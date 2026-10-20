@@ -1,0 +1,17 @@
+{
+ "model": "Qwen/Qwen3-VL-2B-Instruct",
+ "n": 1000,
+ "Attribute (Appr.)": 30.3,
+ "Attribute (Meas.)": 26.6,
+ "MSR": 22.7,
+ "Motion (Cam.)": 29.7,
+ "Motion (Obj.)": 26.3,
+ "Positional Relationship (Cam.\u2013Cam.)": 29.0,
+ "Positional Relationship (Cam.\u2013Obj.)": 37.2,
+ "Positional Relationship (Cam.\u2013Reg.)": 36.1,
+ "Positional Relationship (Obj.\u2013Obj.)": 22.3,
+ "Positional Relationship (Obj.\u2013Reg.)": 35.3,
+ "Positional Relationship (Reg.\u2013Reg.)": 32.1,
+ "overall": 29.0,
+ "parse_rate": 99.2
+}

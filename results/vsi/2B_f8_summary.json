@@ -1,0 +1,16 @@
+{
+ "model": "Qwen/Qwen3-VL-2B-Instruct",
+ "nframes": 8,
+ "fps": null,
+ "split": "full",
+ "n": 5130,
+ "object_counting": 41.309734513274336,
+ "object_abs_distance": 35.119904076738614,
+ "object_size_estimation": 65.48793284365163,
+ "room_size_estimation": 46.84027777777778,
+ "object_rel_distance": 39.718309859154935,
+ "object_rel_direction": 40.54219648788532,
+ "route_planning": 30.412371134020617,
+ "obj_appearance_order": 50.161812297734635,
+ "overall": 43.699067373779734
+}

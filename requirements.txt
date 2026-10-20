@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.14.1+cu130
+torchvision
+transformers==5.20.1
+accelerate
+qwen-vl-utils==0.0.14
+decord
+av
+pillow
+numpy
+pandas
+pyarrow
+datasets
+huggingface_hub

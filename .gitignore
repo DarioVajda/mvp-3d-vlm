@@ -1,0 +1,44 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Data: downloaded benchmarks (~13 GB) and video previews, re-created by the steps in README.md.
+# Only the small question-id subsets are tracked.
+data/*
+!data/subsets/
+
+# Slurm logs
+logs/
+
+# Results: keep full-run predictions, summaries and the figures used in README.md;
+# drop smoke tests, cancelled partial runs and scratch figures
+results/smoke/
+results/vsi_cancelled/
+results/examples/reldist_*.jpg
+
+# Large binary artefacts that should never be committed
+*.mp4
+*.webm
+*.zip
+*.tar
+*.tar.gz
+*.parquet
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.sqsh
+
+# Credentials and secrets
+.env
+.env.*
+*.token
+.netrc
+.huggingface/
+.cache/
+
+# OS files
+.DS_Store

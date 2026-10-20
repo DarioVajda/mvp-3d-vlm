@@ -1,0 +1,305 @@
+[
+ {
+  "bench": "VSI-Bench",
+  "id": 2587,
+  "task": "object_counting",
+  "question_type": "object_counting",
+  "source": "scannetpp/5942004064",
+  "image": [
+   "vsi_2587.jpg"
+  ],
+  "question": "How many pillow(s) are in this room?",
+  "options": null,
+  "ground_truth": "4",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "2",
+    "score": 0.1
+   },
+   "4B_f32": {
+    "prediction": "2",
+    "score": 0.1
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 1746,
+  "task": "object_abs_distance",
+  "question_type": "object_abs_distance",
+  "source": "scannetpp/f3d64c30f8",
+  "image": [
+   "vsi_1746.jpg"
+  ],
+  "question": "Measuring from the closest point of each object, what is the distance between the cup and the heater (in meters)?",
+  "options": null,
+  "ground_truth": "2.3",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "2.0",
+    "score": 0.8
+   },
+   "4B_f32": {
+    "prediction": "3.0",
+    "score": 0.4
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 3330,
+  "task": "object_size_estimation",
+  "question_type": "object_size_estimation",
+  "source": "scannet/scene0693_00",
+  "image": [
+   "vsi_3330.jpg"
+  ],
+  "question": "What is the length of the longest dimension (length, width, or height) of the trash bin, measured in centimeters?",
+  "options": null,
+  "ground_truth": "26",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "34",
+    "score": 0.4
+   },
+   "4B_f32": {
+    "prediction": "35",
+    "score": 0.4
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 3834,
+  "task": "room_size_estimation",
+  "question_type": "room_size_estimation",
+  "source": "scannet/scene0144_00",
+  "image": [
+   "vsi_3834.jpg"
+  ],
+  "question": "What is the size of this room (in square meters)? \nIf multiple rooms are shown, estimate the size of the combined space.",
+  "options": null,
+  "ground_truth": "13.0",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "18.4",
+    "score": 0.2
+   },
+   "4B_f32": {
+    "prediction": "17.0",
+    "score": 0.4
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 1358,
+  "task": "object_rel_distance",
+  "question_type": "object_rel_distance",
+  "source": "arkitscenes/42897629",
+  "image": [
+   "vsi_1358.jpg"
+  ],
+  "question": "Measuring from the closest point of each object, which of these objects (washer, tv, sofa, table) is the closest to the stove?",
+  "options": [
+   "A. washer",
+   "B. tv",
+   "C. sofa",
+   "D. table"
+  ],
+  "ground_truth": "D",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "D. table",
+    "score": 1.0
+   },
+   "4B_f32": {
+    "prediction": "D. table",
+    "score": 1.0
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 1097,
+  "task": "object_rel_direction",
+  "question_type": "object_rel_direction_hard",
+  "source": "arkitscenes/47430468",
+  "image": [
+   "vsi_1097.jpg"
+  ],
+  "question": "If I am standing by the stove and facing the stool, is the refrigerator to my front-left, front-right, back-left, or back-right?\nThe directions refer to the quadrants of a Cartesian plane (if I am standing at the origin and facing along the positive y-axis).",
+  "options": [
+   "A. back-left",
+   "B. front-left",
+   "C. back-right",
+   "D. front-right"
+  ],
+  "ground_truth": "D",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "B. front-left",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "A. back-left",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 5119,
+  "task": "route_planning",
+  "question_type": "route_planning",
+  "source": "scannet/scene0412_00",
+  "image": [
+   "vsi_5119.jpg"
+  ],
+  "question": "You are a robot beginning at the orange traffic cone and facing the sink. You want to navigate to the elevator. You will perform the following actions (Note: for each [please fill in], choose either 'turn back,' 'turn left,' or 'turn right.'): 1. [please fill in] 2. Go forward until the metal rack 3. [please fill in] 4. Go forward until the cardboard boxes 5. [please fill in] 6. Go forward until the trash bin 7. [please fill in] 8. Go forward until the elevator. You have reached the final destination.",
+  "options": [
+   "A. Turn Right, Turn Right, Turn Right, Turn Right",
+   "B. Turn Right, Turn Right, Turn Left, Turn Right",
+   "C. Turn Back, Turn Left, Turn Left, Turn Right",
+   "D. Turn Left, Turn Left, Turn Right, Turn Right"
+  ],
+  "ground_truth": "B",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "A",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "A",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "bench": "VSI-Bench",
+  "id": 4207,
+  "task": "obj_appearance_order",
+  "question_type": "obj_appearance_order",
+  "source": "scannet/scene0207_02",
+  "image": [
+   "vsi_4207.jpg"
+  ],
+  "question": "What will be the first-time appearance order of the following categories in the video: door, backpack, mirror, closet?",
+  "options": [
+   "A. door, backpack, mirror, closet",
+   "B. mirror, backpack, closet, door",
+   "C. closet, backpack, door, mirror",
+   "D. closet, mirror, backpack, door"
+  ],
+  "ground_truth": "C",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "C. closet, backpack, door, mirror",
+    "score": 1.0
+   },
+   "4B_f32": {
+    "prediction": "C. closet, backpack, door, mirror",
+    "score": 1.0
+   }
+  }
+ },
+ {
+  "bench": "MMSI-Bench",
+  "id": 197,
+  "task": "Positional Relationship (Cam.–Obj.)",
+  "question_type": "Positional Relationship (Cam.–Obj.)",
+  "source": "medium",
+  "image": [
+   "mmsi_197_0.jpg",
+   "mmsi_197_1.jpg"
+  ],
+  "question": "These two photos were taken by you in succession. When you took the first photo, which pillow in the second photo is the farthest white pillow from you, and is it on your left or right?\nOptions: A: The one on the left, on the left, B: The one on the right, on the right, C: The one on the left, on the right, D: The one on the right, on the left",
+  "options": null,
+  "ground_truth": "A",
+  "predictions": {
+   "2B": {
+    "prediction": "C: The one on the left, on the right,",
+    "score": 0.0
+   },
+   "4B": {
+    "prediction": "A",
+    "score": 1.0
+   }
+  }
+ },
+ {
+  "bench": "MMSI-Bench",
+  "id": 320,
+  "task": "Motion (Cam.)",
+  "question_type": "Motion (Cam.)",
+  "source": "easy",
+  "image": [
+   "mmsi_320_0.jpg",
+   "mmsi_320_1.jpg"
+  ],
+  "question": "First-person continuous shooting, in which direction is the camera moving?\nOptions: A: Not moving, B: Left, C: Up, D: Right",
+  "options": null,
+  "ground_truth": "A",
+  "predictions": {
+   "2B": {
+    "prediction": "D",
+    "score": 0.0
+   },
+   "4B": {
+    "prediction": "A",
+    "score": 1.0
+   }
+  }
+ },
+ {
+  "bench": "MMSI-Bench",
+  "id": 810,
+  "task": "Attribute (Meas.)",
+  "question_type": "Attribute (Meas.)",
+  "source": "hard",
+  "image": [
+   "mmsi_810_0.jpg",
+   "mmsi_810_1.jpg"
+  ],
+  "question": "Which has a larger volume, the cardboard box or the printer?\nOptions: A: Printer, B: Cannot be determined, C: Cardboard box, D: The same size",
+  "options": null,
+  "ground_truth": "B",
+  "predictions": {
+   "2B": {
+    "prediction": "C: Cardboard box",
+    "score": 0.0
+   },
+   "4B": {
+    "prediction": "C",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "bench": "MMSI-Bench",
+  "id": 535,
+  "task": "MSR",
+  "question_type": "MSR",
+  "source": "medium",
+  "image": [
+   "mmsi_535_0.jpg",
+   "mmsi_535_1.jpg",
+   "mmsi_535_2.jpg",
+   "mmsi_535_3.jpg",
+   "mmsi_535_4.jpg"
+  ],
+  "question": "Suppose I am taking the first picture facing north, then in which direction is the camera facing when taking the second picture?\nOptions: A: Southwest, B: Northwest, C: Northeast, D: Southeast",
+  "options": null,
+  "ground_truth": "A",
+  "predictions": {
+   "2B": {
+    "prediction": "C: Northeast",
+    "score": 0.0
+   },
+   "4B": {
+    "prediction": "C",
+    "score": 0.0
+   }
+  }
+ }
+]

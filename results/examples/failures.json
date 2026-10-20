@@ -1,0 +1,220 @@
+[
+ {
+  "id": 2556,
+  "task": "object_counting",
+  "question_type": "object_counting",
+  "dataset": "scannetpp",
+  "scene_name": "bde1e479ad",
+  "question": "How many ceiling light(s) are in this room?",
+  "options": null,
+  "ground_truth": "8",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "4",
+    "score": 0.1
+   },
+   "4B_f32": {
+    "prediction": "2",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 1794,
+  "task": "object_abs_distance",
+  "question_type": "object_abs_distance",
+  "dataset": "scannetpp",
+  "scene_name": "27dd4da69e",
+  "question": "Measuring from the closest point of each object, what is the distance between the basket and the cutting board (in meters)?",
+  "options": null,
+  "ground_truth": "9.1",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "2.0",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "2.3",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 2288,
+  "task": "object_size_estimation",
+  "question_type": "object_size_estimation",
+  "dataset": "scannetpp",
+  "scene_name": "286b55a2bf",
+  "question": "What is the length of the longest dimension (length, width, or height) of the exhaust fan, measured in centimeters?",
+  "options": null,
+  "ground_truth": "12",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "24",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "25",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 2672,
+  "task": "room_size_estimation",
+  "question_type": "room_size_estimation",
+  "dataset": "scannetpp",
+  "scene_name": "3f15a9266d",
+  "question": "What is the size of this room (in square meters)? \nIf multiple rooms are shown, estimate the size of the combined space.",
+  "options": null,
+  "ground_truth": "11.9",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "20.0",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "18.0",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 1988,
+  "task": "object_rel_distance",
+  "question_type": "object_rel_distance",
+  "dataset": "scannetpp",
+  "scene_name": "21d970d8de",
+  "question": "Measuring from the closest point of each object, which of these objects (tv, whiteboard, telephone, chair) is the closest to the door?",
+  "options": [
+   "A. tv",
+   "B. whiteboard",
+   "C. telephone",
+   "D. chair"
+  ],
+  "ground_truth": "B",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "B. whiteboard",
+    "score": 1.0
+   },
+   "4B_f32": {
+    "prediction": "D. chair",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 3710,
+  "task": "object_rel_direction",
+  "question_type": "object_rel_direction_easy",
+  "dataset": "scannet",
+  "scene_name": "scene0357_01",
+  "question": "If I am standing by the window and facing the towel, is the table to the left or the right of the towel?",
+  "options": [
+   "A. left",
+   "B. right"
+  ],
+  "ground_truth": "B",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "A. left",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "A. left",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 5073,
+  "task": "route_planning",
+  "question_type": "route_planning",
+  "dataset": "arkitscenes",
+  "scene_name": "47331262",
+  "question": "You are a robot beginning at the corner of the table towards the sofa and facing the table. You want to navigate to the corner fan. You will perform the following actions (Note: for each [please fill in], choose either 'turn back,' 'turn left,' or 'turn right.'): 1. [please fill in] 2. Go forward until the bookshelf 3. [please fill in] 4. Go forward until the wall. You have reached the final destination.",
+  "options": [
+   "A. Turn Back, Turn Right",
+   "B. Turn Right, Turn Left",
+   "C. Turn Left, Turn Right",
+   "D. Turn Right, Turn Right"
+  ],
+  "ground_truth": "C",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "B. Turn Right, Turn Left",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "D. Turn Right, Turn Right",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 4069,
+  "task": "obj_appearance_order",
+  "question_type": "obj_appearance_order",
+  "dataset": "scannet",
+  "scene_name": "scene0580_01",
+  "question": "What will be the first-time appearance order of the following categories in the video: door, table, chair, bookshelf?",
+  "options": [
+   "A. chair, bookshelf, door, table",
+   "B. bookshelf, table, chair, door",
+   "C. door, table, chair, bookshelf",
+   "D. door, chair, table, bookshelf"
+  ],
+  "ground_truth": "D",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "D. door, chair, table, bookshelf",
+    "score": 1.0
+   },
+   "4B_f32": {
+    "prediction": "C. door, table, chair, bookshelf",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 2546,
+  "task": "object_counting",
+  "question_type": "object_counting",
+  "dataset": "scannetpp",
+  "scene_name": "21d970d8de",
+  "question": "How many ceiling light(s) are in this room?",
+  "options": null,
+  "ground_truth": "12",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "4",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "4",
+    "score": 0.0
+   }
+  }
+ },
+ {
+  "id": 751,
+  "task": "object_abs_distance",
+  "question_type": "object_abs_distance",
+  "dataset": "arkitscenes",
+  "scene_name": "42897629",
+  "question": "Measuring from the closest point of each object, what is the distance between the tv and the refrigerator (in meters)?",
+  "options": null,
+  "ground_truth": "9.1",
+  "predictions": {
+   "2B_f32": {
+    "prediction": "4.4",
+    "score": 0.0
+   },
+   "4B_f32": {
+    "prediction": "1.0",
+    "score": 0.0
+   }
+  }
+ }
+]
