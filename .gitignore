@@ -42,3 +42,6 @@ results/examples/reldist_*.jpg
 
 # OS files
 .DS_Store
+
+# Cloned reference repos (re-created with git clone, see README.md)
+third_party/

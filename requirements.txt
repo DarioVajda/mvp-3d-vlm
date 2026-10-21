@@ -12,3 +12,4 @@ pandas
 pyarrow
 datasets
 huggingface_hub
+einops

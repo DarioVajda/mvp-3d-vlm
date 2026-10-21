@@ -3,7 +3,9 @@
 The original videos are H.264, which VS Code's built-in media preview cannot play; VP8 webm plays there.
 
   slurm/submit.sh -J previews -t 00:30:00 -- python src/make_previews.py
+  ... python src/make_previews.py --videos scannetpp/09c1414f1b        # specific videos instead
 """
+import argparse
 import re
 from pathlib import Path
 
@@ -33,8 +35,11 @@ def transcode(src, dst, bitrate=1_500_000, max_frames=None):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--videos", nargs="*", help="<dataset>/<scene> (default: all videos linked from README.md)")
+    args = ap.parse_args()
     readme = (ROOT / "README.md").read_text()
-    videos = sorted(set(re.findall(r"\(data/raw/VSI-Bench/(\w+/\w+)\.mp4\)", readme)))
+    videos = args.videos or sorted(set(re.findall(r"\(data/raw/VSI-Bench/(\w+/\w+)\.mp4\)", readme)))
     for v in videos:
         dst = ROOT / "data" / "previews" / f"{v}.webm"
         src = ROOT / "data" / "raw" / "VSI-Bench" / f"{v}.mp4"
