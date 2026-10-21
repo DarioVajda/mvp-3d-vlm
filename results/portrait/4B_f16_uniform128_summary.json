@@ -1,0 +1,17 @@
+{
+ "model": "Qwen/Qwen3-VL-4B-Instruct",
+ "nframes": 16,
+ "sampling": "uniform128",
+ "vggt_root": "/shared/workspace/povejmo/math/projects/mvp/data/vggt",
+ "fps": null,
+ "split": "full",
+ "n": 701,
+ "object_counting": 58.64197530864198,
+ "object_abs_distance": 35.16949152542373,
+ "object_size_estimation": 76.6906474820144,
+ "room_size_estimation": 61.578947368421055,
+ "object_rel_distance": 50.43478260869565,
+ "object_rel_direction": 45.451100104870775,
+ "route_planning": 36.84210526315789,
+ "overall": 52.115578523032205
+}

@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3-VL-2B-Instruct",
+ "nframes": 8,
+ "sampling": "sa",
+ "vggt_root": "/shared/workspace/povejmo/math/projects/mvp/data/vggt",
+ "layout": "stit",
+ "system": "You are a helpful assistant.",
+ "fps": null,
+ "split": "full",
+ "n": 5130,
+ "object_counting": 53.13274336283186,
+ "object_abs_distance": 33.4052757793765,
+ "object_size_estimation": 64.7324239244491,
+ "room_size_estimation": 45.97222222222223,
+ "object_rel_distance": 35.352112676056336,
+ "object_rel_direction": 45.342888837944905,
+ "route_planning": 32.98969072164948,
+ "obj_appearance_order": 16.666666666666664,
+ "overall": 40.94925302389963
+}

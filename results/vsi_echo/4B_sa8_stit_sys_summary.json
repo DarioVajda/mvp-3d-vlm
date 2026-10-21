@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3-VL-4B-Instruct",
+ "nframes": 8,
+ "sampling": "sa",
+ "vggt_root": "/shared/workspace/povejmo/math/projects/mvp/data/vggt",
+ "layout": "stit",
+ "system": "You are a helpful assistant. The question is given before the video frames and repeated after them; use the frames to answer it.",
+ "fps": null,
+ "split": "full",
+ "n": 5130,
+ "object_counting": 50.42477876106194,
+ "object_abs_distance": 38.021582733812956,
+ "object_size_estimation": 68.06925498426023,
+ "room_size_estimation": 53.090277777777786,
+ "object_rel_distance": 38.16901408450704,
+ "object_rel_direction": 39.14341813675897,
+ "route_planning": 31.443298969072163,
+ "obj_appearance_order": 27.993527508090615,
+ "overall": 43.29439411941771
+}

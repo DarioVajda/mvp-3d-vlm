@@ -1,0 +1,17 @@
+{
+ "model": "Qwen/Qwen3-VL-4B-Instruct",
+ "nframes": 16,
+ "sampling": "sa",
+ "vggt_root": "../data/vggt_portrait_rotated",
+ "fps": null,
+ "split": "full",
+ "n": 701,
+ "object_counting": 61.48148148148148,
+ "object_abs_distance": 37.118644067796616,
+ "object_size_estimation": 75.32374100719424,
+ "room_size_estimation": 65.43859649122807,
+ "object_rel_distance": 48.69565217391305,
+ "object_rel_direction": 41.89276183949579,
+ "route_planning": 34.21052631578947,
+ "overall": 52.02305762527124
+}
