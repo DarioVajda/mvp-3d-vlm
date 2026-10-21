@@ -35,6 +35,10 @@ results/mmsi/        per-question predictions <model>.jsonl and *_summary.json
 results/walkthrough/ figures and 16-frame runs on one scene for docs/walkthrough.md
 results/smoke/       30-question / 22-question smoke tests
 results/vsi_cancelled/ partial runs at 16 / 64 frames (stopped; frame counts above 32 are out of scope)
+papers/              reference PDFs, indexed in papers/README.md
+tasks/               run requests for the cluster, one file per task (see tasks/README.md)
+task-results/<id>/   outputs of each task, same name as its task file
+.claude/skills/add-task-to-queue/  skill that writes a task file after interviewing the author
 ```
 
 The models (`Qwen/Qwen3-VL-2B-Instruct`, `Qwen/Qwen3-VL-4B-Instruct`, `facebook/VGGT-1B`) are in the Hugging Face cache (`~/.cache/huggingface/hub`).

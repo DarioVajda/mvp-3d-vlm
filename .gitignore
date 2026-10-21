@@ -45,3 +45,9 @@ results/examples/reldist_*.jpg
 
 # Cloned reference repos (re-created with git clone, see README.md)
 third_party/
+
+# Papers: only the PDFs the project builds on are tracked; the rest are listed in papers/README.md
+papers/*.pdf
+!papers/2503.11651v1.pdf
+!papers/2505.20279v5.pdf
+!papers/2603.27437v3.pdf
