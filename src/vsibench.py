@@ -63,6 +63,36 @@ def build_prompt(doc):
     return "\n".join([PRE_PROMPT, doc["question"], options, MCA_POST_PROMPT])
 
 
+# ---- prompt layouts for the prompt-echoing experiment (Abhinandan et al., arXiv 2607.15565) ----
+# S = system, T = question, I = video. The baseline above is SIT: video first, then the lmms-eval text.
+LAYOUTS = ["sit", "sti", "stit"]
+ECHO_SYSTEM_PROMPT = ("You are a helpful assistant. The question is given before the video frames and repeated "
+                      "after them; use the frames to answer it.")
+
+
+def question_block(doc):
+    """The question (and options) alone, without the lmms-eval pre/post prompts."""
+    if doc["question_type"] in NA_QUESTION_TYPES:
+        return doc["question"]
+    return doc["question"] + "\nOptions:\n" + "\n".join(doc["options"])
+
+
+def build_prompt_parts(doc, layout="sit"):
+    """(text before the video, text after the video). The chat template joins parts with no separator, so text
+    before the video ends in a newline to put the first frame timestamp on its own line.
+      sit:  ("", baseline)                      question after the video (lmms-eval)
+      sti:  (baseline + "\n", "")               the same text moved before the video
+      stit: (question_block + "\n", baseline)   question echoed: before the video, and unchanged after it
+    """
+    if layout == "sit":
+        return "", build_prompt(doc)
+    if layout == "sti":
+        return build_prompt(doc) + "\n", ""
+    if layout == "stit":
+        return question_block(doc) + "\n", build_prompt(doc)
+    raise ValueError(layout)
+
+
 # ---- scoring (verbatim logic from lmms-eval) ----
 _NUMBER_WORDS = {w: i for i, w in enumerate(
     "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "

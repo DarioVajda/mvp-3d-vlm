@@ -3,7 +3,10 @@ qwen_vl_utils frame sampling/resizing with image_patch_size=16, processor called
 system prompt "You are a helpful assistant.", greedy decoding.
 """
 import torch
+from decord import VideoReader, cpu
 from qwen_vl_utils import process_vision_info
+from torchvision import transforms
+from torchvision.transforms import InterpolationMode
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
 SYSTEM_PROMPT = "You are a helpful assistant."
@@ -31,21 +34,36 @@ class QwenVL:
         video, meta = videos[0]
         return video, meta, video_kwargs
 
+    def load_video_frames(self, path, indices):
+        """Like load_video, but with given frame indices (e.g. from space-aware sampling). Frames are resized
+        exactly as load_video would for the same number of frames, and the metadata carries the true indices
+        so Qwen3-VL's timestamps match the chosen frames."""
+        video, meta, video_kwargs = self.load_video(path, nframes=len(indices))
+        vr = VideoReader(path, ctx=cpu(0))
+        frames = torch.from_numpy(vr.get_batch(list(indices)).asnumpy()).permute(0, 3, 1, 2)
+        frames = transforms.functional.resize(frames, list(video.shape[-2:]), interpolation=InterpolationMode.BICUBIC,
+                                              antialias=True).float()
+        return frames, {**meta, "frames_indices": list(map(int, indices))}, video_kwargs
+
     def load_images(self, images):
         msg = [{"role": "user", "content": [{"type": "image", "image": im} for im in images]}]
         imgs, _ = process_vision_info(msg, image_patch_size=16)
         return imgs
 
-    def _messages(self, prompt, visual_type, n_visuals=1):
-        content = [{"type": visual_type} for _ in range(n_visuals)] + [{"type": "text", "text": prompt}]
-        return [{"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
+    def _messages(self, prompt, visual_type, n_visuals=1, pre="", system=SYSTEM_PROMPT):
+        """User turn = [pre text] + visuals + [prompt text]; empty text parts are left out."""
+        content = [{"type": "text", "text": pre}] if pre else []
+        content += [{"type": visual_type} for _ in range(n_visuals)]
+        content += [{"type": "text", "text": prompt}] if prompt else []
+        return [{"role": "system", "content": [{"type": "text", "text": system}]},
                 {"role": "user", "content": content}]
 
     @torch.inference_mode()
-    def generate_video(self, video, meta, video_kwargs, prompts, max_new_tokens=16):
-        """Answer several prompts about the same video in one batch."""
-        texts = [self.processor.apply_chat_template(self._messages(p, "video"), tokenize=False,
-                                                    add_generation_prompt=True) for p in prompts]
+    def generate_video(self, video, meta, video_kwargs, prompts, max_new_tokens=16, pres=None, system=SYSTEM_PROMPT):
+        """Answer several prompts about the same video in one batch. `pres`: optional text placed before the video."""
+        pres = pres or [""] * len(prompts)
+        texts = [self.processor.apply_chat_template(self._messages(p, "video", pre=q, system=system), tokenize=False,
+                                                    add_generation_prompt=True) for p, q in zip(prompts, pres)]
         inputs = self.processor(text=texts, videos=[video] * len(texts), video_metadata=[meta] * len(texts),
                                 do_resize=False, padding=True, return_tensors="pt", **video_kwargs)
         return self._generate(inputs, max_new_tokens)
