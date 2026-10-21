@@ -11,6 +11,7 @@ README.md            this file
 requirements.txt     .venv packages (torch 2.14.1+cu130, transformers 5.20.1, qwen-vl-utils 0.0.14, decord, ...)
 slurm/submit.sh      sbatch wrapper (container, B200/B300 only, logs to logs/<name>_<jobid>.out)
 slurm/setup_venv.sh  installs requirements.txt into .venv inside a job
+slurm/install_vggt.sh installs third_party/vggt (editable) and einops into .venv inside a job
 src/vsibench.py      VSI-Bench loading, prompts and metrics (mirrors lmms-eval's `vsibench` task)
 src/qwen_vl.py       Qwen3-VL wrapper (mirrors lmms-eval's `qwen3_vl` model)
 src/eval_vsibench.py VSI-Bench evaluation script
@@ -18,16 +19,25 @@ src/eval_mmsi.py     MMSI-Bench evaluation script (official prompt and answer ex
 src/report.py        per-task tables for every run in results/, writes results/summary.json
 src/make_examples.py picks examples and writes results/examples/
 src/make_previews.py transcodes the videos linked here to .webm
+src/extract_vggt.py  runs VGGT-1B on 128 frames per VSI-Bench video, saves cameras, depth, point maps and tokens
+src/show_vggt.py     check figure for one saved reconstruction (frames, depth, confidence, fused cloud)
+src/sa_sampling.py   Spatial-MLLM's space-aware frame sampling on the saved VGGT point maps
+src/walkthrough.py   figures for docs/walkthrough.md
+docs/walkthrough.md  one question followed from video to answer: VGGT, frame sampling, Spatial-MLLM training/inference
+third_party/         reference repos: facebookresearch/vggt (a288dd0), diankun-wu/Spatial-MLLM (9fc4738)
 data/raw/VSI-Bench/  nyu-visionx/VSI-Bench (test.jsonl, parquet splits, videos unzipped into arkitscenes/ scannet/ scannetpp/)
 data/raw/MMSI-Bench/ RunsenXu/MMSI-Bench (MMSI_Bench.parquet, images embedded)
+data/raw/Spatial-MLLM-Data/ Spatial-MLLM's 133k SFT annotations (Diankun/Spatial-MLLM-Data)
+data/vggt/           VGGT reconstructions and features, data/vggt/<dataset>/<scene>/ (see below)
 data/previews/       .webm copies of the videos linked in this README (playable in VS Code)
 results/vsi/         per-question predictions <model>_f<frames>.jsonl and *_summary.json
 results/mmsi/        per-question predictions <model>.jsonl and *_summary.json
+results/walkthrough/ figures and 16-frame runs on one scene for docs/walkthrough.md
 results/smoke/       30-question / 22-question smoke tests
 results/vsi_cancelled/ partial runs at 16 / 64 frames (stopped; frame counts above 32 are out of scope)
 ```
 
-The models (`Qwen/Qwen3-VL-2B-Instruct`, `Qwen/Qwen3-VL-4B-Instruct`) are in the Hugging Face cache (`~/.cache/huggingface/hub`).
+The models (`Qwen/Qwen3-VL-2B-Instruct`, `Qwen/Qwen3-VL-4B-Instruct`, `facebook/VGGT-1B`) are in the Hugging Face cache (`~/.cache/huggingface/hub`).
 
 ## Running
 
@@ -38,13 +48,21 @@ Never run models on the login node; everything goes through Slurm on B200/B300 G
 /usr/bin/python3 -m venv .venv
 slurm/submit.sh -J setup_venv -t 00:40:00 -- bash slurm/setup_venv.sh
 
-# VSI-Bench (full 5130 questions); --per-type N for a stratified subset, --split debiased for the debiased subset
+# VSI-Bench (full 5130 questions); --per-type N for a stratified subset, --split debiased for the debiased subset,
+# --sampling uniform128|sa to pick frames among the 128 VGGT candidates (Spatial-MLLM protocol, needs data/vggt)
 slurm/submit.sh -J vsi_4B_f32 -t 02:00:00 -- bash -c "cd src && python eval_vsibench.py \
     --model Qwen/Qwen3-VL-4B-Instruct --nframes 32 --out ../results/vsi/4B_f32.jsonl"
 
 # MMSI-Bench (1000 questions)
 slurm/submit.sh -J mmsi_4B -t 01:00:00 -- bash -c "cd src && python eval_mmsi.py \
     --model Qwen/Qwen3-VL-4B-Instruct --out ../results/mmsi/4B.jsonl"
+
+# VGGT: reference repos, weights, install, then extraction sharded over 4 GPUs
+git clone --depth 1 https://github.com/facebookresearch/vggt third_party/vggt
+git clone --depth 1 https://github.com/diankun-wu/Spatial-MLLM third_party/Spatial-MLLM
+hf download facebook/VGGT-1B
+slurm/submit.sh -J vggt_install -t 00:20:00 --gres gpu:0 -- bash slurm/install_vggt.sh
+for s in 0 1 2 3; do slurm/submit.sh -J vggt_s$s -t 02:00:00 -- .venv/bin/python src/extract_vggt.py --shard $s --num-shards 4; done
 
 # tables and examples (light; fine on the login node)
 .venv/bin/python src/report.py
@@ -96,22 +114,70 @@ unparsed answers is *not* used; those answers count as wrong (about 1% of answer
 
 ### VSI-Bench
 
-| Model, frames | Count | Abs. dist | Obj. size | Room size | Rel. dist | Rel. dir | Route | Appear. order | **Overall** | Debiased | Qwen report |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2B, 8  | 41.3 | 35.1 | 65.5 | 46.8 | 39.7 | 40.5 | 30.4 | 50.2 | **43.7** | 34.6 | 53.9 |
-| 2B, 32 | 57.3 | 42.1 | 70.7 | 52.7 | 52.8 | 41.2 | 28.4 | 58.7 | **50.5** | 43.1 | 53.9 |
-| 4B, 8  | 51.9 | 34.9 | 68.9 | 51.8 | 39.0 | 40.0 | 29.4 | 51.6 | **45.9** | 39.0 | 59.3 |
-| 4B, 32 | 65.9 | 43.6 | 74.3 | 60.9 | 53.1 | 46.1 | 28.9 | 62.5 | **54.4** | 48.0 | 59.3 |
+| Model | Frames | Sampling | Count | Abs. dist | Obj. size | Room size | Rel. dist | Rel. dir | Route | Appear. order | **Overall** | Debiased |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2B | 8  | uniform      | 41.3 | 35.1 | 65.5 | 46.8 | 39.7 | 40.5 | 30.4 | 50.2 | **43.7** | 34.6 |
+| 2B | 8  | space-aware  | 50.4 | 37.1 | 65.8 | 49.5 | 43.1 | 42.6 | 25.8 | 42.4 | **44.6** | 36.1 |
+| 2B | 16 | uniform (128) | 53.2 | 41.5 | 66.7 | 49.0 | 42.1 | 40.3 | 29.9 | 58.9 | **47.7** | 39.9 |
+| 2B | 16 | space-aware  | 57.9 | 39.2 | 67.8 | 53.0 | 47.9 | 43.4 | 29.9 | 51.3 | **48.8** | 39.6 |
+| 2B | 32 | uniform      | 57.3 | 42.1 | 70.7 | 52.7 | 52.8 | 41.2 | 28.4 | 58.7 | **50.5** | 43.1 |
+| 2B | 32 | space-aware  | 61.5 | 44.6 | 71.7 | 52.1 | 51.7 | 43.0 | 27.3 | 58.7 | **51.3** | 43.7 |
+| 2B | 32 | uniform, lmms-eval ([#2028](https://github.com/QwenLM/Qwen3-VL/issues/2028)) | | | | | | | | | 51.0 | |
+| 2B | ?  | Qwen3-VL report | | | | | | | | | 53.9 | |
+| 4B | 8  | uniform      | 51.9 | 34.9 | 68.9 | 51.8 | 39.0 | 40.0 | 29.4 | 51.6 | **45.9** | 39.0 |
+| 4B | 8  | space-aware  | 59.1 | 39.4 | 69.9 | 55.3 | 45.8 | 41.8 | 32.0 | 37.4 | **47.6** | 40.9 |
+| 4B | 16 | uniform (128) | 61.5 | 40.2 | 71.6 | 55.6 | 46.2 | 44.5 | 34.5 | 61.0 | **51.9** | 45.0 |
+| 4B | 16 | space-aware  | 64.3 | 40.7 | 72.7 | 59.0 | 47.0 | 44.7 | 33.5 | 50.6 | **51.6** | 44.1 |
+| 4B | 32 | uniform      | 65.9 | 43.6 | 74.3 | 60.9 | 53.1 | 46.1 | 28.9 | 62.5 | **54.4** | 48.0 |
+| 4B | 32 | space-aware  | 66.8 | 45.6 | 74.3 | 60.6 | 55.4 | 47.6 | 32.5 | 62.0 | **55.6** | 49.5 |
+| 4B | 32 | uniform, lmms-eval ([#2028](https://github.com/QwenLM/Qwen3-VL/issues/2028)) | | | | | | | | | 54.7 | |
+| 4B | ?  | Qwen3-VL report | | | | | | | | | 59.3 | |
+
+* **Sampling:**
+  * *uniform*: qwen-vl-utils, evenly spaced over the whole video.
+  * *uniform (128)*: evenly spaced over the 128 VGGT candidate frames, the control for space-aware sampling.
+  * *space-aware*: Spatial-MLLM's greedy voxel coverage over the same 128 candidates (`src/sa_sampling.py`).
+* **Space-aware vs uniform, paired per question.** Each cell gives the change in macro overall, then the questions
+  whose score went up / down, with a two-sided sign test. The macro overall averages tasks, so it can fall while more
+  questions improve (4B, 16 frames).
+
+  | | 8 frames | 16 frames | 32 frames |
+  |---|---|---|---|
+  | 2B | +0.9, 1102 better / 943 worse, p < 0.001 | +1.1, 972 / 885, p = 0.05 | +0.8, 866 / 725, p < 0.001 |
+  | 4B | +1.7, 1127 / 907, p < 0.001 | −0.3, 941 / 888, p = 0.22 | +1.2, 886 / 795, p = 0.03 |
+* **What space-aware sampling changes:**
+  * It helps counting, room size and relative distance, especially with few frames. For example, 4B counting at 8
+    frames goes from 51.9 to 59.1.
+  * It hurts appearance order at 8 and 16 frames (4B: 51.6 → 37.4 and 61.0 → 50.6), probably because coverage picks
+    bunch up in time and miss short stretches of video where objects first appear. At 32 frames the picks are dense enough that
+    appearance order recovers.
+  * Net effect: at most +1.7 points overall, far below the 3–5 point gap to the Qwen report.
 
 * **Agreement with lmms-eval:** the 32-frame numbers match an independent lmms-eval reproduction at 32 frames
   ([Qwen3-VL issue #2028](https://github.com/QwenLM/Qwen3-VL/issues/2028): 2B 51.0, 4B 54.7). For 4B, every
   task except route planning is within 0.6 points. Route planning has only 194 questions.
-* **Gap to the Qwen report:** the report's numbers are 3–5 points higher. That issue's author closed the gap by
-  using 64 frames. The report does not state its VSI-Bench frame setting.
+* **Gap to the Qwen report:** the report's numbers are 3–5 points higher.
+  * The report gives no frame setting for VSI-Bench itself. Its general video protocol (Section 5.9) is 2 fps,
+    at most 2,048 frames, 640 tokens per frame and 224K video tokens in total, which would mean far more than
+    32 frames here: the 288 videos last 22–434 s (median 82 s, so about 160 frames at 2 fps). Whether that protocol also applies to the spatial benchmarks is not stated.
+  * In the issue above, the author later wrote that `max_num_frames=64` in lmms-eval "got correct results", without
+    posting the numbers.
 * **More frames:** going from 8 to 32 frames adds 7–9 points. The gain is mostly on counting, room size, relative
   distance and appearance order, which need coverage of the whole scene.
 * **Viewpoint tasks:** relative direction (40–46) and route planning (~29; chance ≈ 28, since questions have 3 or 4 options) do not improve with more
   frames. These are the main targets for explicit 3D cues.
+
+**Prompt echoing.** We also tried placing the question before the frames, following
+[Abhinandan et al., 2607.15565](https://arxiv.org/abs/2607.15565). We tested two layouts:
+- question before the frames only (`--layout sti`);
+- question both before and after them (`--layout stit`, optionally with `--echo-system`, which adds a system-prompt
+  note).
+
+The runs are in `results/vsi_echo/`, all with space-aware frames. Neither layout helps, for either model or any
+frame count:
+- **Before only:** 8–13 points below the usual layout, with appearance order and counting falling furthest.
+- **Before and after:** still 3–5 points below; for example, 4B at 32 frames drops from 55.6 to 52.5.
+- **System note:** changes nothing.
 
 ### MMSI-Bench
 
@@ -311,11 +377,52 @@ GT **9.1** · **4B: `1.0` (MRA 0.0)** · 2B: `4.4` (MRA 0.0)
 
 ![](results/examples/vsi_751.jpg)
 
+## VGGT reconstructions
+
+`src/extract_vggt.py` runs the frozen [VGGT-1B](https://huggingface.co/facebook/VGGT-1B) ([2503.11651](https://arxiv.org/abs/2503.11651))
+once per video on 128 uniformly spaced frames (one joint bf16 forward pass), following the candidate-frame setup of
+Spatial-MLLM's space-aware sampling (`third_party/Spatial-MLLM/src/sampling/sa_sampling.py`). All 288 VSI-Bench
+videos are done: about 4 s of VGGT and 14 s in total per video on one B200 (14.7 GB peak), about 20 min on 4 GPUs.
+Each video takes about 820 MiB, 232 GB in total, in `data/vggt/<dataset>/<scene>/`:
+
+| file | shape | content |
+|---|---|---|
+| `meta.json` | | video, input size, frame counts, timings |
+| `frame_indices.npy` | int32 [128] | frame indices in the original video |
+| `extrinsic.npy`, `intrinsic.npy` | float32 [128,3,4], [128,3,3] | OpenCV camera-from-world (world = first camera), intrinsics in input pixels |
+| `depth.npy`, `depth_conf.npy` | float16 [128,H,W] | depth and confidence (H x W = 392 x 518, or 518 x 392 for portrait) |
+| `world_points.npy`, `world_points_conf.npy` | float16 [128,H,W,3], [128,H,W] | point head output (what the space-aware sampler uses) |
+| `tokens.npy` | float16 [128,1036,2048] | last aggregator layer, patch tokens (the layer Spatial-MLLM's connector uses) |
+| `special_tokens.npy` | float16 [128,5,2048] | same layer, camera + 4 register tokens |
+| `cloud.npz` | ~250k points | fused cloud from depth + cameras (xyz, rgb, frame), for viewing |
+
+All arrays load with `np.load(..., mmap_mode="r")`. VGGT's geometry is up to an unknown global scale per scene
+(median depth is about 0.4 units), so metric answers need a separate scale source.
+
+**Portrait videos.** 57 ARKitScenes videos are upright 480x640 portrait. Spatial-MLLM rotates portrait frames by
+-90 degrees, which turns these sideways, and VGGT then fails on them (median depth confidence 1.0, the minimum of
+its `1 + exp(x)` confidence, against about 5.8 for the landscape ARKitScenes videos). `data/vggt/` therefore keeps
+them upright (long side 518, the same 1036 patches); median confidence becomes 3.9. The rotated outputs, which a
+faithful reproduction of Spatial-MLLM's sampler would see, are in `data/vggt_portrait_rotated/` (`--portrait rotate`).
+Low confidence on ScanNet (median 3.4) mostly reflects darker, blurrier footage rather than failed reconstructions.
+
+`src/show_vggt.py <dataset>/<scene>` draws a check figure (frames, depth, confidence, top and front view of the
+cloud with the camera path coloured from purple at the first frame to yellow at the last):
+
+| ScanNet++ | ARKitScenes |
+|---|---|
+| ![](results/examples/vggt_scannetpp_09c1414f1b.jpg) | ![](results/examples/vggt_arkitscenes_41069025.jpg) |
+| **ARKitScenes, portrait (kept upright)** | **ScanNet (low confidence, still coherent)** |
+| ![](results/examples/vggt_arkitscenes_45261121.jpg) | ![](results/examples/vggt_scannet_scene0671_01.jpg) |
+
+A step-by-step example of how these outputs are used (frame sampling, Spatial-MLLM's model, training and
+inference) is in [docs/walkthrough.md](docs/walkthrough.md).
+
 ## Next steps
 
 1. Check the remaining gap to the Qwen report (frame count, resolution, prompt, decoding).
-2. Extract 3D cues: run a frozen feed-forward reconstruction model (VGGT, [2503.11651](https://arxiv.org/abs/2503.11651))
-   on the sampled frames to get camera poses and point maps, and combine them with a detector to get 3D object boxes.
+2. Reproduce Spatial-MLLM's space-aware frame sampling from the saved point maps and evaluate Qwen3-VL with those
+   frames; combine VGGT geometry with a detector to get 3D object boxes.
 3. Cue injection: a text "scene sheet", 3D position embeddings on image tokens, or per-frame pose tokens.
 4. LoRA fine-tune on a few thousand spatial QA pairs (e.g. SPAR-7M, [2503.22976](https://arxiv.org/abs/2503.22976)),
    with no scene overlap with the test scenes. Ablations: cues without fine-tuning, fine-tuning without cues (the
