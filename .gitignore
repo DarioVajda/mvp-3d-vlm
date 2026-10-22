@@ -1,5 +1,6 @@
 # Python environment and caches
 .venv/
+.venv-*/
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
@@ -17,6 +18,23 @@ logs/
 results/smoke/
 results/vsi_cancelled/
 results/examples/reldist_*.jpg
+
+# Baselines: keep manifests, environment freezes, metrics and merged predictions; drop input dumps, per-question
+# lmms-eval samples, per-shard outputs, dataset caches, smoke tests and failed or superseded runs
+results/baselines/**/inputs.jsonl
+results/baselines/**/hf_datasets_cache/
+results/baselines/**/*_samples_*.jsonl
+results/baselines/spatial_mllm/*/shard*/eval_result/
+results/baselines/spatial_mllm/*_r2/
+results/baselines/spatial_mllm/135K_sa/
+results/baselines/spatial_mllm/135K_uniform/
+results/baselines/spatial_mllm/820K_sa/
+results/baselines/spatial_mllm/820K_uniform/
+results/baselines/spatialstack/smoke_qwen35/
+results/baselines/spatialstack/full_qwen25/
+results/baselines/spatialstack/qwen25_vsi/
+results/baselines/spatialstack/qwen25_mmsi/
+results/baselines/spatialstack/*_r2/
 
 # Large binary artefacts that should never be committed
 *.mp4
