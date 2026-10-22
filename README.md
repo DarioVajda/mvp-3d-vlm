@@ -33,6 +33,8 @@ data/previews/       .webm copies of the videos linked in this README (playable 
 results/vsi/         per-question predictions <model>_f<frames>.jsonl and *_summary.json
 results/mmsi/        per-question predictions <model>.jsonl and *_summary.json
 results/walkthrough/ figures and 16-frame runs on one scene for docs/walkthrough.md
+baselines/           per-baseline environments (setup*.sh, freeze*.txt), wrappers around the authors' eval scripts, input-dump hook
+results/baselines/   baseline outputs, each with manifest.txt, freeze.txt and inputs.jsonl
 results/smoke/       30-question / 22-question smoke tests
 results/vsi_cancelled/ partial runs at 16 / 64 frames (stopped; frame counts above 32 are out of scope)
 ```
@@ -194,6 +196,19 @@ frame count:
 
 Both models are near chance, in line with the leaderboard (Qwen2.5-VL-3B 26.5, 7B 25.9, 72B 30.7). The
 difference between 2B and 4B is within noise: the standard error is about ±1.4 overall and ±5–6 per category.
+
+### Baselines (released checkpoints, authors' own evaluation code)
+
+| Model | VSI-Bench reported | VSI-Bench ours | MMSI-Bench ours |
+|---|---|---|---|
+| SpatialStack-Qwen3.5-4B (32 frames) | 67.5 | 67.53 | 28.0 |
+| SpatialStack-Qwen2.5-4B (32 frames) | 60.9 | 60.77 | 25.7 |
+| Spatial-MLLM-v1.1-135K (16 frames, uniform / space-aware) | 50.48 / 51.81 | 50.42 / 51.34 | |
+| Spatial-MLLM-v1.1-820K (16 frames, uniform / space-aware) | 53.00 / 53.43 | 53.32 / 53.08 | |
+
+The reported VSI-Bench numbers are reproduced within 0.5 points. Neither paper reports MMSI-Bench; there the
+baselines are no better than plain Qwen3-VL. Environments, input checks and deviations are in
+`../mvp_baselines.md` (§11).
 
 ## Examples
 
