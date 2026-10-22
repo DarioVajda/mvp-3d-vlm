@@ -1,0 +1,126 @@
+{
+  "results": {
+    "vsibench": {
+      "alias": "vsibench",
+      "vsibench_score,none": 67.53401580127468,
+      "vsibench_score_stderr,none": "N/A"
+    }
+  },
+  "group_subtasks": {
+    "vsibench": []
+  },
+  "configs": {
+    "vsibench": {
+      "task": "vsibench",
+      "dataset_path": "nyu-visionx/VSI-Bench",
+      "dataset_kwargs": {
+        "token": false
+      },
+      "test_split": "test",
+      "full_docs": false,
+      "process_results_use_image": false,
+      "process_docs": "<function process_docs at 0x7e51fe41eac0>",
+      "doc_to_visual": "<function vsibench_doc_to_visual at 0x7e51fe41f1a0>",
+      "doc_to_text": "<function vsibench_doc_to_text at 0x7e51fe41fc40>",
+      "doc_to_target": "ground_truth",
+      "process_results": "<function vsibench_process_results at 0x7e51fc0fcae0>",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "vsibench_score",
+          "aggregation": "<function vsibench_aggregate_results at 0x7e51fc0fd4e0>",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "generate_until",
+      "generation_kwargs": {
+        "max_new_tokens": 16,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "num_beams": 1,
+        "do_sample": false,
+        "until": [
+          "\n\n"
+        ]
+      },
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": [
+        {
+          "version": 0.0
+        }
+      ],
+      "lmms_eval_specific_kwargs": {
+        "default": {
+          "pre_prompt": "",
+          "mca_post_prompt": "Answer with the option's letter from the given choices directly.",
+          "na_post_prompt": "Please answer the question using a single word or phrase."
+        },
+        "gemini_api": {
+          "pre_prompt": "",
+          "mca_post_prompt": "Answer with the option's letter from the given choices directly.",
+          "na_post_prompt": "Do not response anything other than a single number!"
+        },
+        "gpt4v": {
+          "pre_prompt": "",
+          "mca_post_prompt": "Answer with the option's letter from the given choices directly.",
+          "na_post_prompt": "Do not response anything other than a single number!"
+        },
+        "pre_prompt": "",
+        "mca_post_prompt": "Answer with the option's letter from the given choices directly.",
+        "na_post_prompt": "Please answer the question using a single word or phrase."
+      }
+    }
+  },
+  "versions": {
+    "vsibench": "Yaml"
+  },
+  "n-shot": {
+    "vsibench": 0
+  },
+  "higher_is_better": {
+    "vsibench": {
+      "vsibench_score": true
+    }
+  },
+  "n-samples": {
+    "vsibench": {
+      "original": 5130,
+      "effective": 5130
+    }
+  },
+  "config": {
+    "model": "qwen3_5",
+    "model_args": "pretrained=/shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen3.5-4B/snapshots/777b2289252f7c78628e0f8ac63ffddf50fe7f7b,use_flash_attention_2=true,max_num_frames=32,max_length=12800,geometry_encoder_path=facebook/VGGT-1B,disable_thinking=true",
+    "batch_size": "1",
+    "batch_sizes": [],
+    "device": null,
+    "use_cache": null,
+    "limit": null,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": "",
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "b84ebaa",
+  "date": "20261022_065438",
+  "task_hashes": {
+    "vsibench": "6e887a51fd2ebe55394d325213e98a08dbc9980c7de2e5b1f6b1640ec8072a73"
+  },
+  "model_source": "qwen3_5",
+  "model_name": "/shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen3.5-4B/snapshots/777b2289252f7c78628e0f8ac63ffddf50fe7f7b",
+  "model_name_sanitized": "snapshots__777b2289252f7c78628e0f8ac63ffddf50fe7f7b",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "start_time": 1393595.497525669,
+  "end_time": 1397375.801088035,
+  "total_evaluation_time_seconds": "3780.303562366171"
+}

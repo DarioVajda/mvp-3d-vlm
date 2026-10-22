@@ -1,0 +1,199 @@
+{
+  "results": {
+    "mmsibench": {
+      "alias": "mmsibench",
+      "Motion (Cam.),none": 0.2857142857142857,
+      "Motion (Cam.)_stderr,none": "N/A",
+      "average,none": 0.28,
+      "average_stderr,none": "N/A",
+      "Positional Relationship (Cam.–Obj.),none": [],
+      "Positional Relationship (Cam.–Obj.)_stderr,none": [],
+      "Positional Relationship (Reg.–Reg.),none": [],
+      "Positional Relationship (Reg.–Reg.)_stderr,none": [],
+      "MSR,none": 0.2638888888888889,
+      "MSR_stderr,none": "N/A",
+      "Positional Relationship (Cam.–Cam.),none": [],
+      "Positional Relationship (Cam.–Cam.)_stderr,none": [],
+      "Attribute (Appr.),none": 0.2727272727272727,
+      "Attribute (Appr.)_stderr,none": "N/A",
+      "Positional Relationship (Obj.–Reg.),none": [],
+      "Positional Relationship (Obj.–Reg.)_stderr,none": [],
+      "Positional Relationship (Obj.–Obj.),none": [],
+      "Positional Relationship (Obj.–Obj.)_stderr,none": [],
+      "Attribute (Meas.),none": 0.23255813953488372,
+      "Attribute (Meas.)_stderr,none": "N/A",
+      "Motion (Obj.),none": 0.25,
+      "Motion (Obj.)_stderr,none": "N/A",
+      "Positional Relationship (Cam.–Reg.),none": [],
+      "Positional Relationship (Cam.–Reg.)_stderr,none": []
+    }
+  },
+  "group_subtasks": {
+    "mmsibench": []
+  },
+  "configs": {
+    "mmsibench": {
+      "task": "mmsibench",
+      "dataset_path": "RunsenXu/MMSI-Bench",
+      "dataset_kwargs": {
+        "token": true
+      },
+      "test_split": "test",
+      "full_docs": false,
+      "process_results_use_image": false,
+      "doc_to_visual": "<function msr_doc_to_visual at 0x74567cffaa20>",
+      "doc_to_text": "<function msr_doc_to_text at 0x74567cffade0>",
+      "doc_to_target": "answer",
+      "process_results": "<function msr_process_results at 0x74567cffb420>",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "Positional Relationship (Obj.-Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567cffb920>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567cffbd80>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Cam.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d4220>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Obj.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d4680>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d4ae0>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Reg.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d4f40>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Attribute (Meas.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d53a0>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Attribute (Appr.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d5800>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Motion (Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d5c60>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Motion (Cam.)",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d60c0>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "MSR",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d6520>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "average",
+          "aggregation": "<function msr_aggregate_results at 0x74567b6d6980>",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "generate_until",
+      "generation_kwargs": {
+        "max_new_tokens": 2048,
+        "temperature": 0.0,
+        "do_sample": false,
+        "until": [
+          "\n\n"
+        ]
+      },
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": [
+        {
+          "version": 0.0
+        }
+      ],
+      "lmms_eval_specific_kwargs": {
+        "default": {
+          "pre_prompt": "",
+          "post_prompt": "\nAnswer with the option's letter from the given choices directly. Enclose the option's letter within ``."
+        },
+        "pre_prompt": "",
+        "post_prompt": "\nAnswer with the option's letter from the given choices directly. Enclose the option's letter within ``."
+      }
+    }
+  },
+  "versions": {
+    "mmsibench": "Yaml"
+  },
+  "n-shot": {
+    "mmsibench": 0
+  },
+  "higher_is_better": {
+    "mmsibench": {
+      "Positional Relationship (Obj.-Obj.)": true,
+      "Positional Relationship (Cam.-Obj.)": true,
+      "Positional Relationship (Cam.-Cam.)": true,
+      "Positional Relationship (Obj.-Reg.)": true,
+      "Positional Relationship (Cam.-Reg.)": true,
+      "Positional Relationship (Reg.-Reg.)": true,
+      "Attribute (Meas.)": true,
+      "Attribute (Appr.)": true,
+      "Motion (Obj.)": true,
+      "Motion (Cam.)": true,
+      "MSR": true,
+      "average": true
+    }
+  },
+  "n-samples": {
+    "mmsibench": {
+      "original": 1000,
+      "effective": 1000
+    }
+  },
+  "config": {
+    "model": "qwen3_5",
+    "model_args": "pretrained=/shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen3.5-4B/snapshots/777b2289252f7c78628e0f8ac63ffddf50fe7f7b,use_flash_attention_2=true,max_num_frames=32,max_length=12800,geometry_encoder_path=facebook/VGGT-1B,disable_thinking=true",
+    "batch_size": "1",
+    "batch_sizes": [],
+    "device": null,
+    "use_cache": null,
+    "limit": null,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": "",
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "b84ebaa",
+  "date": "20261022_075929",
+  "task_hashes": {
+    "mmsibench": "af0084d77d8be9bbbfb104d608323bdf2eb3dbc35388413feee12d028520a7ad"
+  },
+  "model_source": "qwen3_5",
+  "model_name": "/shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen3.5-4B/snapshots/777b2289252f7c78628e0f8ac63ffddf50fe7f7b",
+  "model_name_sanitized": "snapshots__777b2289252f7c78628e0f8ac63ffddf50fe7f7b",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "start_time": 1397456.242434545,
+  "end_time": 1397706.926652414,
+  "total_evaluation_time_seconds": "250.6842178690713"
+}

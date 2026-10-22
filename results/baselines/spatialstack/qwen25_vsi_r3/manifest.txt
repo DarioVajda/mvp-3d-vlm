@@ -1,0 +1,8 @@
+date: 2026-10-22T00:37:18Z
+host: ixh
+      2 NVIDIA H100 80GB HBM3
+repo: b84ebaa5451df42a275077772e7a0a6c66e74453
+checkpoint: /shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen2.5-4B/snapshots/6e70accdad7cde7dede9a497a88deb94d992fd9e
+MODEL_IMPL=spatialstack
+MODEL_ARGS_BASE=pretrained=/shared/home/dario.vajda/.cache/huggingface/hub/models--Journey9ni--SpatialStack-Qwen2.5-4B/snapshots/6e70accdad7cde7dede9a497a88deb94d992fd9e,use_flash_attention_2=true,max_num_frames=32,max_length=12800
+BENCHMARKS=vsibench LIMIT=
