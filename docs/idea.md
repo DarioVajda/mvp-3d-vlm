@@ -31,3 +31,69 @@ Current state-of-the-art either uses shallow embedding projection, single-layer 
 *   **VGGT features:** computed on the fly (frozen, `no_grad`, bf16; ~0.6 s and ~8 GB of GPU memory for 32 frames on an H100). No cache: one layer at full resolution is ~165 GB for the 1,201 videos, and the layer choice is still open. Per frame: 37×28 patch tokens at 518×392, 2048-d (frame and global attention outputs concatenated), plus 5 camera/register tokens.
 *   **Frame alignment:** Qwen's video mode merges pairs of frames (temporal patch size 2; check for Qwen3.5), so each Qwen token attends to the VGGT features of its two frames.
 *   **Controls:** zero-shot Qwen3.5-4B, plus the same trainable parameters, data, frames and steps without VGGT (e.g. cross-attending to Qwen's own vision features), so that gains from VGGT are separated from gains from fitting VSI's templates. Report per task, on the debiased split and on MMSI.
+
+### Rough sketch for the resampler implementation
+```python
+import torch
+import torch.nn as nn
+
+class PerceiverResampler(nn.Module):
+    def __init__(self, dim, num_latents=64, num_layers=6):
+        super().__init__()
+        self.num_latents = num_latents
+        
+        # 1. Initialize the predefined, learnable latent queries
+        # Shape: [1, 64, dim]
+        self.latents = nn.Parameter(torch.randn(1, num_latents, dim))
+        
+        # 2. Build the Resampler layers
+        self.layers = nn.ModuleList([])
+        for _ in range(num_layers):
+            self.layers.append(nn.ModuleDict({
+                'cross_attn': nn.MultiheadAttention(embed_dim=dim, num_heads=8, batch_first=True),
+                'self_attn': nn.MultiheadAttention(embed_dim=dim, num_heads=8, batch_first=True),
+                'ffw': nn.Sequential(
+                    nn.Linear(dim, dim * 4),
+                    nn.GELU(),
+                    nn.Linear(dim * 4, dim)
+                ),
+                'norm_q': nn.LayerNorm(dim),
+                'norm_x': nn.LayerNorm(dim),
+                'norm_self': nn.LayerNorm(dim),
+                'norm_ffw': nn.LayerNorm(dim)
+            }))
+
+    def forward(self, x):
+        # x: Variable-length visual features from the encoder
+        # Shape: [batch_size, sequence_length, dim]
+        batch_size = x.shape[0]
+        
+        # Expand the learned fixed latents to match the current batch size
+        latents = self.latents.expand(batch_size, -1, -1)
+        
+        for layer in self.layers:
+            # --- Cross-Attention Bottleneck ---
+            # Query comes from the latents
+            q = layer['norm_q'](latents)
+            
+            # Keys and Values come from concatenating visual features (x) and latents
+            x_norm = layer['norm_x'](x)
+            kv = torch.cat([x_norm, q], dim=1) 
+            
+            # Cross-attend and add residual
+            cross_out, _ = layer['cross_attn'](query=q, key=kv, value=kv)
+            latents = latents + cross_out
+            
+            # --- Latent Self-Attention ---
+            # Latents attend to themselves to process the newly extracted visual info
+            q_self = layer['norm_self'](latents)
+            self_out, _ = layer['self_attn'](query=q_self, key=q_self, value=q_self)
+            latents = latents + self_out
+            
+            # --- Feed-Forward Network ---
+            ffw_out = layer['ffw'](layer['norm_ffw'](latents))
+            latents = latents + ffw_out
+            
+        # The output is always exactly [batch_size, 64, dim], regardless of x's sequence length
+        return latents
+```
