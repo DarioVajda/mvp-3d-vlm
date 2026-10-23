@@ -3,6 +3,7 @@
 Can a small open VLM (Qwen3-VL 2B/4B) get much of the benefit of 3D geometry encoders cheaply, by being given
 the output of a frozen 3D reconstruction model (as text or extra tokens) plus a light LoRA fine-tune?
 This directory currently holds **stage 1: zero-shot baselines** on VSI-Bench and MMSI-Bench.
+Examples of the training data (SpatialStack's mix): [docs/training_data_examples.md](docs/training_data_examples.md).
 
 ## Layout
 
@@ -17,7 +18,7 @@ src/mvp/                  the Python package (installed into .venv, run as pytho
 slurm/                    submit.sh (sbatch wrapper), venv and VGGT install scripts
 experiments/              one-off experiments (portrait_rotation/)
 baselines/<method>/       Spatial-MLLM, SpatialStack, VG-LLM: env/ (setup, freezes), eval/ (wrappers), checks/
-docs/                     idea, baselines plan and results, walkthrough of one question
+docs/                     idea, baselines plan and results, walkthrough of one question, training data examples
 data/                     benchmarks (raw/), VGGT outputs (vggt/), video previews (previews/); gitignored except subsets/
 results/
 ├── zeroshot/             our Qwen3-VL runs: vsibench/<protocol>/, mmsibench/, summary.json

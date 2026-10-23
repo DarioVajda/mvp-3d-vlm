@@ -13,3 +13,4 @@ pyarrow
 datasets
 huggingface_hub
 einops
+opencv-python-headless
