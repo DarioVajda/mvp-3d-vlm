@@ -7,36 +7,25 @@ This directory currently holds **stage 1: zero-shot baselines** on VSI-Bench and
 ## Layout
 
 ```
-README.md            this file
-requirements.txt     .venv packages (torch 2.14.1+cu130, transformers 5.20.1, qwen-vl-utils 0.0.14, decord, ...)
-slurm/submit.sh      sbatch wrapper (container, B200/B300 only, logs to logs/<name>_<jobid>.out)
-slurm/setup_venv.sh  installs requirements.txt into .venv inside a job
-slurm/install_vggt.sh installs third_party/vggt (editable) and einops into .venv inside a job
-src/vsibench.py      VSI-Bench loading, prompts and metrics (mirrors lmms-eval's `vsibench` task)
-src/qwen_vl.py       Qwen3-VL wrapper (mirrors lmms-eval's `qwen3_vl` model)
-src/eval_vsibench.py VSI-Bench evaluation script
-src/eval_mmsi.py     MMSI-Bench evaluation script (official prompt and answer extraction)
-src/report.py        per-task tables for every run in results/, writes results/summary.json
-src/make_examples.py picks examples and writes results/examples/
-src/make_previews.py transcodes the videos linked here to .webm
-src/extract_vggt.py  runs VGGT-1B on 128 frames per VSI-Bench video, saves cameras, depth, point maps and tokens
-src/show_vggt.py     check figure for one saved reconstruction (frames, depth, confidence, fused cloud)
-src/sa_sampling.py   Spatial-MLLM's space-aware frame sampling on the saved VGGT point maps
-src/walkthrough.py   figures for docs/walkthrough.md
-docs/walkthrough.md  one question followed from video to answer: VGGT, frame sampling, Spatial-MLLM training/inference
-third_party/         reference repos: facebookresearch/vggt (a288dd0), diankun-wu/Spatial-MLLM (9fc4738)
-data/raw/VSI-Bench/  nyu-visionx/VSI-Bench (test.jsonl, parquet splits, videos unzipped into arkitscenes/ scannet/ scannetpp/)
-data/raw/MMSI-Bench/ RunsenXu/MMSI-Bench (MMSI_Bench.parquet, images embedded)
-data/raw/Spatial-MLLM-Data/ Spatial-MLLM's 133k SFT annotations (Diankun/Spatial-MLLM-Data)
-data/vggt/           VGGT reconstructions and features, data/vggt/<dataset>/<scene>/ (see below)
-data/previews/       .webm copies of the videos linked in this README (playable in VS Code)
-results/vsi/         per-question predictions <model>_f<frames>.jsonl and *_summary.json
-results/mmsi/        per-question predictions <model>.jsonl and *_summary.json
-results/walkthrough/ figures and 16-frame runs on one scene for docs/walkthrough.md
-baselines/           per-baseline environments (setup*.sh, freeze*.txt), wrappers around the authors' eval scripts, input-dump hook
-results/baselines/   baseline outputs, each with manifest.txt, freeze.txt and inputs.jsonl
-results/smoke/       30-question / 22-question smoke tests
-results/vsi_cancelled/ partial runs at 16 / 64 frames (stopped; frame counts above 32 are out of scope)
+src/mvp/                  the Python package (installed into .venv, run as python -m mvp.<module>)
+├── paths.py              project, data and results paths
+├── benchmarks/           VSI-Bench and MMSI-Bench: loading, prompts, answer extraction, metrics
+├── models/               Qwen3-VL wrapper
+├── eval/                 evaluation scripts, one per benchmark
+├── reconstruction/       VGGT extraction, check figures, space-aware frame sampling
+└── reporting/            tables, run comparisons, example figures, video previews, walkthrough figures
+slurm/                    submit.sh (sbatch wrapper), venv and VGGT install scripts
+experiments/              one-off experiments (portrait_rotation/)
+baselines/<method>/       Spatial-MLLM, SpatialStack, VG-LLM: env/ (setup, freezes), eval/ (wrappers), checks/
+docs/                     idea, baselines plan and results, walkthrough of one question
+data/                     benchmarks (raw/), VGGT outputs (vggt/), video previews (previews/); gitignored except subsets/
+results/
+├── zeroshot/             our Qwen3-VL runs: vsibench/<protocol>/, mmsibench/, summary.json
+├── baselines/<method>/   baseline outputs with manifest, freeze and input fingerprints
+├── figures/              examples/ (linked below) and walkthrough/
+└── _scratch/             smoke tests and cancelled runs (gitignored)
+third_party/              reference repos: vggt (a288dd0), Spatial-MLLM (9fc4738), baselines (gitignored)
+logs/                     Slurm logs by area (gitignored)
 ```
 
 The models (`Qwen/Qwen3-VL-2B-Instruct`, `Qwen/Qwen3-VL-4B-Instruct`, `facebook/VGGT-1B`) are in the Hugging Face cache (`~/.cache/huggingface/hub`).
@@ -52,24 +41,24 @@ slurm/submit.sh -J setup_venv -t 00:40:00 -- bash slurm/setup_venv.sh
 
 # VSI-Bench (full 5130 questions); --per-type N for a stratified subset, --split debiased for the debiased subset,
 # --sampling uniform128|sa to pick frames among the 128 VGGT candidates (Spatial-MLLM protocol, needs data/vggt)
-slurm/submit.sh -J vsi_4B_f32 -t 02:00:00 -- bash -c "cd src && python eval_vsibench.py \
-    --model Qwen/Qwen3-VL-4B-Instruct --nframes 32 --out ../results/vsi/4B_f32.jsonl"
+slurm/submit.sh -J vsi_4B_f32 -t 02:00:00 -- .venv/bin/python -m mvp.eval.vsibench \
+    --model Qwen/Qwen3-VL-4B-Instruct --nframes 32 --out results/zeroshot/vsibench/qwen_sampling/4B_f32.jsonl
 
 # MMSI-Bench (1000 questions)
-slurm/submit.sh -J mmsi_4B -t 01:00:00 -- bash -c "cd src && python eval_mmsi.py \
-    --model Qwen/Qwen3-VL-4B-Instruct --out ../results/mmsi/4B.jsonl"
+slurm/submit.sh -J mmsi_4B -t 01:00:00 -- .venv/bin/python -m mvp.eval.mmsibench \
+    --model Qwen/Qwen3-VL-4B-Instruct --out results/zeroshot/mmsibench/4B.jsonl
 
 # VGGT: reference repos, weights, install, then extraction sharded over 4 GPUs
 git clone --depth 1 https://github.com/facebookresearch/vggt third_party/vggt
 git clone --depth 1 https://github.com/diankun-wu/Spatial-MLLM third_party/Spatial-MLLM
 hf download facebook/VGGT-1B
 slurm/submit.sh -J vggt_install -t 00:20:00 --gres gpu:0 -- bash slurm/install_vggt.sh
-for s in 0 1 2 3; do slurm/submit.sh -J vggt_s$s -t 02:00:00 -- .venv/bin/python src/extract_vggt.py --shard $s --num-shards 4; done
+for s in 0 1 2 3; do slurm/submit.sh -J vggt_s$s -t 02:00:00 -- .venv/bin/python -m mvp.reconstruction.extract --shard $s --num-shards 4; done
 
 # tables and examples (light; fine on the login node)
-.venv/bin/python src/report.py
-.venv/bin/python src/make_examples.py --vsi results/vsi/2B_f32.jsonl results/vsi/4B_f32.jsonl \
-    --mmsi results/mmsi/2B.jsonl results/mmsi/4B.jsonl
+.venv/bin/python -m mvp.reporting.tables
+.venv/bin/python -m mvp.reporting.examples --vsi results/zeroshot/vsibench/qwen_sampling/{2B,4B}_f32.jsonl \
+    --mmsi results/zeroshot/mmsibench/{2B,4B}.jsonl
 ```
 
 Both eval scripts resume from an existing `--out` file. On one B300, the 2B / 4B models run VSI-Bench in
@@ -138,7 +127,7 @@ unparsed answers is *not* used; those answers count as wrong (about 1% of answer
 * **Sampling:**
   * *uniform*: qwen-vl-utils, evenly spaced over the whole video.
   * *uniform (128)*: evenly spaced over the 128 VGGT candidate frames, the control for space-aware sampling.
-  * *space-aware*: Spatial-MLLM's greedy voxel coverage over the same 128 candidates (`src/sa_sampling.py`).
+  * *space-aware*: Spatial-MLLM's greedy voxel coverage over the same 128 candidates (`src/mvp/reconstruction/sa_sampling.py`).
 * **Space-aware vs uniform, paired per question.** Each cell gives the change in macro overall, then the questions
   whose score went up / down, with a two-sided sign test. The macro overall averages tasks, so it can fall while more
   questions improve (4B, 16 frames).
@@ -175,7 +164,7 @@ unparsed answers is *not* used; those answers count as wrong (about 1% of answer
 - question both before and after them (`--layout stit`, optionally with `--echo-system`, which adds a system-prompt
   note).
 
-The runs are in `results/vsi_echo/`, all with space-aware frames. Neither layout helps, for either model or any
+The runs are in `results/zeroshot/vsibench/prompt_echo/`, all with space-aware frames. Neither layout helps, for either model or any
 frame count:
 - **Before only:** 8–13 points below the usual layout, with appearance order and counting falling furthest.
 - **Before and after:** still 3–5 points below; for example, 4B at 32 frames drops from 55.6 to 52.5.
@@ -218,7 +207,7 @@ are reproduced too. None of the papers report MMSI-Bench; there the baselines ar
 Predictions are from the 32-frame VSI-Bench runs and the MMSI-Bench runs. VSI-Bench frame grids show 8 frames
 sampled uniformly from the video (the model saw 32); click **▶** to watch the full video in VS Code. The
 original videos are H.264, which VS Code's media preview cannot play, so ▶ opens a VP8 `.webm` copy from
-`data/previews/` (made by `src/make_previews.py`); `mp4` links to the original file. ✓ means correct; numeric answers show their MRA score. MMSI-Bench questions come
+`data/previews/` (made by `src/mvp/reporting/previews.py`); `mp4` links to the original file. ✓ means correct; numeric answers show their MRA score. MMSI-Bench questions come
 with still images only, so there is no video to link.
 
 ### VSI-Bench
@@ -226,69 +215,69 @@ with still images only, so there is no video to link.
 **Object counting** ([▶ `scannetpp/5942004064`](data/previews/scannetpp/5942004064.webm) · [mp4](data/raw/VSI-Bench/scannetpp/5942004064.mp4), id 2587): *How many pillow(s) are in this room?*
 GT **4** · 2B: `2` (MRA 0.1) · 4B: `2` (MRA 0.1)
 
-![](results/examples/vsi_2587.jpg)
+![](results/figures/examples/vsi_2587.jpg)
 
 **Absolute distance** ([▶ `scannetpp/f3d64c30f8`](data/previews/scannetpp/f3d64c30f8.webm) · [mp4](data/raw/VSI-Bench/scannetpp/f3d64c30f8.mp4), id 1746): *Measuring from the closest point of each object, what is the distance between the cup and the heater (in meters)?*
 GT **2.3** · 2B: `2.0` (MRA 0.8) · 4B: `3.0` (MRA 0.4)
 
-![](results/examples/vsi_1746.jpg)
+![](results/figures/examples/vsi_1746.jpg)
 
 **Object size** ([▶ `scannet/scene0693_00`](data/previews/scannet/scene0693_00.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0693_00.mp4), id 3330): *What is the length of the longest dimension (length, width, or height) of the trash bin, measured in centimeters?*
 GT **26** · 2B: `34` (MRA 0.4) · 4B: `35` (MRA 0.4)
 
-![](results/examples/vsi_3330.jpg)
+![](results/figures/examples/vsi_3330.jpg)
 
 **Room size** ([▶ `scannet/scene0144_00`](data/previews/scannet/scene0144_00.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0144_00.mp4), id 3834): *What is the size of this room (in square meters)? If multiple rooms are shown, estimate the size of the combined space.*
 GT **13.0** · 2B: `18.4` (MRA 0.2) · 4B: `17.0` (MRA 0.4)
 
-![](results/examples/vsi_3834.jpg)
+![](results/figures/examples/vsi_3834.jpg)
 
 **Relative distance** ([▶ `arkitscenes/42897629`](data/previews/arkitscenes/42897629.webm) · [mp4](data/raw/VSI-Bench/arkitscenes/42897629.mp4), id 1358): *Which of these objects (washer, tv, sofa, table) is the closest to the stove?*
 A. washer · B. tv · C. sofa · D. table. GT **D** · 2B: `D. table` ✓ · 4B: `D. table` ✓
 
-![](results/examples/vsi_1358.jpg)
+![](results/figures/examples/vsi_1358.jpg)
 
 **Relative direction, hard** ([▶ `arkitscenes/47430468`](data/previews/arkitscenes/47430468.webm) · [mp4](data/raw/VSI-Bench/arkitscenes/47430468.mp4), id 1097): *If I am standing by the stove and facing the stool, is the refrigerator to my front-left, front-right, back-left, or back-right?*
 A. back-left · B. front-left · C. back-right · D. front-right. GT **D** · 2B: `B. front-left` ✗ · 4B: `A. back-left` ✗
 
-![](results/examples/vsi_1097.jpg)
+![](results/figures/examples/vsi_1097.jpg)
 
 **Route planning** ([▶ `scannet/scene0412_00`](data/previews/scannet/scene0412_00.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0412_00.mp4), id 5119): *You are a robot beginning at the orange traffic cone and facing the sink. You want to navigate to the elevator. ... 1. [please fill in] 2. Go forward until the metal rack 3. [please fill in] 4. Go forward until the cardboard boxes 5. [please fill in] 6. Go forward until the trash bin 7. [please fill in] 8. Go forward until the elevator.*
 A. R,R,R,R · B. R,R,L,R · C. Back,L,L,R · D. L,L,R,R. GT **B** · 2B: `A` ✗ · 4B: `A` ✗
 
-![](results/examples/vsi_5119.jpg)
+![](results/figures/examples/vsi_5119.jpg)
 
 **Appearance order** ([▶ `scannet/scene0207_02`](data/previews/scannet/scene0207_02.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0207_02.mp4), id 4207): *What will be the first-time appearance order of the following categories in the video: door, backpack, mirror, closet?*
 A. door, backpack, mirror, closet · B. mirror, backpack, closet, door · C. closet, backpack, door, mirror · D. closet, mirror, backpack, door. GT **C** · 2B: `C. closet, backpack, door, mirror` ✓ · 4B: same ✓
 
-![](results/examples/vsi_4207.jpg)
+![](results/figures/examples/vsi_4207.jpg)
 
 ### MMSI-Bench
 
 **Positional relationship, Cam.–Obj.** (medium, id 197): *These two photos were taken by you in succession. When you took the first photo, which pillow in the second photo is the farthest white pillow from you, and is it on your left or right?*
 A: left one, on the left · B: right one, on the right · C: left one, on the right · D: right one, on the left. GT **A** · 2B: `C: The one on the left, on the right,` ✗ · 4B: `A` ✓
 
-<img src="results/examples/mmsi_197_0.jpg" width="360"> <img src="results/examples/mmsi_197_1.jpg" width="360">
+<img src="results/figures/examples/mmsi_197_0.jpg" width="360"> <img src="results/figures/examples/mmsi_197_1.jpg" width="360">
 
 **Camera motion** (easy, id 320): *First-person continuous shooting, in which direction is the camera moving?*
 A: Not moving · B: Left · C: Up · D: Right. GT **A** · 2B: `D` ✗ · 4B: `A` ✓
 
-<img src="results/examples/mmsi_320_0.jpg" width="360"> <img src="results/examples/mmsi_320_1.jpg" width="360">
+<img src="results/figures/examples/mmsi_320_0.jpg" width="360"> <img src="results/figures/examples/mmsi_320_1.jpg" width="360">
 
 **Attribute, measurement** (hard, id 810): *Which has a larger volume, the cardboard box or the printer?*
 A: Printer · B: Cannot be determined · C: Cardboard box · D: The same size. GT **B** · 2B: `C: Cardboard box` ✗ · 4B: `C` ✗
 
-<img src="results/examples/mmsi_810_0.jpg" width="360"> <img src="results/examples/mmsi_810_1.jpg" width="360">
+<img src="results/figures/examples/mmsi_810_0.jpg" width="360"> <img src="results/figures/examples/mmsi_810_1.jpg" width="360">
 
 **Multi-step reasoning** (medium, id 535, 5 images): *Suppose I am taking the first picture facing north, then in which direction is the camera facing when taking the second picture?*
 A: Southwest · B: Northwest · C: Northeast · D: Southeast. GT **A** · 2B: `C: Northeast` ✗ · 4B: `C` ✗
 
-<img src="results/examples/mmsi_535_0.jpg" width="200"> <img src="results/examples/mmsi_535_1.jpg" width="200"> <img src="results/examples/mmsi_535_2.jpg" width="200"> <img src="results/examples/mmsi_535_3.jpg" width="200"> <img src="results/examples/mmsi_535_4.jpg" width="200">
+<img src="results/figures/examples/mmsi_535_0.jpg" width="200"> <img src="results/figures/examples/mmsi_535_1.jpg" width="200"> <img src="results/figures/examples/mmsi_535_2.jpg" width="200"> <img src="results/figures/examples/mmsi_535_3.jpg" width="200"> <img src="results/figures/examples/mmsi_535_4.jpg" width="200">
 
 ### VSI-Bench-Debiased: where 4B fails
 
 Ten debiased questions that Qwen3-VL-4B (32 frames) got completely wrong: a wrong letter, or for numeric questions
-MRA 0 (more than 50% relative error). They are drawn round-robin over the 8 tasks (`make_examples.py
+MRA 0 (more than 50% relative error). They are drawn round-robin over the 8 tasks (`reporting/examples.py
 --failures-of 4B_f32`), so they show *kinds* of failure, not how often each happens. For frequency, the share of
 debiased questions per task where 4B scores 0:
 
@@ -312,7 +301,7 @@ What the examples show:
 
 GT **8** · **4B: `2` (MRA 0.0)** · 2B: `4` (MRA 0.1)
 
-![](results/examples/vsi_2556.jpg)
+![](results/figures/examples/vsi_2556.jpg)
 
 **2. object_abs_distance** ([▶ `scannetpp/27dd4da69e`](data/previews/scannetpp/27dd4da69e.webm) · [mp4](data/raw/VSI-Bench/scannetpp/27dd4da69e.mp4), id 1794)
 
@@ -320,7 +309,7 @@ GT **8** · **4B: `2` (MRA 0.0)** · 2B: `4` (MRA 0.1)
 
 GT **9.1** · **4B: `2.3` (MRA 0.0)** · 2B: `2.0` (MRA 0.0)
 
-![](results/examples/vsi_1794.jpg)
+![](results/figures/examples/vsi_1794.jpg)
 
 **3. object_size_estimation** ([▶ `scannetpp/286b55a2bf`](data/previews/scannetpp/286b55a2bf.webm) · [mp4](data/raw/VSI-Bench/scannetpp/286b55a2bf.mp4), id 2288)
 
@@ -328,7 +317,7 @@ GT **9.1** · **4B: `2.3` (MRA 0.0)** · 2B: `2.0` (MRA 0.0)
 
 GT **12** · **4B: `25` (MRA 0.0)** · 2B: `24` (MRA 0.0)
 
-![](results/examples/vsi_2288.jpg)
+![](results/figures/examples/vsi_2288.jpg)
 
 **4. room_size_estimation** ([▶ `scannetpp/3f15a9266d`](data/previews/scannetpp/3f15a9266d.webm) · [mp4](data/raw/VSI-Bench/scannetpp/3f15a9266d.mp4), id 2672)
 
@@ -337,7 +326,7 @@ GT **12** · **4B: `25` (MRA 0.0)** · 2B: `24` (MRA 0.0)
 
 GT **11.9** · **4B: `18.0` (MRA 0.0)** · 2B: `20.0` (MRA 0.0)
 
-![](results/examples/vsi_2672.jpg)
+![](results/figures/examples/vsi_2672.jpg)
 
 **5. object_rel_distance** ([▶ `scannetpp/21d970d8de`](data/previews/scannetpp/21d970d8de.webm) · [mp4](data/raw/VSI-Bench/scannetpp/21d970d8de.mp4), id 1988)
 
@@ -347,7 +336,7 @@ A. tv · B. whiteboard · C. telephone · D. chair
 
 GT **B** · **4B: `D. chair` ✗** · 2B: `B. whiteboard` ✓
 
-![](results/examples/vsi_1988.jpg)
+![](results/figures/examples/vsi_1988.jpg)
 
 **6. object_rel_direction_easy** ([▶ `scannet/scene0357_01`](data/previews/scannet/scene0357_01.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0357_01.mp4), id 3710)
 
@@ -357,7 +346,7 @@ A. left · B. right
 
 GT **B** · **4B: `A. left` ✗** · 2B: `A. left` ✗
 
-![](results/examples/vsi_3710.jpg)
+![](results/figures/examples/vsi_3710.jpg)
 
 **7. route_planning** ([▶ `arkitscenes/47331262`](data/previews/arkitscenes/47331262.webm) · [mp4](data/raw/VSI-Bench/arkitscenes/47331262.mp4), id 5073)
 
@@ -367,7 +356,7 @@ A. Turn Back, Turn Right · B. Turn Right, Turn Left · C. Turn Left, Turn Right
 
 GT **C** · **4B: `D. Turn Right, Turn Right` ✗** · 2B: `B. Turn Right, Turn Left` ✗
 
-![](results/examples/vsi_5073.jpg)
+![](results/figures/examples/vsi_5073.jpg)
 
 **8. obj_appearance_order** ([▶ `scannet/scene0580_01`](data/previews/scannet/scene0580_01.webm) · [mp4](data/raw/VSI-Bench/scannet/scene0580_01.mp4), id 4069)
 
@@ -377,7 +366,7 @@ A. chair, bookshelf, door, table · B. bookshelf, table, chair, door · C. door,
 
 GT **D** · **4B: `C. door, table, chair, bookshelf` ✗** · 2B: `D. door, chair, table, bookshelf` ✓
 
-![](results/examples/vsi_4069.jpg)
+![](results/figures/examples/vsi_4069.jpg)
 
 **9. object_counting** ([▶ `scannetpp/21d970d8de`](data/previews/scannetpp/21d970d8de.webm) · [mp4](data/raw/VSI-Bench/scannetpp/21d970d8de.mp4), id 2546)
 
@@ -385,7 +374,7 @@ GT **D** · **4B: `C. door, table, chair, bookshelf` ✗** · 2B: `D. door, chai
 
 GT **12** · **4B: `4` (MRA 0.0)** · 2B: `4` (MRA 0.0)
 
-![](results/examples/vsi_2546.jpg)
+![](results/figures/examples/vsi_2546.jpg)
 
 **10. object_abs_distance** ([▶ `arkitscenes/42897629`](data/previews/arkitscenes/42897629.webm) · [mp4](data/raw/VSI-Bench/arkitscenes/42897629.mp4), id 751)
 
@@ -393,11 +382,11 @@ GT **12** · **4B: `4` (MRA 0.0)** · 2B: `4` (MRA 0.0)
 
 GT **9.1** · **4B: `1.0` (MRA 0.0)** · 2B: `4.4` (MRA 0.0)
 
-![](results/examples/vsi_751.jpg)
+![](results/figures/examples/vsi_751.jpg)
 
 ## VGGT reconstructions
 
-`src/extract_vggt.py` runs the frozen [VGGT-1B](https://huggingface.co/facebook/VGGT-1B) ([2503.11651](https://arxiv.org/abs/2503.11651))
+`src/mvp/reconstruction/extract.py` runs the frozen [VGGT-1B](https://huggingface.co/facebook/VGGT-1B) ([2503.11651](https://arxiv.org/abs/2503.11651))
 once per video on 128 uniformly spaced frames (one joint bf16 forward pass), following the candidate-frame setup of
 Spatial-MLLM's space-aware sampling (`third_party/Spatial-MLLM/src/sampling/sa_sampling.py`). All 288 VSI-Bench
 videos are done: about 4 s of VGGT and 14 s in total per video on one B200 (14.7 GB peak), about 20 min on 4 GPUs.
@@ -424,14 +413,14 @@ them upright (long side 518, the same 1036 patches); median confidence becomes 3
 faithful reproduction of Spatial-MLLM's sampler would see, are in `data/vggt_portrait_rotated/` (`--portrait rotate`).
 Low confidence on ScanNet (median 3.4) mostly reflects darker, blurrier footage rather than failed reconstructions.
 
-`src/show_vggt.py <dataset>/<scene>` draws a check figure (frames, depth, confidence, top and front view of the
+`python -m mvp.reconstruction.show <dataset>/<scene>` draws a check figure (frames, depth, confidence, top and front view of the
 cloud with the camera path coloured from purple at the first frame to yellow at the last):
 
 | ScanNet++ | ARKitScenes |
 |---|---|
-| ![](results/examples/vggt_scannetpp_09c1414f1b.jpg) | ![](results/examples/vggt_arkitscenes_41069025.jpg) |
+| ![](results/figures/examples/vggt_scannetpp_09c1414f1b.jpg) | ![](results/figures/examples/vggt_arkitscenes_41069025.jpg) |
 | **ARKitScenes, portrait (kept upright)** | **ScanNet (low confidence, still coherent)** |
-| ![](results/examples/vggt_arkitscenes_45261121.jpg) | ![](results/examples/vggt_scannet_scene0671_01.jpg) |
+| ![](results/figures/examples/vggt_arkitscenes_45261121.jpg) | ![](results/figures/examples/vggt_scannet_scene0671_01.jpg) |
 
 A step-by-step example of how these outputs are used (frame sampling, Spatial-MLLM's model, training and
 inference) is in [docs/walkthrough.md](docs/walkthrough.md).

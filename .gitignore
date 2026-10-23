@@ -2,6 +2,7 @@
 .venv/
 .venv-*/
 __pycache__/
+*.egg-info/
 *.py[cod]
 .ipynb_checkpoints/
 
@@ -10,14 +11,13 @@ __pycache__/
 data/*
 !data/subsets/
 
-# Slurm logs
+# Slurm logs (logs/<area>/, see slurm/submit.sh LOGDIR)
 logs/
 
 # Results: keep full-run predictions, summaries and the figures used in README.md;
 # drop smoke tests, cancelled partial runs and scratch figures
-results/smoke/
-results/vsi_cancelled/
-results/examples/reldist_*.jpg
+results/_scratch/
+results/figures/examples/reldist_*.jpg
 
 # Baselines: keep manifests, environment freezes, metrics and merged predictions; drop input dumps, per-question
 # lmms-eval samples, per-shard outputs, dataset caches, smoke tests and failed or superseded runs
@@ -69,8 +69,7 @@ results/baselines/vg_llm/blackwell_env/8b_vsi/shard[124]/
 
 # Cloned reference repos (re-created with git clone, see README.md)
 third_party/
-# per-run copies of the environment freeze and raw logs (the env freeze is in baselines/<method>/)
+# per-run copies of the environment freeze and raw logs (the env freeze is in baselines/<method>/env/)
 results/baselines/vg_llm/**/freeze*.txt
 results/baselines/vg_llm/**/run.log
-baselines/vg_llm/*.log
 results/baselines/vg_llm/*_merged/per_question.jsonl
