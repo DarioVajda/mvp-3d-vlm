@@ -1,0 +1,3 @@
+task: blinkrev_spatial_relation
+dataset_name: Spatial_Relation
+include: blink_default_yaml

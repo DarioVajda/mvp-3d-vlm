@@ -35,6 +35,12 @@ results/baselines/spatialstack/full_qwen25/
 results/baselines/spatialstack/qwen25_vsi/
 results/baselines/spatialstack/qwen25_mmsi/
 results/baselines/spatialstack/*_r2/
+results/baselines/vg_llm/smoke_4b/
+# VG-LLM shard runs that were cancelled or crashed in aggregation (no results); their reruns are the *_r2 dirs
+results/baselines/vg_llm/4b_vsi/shard[0124]/
+results/baselines/vg_llm/8b_vsi/shard1/
+results/baselines/vg_llm/blackwell_env/4b_vsi/shard[12]/
+results/baselines/vg_llm/blackwell_env/8b_vsi/shard[124]/
 
 # Large binary artefacts that should never be committed
 *.mp4
@@ -63,3 +69,8 @@ results/baselines/spatialstack/*_r2/
 
 # Cloned reference repos (re-created with git clone, see README.md)
 third_party/
+# per-run copies of the environment freeze and raw logs (the env freeze is in baselines/<method>/)
+results/baselines/vg_llm/**/freeze*.txt
+results/baselines/vg_llm/**/run.log
+baselines/vg_llm/*.log
+results/baselines/vg_llm/*_merged/per_question.jsonl

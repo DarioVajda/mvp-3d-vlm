@@ -1,0 +1,30 @@
+# VG-LLM's tasks/blink/blink_default_yaml with the dataset pinned to the revision before the 2025-09-03 re-upload, which
+# changed the answer format of Relative_Reflectance to bare letters (VG-LLM's blink_process_results reads answer[1])
+# and the answers of 89 of its 134 questions. All other subtasks are identical in both revisions.
+dataset_path: BLINK-Benchmark/BLINK
+dataset_kwargs:
+  token: True
+  revision: cbb5717ea541ba92bbf9a63b99972493a1a133b8
+output_type: generate_until
+doc_to_visual: !function utils.blink_doc_to_visual
+doc_to_text: !function utils.blink_doc_to_text
+doc_to_target: "answer"
+generation_kwargs:
+  max_new_tokens: 16
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+# The return value of process_results will be used by metrics
+process_results: !function utils.blink_process_results
+# Note that the metric name can be either a registed metric function (such as the case for GQA) or a key name returned by process_results
+metric_list:
+  - metric: blink_score
+    aggregation: !function utils.blink_aggregate_results
+    higher_is_better: true
+lmms_eval_specific_kwargs:
+  default:
+    pre_prompt: ""
+    mca_post_prompt: "Answer with the option's letter from the given choices directly."
+metadata:
+  - version: 0.0

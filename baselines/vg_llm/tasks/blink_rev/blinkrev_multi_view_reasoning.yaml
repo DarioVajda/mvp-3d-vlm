@@ -1,0 +1,3 @@
+task: blinkrev_multi_view_reasoning
+dataset_name: Multi-view_Reasoning
+include: blink_default_yaml

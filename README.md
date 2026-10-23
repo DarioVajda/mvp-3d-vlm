@@ -205,9 +205,12 @@ difference between 2B and 4B is within noise: the standard error is about ±1.4 
 | SpatialStack-Qwen2.5-4B (32 frames) | 60.9 | 60.77 | 25.7 |
 | Spatial-MLLM-v1.1-135K (16 frames, uniform / space-aware) | 50.48 / 51.81 | 50.42 / 51.34 | |
 | Spatial-MLLM-v1.1-820K (16 frames, uniform / space-aware) | 53.00 / 53.43 | 53.32 / 53.08 | |
+| VG-LLM-8B (32 frames) | 50.7 | 50.69 | 27.2 |
+| VG-LLM-4B (32 frames) | 47.3 | 46.53 | 28.1 |
 
-The reported VSI-Bench numbers are reproduced within 0.5 points. Neither paper reports MMSI-Bench; there the
-baselines are no better than plain Qwen3-VL. Environments, input checks and deviations are in
+The reported VSI-Bench numbers are reproduced within 0.5 points, except VG-LLM-4B (−0.8, mostly room size; its
+reported number is from the paper's v3, which matches the released checkpoint). VG-LLM's CV-Bench and BLINK numbers
+are reproduced too. None of the papers report MMSI-Bench; there the baselines are no better than plain Qwen3-VL. Environments, input checks and deviations are in
 `../mvp_baselines.md` (§11).
 
 ## Examples

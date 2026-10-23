@@ -1,0 +1,20 @@
+group: blinkrev
+task:
+  - blinkrev_art_style
+  - blinkrev_functional_correspondence
+  - blinkrev_multi_view_reasoning
+  - blinkrev_relative_reflectance
+  - blinkrev_visual_correspondence
+  - blinkrev_counting
+  - blinkrev_iq_test
+  - blinkrev_object_localization
+  - blinkrev_semantic_correspondence
+  - blinkrev_visual_similarity
+  - blinkrev_forensic_detection
+  - blinkrev_jigsaw
+  - blinkrev_relative_depth
+  - blinkrev_spatial_relation
+test_split: val
+aggregate_metric_list:
+  - metric: blink_score
+    weight_by_size: False

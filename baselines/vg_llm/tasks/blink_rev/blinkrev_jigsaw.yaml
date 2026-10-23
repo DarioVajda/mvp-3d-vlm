@@ -1,0 +1,3 @@
+task: blinkrev_jigsaw
+dataset_name: Jigsaw
+include: blink_default_yaml

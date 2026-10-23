@@ -1,0 +1,10 @@
+date: 2026-10-22T23:13:21Z
+host: ixb1
+      1 NVIDIA B200
+repo: c77fd1d7c0d9c69529bc4fb303a3ca8d391f0803
+checkpoint: /shared/home/dario.vajda/.cache/huggingface/hub/models--zd11024--vgllm-qa-vggt-8b/snapshots/73d51445fbb307c453c944bc3354aef68ec3cc59
+tasks: vsibench_shard
+limit: 
+processes: 1
+VSI_SHARD: 4/6
+environment: blackwell

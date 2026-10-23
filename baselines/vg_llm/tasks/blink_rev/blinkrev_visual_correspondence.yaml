@@ -1,0 +1,3 @@
+task: blinkrev_visual_correspondence
+dataset_name: Visual_Correspondence
+include: blink_default_yaml

@@ -1,0 +1,199 @@
+{
+  "results": {
+    "mmsibench": {
+      "alias": "mmsibench",
+      "Motion (Cam.),none": 0.10810810810810811,
+      "Motion (Cam.)_stderr,none": "N/A",
+      "average,none": 0.272,
+      "average_stderr,none": "N/A",
+      "Positional Relationship (Cam.–Obj.),none": [],
+      "Positional Relationship (Cam.–Obj.)_stderr,none": [],
+      "Attribute (Meas.),none": 0.265625,
+      "Attribute (Meas.)_stderr,none": "N/A",
+      "Positional Relationship (Reg.–Reg.),none": [],
+      "Positional Relationship (Reg.–Reg.)_stderr,none": [],
+      "MSR,none": 0.23232323232323232,
+      "MSR_stderr,none": "N/A",
+      "Motion (Obj.),none": 0.2894736842105263,
+      "Motion (Obj.)_stderr,none": "N/A",
+      "Positional Relationship (Cam.–Cam.),none": [],
+      "Positional Relationship (Cam.–Cam.)_stderr,none": [],
+      "Positional Relationship (Cam.–Reg.),none": [],
+      "Positional Relationship (Cam.–Reg.)_stderr,none": [],
+      "Attribute (Appr.),none": 0.15151515151515152,
+      "Attribute (Appr.)_stderr,none": "N/A",
+      "Positional Relationship (Obj.–Reg.),none": [],
+      "Positional Relationship (Obj.–Reg.)_stderr,none": [],
+      "Positional Relationship (Obj.–Obj.),none": [],
+      "Positional Relationship (Obj.–Obj.)_stderr,none": []
+    }
+  },
+  "group_subtasks": {
+    "mmsibench": []
+  },
+  "configs": {
+    "mmsibench": {
+      "task": "mmsibench",
+      "dataset_path": "RunsenXu/MMSI-Bench",
+      "dataset_kwargs": {
+        "token": true
+      },
+      "test_split": "test",
+      "full_docs": false,
+      "process_results_use_image": false,
+      "doc_to_visual": "<function msr_doc_to_visual at 0x7cf2e0a11510>",
+      "doc_to_text": "<function msr_doc_to_text at 0x7cf2e0a11870>",
+      "doc_to_target": "answer",
+      "process_results": "<function msr_process_results at 0x7cf2e0a11e10>",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "Positional Relationship (Obj.-Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a12290>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a12710>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Cam.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a12b90>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Obj.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a13010>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Cam.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a13490>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Positional Relationship (Reg.-Reg.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a13910>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Attribute (Meas.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a13d90>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Attribute (Appr.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a40280>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Motion (Obj.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a40700>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "Motion (Cam.)",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a40b80>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "MSR",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a41000>",
+          "higher_is_better": true
+        },
+        {
+          "metric": "average",
+          "aggregation": "<function msr_aggregate_results at 0x7cf2e0a41480>",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "generate_until",
+      "generation_kwargs": {
+        "max_new_tokens": 2048,
+        "temperature": 0.0,
+        "do_sample": false,
+        "until": [
+          "\n\n"
+        ]
+      },
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": [
+        {
+          "version": 0.0
+        }
+      ],
+      "lmms_eval_specific_kwargs": {
+        "default": {
+          "pre_prompt": "",
+          "post_prompt": "\nAnswer with the option's letter from the given choices directly. Enclose the option's letter within ``."
+        },
+        "pre_prompt": "",
+        "post_prompt": "\nAnswer with the option's letter from the given choices directly. Enclose the option's letter within ``."
+      }
+    }
+  },
+  "versions": {
+    "mmsibench": "Yaml"
+  },
+  "n-shot": {
+    "mmsibench": 0
+  },
+  "higher_is_better": {
+    "mmsibench": {
+      "Positional Relationship (Obj.-Obj.)": true,
+      "Positional Relationship (Cam.-Obj.)": true,
+      "Positional Relationship (Cam.-Cam.)": true,
+      "Positional Relationship (Obj.-Reg.)": true,
+      "Positional Relationship (Cam.-Reg.)": true,
+      "Positional Relationship (Reg.-Reg.)": true,
+      "Attribute (Meas.)": true,
+      "Attribute (Appr.)": true,
+      "Motion (Obj.)": true,
+      "Motion (Cam.)": true,
+      "MSR": true,
+      "average": true
+    }
+  },
+  "n-samples": {
+    "mmsibench": {
+      "original": 1000,
+      "effective": 1000
+    }
+  },
+  "config": {
+    "model": "vgllm",
+    "model_args": "pretrained=/shared/home/dario.vajda/.cache/huggingface/hub/models--zd11024--vgllm-qa-vggt-8b/snapshots/73d51445fbb307c453c944bc3354aef68ec3cc59,use_flash_attention_2=true,max_num_frames=32,max_length=12800",
+    "batch_size": "1",
+    "batch_sizes": [],
+    "device": null,
+    "use_cache": null,
+    "limit": null,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": "",
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "c77fd1d",
+  "date": "20261023_064143",
+  "task_hashes": {
+    "mmsibench": "4aab890f657e039fb25583a2f22e6d53790ebe339db184c618120ac7c614b97a"
+  },
+  "model_source": "vgllm",
+  "model_name": "/shared/home/dario.vajda/.cache/huggingface/hub/models--zd11024--vgllm-qa-vggt-8b/snapshots/73d51445fbb307c453c944bc3354aef68ec3cc59",
+  "model_name_sanitized": "snapshots__73d51445fbb307c453c944bc3354aef68ec3cc59",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "start_time": 998496.715860214,
+  "end_time": 999001.636852879,
+  "total_evaluation_time_seconds": "504.9209926649928"
+}

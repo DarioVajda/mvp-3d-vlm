@@ -1,0 +1,3 @@
+task: blinkrev_object_localization
+dataset_name: Object_Localization
+include: blink_default_yaml
