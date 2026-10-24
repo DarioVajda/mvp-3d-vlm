@@ -484,6 +484,5 @@ inference) is in [docs/walkthrough.md](docs/walkthrough.md).
 4. LoRA fine-tune on a few thousand spatial QA pairs (e.g. SPAR-7M, [2503.22976](https://arxiv.org/abs/2503.22976)),
    with no scene overlap with the test scenes. Ablations: cues without fine-tuning, fine-tuning without cues (the
    key control), fine-tuning with cues, and ground-truth 3D boxes as an upper bound.
-5. Gated cross-attention from VGGT features into the LLM (plan in [docs/idea.md](docs/idea.md), parameter counts in
-   [docs/param_budget.md](docs/param_budget.md)): pending to confirm tomorrow with a fresh head, which is how we are
-   going to construct the blocks.
+5. Gated cross-attention from VGGT features into the LLM: plan, arms and failure modes in [docs/idea.md](docs/idea.md),
+   parameter counts in [docs/param_budget.md](docs/param_budget.md).

@@ -58,23 +58,29 @@ VGGT layer-23 tokens            learned latents
    total  ~86M
 ```
 
-## SpatialStack geometry token merger (additive arm; 2603.27437v3 App. A.2)
+## SpatialStack geometry token merger (additive arm; 2603.27437v3 App. A.2, shapes from the released checkpoint)
 
 ```
    VGGT tokens [frames x 37x28, G=2048]
-        |  RMSNorm (2048 params)
+        |  LayerNorm (2 x 2048 params)
         |  2x2 window -> concat 4 tokens  ->  [frames x 18x14, 4G = 8192]
-        |  W1  8192 -> Dmlp            8192*2560 = 21.0M   (paper does not state Dmlp; 2560 assumed)
+        |  W1  8192 -> 4096            8192*4096 = 33.6M   (hidden width 4096, read from the checkpoint)
         |  GELU
-        |  W2  Dmlp -> D               2560*2560 =  6.6M
+        |  W2  4096 -> D               4096*2560 = 10.5M
         v
    [one 2560-d vector per merged Qwen visual token]
         +  added into the residual at visual-token positions after LLM layer j
 
-   per merger 27.5M
-   published (3 mergers, VGGT 11/17/23 -> LLM layers 0,1,2)  =   83M
-   at the 8 block positions, separate mergers                 =  220M
-   at the 8 positions, one shared merger                      =   28M
+   per merger 44.1M
+   published (3 mergers, VGGT 11/17/23 -> LLM layers 0,1,2)  =  132M
+   at the 8 block positions, separate mergers                 =  352M
+   at the 8 positions, one shared merger                      =   44M
+
+   Source: tensor shapes in `Journey9ni/SpatialStack-Qwen3.5-4B/model.safetensors` (header read over HTTP):
+   `language_feature_fusion.fusion_layers.{0,1,2}.0.geo_ln.{weight,bias} [2048]`,
+   `geo_mlp.0.weight [4096, 8192]`, `geo_mlp.0.bias [4096]`, `geo_mlp.2.weight [2560, 4096]`, `geo_mlp.2.bias [2560]`.
+   The checkpoint stores each merger twice (under `language_feature_fusion.` and `model.language_feature_fusion.`),
+   264M on disk, 132M distinct. The paper itself gives no count and no hidden width.
 ```
 
 ## Totals
@@ -83,6 +89,6 @@ VGGT layer-23 tokens            learned latents
 |---|---|
 | Cross-attn, full Flamingo blocks + Flamingo resampler | ~806M |
 | Cross-attn, shrunk blocks + small resampler | ~86M |
-| Additive, published SpatialStack (3 mergers) | ~83M |
-| Additive, 8 positions, separate mergers | ~220M |
-| Additive, 8 positions, one shared merger | ~28M |
+| Additive, published SpatialStack (3 mergers) | 132M (measured) |
+| Additive, 8 positions, separate mergers | ~352M |
+| Additive, 8 positions, one shared merger | ~44M |
