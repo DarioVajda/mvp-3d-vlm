@@ -1,6 +1,7 @@
-"""Thin Qwen3-VL wrapper, following lmms-eval's `qwen3_vl` model (lmms_eval/models/simple/qwen3_vl.py):
+"""Thin Qwen3-VL / Qwen3.5 wrapper, following lmms-eval's `qwen3_vl` model (lmms_eval/models/simple/qwen3_vl.py):
 qwen_vl_utils frame sampling/resizing with image_patch_size=16, processor called with do_resize=False,
-system prompt "You are a helpful assistant.", greedy decoding.
+system prompt "You are a helpful assistant.", greedy decoding. Qwen3.5 (same processor as Qwen3-VL) thinks by
+default; thinking is turned off, as in SpatialStack's lmms-eval `qwen3_5` model (disable_thinking=true).
 """
 import torch
 from decord import VideoReader, cpu
@@ -19,6 +20,7 @@ class QwenVL:
         self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=min_pixels, max_pixels=max_pixels)
         self.processor.tokenizer.padding_side = "left"
         self.min_pixels, self.max_pixels = min_pixels, max_pixels
+        self.template_kwargs = {"enable_thinking": False} if "Qwen3.5" in model_id else {}
 
     def load_video(self, path, nframes=None, fps=None, max_frames=2048, total_pixels=224000 * 32 * 32):
         """Uniformly sample `nframes` frames (lmms-eval default: nframes=max_num_frames=32), or sample at `fps`
@@ -63,7 +65,8 @@ class QwenVL:
         """Answer several prompts about the same video in one batch. `pres`: optional text placed before the video."""
         pres = pres or [""] * len(prompts)
         texts = [self.processor.apply_chat_template(self._messages(p, "video", pre=q, system=system), tokenize=False,
-                                                    add_generation_prompt=True) for p, q in zip(prompts, pres)]
+                                                    add_generation_prompt=True, **self.template_kwargs)
+                 for p, q in zip(prompts, pres)]
         inputs = self.processor(text=texts, videos=[video] * len(texts), video_metadata=[meta] * len(texts),
                                 do_resize=False, padding=True, return_tensors="pt", **video_kwargs)
         return self._generate(inputs, max_new_tokens)
@@ -71,7 +74,7 @@ class QwenVL:
     @torch.inference_mode()
     def generate_images(self, images, prompt, max_new_tokens=16):
         text = self.processor.apply_chat_template(self._messages(prompt, "image", len(images)), tokenize=False,
-                                                  add_generation_prompt=True)
+                                                  add_generation_prompt=True, **self.template_kwargs)
         inputs = self.processor(text=[text], images=images, do_resize=False, padding=True, return_tensors="pt")
         return self._generate(inputs, max_new_tokens)
 

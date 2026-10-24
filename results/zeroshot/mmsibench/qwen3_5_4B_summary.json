@@ -1,0 +1,17 @@
+{
+ "model": "Qwen/Qwen3.5-4B",
+ "n": 1000,
+ "Attribute (Appr.)": 28.8,
+ "Attribute (Meas.)": 45.3,
+ "MSR": 31.8,
+ "Motion (Cam.)": 24.3,
+ "Motion (Obj.)": 31.6,
+ "Positional Relationship (Cam.\u2013Cam.)": 29.0,
+ "Positional Relationship (Cam.\u2013Obj.)": 39.5,
+ "Positional Relationship (Cam.\u2013Reg.)": 36.1,
+ "Positional Relationship (Obj.\u2013Obj.)": 29.8,
+ "Positional Relationship (Obj.\u2013Reg.)": 31.8,
+ "Positional Relationship (Reg.\u2013Reg.)": 28.4,
+ "overall": 32.2,
+ "parse_rate": 99.7
+}

@@ -167,6 +167,34 @@
   "overall": 51.894864940258536,
   "debiased_overall": 44.99243061090642
  },
+ "vsi/qwen3_5_2B_f16": {
+  "n": 5130,
+  "complete": true,
+  "object_counting": 42.849557522123895,
+  "object_abs_distance": 34.97601918465229,
+  "object_size_estimation": 60.00000000000001,
+  "room_size_estimation": 44.65277777777777,
+  "object_rel_distance": 43.239436619718305,
+  "object_rel_direction": 48.74882954677702,
+  "route_planning": 31.443298969072163,
+  "obj_appearance_order": 42.394822006472495,
+  "overall": 43.53809270332424,
+  "debiased_overall": 34.673603068284564
+ },
+ "vsi/qwen3_5_4B_f16": {
+  "n": 5130,
+  "complete": true,
+  "object_counting": 45.23893805309734,
+  "object_abs_distance": 37.15827338129497,
+  "object_size_estimation": 65.59286463798531,
+  "room_size_estimation": 45.97222222222223,
+  "object_rel_distance": 52.394366197183096,
+  "object_rel_direction": 47.87150250121221,
+  "route_planning": 32.47422680412371,
+  "obj_appearance_order": 59.70873786407766,
+  "overall": 48.30139145764957,
+  "debiased_overall": 39.59261630051858
+ },
  "mmsi/2B": {
   "run": "2B",
   "n": 1000,
@@ -200,5 +228,39 @@
   "Positional Relationship (Obj.\u2013Obj.)": 21.27659574468085,
   "Positional Relationship (Obj.\u2013Reg.)": 35.294117647058826,
   "Positional Relationship (Reg.\u2013Reg.)": 25.925925925925924
+ },
+ "mmsi/qwen3_5_2B": {
+  "run": "qwen3_5_2B",
+  "n": 1000,
+  "overall": 27.700000000000003,
+  "parse_rate": 99.9,
+  "Attribute (Appr.)": 19.696969696969695,
+  "Attribute (Meas.)": 37.5,
+  "MSR": 27.77777777777778,
+  "Motion (Cam.)": 20.27027027027027,
+  "Motion (Obj.)": 27.631578947368425,
+  "Positional Relationship (Cam.\u2013Cam.)": 29.03225806451613,
+  "Positional Relationship (Cam.\u2013Obj.)": 32.55813953488372,
+  "Positional Relationship (Cam.\u2013Reg.)": 33.734939759036145,
+  "Positional Relationship (Obj.\u2013Obj.)": 23.404255319148938,
+  "Positional Relationship (Obj.\u2013Reg.)": 29.411764705882355,
+  "Positional Relationship (Reg.\u2013Reg.)": 23.456790123456788
+ },
+ "mmsi/qwen3_5_4B": {
+  "run": "qwen3_5_4B",
+  "n": 1000,
+  "overall": 32.2,
+  "parse_rate": 99.7,
+  "Attribute (Appr.)": 28.78787878787879,
+  "Attribute (Meas.)": 45.3125,
+  "MSR": 31.818181818181817,
+  "Motion (Cam.)": 24.324324324324326,
+  "Motion (Obj.)": 31.57894736842105,
+  "Positional Relationship (Cam.\u2013Cam.)": 29.03225806451613,
+  "Positional Relationship (Cam.\u2013Obj.)": 39.53488372093023,
+  "Positional Relationship (Cam.\u2013Reg.)": 36.144578313253014,
+  "Positional Relationship (Obj.\u2013Obj.)": 29.78723404255319,
+  "Positional Relationship (Obj.\u2013Reg.)": 31.76470588235294,
+  "Positional Relationship (Reg.\u2013Reg.)": 28.39506172839506
  }
 }

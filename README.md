@@ -53,6 +53,12 @@ slurm/submit.sh -J vsi_4B_f32 -t 02:00:00 -- .venv/bin/python -m mvp.eval.vsiben
 slurm/submit.sh -J mmsi_4B -t 01:00:00 -- .venv/bin/python -m mvp.eval.mmsibench \
     --model Qwen/Qwen3-VL-4B-Instruct --out results/zeroshot/mmsibench/4B.jsonl
 
+# Qwen3.5 (thinking off): 16 uniform frames; on MMSI it reasons before answering, so allow 2048 new tokens
+slurm/submit.sh -J vsi_q35_4B_f16 -t 02:00:00 -- .venv/bin/python -m mvp.eval.vsibench \
+    --model Qwen/Qwen3.5-4B --nframes 16 --out results/zeroshot/vsibench/qwen3_5/qwen3_5_4B_f16.jsonl
+slurm/submit.sh -J mmsi_q35_4B -t 04:00:00 -- .venv/bin/python -m mvp.eval.mmsibench \
+    --model Qwen/Qwen3.5-4B --max-new-tokens 2048 --out results/zeroshot/mmsibench/qwen3_5_4B.jsonl
+
 # VGGT: reference repos, weights, install, then extraction sharded over 4 GPUs
 git clone --depth 1 https://github.com/facebookresearch/vggt third_party/vggt
 git clone --depth 1 https://github.com/diankun-wu/Spatial-MLLM third_party/Spatial-MLLM
@@ -68,6 +74,8 @@ for s in 0 1 2 3; do slurm/submit.sh -J vggt_s$s -t 02:00:00 -- .venv/bin/python
 
 Both eval scripts resume from an existing `--out` file. On one B300, the 2B / 4B models run VSI-Bench in
 about 9 / 10 min at 8 frames and 24 / 34 min at 32 frames, and MMSI-Bench in about 4 / 6 min.
+Qwen3.5 is slower: VSI-Bench at 16 frames takes about 25 min, and MMSI-Bench about 2 h 10 min because of
+the long answers (one A100 / H100; `flash-linear-attention` is not installed, so a slower fallback is used).
 
 ## Evaluation protocol
 
@@ -175,21 +183,41 @@ frame count:
 - **Before and after:** still 3–5 points below; for example, 4B at 32 frames drops from 55.6 to 52.5.
 - **System note:** changes nothing.
 
+### Qwen3.5 (VSI-Bench, 16 uniform frames)
+
+`Qwen/Qwen3.5-2B` / `-4B` (the base of SpatialStack-Qwen3.5-4B), same protocol as above with thinking turned off
+(`enable_thinking=False`, as in SpatialStack's evaluation). The Qwen3-VL rows are the closest existing runs
+(16 frames uniform over the 128 candidates, so nearly the same frames).
+
+| Model | Count | Abs. dist | Obj. size | Room size | Rel. dist | Rel. dir | Route | Appear. order | **Overall** | Debiased |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen3.5-2B | 42.8 | 35.0 | 60.0 | 44.7 | 43.2 | 48.7 | 31.4 | 42.4 | **43.5** | 34.7 |
+| Qwen3-VL-2B | 53.2 | 41.5 | 66.7 | 49.0 | 42.1 | 40.3 | 29.9 | 58.9 | **47.7** | 39.9 |
+| Qwen3.5-4B | 45.2 | 37.2 | 65.6 | 46.0 | 52.4 | 47.9 | 32.5 | 59.7 | **48.3** | 39.6 |
+| Qwen3-VL-4B | 61.5 | 40.2 | 71.6 | 55.6 | 46.2 | 44.5 | 34.5 | 61.0 | **51.9** | 45.0 |
+
+Qwen3.5 is 3.6–4.2 points below Qwen3-VL of the same size, mostly from counting (−10 / −16) and the
+measurement tasks. It is better at relative direction (+8 / +3) and, for 4B, relative distance (+6). The inputs are the
+same size (about 2.5k tokens, 640×480 frames), so the input is not the cause.
+
 ### MMSI-Bench
 
-| Category | 2B | 4B |
-|---|---|---|
-| **Overall** | **29.0** | **27.5** |
-| Answer parsed | 99.2 | 98.9 |
-| Pos. Cam.–Obj. / Cam.–Reg. | 37.2 / 36.1 | 36.0 / 30.1 |
-| Pos. Obj.–Reg. / Reg.–Reg. | 35.3 / 32.1 | 35.3 / 25.9 |
-| Pos. Cam.–Cam. / Obj.–Obj. | 29.0 / 22.3 | 26.9 / 21.3 |
-| Attr. Meas. / Appr. | 26.6 / 30.3 | 40.6 / 16.7 |
-| Motion Cam. / Obj. | 29.7 / 26.3 | 25.7 / 27.6 |
-| MSR | 22.7 | 23.2 |
+| Category | Qwen3-VL-2B | Qwen3-VL-4B | Qwen3.5-2B | Qwen3.5-4B |
+|---|---|---|---|---|
+| **Overall** | **29.0** | **27.5** | **27.7** | **32.2** |
+| Answer parsed | 99.2 | 98.9 | 99.9 | 99.7 |
+| Pos. Cam.–Obj. / Cam.–Reg. | 37.2 / 36.1 | 36.0 / 30.1 | 32.6 / 33.7 | 39.5 / 36.1 |
+| Pos. Obj.–Reg. / Reg.–Reg. | 35.3 / 32.1 | 35.3 / 25.9 | 29.4 / 23.5 | 31.8 / 28.4 |
+| Pos. Cam.–Cam. / Obj.–Obj. | 29.0 / 22.3 | 26.9 / 21.3 | 29.0 / 23.4 | 29.0 / 29.8 |
+| Attr. Meas. / Appr. | 26.6 / 30.3 | 40.6 / 16.7 | 37.5 / 19.7 | 45.3 / 28.8 |
+| Motion Cam. / Obj. | 29.7 / 26.3 | 25.7 / 27.6 | 20.3 / 27.6 | 24.3 / 31.6 |
+| MSR | 22.7 | 23.2 | 27.8 | 31.8 |
 
-Both models are near chance, in line with the leaderboard (Qwen2.5-VL-3B 26.5, 7B 25.9, 72B 30.7). The
-difference between 2B and 4B is within noise: the standard error is about ±1.4 overall and ±5–6 per category.
+All models are near chance, in line with the leaderboard (Qwen2.5-VL-3B 26.5, 7B 25.9, 72B 30.7). The standard
+error is about ±1.4 overall and ±5–6 per category, so only Qwen3.5-4B stands out (+4.7 over Qwen3-VL-4B, and above
+SpatialStack-Qwen3.5-4B's 28.0). Unlike Qwen3-VL, Qwen3.5 writes out its reasoning even with thinking off (median
+about 800 characters), so it gets up to 2048 new tokens, as in SpatialStack's MMSI-Bench config; Qwen3-VL answers
+directly within 32.
 
 ### Baselines (released checkpoints, authors' own evaluation code)
 

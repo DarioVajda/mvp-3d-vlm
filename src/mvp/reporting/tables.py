@@ -12,7 +12,7 @@ from mvp.benchmarks.vsibench import TASKS, load_vsibench, summarize
 from mvp.paths import ZEROSHOT
 
 # Run folders summarised as "vsi/<run>" and "mmsi/<run>" in summary.json
-VSI_RUNS = ["vsibench/qwen_sampling", "vsibench/spatial_mllm_sampling"]
+VSI_RUNS = ["vsibench/qwen_sampling", "vsibench/spatial_mllm_sampling", "vsibench/qwen3_5"]
 MMSI_RUNS = ["mmsibench"]
 # Qwen3-VL technical report (arXiv 2511.21631), Table 4: VSI-Bench overall, instruct models
 REPORTED = {"2B": 53.9, "4B": 59.3}
