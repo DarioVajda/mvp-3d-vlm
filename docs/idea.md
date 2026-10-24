@@ -231,3 +231,28 @@ class GatedXAttnDense(nn.Module):
         y = y + torch.tanh(self.a_ffw) * self.ffw(self.norm_ffw(y))
         return y                               # then the frozen softmax layer (3, 7, ..., 31) runs
 ```
+
+## Summary table of the experiment designs
+
+Shared by every arm: Qwen3.5-4B (thinking off), VLM-3R ScanNet QA capped at 3k per task (≈16.2k), 8 uniform
+training frames, lr 1e-4, 3 epochs, effective batch 32, 3% warmup, cosine, bf16, loss on answer tokens only, one
+seed; evaluation on the stratified 100-per-task VSI-Bench subset at 8 and 32 frames plus full MMSI-Bench.
+
+| | 0a / 0b · zero-shot | 1 · LoRA only | 2 · matched additive | 3 · published SpatialStack | 4 · cross-attention |
+|---|---|---|---|---|---|
+| Role | untuned baseline at 8 / 32 frames | data-only control | same positions and features as arm 4, addition instead of attention | reference to the paper | the hypothesis |
+| Trained | nothing | LoRA r=64 | LoRA + 1 merger | LoRA + 3 mergers | LoRA + 8 blocks + resampler |
+| Geometry source | none | none | VGGT layer 23, patch tokens | VGGT layers 11, 17, 23, patch tokens | VGGT layer 23, patch + camera + 4 register tokens |
+| Compression | – | – | 2×2 window concat → MLP 8192→4096→2560 (one shared merger) | same, one merger per layer | Perceiver resampler, 8 layers, width 1536, 256 latents per video |
+| Where it enters the LLM | – | – | added to visual-token hidden states after layers 3, 7, …, 31 | added to visual-token hidden states after layers 0, 1, 2 (VGGT 11→0, 17→1, 23→2) | gated cross-attention before layers 3, 7, …, 31; all tokens query |
+| Operator | – | – | addition, position-matched | addition, position-matched | softmax attention over 256 latents, tanh gates init 0 |
+| Grid alignment needed | – | – | yes: VGGT at 560×420 so 20×15 windows match Qwen's 20×15 merged tokens | yes (their code handles it) | no |
+| Frame-order information | Qwen's own visual tokens | same | same | same | same; none inside the geometry path |
+| New weights (excl. LoRA) | 0 | 0 | 44M | 132M (measured from checkpoint) | 863M (629M blocks + 234M resampler) |
+| Added compute per sample at 8 frames | – | – | VGGT forward (≈1.9× an LLM forward) + negligible | same + negligible | VGGT forward + ≈25% of the LLM's training step |
+| Expected if the hypothesis holds | 48.3 at 16 frames (known); 8 and 32 to run | well above 0b (SpatialStack: +11 from data alone) | above arm 1 by a point or two | ≈ arm 2, possibly slightly above | above arm 2 on VSI, especially rel. direction and rel. distance; MMSI not below 32.2 |
+| What a null result would mean | – | – | – | – | attention adds nothing over addition at equal data; or capacity/overfitting masked it (check gates, train vs eval loss) |
+| Comparisons it enables | fine-tune effect (1 − 0b) | geometry effect (2, 3, 4 − 1) | operator effect (4 − 2) | reproduction (3 vs 67.5 published, under LoRA instead of full FT); stacking effect (3 − 2) | – |
+
+Caveat on arm 4: 6.5× the new weights of arm 3 and 20× arm 2. A capacity-matched variant (no FFW, inner width
+1024, 2-layer resampler, ≈86M; or narrow FFW, ≈190M) is the first follow-up if arm 4 wins.
