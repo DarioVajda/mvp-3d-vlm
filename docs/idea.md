@@ -38,52 +38,53 @@ can cost general spatial reasoning.
 | Decision | Choice | Why |
 |---|---|---|
 | Claim to settle first | cross-attention beats additive injection | the one comparison nobody has run |
-| Base model | Qwen3.5-4B | base of SpatialStack-Qwen3.5-4B (67.5 reproduced at 67.53), so the published additive recipe runs as a reference arm. Cost: 3.6 points weaker zero-shot than Qwen3-VL-4B at 16 frames (48.3 vs 51.9); hybrid attention (below) |
+| Base model | Qwen3.5-4B for the headline runs; Qwen3.5-2B first, to debug the pipeline and get early numbers | base of SpatialStack-Qwen3.5-4B (67.5 reproduced at 67.53), so the published additive recipe runs as a reference arm. Cost: 3.6 points weaker zero-shot than Qwen3-VL-4B at 16 frames (48.3 vs 51.9); hybrid attention (below) |
 | LLM weights | LoRA in every arm, r = 64 on all linear layers | identical across arms so only the fusion differs; lets the LLM adapt its answer format |
 | Training data | VLM-3R ScanNet QA, each of the 6 tasks capped at 3k (room size keeps all 1,201): ≈16.2k samples | balanced per-task signal; half the raw 51.8k is relative direction |
-| Insertion points | one gated cross-attention block before each softmax-attention layer: 3, 7, 11, 15, 19, 23, 27, 31 | Flamingo's every-4th recipe mapped onto Qwen3.5's 3:1 linear/softmax pattern; injected geometry lands right in front of a layer that can retrieve it exactly |
+| Insertion points | one gated cross-attention block before each softmax-attention layer: 3, 7, 11, 15, 19, 23, 27, 31 on the 4B (8 blocks); 3, 7, 11, 15, 19, 23 on the 2B (6 blocks) | Flamingo's every-4th recipe mapped onto Qwen3.5's 3:1 linear/softmax pattern; injected geometry lands right in front of a layer that can retrieve it exactly |
 | VGGT features | aggregator layer 23 (last), patch tokens + camera token + 4 register tokens | layer 23 alone gave most of SpatialStack's VSI gain (Table 1); VLM-3R's camera "view token" was worth 1.8 (Table 6) |
-| Compression | Perceiver resampler, 8 layers, width 1536, 16 heads, 256 latents per video | fixed K/V size regardless of frame count, which is what makes 8-frame training and 32-frame eval possible. Other downsampling (grid-preserving) is a later variant |
+| Compression | Perceiver resampler only (no other compression in the first experiment): Flamingo resampler layers (no separate latent self-attention), 8 layers, width 1024, 8 heads of 128, 256 latents per video, one resampler shared by all blocks | fixed K/V size regardless of frame count, which is what makes 8-frame training and 32-frame eval possible. Other downsampling (grid-preserving) is a later variant |
 | Frame tag into resampler | none | relies on VGGT's own features. Known risk: VGGT is permutation-equivariant for all but the first frame, so order-dependent tasks (appearance order, MMSI camera motion) get no help from geometry. These are the canaries; add a learned frame-index embedding if they drop |
-| Block | full Flamingo gated xattn-dense: xattn at width 2560 (20 heads × 128) + FFW 2560→10240→2560, both branches gated by tanh(α), α init 0 | faithful to Flamingo; its ablations: no gate −4.2 and unstable (Table 3 iii), no FFW −3.8 (row iv, VANILLA XATTN) |
+| Block | full Flamingo gated xattn-dense: xattn at width D (4B: 2560, 20 heads × 128; 2B: 2048, 16 heads × 128) + FFW D→4D→D, both branches gated by tanh(α), α init 0. Shrunk xattn-only blocks (inner width 1024, no FFW) are the capacity-matched alternative, not yet decided | faithful to Flamingo; its ablations: no gate −4.2 and unstable (Table 3 iii), no FFW −3.8 (row iv, VANILLA XATTN) |
 | Who queries | all tokens, text included | Flamingo's design; the answer is produced at text positions |
 | Frames | train on 8 uniform frames; evaluate at 8 and 32 | SpatialStack trains on 4–8, evaluates at 32 (Table B) |
+| Batching | to be decided when implementing (one question per sample vs. questions grouped by video, so VGGT runs once per video); the epoch and batch numbers below assume one question per sample | grouping changes what an epoch and a batch mean |
 | Hyperparameters | lr 1e-4 for LoRA and for new modules, 3 epochs, effective batch 32, 3% warmup, cosine, AdamW, bf16, loss on answer tokens only | SpatialStack: lr 1e-5, batch 64, 1 epoch, 3% warmup, cosine (Table B), but that is full fine-tuning; fresh modules need more. Not from a paper |
 | First evaluation | VSI-Bench stratified 100 per task type (~1.1k q) at 8 and 32 frames; full MMSI-Bench (1,000 q, 2048 new tokens, thinking off) | ~10 min per arm per frame setting; SE ≈1.5 overall, ≈5 per task. Success criteria deferred until first results |
 | Success criterion | deferred: run the subset, look, then decide | user's call |
 
 ### Arms
 
-All arms: Qwen3.5-4B, LoRA r=64, same data, frames, steps, seed; VGGT frozen, computed on the fly on the 8
+All arms: Qwen3.5-4B (first on Qwen3.5-2B), LoRA r=64, same data, frames, steps, seed; VGGT frozen, computed on the fly on the 8
 training frames (the 128-frame cache in `data/vggt/` is a different joint pass and only serves the sampler).
 
-| # | Arm | New trainable weights (excl. LoRA) | Purpose |
+| # | Arm | New trainable weights (excl. LoRA), 4B / 2B | Purpose |
 |---|---|---|---|
 | 0a | Qwen3.5-4B zero-shot, 8 frames | 0 | untuned baseline at the training frame count (not yet run) |
 | 0b | Qwen3.5-4B zero-shot, 32 frames | 0 | untuned baseline at the eval frame count (not yet run; 16-frame run = 48.3) |
-| 1 | LoRA only, no geometry | 0 | data-only control (SpatialStack's 64.76 row) |
-| 2 | Matched additive: VGGT layer 23 → one shared SpatialStack-style merger → added to the visual-token slice at the same 8 positions as the blocks | 44M | only the operator differs from arm 4; also SpatialStack's missing "one layer inside the LLM" ablation |
-| 3 | Published SpatialStack: VGGT 11/17/23 → three mergers → LLM layers 0/1/2 (their code) | 132M (measured) | reference to the paper |
-| 4 | Cross-attention: 8 full Flamingo blocks + 8-layer resampler | 863M | the hypothesis |
+| 1 | Control 1: LoRA only, no geometry | 0 | data-only control (SpatialStack's 64.76 row) |
+| 2 | Control 2, matched additive: VGGT layer 23 → one shared SpatialStack-style merger → added to the visual-token slice at the same positions as the blocks | 44M / 42M | only the operator differs from arm 4; also SpatialStack's missing "one layer inside the LLM" ablation |
+| 3 | Published SpatialStack: VGGT 11/17/23 → three mergers → LLM layers 0/1/2 (their code) | 132M (measured) / 126M | reference to the paper, not a control |
+| 4 | Cross-attention: full Flamingo blocks (8 on the 4B, 6 on the 2B) + one 8-layer resampler at width 1024 | 735M / 407M | the hypothesis |
 
-Known limitation: arm 4 has 6.5× the new weights of arm 3 and 20× arm 2. A win can be attributed to capacity
-until a capacity-matched variant (no FFW, inner width 1024, 2-layer resampler: ~86M; or narrow FFW: ~190M) is
-run. Chosen knowingly for the first experiment.
+Known limitation: on the 4B, arm 4 has 5.6× the new weights of arm 3 and 17× arm 2 (2B: 3.2× and 9.7×). A win
+can be attributed to capacity until the capacity-matched variant (shrunk xattn-only blocks, inner width 1024, same
+resampler: 162M on the 4B, 141M on the 2B) is run. Chosen knowingly for the first experiment.
 
 ### Parameter counts
 
-Full arithmetic and ASCII diagrams in [param_budget.md](param_budget.md). Summary (D = 2560, VGGT width G = 2048):
+Full arithmetic and ASCII diagrams in [param_budget.md](param_budget.md). Summary (D = 2560 on the 4B, 2048 on the 2B; VGGT width G = 2048):
 
-| Component | Arithmetic | Weights |
-|---|---|---|
-| Resampler input map | 2048 × 1536 | 3.1M |
-| Resampler, 8 layers | 8 × (4·1536² + 2·1536·6144) | 226.5M |
-| Resampler output map + latents | 1536 × 2560 + 256 × 1536 | 4.3M |
-| One block, cross-attention | 4 × 2560² | 26.2M |
-| One block, FFW | 2 × 2560 × 10240 | 52.4M |
-| 8 blocks | 8 × 78.6M | 629M |
-| **Arm 4 total** | | **863M** (Adam state ≈12 GB) |
-| SpatialStack merger (checkpoint shapes: LN 2048; 4096×8192; 2560×4096; biases) | | 44.1M each, 132M for three |
+| Component | 4B arithmetic | 4B | 2B (D = 2048) |
+|---|---|---|---|
+| Resampler input map + latents | 2048 × 1024 + 256 × 1024 | 2.4M | 2.4M |
+| Resampler, 8 layers | 8 × (4·1024² + 2·1024·4096) | 100.7M | 100.7M |
+| Resampler output map | 1024 × D | 2.6M | 2.1M |
+| One block, cross-attention | 4 × D² | 26.2M | 16.8M |
+| One block, FFW | 2 × D × 4D | 52.4M | 33.6M |
+| All blocks | 8 × 78.6M / 6 × 50.3M | 629M | 302M |
+| **Arm 4 total** | | **735M** (fp32 weights + grads + Adam ≈ 11.8 GB) | **407M** (≈ 6.5 GB) |
+| SpatialStack merger (checkpoint shapes: LN 2048; 4096×8192; D×4096; biases) | | 44.1M each, 132M for three | 42.0M each, 126M for three |
 
 ### Speed and memory (estimates, to be replaced by the smoke test)
 
@@ -92,7 +93,7 @@ VGGT 0.6 s and 8 GB for 32 frames on an H100. Assumptions: 4B MACs per token for
 linear scaling with tokens.
 
 - LLM step at 8 frames (≈1.3k tokens): ≈0.08 s B200 / 0.13 s H100. Blocks add ≈16% of LLM forward MACs, resampler
-  ≈9%; with backward ≈ +25% → ≈0.10 / 0.16 s. VGGT forward at 8 frames ≈0.08 / 0.12 s (same in arms 2–4).
+  ≈4% at width 1024; with backward ≈ +20% → ≈0.10 / 0.16 s. The 2B is roughly half of all of this. VGGT forward at 8 frames ≈0.08 / 0.12 s (same in arms 2–4).
 - One epoch of 16.2k samples, batch 1, compute only: ≈55 min B200 / ≈80 min H100; 3 epochs ≈3–4 GPU-h per arm
   before data loading and the Qwen vision encoder, which are not benchmarked for training.
 - Eval: Qwen3.5-4B zero-shot at 16 frames took 18 min on an H100 for 5,130 questions; the 1.1k subset at 32 frames
@@ -114,22 +115,22 @@ softmax layer so the next layer can do exact token-level retrieval over what was
 it into a linear layer's running memory first. Whether geometry survives three linear-attention layers is untested;
 this placement sidesteps the question.
 
-### Block (Flamingo Fig. 4, at D = 2560)
+### Block (Flamingo Fig. 4, at D = 2560 on the 4B, 2048 on the 2B)
 
 ```
-y = y + tanh(a_xattn) * xattn(q = LN(y), kv = latents)      # 4 × 2560², 20 heads of 128
-y = y + tanh(a_ffw)   * ffw(LN(y))                          # 2560 → 10240 → 2560
+y = y + tanh(a_xattn) * xattn(q = LN(y), kv = latents)      # 4 × D², D / 128 heads of 128
+y = y + tanh(a_ffw)   * ffw(LN(y))                          # D → 4D → D
 y = frozen_qwen_softmax_layer(y)                            # with LoRA
 ```
 
-Both scalars `a_*` start at 0, so at step 0 the model is exactly Qwen3.5-4B.
+Both scalars `a_*` start at 0, so at step 0 the model is exactly the base Qwen3.5.
 
-### Resampler (Flamingo Sec. 2.1 / App. A.1.1, enlarged)
+### Resampler (Flamingo Sec. 2.1 / App. A.1.1, without the separate self-attention)
 
-Input: VGGT layer-23 tokens for the 8 frames, (8 × 1036 patches + 8 × 5 special) × 2048 → Linear 2048→1536.
+Input: VGGT layer-23 tokens for the 8 frames, (8 × 1036 patches + 8 × 5 special) × 2048 → Linear 2048→1024.
 8 layers of: latents ← cross-attention over [tokens; latents] (K/V include the latents, as Flamingo), FFW 4×.
-256 learned latents, width 1536, 16 heads. Output Linear 1536→2560. No frame or spatial embedding (see risk above).
-At 32-frame eval the input is 4× longer; the output is still 256 × 2560.
+256 learned latents, width 1024, 8 heads of 128. Output Linear 1024→D. One resampler per video, shared by all blocks. No frame or spatial embedding (see risk above).
+At 32-frame eval the input is 4× longer; the output is still 256 × D.
 
 ### Additive arms
 
@@ -156,7 +157,7 @@ At 32-frame eval the input is 4× longer; the output is still 256 × 2560.
 
 ## What to log (so first results can be read)
 
-- Per step: loss, lr, the 16 gate values `tanh(a)` per block, gradient norm, step time, peak memory.
+- Per step: loss, lr, the two gate values `tanh(a)` per block, gradient norm, step time, peak memory.
 - Per eval: VSI per task at 8 and 32 frames, MMSI per category, parse rate, mean attention entropy per block, share
   of attention mass on camera/register tokens vs patches, answers dumped to jsonl as in `results/zeroshot/`.
 - Per run: full config, seed, frame indices, VGGT confidence stats, git commit, freeze.txt.
@@ -165,8 +166,8 @@ At 32-frame eval the input is 4× longer; the output is still 256 × 2560.
 
 | Risk | How we'd notice | What to do |
 |---|---|---|
-| Gates stay near 0: the LLM never uses geometry | `tanh(a)` flat across training; arm 4 ≈ arm 1 | raise lr on `a` only, or init a = 0.1; check K/V scale after the 1536→2560 map |
-| 863M fresh weights overfit 16k samples | train loss ≪ eval loss; VSI subset up, MMSI down | fewer epochs, dropout in blocks, or the capacity-matched variant |
+| Gates stay near 0: the LLM never uses geometry | `tanh(a)` flat across training; arm 4 ≈ arm 1 | raise lr on `a` only, or init a = 0.1; check K/V scale after the 1024→2560 map |
+| 735M fresh weights (4B; 407M on the 2B) overfit 16k samples | train loss ≪ eval loss; VSI subset up, MMSI down | fewer epochs, dropout in blocks, or the capacity-matched variant |
 | Template fitting, not geometry | arm 1 ≈ arms 2–4 on VSI | report per task; rel. direction and rel. distance are where geometry should show |
 | No frame tag → order tasks degrade | appearance order / MMSI camera motion below arm 1 | add learned frame-index embedding to resampler input |
 | 8-train / 32-eval mismatch | 32-frame scores below 8-frame for arm 4 only | fine-tune 1 epoch at 32 frames, or sample 8–32 frames during training |
@@ -178,8 +179,8 @@ At 32-frame eval the input is 4× longer; the output is still 256 × 2560.
 
 ## Smoke test (before any full run)
 
-50 training steps of arm 4 at batch 1 on 8 frames; then 20 stratified VSI questions at 8 and 32 frames and 20
-MMSI questions. Check: loss decreases, all 16 gates move off zero, no NaN, step time and peak memory recorded
+50 training steps of arm 4 on Qwen3.5-2B at batch 1 on 8 frames; then 20 stratified VSI questions at 8 and 32 frames and 20
+MMSI questions. Check: loss decreases, all gates (16 on the 4B, 12 on the 2B) move off zero, no NaN, step time and peak memory recorded
 (these replace the estimates above), parse rate 100%, grid assertion for arm 2 passes.
 
 ## Superseded leans (kept for the record)
@@ -195,7 +196,7 @@ import torch
 import torch.nn as nn
 
 class PerceiverResampler(nn.Module):
-    def __init__(self, dim=1536, in_dim=2048, out_dim=2560, num_latents=256, num_layers=8, heads=16):
+    def __init__(self, dim=1024, in_dim=2048, out_dim=2560, num_latents=256, num_layers=8, heads=8):
         super().__init__()
         self.inp = nn.Linear(in_dim, dim)
         self.latents = nn.Parameter(torch.randn(1, num_latents, dim) * 0.02)
@@ -214,11 +215,11 @@ class PerceiverResampler(nn.Module):
             kv = torch.cat([layer['norm_x'](x), q], dim=1)   # Flamingo: K/V include the latents
             latents = latents + layer['cross_attn'](q, kv, kv)[0]
             latents = latents + layer['ffw'](layer['norm_ffw'](latents))
-        return self.out(latents)               # [B, 256, 2560], same size at 8 or 32 frames
+        return self.out(latents)               # [B, 256, D], same size at 8 or 32 frames
 
 
 class GatedXAttnDense(nn.Module):
-    def __init__(self, dim=2560, heads=20):
+    def __init__(self, dim=2560, heads=20):    # 2B: dim=2048, heads=16
         super().__init__()
         self.norm_q, self.norm_ffw = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.xattn = nn.MultiheadAttention(dim, heads, batch_first=True)
@@ -226,8 +227,8 @@ class GatedXAttnDense(nn.Module):
         self.a_xattn = nn.Parameter(torch.zeros(1))
         self.a_ffw = nn.Parameter(torch.zeros(1))
 
-    def forward(self, y, latents):             # y: LLM hidden states [B, T, 2560]; all tokens query
+    def forward(self, y, latents):             # y: LLM hidden states [B, T, D]; all tokens query
         y = y + torch.tanh(self.a_xattn) * self.xattn(self.norm_q(y), latents, latents)[0]
         y = y + torch.tanh(self.a_ffw) * self.ffw(self.norm_ffw(y))
-        return y                               # then the frozen softmax layer (3, 7, ..., 31) runs
+        return y                               # then the frozen softmax layer (3, 7, ...) runs
 ```
