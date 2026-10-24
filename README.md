@@ -74,8 +74,25 @@ for s in 0 1 2 3; do slurm/submit.sh -J vggt_s$s -t 02:00:00 -- .venv/bin/python
 
 Both eval scripts resume from an existing `--out` file. On one B300, the 2B / 4B models run VSI-Bench in
 about 9 / 10 min at 8 frames and 24 / 34 min at 32 frames, and MMSI-Bench in about 4 / 6 min.
-Qwen3.5 is slower: VSI-Bench at 16 frames takes about 25 min, and MMSI-Bench about 2 h 10 min because of
-the long answers (one A100 / H100; `flash-linear-attention` is not installed, so a slower fallback is used).
+Qwen3.5 is slower: VSI-Bench at 16 frames takes about 18 min on one H100 (22 min without the kernels below), and
+MMSI-Bench about 2 h 10 min because of the long answers (measured without the kernels).
+
+**Qwen3.5 kernels.** Its linear-attention (Gated DeltaNet) layers use `flash-linear-attention` (Triton) and
+`causal-conv1d` (CUDA, built from source for sm_75–sm_121 by `slurm/install_linear_attn_kernels.sh`, which
+`setup_venv.sh` calls); transformers picks both up automatically, otherwise it falls back to slow PyTorch code and
+warns. On one 32-frame VSI-Bench video (5k tokens, `experiments/linear_attn_kernels/`), compared with that fallback:
+
+| GPU | prefill, batch 1 | prefill, batch 8 | greedy decoding | train step (fwd + bwd, frozen model) |
+|---|---|---|---|---|
+| A100 | 1.9× | 1.7× | 1.2× | 4.4× (5.05 → 1.15 s) |
+| H100 | 2.0× | 1.7× | 1.1× | 5.5× (2.69 → 0.49 s) |
+| B200 | 2.4× | 1.9× | 1.1× | 5.8× (1.77 → 0.31 s) |
+| B300 | 3.3× | 1.8× | 1.1× | 8.8× (2.87 → 0.33 s) |
+
+Full VSI-Bench (Qwen3.5-4B, 16 frames, H100) gives 48.4 with the kernels vs 48.3 without, with 89.6% of
+predictions identical (bf16 differences); wall time goes from 22 to 18 min, since video decoding, the vision encoder
+and token-by-token decoding dominate there. The first run on a new GPU type spends a few minutes compiling Triton
+kernels (cached in `~/.triton/cache`).
 
 ## Evaluation protocol
 
