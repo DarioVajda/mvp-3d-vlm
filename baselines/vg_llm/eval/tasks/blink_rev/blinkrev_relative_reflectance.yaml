@@ -1,0 +1,3 @@
+task: blinkrev_relative_reflectance
+dataset_name: Relative_Reflectance
+include: blink_default_yaml

@@ -21,7 +21,7 @@ Answering it needs two things:
 The video has 5,450 frames. Like Spatial-MLLM, we take 128 uniformly spaced candidates
 (`np.linspace(0, 5449, 128, dtype=int)`), about one every 1.4 s.
 
-![candidates](../results/walkthrough/1_candidates.jpg)
+![candidates](../results/figures/walkthrough/1_candidates.jpg)
 
 ## Step 2: VGGT on all 128 frames
 
@@ -32,7 +32,7 @@ The frozen VGGT-1B makes **one joint forward pass** over all 128 frames.
   - the camera head reads the last block's camera token and gives a pose and intrinsics for every frame;
   - two DPT heads read blocks 4/11/17/23 and give a depth map and a 3D point map, each with a confidence.
 
-![vggt](../results/examples/vggt_scannetpp_09c1414f1b.jpg)
+![vggt](../results/figures/examples/vggt_scannetpp_09c1414f1b.jpg)
 
 Everything is saved in `data/vggt/scannetpp/09c1414f1b/` (see the README). All of it is in VGGT's own units:
 - The first camera sits at the origin.
@@ -43,7 +43,7 @@ The reconstruction already contains the layout of the flat, but not its size in 
 ## Step 3: space-aware frame sampling
 
 The language model only gets 16 frames, so we need to pick which 16. Spatial-MLLM picks them greedily, by how
-much of the scene each frame shows. `src/sa_sampling.py` re-implements this on the saved point maps. On this
+much of the scene each frame shows. `src/mvp/reconstruction/sa_sampling.py` re-implements this on the saved point maps. On this
 scene it selects exactly the same frames as the original Spatial-MLLM functions.
 
 1. **Confident points.** Keep the points whose `world_points_conf` is at least the median over all 26M points
@@ -61,7 +61,7 @@ scene it selects exactly the same frames as the original Spatial-MLLM functions.
    The first pick (#72, 103 s) is a wide view across the living room. Each later pick adds the largest part of the
    flat not seen yet, so the gains shrink. Frames that mostly repeat earlier views are never picked.
 
-![coverage](../results/walkthrough/3_coverage.jpg)
+![coverage](../results/figures/walkthrough/3_coverage.jpg)
 
 With 16 frames, space-aware sampling covers **81%** of the voxels, against **59%** for 16 uniform frames. Uniform
 sampling spends its first four frames (0-36 s) on the dining area and leaves larger parts of the scene unseen
@@ -69,7 +69,7 @@ sampling spends its first four frames (0-36 s) on the dining area and leaves lar
 
 ## Step 4: what the language model sees, and what it answers
 
-![frames](../results/walkthrough/4_frames.jpg)
+![frames](../results/figures/walkthrough/4_frames.jpg)
 
 We gave Qwen3-VL-4B (zero-shot, our VSI-Bench protocol) 16 frames chosen in three ways. Each run uses 2,586
 input tokens:
@@ -91,12 +91,12 @@ run is the next step.
 What this example suggests is that frame choice alone does not give the model metric geometry. Spatial-MLLM
 therefore also feeds VGGT's features into the model and trains it to use them.
 
-Reproduce: `slurm/submit.sh -J wt -t 00:30:00 -- bash -c "cd src && python eval_vsibench.py --model Qwen/Qwen3-VL-4B-Instruct --nframes 16 --sampling sa --scenes 09c1414f1b --out ../results/walkthrough/4B_f16_sa.jsonl"`
+Reproduce: `slurm/submit.sh -J wt -t 00:30:00 -- .venv/bin/python -m mvp.eval.vsibench --model Qwen/Qwen3-VL-4B-Instruct --nframes 16 --sampling sa --scenes 09c1414f1b --out results/figures/walkthrough/4B_f16_sa.jsonl`
 (also `--sampling qwen` / `uniform128`).
 
 ## Step 5: Spatial-MLLM, training and inference
 
-![architecture](../results/walkthrough/5_architecture.png)
+![architecture](../results/figures/walkthrough/5_architecture.png)
 
 **Model.** Spatial-MLLM adds a second visual stream to Qwen2.5-VL-3B:
 - **2D stream.** Qwen's own ViT turns the 16 frames (644×476) into 3,128 visual tokens: 2 frames × 2×2 patches
@@ -139,4 +139,4 @@ answer that is scored by MRA. For VSI-Bench, the 16 frames are the space-aware f
   128 frames jointly). They are what the sampler needs. The fused model would compute its own VGGT tokens on the
   16 chosen frames, or we cache those separately.
 
-Figures: `python src/walkthrough.py --video scannetpp/09c1414f1b` (light, runs on the login node).
+Figures: `.venv/bin/python -m mvp.reporting.walkthrough --video scannetpp/09c1414f1b` (light, runs on the login node).

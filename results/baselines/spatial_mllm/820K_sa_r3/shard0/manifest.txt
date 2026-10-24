@@ -1,0 +1,8 @@
+date: 2026-10-22T00:23:34Z
+host: ixh
+      1 NVIDIA H100 80GB HBM3
+repo: 9fc47382c7bc5ab52951e6e2e64db08fca0948ee
+checkpoint: /shared/home/dario.vajda/.cache/huggingface/hub/models--Diankun--Spatial-MLLM-v1.1-Instruct-820K/snapshots/89ac646b88effaa651d304a308bf6e543c305f0c
+video_dir: datasets/evaluation/vsibench/sa_sampling_16f
+annotation_dir: /shared/workspace/povejmo/math/projects/mvp/results/baselines/spatial_mllm/820K_sa_r3/shard0/annotations
+shard: 0 4

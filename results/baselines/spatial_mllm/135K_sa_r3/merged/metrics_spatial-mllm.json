@@ -1,0 +1,56 @@
+{
+  "per_question_type": {
+    "obj_appearance_order": {
+      "score": 0.5323624595469255,
+      "count": 618
+    },
+    "object_abs_distance": {
+      "score": 0.3894484424226576,
+      "count": 834
+    },
+    "object_counting": {
+      "score": 0.6654867272988885,
+      "count": 565
+    },
+    "object_rel_direction_easy": {
+      "score": 0.7096774193548387,
+      "count": 217
+    },
+    "object_rel_direction_hard": {
+      "score": 0.5442359249329759,
+      "count": 373
+    },
+    "object_rel_direction_medium": {
+      "score": 0.6190476190476191,
+      "count": 378
+    },
+    "object_rel_distance": {
+      "score": 0.4056338028169014,
+      "count": 710
+    },
+    "object_size_estimation": {
+      "score": 0.5809024127683009,
+      "count": 953
+    },
+    "room_size_estimation": {
+      "score": 0.5635416669667594,
+      "count": 288
+    },
+    "route_planning": {
+      "score": 0.34536082474226804,
+      "count": 194
+    }
+  },
+  "acc": {
+    "micro": 0.5120481927710844,
+    "macro": 0.47691935205447655
+  },
+  "mra": {
+    "micro": 0.5366287883935552,
+    "macro": 0.5498448123641516
+  },
+  "all": {
+    "micro": 0.5246978560153969,
+    "macro": 0.513382082209314
+  }
+}

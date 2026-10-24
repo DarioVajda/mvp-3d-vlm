@@ -1,0 +1,3 @@
+task: blinkrev_art_style
+dataset_name: Art_Style
+include: blink_default_yaml

@@ -1,0 +1,9 @@
+group: blinkrev_spatial
+task:
+  - blinkrev_multi_view_reasoning
+  - blinkrev_relative_depth
+  - blinkrev_spatial_relation
+test_split: val
+aggregate_metric_list:
+  - metric: blink_score
+    weight_by_size: False

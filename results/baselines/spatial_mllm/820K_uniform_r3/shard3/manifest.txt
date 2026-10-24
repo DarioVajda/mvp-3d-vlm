@@ -1,0 +1,8 @@
+date: 2026-10-22T00:23:12Z
+host: ana
+      1 NVIDIA A100 80GB PCIe
+repo: 9fc47382c7bc5ab52951e6e2e64db08fca0948ee
+checkpoint: /shared/home/dario.vajda/.cache/huggingface/hub/models--Diankun--Spatial-MLLM-v1.1-Instruct-820K/snapshots/89ac646b88effaa651d304a308bf6e543c305f0c
+video_dir: datasets/evaluation/vsibench
+annotation_dir: /shared/workspace/povejmo/math/projects/mvp/results/baselines/spatial_mllm/820K_uniform_r3/shard3/annotations
+shard: 3 4

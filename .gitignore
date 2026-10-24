@@ -1,6 +1,8 @@
 # Python environment and caches
 .venv/
+.venv-*/
 __pycache__/
+*.egg-info/
 *.py[cod]
 .ipynb_checkpoints/
 
@@ -9,14 +11,36 @@ __pycache__/
 data/*
 !data/subsets/
 
-# Slurm logs
+# Slurm logs (logs/<area>/, see slurm/submit.sh LOGDIR)
 logs/
 
 # Results: keep full-run predictions, summaries and the figures used in README.md;
 # drop smoke tests, cancelled partial runs and scratch figures
-results/smoke/
-results/vsi_cancelled/
-results/examples/reldist_*.jpg
+results/_scratch/
+results/figures/examples/reldist_*.jpg
+
+# Baselines: keep manifests, environment freezes, metrics and merged predictions; drop input dumps, per-question
+# lmms-eval samples, per-shard outputs, dataset caches, smoke tests and failed or superseded runs
+results/baselines/**/inputs.jsonl
+results/baselines/**/hf_datasets_cache/
+results/baselines/**/*_samples_*.jsonl
+results/baselines/spatial_mllm/*/shard*/eval_result/
+results/baselines/spatial_mllm/*_r2/
+results/baselines/spatial_mllm/135K_sa/
+results/baselines/spatial_mllm/135K_uniform/
+results/baselines/spatial_mllm/820K_sa/
+results/baselines/spatial_mllm/820K_uniform/
+results/baselines/spatialstack/smoke_qwen35/
+results/baselines/spatialstack/full_qwen25/
+results/baselines/spatialstack/qwen25_vsi/
+results/baselines/spatialstack/qwen25_mmsi/
+results/baselines/spatialstack/*_r2/
+results/baselines/vg_llm/smoke_4b/
+# VG-LLM shard runs that were cancelled or crashed in aggregation (no results); their reruns are the *_r2 dirs
+results/baselines/vg_llm/4b_vsi/shard[0124]/
+results/baselines/vg_llm/8b_vsi/shard1/
+results/baselines/vg_llm/blackwell_env/4b_vsi/shard[12]/
+results/baselines/vg_llm/blackwell_env/8b_vsi/shard[124]/
 
 # Large binary artefacts that should never be committed
 *.mp4
@@ -51,3 +75,8 @@ papers/*.pdf
 !papers/2503.11651v1.pdf
 !papers/2505.20279v5.pdf
 !papers/2603.27437v3.pdf
+
+# per-run copies of the environment freeze and raw logs (the env freeze is in baselines/<method>/env/)
+results/baselines/vg_llm/**/freeze*.txt
+results/baselines/vg_llm/**/run.log
+results/baselines/vg_llm/*_merged/per_question.jsonl

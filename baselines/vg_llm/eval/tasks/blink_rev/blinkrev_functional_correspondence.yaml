@@ -1,0 +1,3 @@
+task: blinkrev_functional_correspondence
+dataset_name: Functional_Correspondence
+include: blink_default_yaml
