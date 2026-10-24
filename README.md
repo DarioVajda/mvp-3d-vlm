@@ -25,6 +25,10 @@ results/
 ├── baselines/<method>/   baseline outputs with manifest, freeze and input fingerprints
 ├── figures/              examples/ (linked below) and walkthrough/
 └── _scratch/             smoke tests and cancelled runs (gitignored)
+papers/                   reference PDFs, indexed in papers/README.md
+tasks/                    run requests for the cluster, one file per task (see tasks/README.md)
+task-results/<id>/        outputs of each task, same name as its task file
+skills/add-task-to-queue/ skill that writes a task file after interviewing the author
 third_party/              reference repos: vggt (a288dd0), Spatial-MLLM (9fc4738), baselines (gitignored)
 logs/                     Slurm logs by area (gitignored)
 ```
@@ -435,3 +439,6 @@ inference) is in [docs/walkthrough.md](docs/walkthrough.md).
 4. LoRA fine-tune on a few thousand spatial QA pairs (e.g. SPAR-7M, [2503.22976](https://arxiv.org/abs/2503.22976)),
    with no scene overlap with the test scenes. Ablations: cues without fine-tuning, fine-tuning without cues (the
    key control), fine-tuning with cues, and ground-truth 3D boxes as an upper bound.
+5. Gated cross-attention from VGGT features into the LLM (plan in [docs/idea.md](docs/idea.md), parameter counts in
+   [docs/param_budget.md](docs/param_budget.md)): pending to confirm tomorrow with a fresh head, which is how we are
+   going to construct the blocks.
