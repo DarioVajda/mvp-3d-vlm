@@ -1,5 +1,7 @@
 # Scene sheet: explicit 3D cues as text
 
+Random idea from Dario: To prevent context lenght explosion, maybe the initial scene sheet should only contain the list of objects and then the model could "agentically" ask for distances between some pair which it might need to answer the questions (with the "tool" use rules explained in the prompt).
+
 **Status (2026-10-26):** proposal, nothing run yet. This is item 3 ("cue injection: a text scene sheet") of the
 README's next steps. It is an alternative to the gated cross-attention plan in `docs/idea.md`. That plan trains
 new layers that read VGGT features. This one trains nothing: it turns VGGT's 3D points into a written list of
