@@ -10,6 +10,8 @@ from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
+from mvp.fusion.model import stop_tokens
+
 SYSTEM_PROMPT = "You are a helpful assistant."
 
 
@@ -81,7 +83,7 @@ class QwenVL:
     def _generate(self, inputs, max_new_tokens):
         inputs = inputs.to(self.model.device)
         out = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False,
-                                  temperature=None, top_p=None, top_k=None)
+                                  temperature=None, top_p=None, top_k=None, **stop_tokens(self.processor.tokenizer))
         out = out[:, inputs["input_ids"].shape[1]:]
         return [s.strip() for s in self.processor.batch_decode(out, skip_special_tokens=True)], \
             int(inputs["input_ids"].shape[1])

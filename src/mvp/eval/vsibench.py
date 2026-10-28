@@ -4,6 +4,8 @@
   python -m mvp.eval.vsibench ... --per-type 5          # stratified subset: 5 questions per question type
   python -m mvp.eval.vsibench ... --nframes 16 --sampling sa   # Spatial-MLLM space-aware frames (needs data/vggt)
   python -m mvp.eval.vsibench ... --layout stit [--echo-system]  # prompt echoing (see mvp.benchmarks.vsibench.build_prompt_parts)
+  python -m mvp.eval.vsibench --model Qwen/Qwen3.5-4B --images --nframes 32 ...  # frames as images (SpatialStack protocol)
+  python -m mvp.eval.vsibench --fusion-ckpt results/train/2B_xattn/final.pt --nframes 32 ...  # a trained arm (images)
 
 Questions are grouped by video so each video is decoded once; resumes from an existing --out file.
 """
@@ -37,7 +39,10 @@ def frame_indices(path, sampling, nframes, vggt_root):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True)
+    ap.add_argument("--model", help="required unless --fusion-ckpt is given")
+    ap.add_argument("--images", action="store_true", help="frames as separate images through mvp.fusion (SpatialStack's "
+                    "protocol: np.linspace frames, VGGT on the same frames), instead of a Qwen video")
+    ap.add_argument("--fusion-ckpt", help="trained arm from mvp.train.run (implies --images)")
     ap.add_argument("--nframes", type=int, default=32)
     ap.add_argument("--fps", type=float, default=None, help="sample at this fps instead of a fixed --nframes")
     ap.add_argument("--sampling", default="qwen", choices=["qwen", "uniform128", "sa"],
@@ -58,6 +63,10 @@ def main():
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
+    args.images = args.images or args.fusion_ckpt is not None
+    assert args.model or args.fusion_ckpt, "--model or --fusion-ckpt"
+    if args.images:
+        assert args.sampling == "qwen" and args.fps is None and args.layout == "sit", "images mode: uniform frames, sit layout"
 
     df = load_vsibench(args.split)
     if args.per_type:
@@ -78,44 +87,65 @@ def main():
     print(f"{len(df)} questions, {len(done)} done, {len(todo)} to go, {todo['video_path'].nunique()} videos", flush=True)
 
     from mvp.models.qwen_vl import QwenVL, SYSTEM_PROMPT
-    model = QwenVL(args.model)
     system = ECHO_SYSTEM_PROMPT if args.echo_system else SYSTEM_PROMPT
+    if args.images:
+        from mvp.fusion.model import FusionVL
+        from mvp.fusion.inputs import SYSTEM_PROMPT as FUSION_SYSTEM, uniform_frames
+        assert system == FUSION_SYSTEM
+        model = (FusionVL.load(args.fusion_ckpt) if args.fusion_ckpt else FusionVL(args.model, "base")).cuda().eval()
+        args.model = model.config["model_id"]
+    else:
+        model = QwenVL(args.model)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     t0, n = time.time(), 0
     with open(args.out, "a") as fout:
         for vi, (path, group) in enumerate(todo.groupby("video_path", sort=False)):
-            if args.sampling == "qwen":
+            if args.images:
+                frames, idx = uniform_frames(path, args.nframes)
+                vis = model.inputs.visual(frames)
+                meta = {"frames_indices": idx}
+                n_vis = int((vis["image_grid_thw"].prod(-1) // 4).sum())
+                n_frames, frame_hw = len(frames), [frames[0].height, frames[0].width]
+            elif args.sampling == "qwen":
                 video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
             else:
                 video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
             docs = group.to_dict("records")
-            n_vis = video.shape[0] * video.shape[2] * video.shape[3] // (2 * 32 * 32)  # visual tokens
+            if not args.images:
+                n_vis = video.shape[0] * video.shape[2] * video.shape[3] // (2 * 32 * 32)  # visual tokens
+                n_frames, frame_hw = int(video.shape[0]), list(video.shape[-2:])
             bs = max(1, min(args.batch_size, args.token_budget // (n_vis + 200)))
             for i in range(0, len(docs), bs):
                 batch = docs[i:i + bs]
                 parts = [build_prompt_parts(d, args.layout) for d in batch]
-                preds, n_tok = model.generate_video(video, meta, vkw, [p for _, p in parts],
-                                                    pres=[q for q, _ in parts], system=system)
+                if args.images:
+                    batch_in = {**vis, **model.inputs.text([p for _, p in parts], vis["image_grid_thw"], padding_side="left")}
+                    preds = model.generate({k: v.cuda() for k, v in batch_in.items()})
+                    n_tok = int(batch_in["input_ids"].shape[1])
+                else:
+                    preds, n_tok = model.generate_video(video, meta, vkw, [p for _, p in parts],
+                                                        pres=[q for q, _ in parts], system=system)
                 for d, p in zip(batch, preds):
                     rec = {"id": int(d["id"]), "dataset": d["dataset"], "scene_name": d["scene_name"],
                            "question_type": d["question_type"], "task": task_of(d["question_type"]),
                            "question": d["question"], "options": d["options"] if isinstance(d["options"], list) else None,
                            "ground_truth": d["ground_truth"], "prediction": p, "score": score(d, p),
-                           "n_frames": int(video.shape[0]), "frame_hw": list(video.shape[-2:]), "n_input_tokens": n_tok,
+                           "n_frames": n_frames, "frame_hw": frame_hw, "n_input_tokens": n_tok,
                            "frame_indices": list(meta["frames_indices"])}
                     fout.write(json.dumps(rec) + "\n")
                 fout.flush()
                 n += len(batch)
             if vi % 20 == 0:
                 print(f"[{vi + 1} videos, {n} qs, {time.time() - t0:.0f}s] {path.split('/')[-1]} "
-                      f"frames={tuple(video.shape)} tokens={n_tok}", flush=True)
+                      f"frames={n_frames}x{tuple(frame_hw)} tokens={n_tok}", flush=True)
 
     res = pd.read_json(args.out, lines=True)
     res = res[res["id"].isin(df["id"])]
     summary = summarize(res)
     print(json.dumps({k: round(v, 1) for k, v in summary.items()}, indent=1))
     with open(args.out.replace(".jsonl", "_summary.json"), "w") as f:
-        json.dump({"model": args.model, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
+        json.dump({"model": args.model, "protocol": "images" if args.images else "video", "fusion_ckpt": args.fusion_ckpt,
+                   "arm": model.arm if args.images else None, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
                    "layout": args.layout, "system": system, "fps": args.fps, "split": args.split, "n": len(res), **summary}, f, indent=1)
 
 
