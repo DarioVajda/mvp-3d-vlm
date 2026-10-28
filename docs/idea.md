@@ -48,23 +48,41 @@ can cost general spatial reasoning.
 | Block | full Flamingo gated xattn-dense: xattn at width D (4B: 2560, 20 heads × 128; 2B: 2048, 16 heads × 128) + FFW D→4D→D, both branches gated by tanh(α), α init 0. Shrunk xattn-only blocks (inner width 1024, no FFW) are the capacity-matched alternative, not yet decided | faithful to Flamingo; its ablations: no gate −4.2 and unstable (Table 3 iii), no FFW −3.8 (row iv, VANILLA XATTN) |
 | Who queries | all tokens, text included | Flamingo's design; the answer is produced at text positions |
 | Frames | train on 8 uniform frames; evaluate at 8 and 32 | SpatialStack trains on 4–8, evaluates at 32 (Table B) |
-| Batching | to be decided when implementing (one question per sample vs. questions grouped by video, so VGGT runs once per video); the epoch and batch numbers below assume one question per sample | grouping changes what an epoch and a batch mean |
+| Visual input format | frames fed as separate **images** (SpatialStack's protocol), not as a Qwen video: 8 frames → 8 × 300 = 2,400 visual tokens at 640×480, 32 frames → 9,600 | Qwen3.5 merges *video* frames in temporal pairs, so per-frame alignment with VGGT (arm 2) is only possible with frames as images; it is also the protocol behind SpatialStack's 67.5 and keeps all arms comparable. Decided 2026-10-24 |
+| Batching | one micro-batch = up to 8 questions of **one video** (VGGT and Qwen's vision encoder run once per micro-batch); gradient accumulation over 4 micro-batches → effective batch 32 questions. An epoch is still 16.2k questions | VGGT stays inside the model and runs on the fly (no feature cache): reading cached layer-23 tokens would take about as long as recomputing them, train and eval pipelines stay identical, and the VGGT layer can be chosen per run. Decided 2026-10-24 |
 | Hyperparameters | lr 1e-4 for LoRA and for new modules, 3 epochs, effective batch 32, 3% warmup, cosine, AdamW, bf16, loss on answer tokens only | SpatialStack: lr 1e-5, batch 64, 1 epoch, 3% warmup, cosine (Table B), but that is full fine-tuning; fresh modules need more. Not from a paper |
 | First evaluation | VSI-Bench stratified 100 per task type (~1.1k q) at 8 and 32 frames; full MMSI-Bench (1,000 q, 2048 new tokens, thinking off) | ~10 min per arm per frame setting; SE ≈1.5 overall, ≈5 per task. Success criteria deferred until first results |
 | Success criterion | deferred: run the subset, look, then decide | user's call |
 
+### Revision after the 2B pilot (2026-10-24, evening)
+
+The pilot (3 epochs, `results/train/2B_*`) gave LoRA-only 56.6, cross-attention 56.5 with its gates never opening, and
+additive 42.5 on the 1,000-question VSI subset at 32 frames. The additive arm as built (one shared merger, the same
+delta added before all 6 softmax layers, lr 1e-4, LoRA) was not a faithful SpatialStack control. Decided changes:
+
+| Decision | Choice | Why |
+|---|---|---|
+| Arm 2 (additive) | **SpatialStack's recipe inside our pipeline**: VGGT layers 11, 17, 23 → three separate mergers → added to the output of decoder layers 0, 1, 2 (`--vggt-layers 11 17 23 --fusion-after 0 1 2`) | matches the released checkpoint except for LoRA instead of full fine-tuning, our data and our lr |
+| Arm 4 (cross-attention) | same inputs and injection points as arm 2: VGGT layer L_k → its own resampler → cross-attention block added after decoder layer k, k = 0, 1, 2; patch tokens only (no camera/register tokens), like the mergers | only the operator differs from arm 2 |
+| Gate | none; the output projections of the cross-attention and FFW branches are zero-initialised (`--gate none`) | the tanh gates stayed at 0 for 1,893 steps: the untrained branches were 2–7× the residual stream, so any opening raised the loss. Zero-init output projections are exactly the mergers' zero-init last linear, so both arms start as a no-op and open through the same mechanism |
+| Per-point modules | nothing shared: one merger / one resampler + block per injection point | each depth gets its own scale; SpatialStack also uses three mergers |
+| Training length | 10 epochs (6,310 steps) | give the new modality time to be learned; the pilot's additive loss was still falling |
+| Schedule | linear warmup over 10% of the steps, cosine from 1e-4 down to 1e-5 (floor = 0.1 × peak) at the last step | pilot used 3% warmup and cosine to 0 |
+| LLM weights, lr | unchanged: LoRA r = 64, lr 1e-4 for LoRA and new modules | cheaper and faster than full fine-tuning; not expected to be the decisive difference |
+| Controls | LoRA-only rerun for 10 epochs with the same schedule | the 3-epoch control is not comparable to 10-epoch arms |
+
 ### Arms
 
-All arms: Qwen3.5-4B (first on Qwen3.5-2B), LoRA r=64, same data, frames, steps, seed; VGGT frozen, computed on the fly on the 8
-training frames (the 128-frame cache in `data/vggt/` is a different joint pass and only serves the sampler).
+All arms: Qwen3.5-4B (first on Qwen3.5-2B), LoRA r=64, same data, frames (as images), steps, seed; VGGT frozen, part of the model
+and computed on the fly on the 8 training frames (the 128-frame cache in `data/vggt/` is a different joint pass and only serves the sampler).
 
 | # | Arm | New trainable weights (excl. LoRA), 4B / 2B | Purpose |
 |---|---|---|---|
 | 0a | Qwen3.5-4B zero-shot, 8 frames | 0 | untuned baseline at the training frame count (not yet run) |
 | 0b | Qwen3.5-4B zero-shot, 32 frames | 0 | untuned baseline at the eval frame count (not yet run; 16-frame run = 48.3) |
 | 1 | Control 1: LoRA only, no geometry | 0 | data-only control (SpatialStack's 64.76 row) |
-| 2 | Control 2, matched additive: VGGT layer 23 → one shared SpatialStack-style merger → added to the visual-token slice at the same positions as the blocks | 44M / 42M | only the operator differs from arm 4; also SpatialStack's missing "one layer inside the LLM" ablation |
-| 3 | Published SpatialStack: VGGT 11/17/23 → three mergers → LLM layers 0/1/2 (their code) | 132M (measured) / 126M | reference to the paper, not a control |
+| 2 | Control 2, additive (pilot version, superseded above): VGGT layer 23 → one shared SpatialStack-style merger → added to the visual-token slice at the same positions as the blocks | 44M / 42M | pilot result: 42.5, 14 points below LoRA-only. Revised to SpatialStack's three mergers after layers 0–2 |
+| 3 | Published SpatialStack: VGGT 11/17/23 → three mergers → LLM layers 0/1/2 | 132M (measured) / 126M | **not retrained**: the reference numbers are the paper's 67.5 and our reproduction 67.53 of the released checkpoint (full fine-tuning on their 4-dataset mix, so not comparable to arms 1–4; decided 2026-10-24) |
 | 4 | Cross-attention: full Flamingo blocks (8 on the 4B, 6 on the 2B) + one 8-layer resampler at width 1024 | 735M / 407M | the hypothesis |
 
 Known limitation: on the 4B, arm 4 has 5.6× the new weights of arm 3 and 17× arm 2 (2B: 3.2× and 9.7×). A win
@@ -92,9 +110,10 @@ Basis: README kernel benchmark, frozen-model train step at 32 frames / 5k tokens
 VGGT 0.6 s and 8 GB for 32 frames on an H100. Assumptions: 4B MACs per token for the LLM, backward = 2× forward,
 linear scaling with tokens.
 
-- LLM step at 8 frames (≈1.3k tokens): ≈0.08 s B200 / 0.13 s H100. Blocks add ≈16% of LLM forward MACs, resampler
-  ≈4% at width 1024; with backward ≈ +20% → ≈0.10 / 0.16 s. The 2B is roughly half of all of this. VGGT forward at 8 frames ≈0.08 / 0.12 s (same in arms 2–4).
-- One epoch of 16.2k samples, batch 1, compute only: ≈55 min B200 / ≈80 min H100; 3 epochs ≈3–4 GPU-h per arm
+- LLM step at 8 frames as images (≈2.5k tokens per question): ≈0.16 s B200 / 0.25 s H100. Blocks add ≈16% of LLM forward MACs, resampler
+  ≈4% at width 1024; with backward ≈ +20% → ≈0.19 / 0.30 s. The 2B is roughly half of all of this. VGGT forward at 8 frames ≈0.08 / 0.12 s (same in arms 2–4),
+  once per micro-batch of up to 8 questions, as is Qwen's vision encoder.
+- One epoch of 16.2k questions, compute only: ≈1.7 h B200 / ≈2.7 h H100; 3 epochs ≈5–8 GPU-h per arm
   before data loading and the Qwen vision encoder, which are not benchmarked for training.
 - Eval: Qwen3.5-4B zero-shot at 16 frames took 18 min on an H100 for 5,130 questions; the 1.1k subset at 32 frames
   ≈10 min per arm; MMSI with 2048 new tokens ≈2 h 10 min full (README) — consider a 500-question half for first results.
@@ -148,9 +167,12 @@ At 32-frame eval the input is 4× longer; the output is still 256 × D.
 - VLM-3R ScanNet QA: 51.8k VSI-Bench-template questions on 1,201 ScanNet videos, none in VSI-Bench. Tasks and raw
   counts: rel. direction 25,781, rel. distance 11,038, abs. distance 6,960, obj. size 4,234, counting 2,565, room size
   1,201. No route planning or appearance order. Cap 3k per task → ≈16.2k.
-- Prompts have no `<video>` placeholder ("These are frames of a video.\n..."); visual tokens go in front of the text,
-  as SpatialStack does. Thinking off (`enable_thinking=False`), as in SpatialStack's lmms-eval config.
-- 8 uniform frames per video; the same frames go to Qwen (640×480) and VGGT (518×392 for the resampler arm).
+- Prompts have no `<video>` placeholder ("These are frames of a video.\n..."); each frame is one image and the visual tokens go in
+  front of the text, as SpatialStack does. Thinking off (`enable_thinking=False`), as in SpatialStack's lmms-eval config. With thinking
+  off the template opens the assistant turn with `<think>\n\n</think>\n\n`; the training sequence is *prompt (generation prompt, thinking
+  off) + answer + `<|im_end|>`*, with the loss on the answer and `<|im_end|>` only, so training and inference see the same prefix.
+- 8 uniform frames per video; the same frames go to Qwen (640×480, 40×30 patches → 20×15 merged tokens per frame) and VGGT
+  (518×392 for the resampler arm; 560×420 = Qwen grid × 14 px for the additive arm, as in SpatialStack's `prepare_image_inputs`).
 - VGGT outputs are scale-normalised (VGGT Sec. 3.4: "we do not apply such normalization to the predictions ... we
   force it to learn the normalization"), so metric answers (abs. distance, size, room size) must be learned from data.
   VLM-3R attributes VGGT's weak room-size result (63.7 → 54.0, Table D) to this.
