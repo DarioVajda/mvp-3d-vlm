@@ -1,0 +1,88 @@
+{
+ "epoch": 5,
+ "step": 7625,
+ "ckpt": "results/train/2B_v4_xattn8L_nm1e-5/ckpt_epoch5.pt",
+ "dev_acc": 65.05,
+ "epochs": [
+  {
+   "epoch": 0.5,
+   "step": 762,
+   "dev_acc": 44.72222222222222,
+   "dev_acc/all": 43.85714285714285,
+   "dev_acc/appearance_order": 38.666666666666664,
+   "dev_loss": 0.7999090490206866
+  },
+  {
+   "epoch": 1,
+   "step": 1525,
+   "dev_acc": 54.577777777777776,
+   "dev_acc/all": 54.30476190476191,
+   "dev_acc/appearance_order": 52.666666666666664,
+   "dev_loss": 0.7207922277316241
+  },
+  {
+   "epoch": 1.5,
+   "step": 2287,
+   "dev_acc": 51.37777777777777,
+   "dev_acc/all": 51.18095238095237,
+   "dev_acc/appearance_order": 50.0,
+   "dev_loss": 0.7479468976947623
+  },
+  {
+   "epoch": 2,
+   "step": 3050,
+   "dev_acc": 54.1611111111111,
+   "dev_acc/all": 54.51904761904762,
+   "dev_acc/appearance_order": 56.666666666666664,
+   "dev_loss": 0.7122845287054358
+  },
+  {
+   "epoch": 2.5,
+   "step": 3812,
+   "dev_acc": 56.888888888888886,
+   "dev_acc/all": 56.57142857142856,
+   "dev_acc/appearance_order": 54.666666666666664,
+   "dev_loss": 0.70877793003136
+  },
+  {
+   "epoch": 3,
+   "step": 4575,
+   "dev_acc": 60.77777777777777,
+   "dev_acc/all": 60.09523809523808,
+   "dev_acc/appearance_order": 56.0,
+   "dev_loss": 0.6914680588413292
+  },
+  {
+   "epoch": 3.5,
+   "step": 5337,
+   "dev_acc": 60.072222222222216,
+   "dev_acc/all": 60.06190476190475,
+   "dev_acc/appearance_order": 60.0,
+   "dev_loss": 0.7327076226892606
+  },
+  {
+   "epoch": 4,
+   "step": 6100,
+   "dev_acc": 62.9,
+   "dev_acc/all": 62.0095238095238,
+   "dev_acc/appearance_order": 56.666666666666664,
+   "dev_loss": 0.7811293910926497
+  },
+  {
+   "epoch": 4.5,
+   "step": 6862,
+   "dev_acc": 64.7111111111111,
+   "dev_acc/all": 63.561904761904756,
+   "dev_acc/appearance_order": 56.666666666666664,
+   "dev_loss": 0.9005315216494278
+  },
+  {
+   "epoch": 5,
+   "step": 7625,
+   "dev_acc": 65.05,
+   "dev_acc/all": 64.04285714285713,
+   "dev_acc/appearance_order": 58.0,
+   "dev_loss": 0.9268944108989877
+  }
+ ]
+}

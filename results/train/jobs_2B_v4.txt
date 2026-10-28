@@ -1,0 +1,7 @@
+2B_v4_lora train 207886 eval 207887
+2B_v4_additive_nm1e-5 train 207888 eval 207889
+2B_v4_xattn2L_nm1e-5 train 207890 eval 207891
+2B_v4_xattn8L_nm1e-5 train 207892 eval 207893
+2B_v4_additive_nm3e-5 train 207894 eval 207895
+2B_v4_xattn2L_nm3e-5 train 207896 eval 207897
+2B_v4_xattn8L_nm3e-5 train 207898 eval 207899

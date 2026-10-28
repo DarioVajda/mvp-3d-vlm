@@ -1,0 +1,3 @@
+2B_v3_lora train 206880 eval 206881
+2B_v3_additive train 206882 eval 206883
+2B_v3_xattn train 206884 eval 206885

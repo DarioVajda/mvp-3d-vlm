@@ -1,0 +1,4 @@
+check 206907
+4B_v3_lora train 206908 eval 206909
+4B_v3_additive train 206910 eval 206911
+4B_v3_xattn train 206912 eval 206913
