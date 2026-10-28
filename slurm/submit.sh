@@ -21,8 +21,10 @@ cmd=$(printf '%q ' "$@")
 LOGS=$ROOT/logs${LOGDIR:+/$LOGDIR}
 mkdir -p "$LOGS"
 
-sbatch --parsable -p frida -A povejmo -c 16 --mem 128G -t 01:00:00 --gres gpu:1 \
+out=$(sbatch --parsable -p frida -A povejmo -c 16 --mem 128G -t 01:00:00 --gres gpu:1 \
     --constraint 'GPU_BRD:B300|GPU_BRD:B200' \
     -J mvp -o "$LOGS/%x_%j.out" "${opts[@]}" \
     --wrap "srun --export=ALL,MELLANOX_VISIBLE_DEVICES=none --container-image=$CONTAINER --container-mounts=/shared:/shared \
-        env HOME=$HOME PYTHONUNBUFFERED=1 bash -c 'cd $ROOT && export PATH=$ROOT/.venv/bin:\$PATH && echo [\$(hostname)] && $cmd'"
+        env HOME=$HOME PYTHONUNBUFFERED=1 bash -c 'cd $ROOT && export PATH=$ROOT/.venv/bin:\$PATH && echo [\$(hostname)] && $cmd'")
+# sbatch may print a cluster banner before the id; keep only the id (--parsable gives "id" or "id;cluster")
+echo "$out" | grep -oE '^[0-9]+' | tail -1
