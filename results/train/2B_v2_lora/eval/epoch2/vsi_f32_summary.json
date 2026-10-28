@@ -1,0 +1,23 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_v2_lora/ckpt_epoch2.pt",
+ "arm": "lora",
+ "nframes": 32,
+ "sampling": "qwen",
+ "vggt_root": "/shared/workspace/povejmo/math/projects/mvp/data/vggt",
+ "layout": "sit",
+ "system": "You are a helpful assistant.",
+ "fps": null,
+ "split": "full",
+ "n": 1000,
+ "object_counting": 69.8,
+ "object_abs_distance": 38.0,
+ "object_size_estimation": 60.90000000000001,
+ "room_size_estimation": 51.9,
+ "object_rel_distance": 59.0,
+ "object_rel_direction": 58.666666666666664,
+ "route_planning": 34.0,
+ "obj_appearance_order": 28.000000000000004,
+ "overall": 50.03333333333333
+}

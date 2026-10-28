@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_additive/ckpt_epoch3.pt",
+ "arm": "additive",
+ "n": 1000,
+ "Attribute (Appr.)": 25.8,
+ "Attribute (Meas.)": 29.7,
+ "MSR": 20.7,
+ "Motion (Cam.)": 18.9,
+ "Motion (Obj.)": 25.0,
+ "Positional Relationship (Cam.\u2013Cam.)": 28.0,
+ "Positional Relationship (Cam.\u2013Obj.)": 31.4,
+ "Positional Relationship (Cam.\u2013Reg.)": 30.1,
+ "Positional Relationship (Obj.\u2013Obj.)": 33.0,
+ "Positional Relationship (Obj.\u2013Reg.)": 23.5,
+ "Positional Relationship (Reg.\u2013Reg.)": 27.2,
+ "overall": 26.1,
+ "parse_rate": 98.4
+}

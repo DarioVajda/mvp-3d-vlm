@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": null,
+ "arm": "base",
+ "n": 1000,
+ "Attribute (Appr.)": 19.7,
+ "Attribute (Meas.)": 39.1,
+ "MSR": 25.3,
+ "Motion (Cam.)": 21.6,
+ "Motion (Obj.)": 25.0,
+ "Positional Relationship (Cam.\u2013Cam.)": 31.2,
+ "Positional Relationship (Cam.\u2013Obj.)": 23.3,
+ "Positional Relationship (Cam.\u2013Reg.)": 25.3,
+ "Positional Relationship (Obj.\u2013Obj.)": 27.7,
+ "Positional Relationship (Obj.\u2013Reg.)": 27.1,
+ "Positional Relationship (Reg.\u2013Reg.)": 25.9,
+ "overall": 26.3,
+ "parse_rate": 99.7
+}
