@@ -13,4 +13,6 @@ pyarrow
 datasets
 huggingface_hub
 einops
+peft==0.21.2
 opencv-python-headless
+wandb==0.31.0
