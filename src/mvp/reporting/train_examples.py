@@ -7,6 +7,7 @@ drawn with SpatialStack's own draw_marker.py, as its training loader does. Light
 """
 import importlib.util
 import json
+import math
 import random
 import re
 from collections import defaultdict
@@ -36,6 +37,32 @@ SPAR_PICKS = [  # (source, task type)
     ("structured3d", "position_matching"), ("structured3d", "view_change_infer"),
     ("structured3d", "spatial_imagination_oc_mv"), ("structured3d", "spatial_volume_infer"),
 ]
+
+PIE_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]  # dataviz skill's categorical slots
+
+
+def pie_svg(counts):
+    """Pie of (label, count) pairs, largest first and clockwise from 12 o'clock, with a legend on the right."""
+    total, r, cx, cy = sum(n for _, n in counts), 120, 140, 140
+    parts, a0 = [], -math.pi / 2
+    for k, (label, n) in enumerate(counts):
+        a1 = a0 + 2 * math.pi * n / total
+        x0, y0, x1, y1 = cx + r * math.cos(a0), cy + r * math.sin(a0), cx + r * math.cos(a1), cy + r * math.sin(a1)
+        parts.append(f'<path d="M{cx},{cy} L{x0:.1f},{y0:.1f} A{r},{r} 0 {int(a1 - a0 > math.pi)} 1 {x1:.1f},{y1:.1f} Z" '
+                     f'fill="{PIE_COLORS[k]}" stroke="#fff" stroke-width="2"><title>{label}: {n:,}</title></path>')
+        if n / total >= 0.1:  # share inside the larger slices only (white on yellow is too faint)
+            am = (a0 + a1) / 2
+            parts.append(f'<text x="{cx + 0.65 * r * math.cos(am):.1f}" y="{cy + 0.65 * r * math.sin(am) + 5:.1f}" '
+                         f'text-anchor="middle" font-size="14" font-weight="600" fill="#fff">{n / total:.0%}</text>')
+        y = 62 + 30 * k
+        parts += [f'<rect x="300" y="{y - 11}" width="14" height="14" rx="3" fill="{PIE_COLORS[k]}"/>',
+                  f'<text x="322" y="{y + 1}" font-size="14" fill="#1a1a19">{label}</text>',
+                  f'<text x="560" y="{y + 1}" font-size="14" fill="#5f5e5a" text-anchor="end">'
+                  f'{n:,} ({n / total:.1%})</text>']
+        a0 = a1
+    return ('<svg xmlns="http://www.w3.org/2000/svg" width="580" height="280" viewBox="0 0 580 280" '
+            'font-family="system-ui, -apple-system, Segoe UI, sans-serif">'
+            '<rect width="580" height="280" fill="#fff"/>' + "".join(parts) + "</svg>\n")
 
 
 def load_draw_functions():
@@ -71,18 +98,31 @@ def qa(r):
 
 
 def scannet_section(rng):
-    md = ["## VLM-3R ScanNet QA", "", "VSI-Bench templates on 1,201 ScanNet videos; one example per task. "
-          "8 uniform frames shown.", ""]
+    md = ["## VLM-3R ScanNet QA", "", "VSI-Bench templates on 1,201 ScanNet videos; one example per task below "
+          "(click to expand), 8 uniform frames shown.", ""]
     data = json.load(open(TRAIN_ANN / "merged_qa_scannet_train.json"))
     by_task = defaultdict(list)
     for r in data:
         q = r["conversations"][0]["value"].lower()
         by_task[next((t for t, keys in VLM3R_TASKS if any(k in q for k in keys)), "other")].append(r)
-    for task, rs in sorted(by_task.items(), key=lambda kv: -len(kv[1])):
+    tasks = sorted(by_task.items(), key=lambda kv: -len(kv[1]))
+    (OUT / "vlm3r_tasks.svg").write_text(pie_svg([(t, len(rs)) for t, rs in tasks]))
+    md += [f"![Questions per task]({OUT.name}/vlm3r_tasks.svg)", ""]
+    md += ["| task | samples | share | videos | samples per video |", "|---|--:|--:|--:|--:|"]
+    for task, rs in tasks:
+        n_vid = len({r["video"] for r in rs})
+        md.append(f"| {task} | {len(rs):,} | {len(rs) / len(data):.1%} | {n_vid:,} | {len(rs) / n_vid:.1f} |")
+    md += [f"| {task} | 0 | 0.0% | 0 | 0.0 |" for task in ["route_plan", "appearance_order"]]  # VSI-Bench tasks absent here
+    md += [f"| **total** | **{len(data):,}** | | **{len({r['video'] for r in data}):,}** | "
+           f"**{len(data) / len({r['video'] for r in data}):.1f}** |", "",
+           "rel_direction splits evenly over VSI-Bench's three difficulties (2, 3 or 4 options). "
+           "There are no route_plan or appearance_order questions (the latter come from VSI-590K, below).", ""]
+    for task, rs in tasks:
         r = rng.choice(rs)
         name = f"vlm3r_{task}.jpg"
         frame_grid(str(TRAIN_MEDIA / r["video"])).save(OUT / name, quality=85)
-        md += [f"### {task} ({len(rs):,} samples): `{r['video']}`", "", f"![]({OUT.name}/{name})", "", *qa(r)]
+        md += ["<details>", f"<summary><b>{task}</b> ({len(rs):,} samples): <code>{r['video']}</code></summary>", "",
+               f"![]({OUT.name}/{name})", "", *qa(r), "</details>", ""]
 
     md += ["## VSI-590K appearance order", "", "Same ScanNet videos. The annotations' paths lack `videos/`, "
            "so they are rewritten here.", ""]

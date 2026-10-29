@@ -4,9 +4,26 @@ SpatialStack's training mix (annotations in `data/raw/SpatialStackData/`, media 
 
 ## VLM-3R ScanNet QA
 
-VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform frames shown.
+VSI-Bench templates on 1,201 ScanNet videos; one example per task below (click to expand), 8 uniform frames shown.
 
-### rel_direction (25,781 samples): `scannet/videos/scene0271_00.mp4`
+![Questions per task](training_data_examples/vlm3r_tasks.svg)
+
+| task | samples | share | videos | samples per video |
+|---|--:|--:|--:|--:|
+| rel_direction | 25,781 | 49.8% | 587 | 43.9 |
+| rel_distance | 11,038 | 21.3% | 579 | 19.1 |
+| abs_distance | 6,960 | 13.4% | 905 | 7.7 |
+| obj_size | 4,234 | 8.2% | 1,123 | 3.8 |
+| counting | 2,565 | 5.0% | 1,008 | 2.5 |
+| room_size | 1,201 | 2.3% | 1,201 | 1.0 |
+| route_plan | 0 | 0.0% | 0 | 0.0 |
+| appearance_order | 0 | 0.0% | 0 | 0.0 |
+| **total** | **51,779** | | **1,201** | **43.1** |
+
+rel_direction splits evenly over VSI-Bench's three difficulties (2, 3 or 4 options). There are no route_plan or appearance_order questions (the latter come from VSI-590K, below).
+
+<details>
+<summary><b>rel_direction</b> (25,781 samples): <code>scannet/videos/scene0271_00.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_rel_direction.jpg)
 
@@ -14,7 +31,10 @@ VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform fra
 
 **A:** A
 
-### rel_distance (11,038 samples): `scannet/videos/scene0261_01.mp4`
+</details>
+
+<details>
+<summary><b>rel_distance</b> (11,038 samples): <code>scannet/videos/scene0261_01.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_rel_distance.jpg)
 
@@ -22,7 +42,10 @@ VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform fra
 
 **A:** B
 
-### abs_distance (6,960 samples): `scannet/videos/scene0263_00.mp4`
+</details>
+
+<details>
+<summary><b>abs_distance</b> (6,960 samples): <code>scannet/videos/scene0263_00.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_abs_distance.jpg)
 
@@ -30,7 +53,10 @@ VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform fra
 
 **A:** 0.5
 
-### obj_size (4,234 samples): `scannet/videos/scene0270_01.mp4`
+</details>
+
+<details>
+<summary><b>obj_size</b> (4,234 samples): <code>scannet/videos/scene0270_01.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_obj_size.jpg)
 
@@ -38,7 +64,10 @@ VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform fra
 
 **A:** 38
 
-### counting (2,565 samples): `scannet/videos/scene0168_00.mp4`
+</details>
+
+<details>
+<summary><b>counting</b> (2,565 samples): <code>scannet/videos/scene0168_00.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_counting.jpg)
 
@@ -46,13 +75,18 @@ VSI-Bench templates on 1,201 ScanNet videos; one example per task. 8 uniform fra
 
 **A:** 9
 
-### room_size (1,201 samples): `scannet/videos/scene0106_01.mp4`
+</details>
+
+<details>
+<summary><b>room_size</b> (1,201 samples): <code>scannet/videos/scene0106_01.mp4</code></summary>
 
 ![](training_data_examples/vlm3r_room_size.jpg)
 
 **Q:** These are frames of a video.<br>What is the size of this room (in square meters)? <br>If multiple rooms are shown, estimate the size of the combined space.<br>Please answer the question using a single word or phrase.
 
 **A:** 37.3
+
+</details>
 
 ## VSI-590K appearance order
 
