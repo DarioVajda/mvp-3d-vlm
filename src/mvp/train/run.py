@@ -44,6 +44,10 @@ from mvp.paths import ROOT
 from mvp.train.data import MicroBatches, epoch_plan, load_appearance, load_vlm3r, rank_steps, score_answer, to_device
 
 
+def is_slope(name):
+    return name.startswith("aligned.") and name.rsplit(".", 1)[-1] in ("lam", "mu")
+
+
 def parse():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
@@ -70,6 +74,14 @@ def parse():
     ap.add_argument("--ao-dev-q", type=int, default=150, help="max appearance-order dev questions")
     ap.add_argument("--ao-cap", type=int, default=None, help="max appearance-order train questions (smoke tests)")
     ap.add_argument("--resampler-layers", type=int, default=8, help="Perceiver resampler depth (xattn arm)")
+    ap.add_argument("--rope3", action=argparse.BooleanOptionalAction, default=True,
+                    help="xattn_aligned: 3-axis RoPE on (frame, row, col) of queries and keys")
+    ap.add_argument("--local-bias", action=argparse.BooleanOptionalAction, default=True,
+                    help="xattn_aligned: learned locality bias -lam*(|dr|+|dc|) - mu*[other frame] on the logits")
+    ap.add_argument("--bias-lam", type=float, default=1.5, help="xattn_aligned: initial lam (per head)")
+    ap.add_argument("--bias-mu", type=float, default=3.0, help="xattn_aligned: initial mu (per head)")
+    ap.add_argument("--bias-lr", type=float, default=1e-3, help="xattn_aligned: lr of the lam / mu slopes (Adam moves a "
+                    "parameter by about lr per step, so at the 1e-5 module lr they would stay at their init)")
     ap.add_argument("--lora-r", type=int, default=64)
     ap.add_argument("--lora-alpha", type=int, default=128)
     ap.add_argument("--lora-dropout", type=float, default=0.05)
@@ -106,7 +118,9 @@ def main():
     torch.manual_seed(args.seed)  # same init of the new modules on every rank (DDP also broadcasts rank 0's)
     model = FusionVL(args.model, args.arm, lora_r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                      vggt_layers=args.vggt_layers, fusion_after=args.fusion_after, gate=args.gate,
-                     special_tokens=args.special_tokens, resampler_layers=args.resampler_layers, pixels=TRAIN_PIXELS,
+                     special_tokens=args.special_tokens, resampler_layers=args.resampler_layers, rope3=args.rope3,
+                     local_bias=args.local_bias, bias_lam=args.bias_lam, bias_mu=args.bias_mu, train_frames=args.nframes,
+                     pixels=TRAIN_PIXELS,
                      grad_ckpt=not args.no_grad_ckpt).to(dev)
     model.train()
     params = [p for p in model.parameters() if p.requires_grad]
@@ -134,11 +148,14 @@ def main():
     warm = max(1, round(args.warmup * total))
     groups = []  # LoRA at lr, new modules at fusion_lr; no decay on biases and norm weights (1-d), as in HF's Trainer
     for is_lora, lr in ((True, args.lr), (False, args.fusion_lr or args.lr)):
-        ps = [p for n, p in model.named_parameters() if p.requires_grad and ("lora_" in n) == is_lora]
+        ps = [p for n, p in model.named_parameters() if p.requires_grad and ("lora_" in n) == is_lora and not is_slope(n)]
         for decay in (True, False):
             sub = [p for p in ps if (p.ndim > 1) == decay]
             if sub:
                 groups.append({"params": sub, "lr": lr, "weight_decay": args.weight_decay if decay else 0.0})
+    slopes = [p for n, p in model.named_parameters() if p.requires_grad and is_slope(n)]
+    if slopes:  # xattn_aligned locality-bias slopes: own lr, no decay
+        groups.append({"params": slopes, "lr": args.bias_lr, "weight_decay": 0.0})
     opt = torch.optim.AdamW(groups, lr=args.lr, weight_decay=args.weight_decay)
     floor = args.min_lr
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: (s + 1) / warm if s < warm else floor + (1 - floor) *
@@ -165,9 +182,11 @@ def main():
         tot = torch.zeros(2, device=dev)  # loss sum, questions
         with torch.no_grad():
             loader_dev = DataLoader(MicroBatches(dev_mbs, model.inputs, args.nframes), batch_size=None, num_workers=2)
-            for qs, b in zip(dev_mbs, loader_dev):
+            for i, (qs, b) in enumerate(zip(dev_mbs, loader_dev)):
                 b = to_device(b, dev)
+                model.collect_attn = generate and i == 0  # xattn_aligned: attention diagnostics on one micro-batch
                 per_q = model(b)
+                model.collect_attn = False
                 tot += torch.tensor([per_q.sum().item(), len(per_q)], device=dev)
                 if generate:
                     gb = {k: b[k] for k in ("pixel_values", "image_grid_thw", "vggt_images")}
@@ -185,6 +204,9 @@ def main():
                 for t, v in g.items():
                     acc.setdefault(t, []).extend(v)
         res = {"dev_loss": tot[0].item() / max(1, tot[1].item())}
+        if generate and model.attn_stats:  # rank 0's micro-batch
+            res.update({f"attn/{k}_{s}": v for k, st in model.attn_stats.items() for s, v in st.items()})
+            model.attn_stats = {}
         if generate:
             per = {t: 100 * sum(v) / len(v) for t, v in sorted(acc.items())}
             vlm3r = [v for t, v in per.items() if t != "appearance_order"]
@@ -242,10 +264,13 @@ def main():
                        "grad_norm": gnorm.item(), "questions": int(stats[1].item()), "tokens": int(stats[2].item()),
                        "step_time": time.time() - t0, "peak_mem_gb": torch.cuda.max_memory_allocated(dev) / 2**30,
                        "elapsed": time.time() - t_start, "gates": model.gates(), "inject": dict(model.stats)}
+                if model.bias_slopes():
+                    rec["bias"] = model.bias_slopes()
                 log.write(json.dumps(rec) + "\n")
                 log.flush()
                 if run is not None:
-                    flat = {k: v for k, v in rec.items() if k not in ("gates", "inject")}
+                    flat = {k: v for k, v in rec.items() if k not in ("gates", "inject", "bias")}
+                    flat.update({f"bias/{i}_{k}": v for i, g in rec.get("bias", {}).items() for k, v in g.items()})
                     flat.update({f"gates/{i}_{k}": v for i, g in rec["gates"].items() for k, v in g.items()})
                     flat.update({f"inject/{i}": v for i, v in rec["inject"].items()})
                     run.log(flat, step=step)
@@ -253,6 +278,7 @@ def main():
                     g = rec["gates"]
                     gs = f" gates xattn {min(v['xattn'] for v in g.values()):+.4f}..{max(v['xattn'] for v in g.values()):+.4f}" if g else ""
                     gs += " inject " + " ".join(f"{i}:{v:.3f}" for i, v in rec["inject"].items()) if rec["inject"] else ""
+                    gs += " lam/mu " + " ".join(f"{i}:{v['lam']:.2f}/{v['mu']:.2f}" for i, v in rec["bias"].items()) if "bias" in rec else ""
                     print(f"step {step}/{total} ep {epoch} loss {rec['loss']:.4f} lr {rec['lr']:.2e} gnorm {rec['grad_norm']:.3f} "
                           f"q {rec['questions']} tok {rec['tokens']} {rec['step_time']:.2f}s mem {rec['peak_mem_gb']:.1f}G{gs}", flush=True)
             k = next((k for k in range(1, args.evals_per_epoch) if step == epoch * steps_per_epoch + marks[k]), None)

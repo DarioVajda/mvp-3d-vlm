@@ -7,6 +7,9 @@ Arms:
             to the output of decoder layer k (control 2)
   xattn     same inputs and injection points, with the merger replaced by PerceiverResampler(VGGT layer L_k) +
             a cross-attention block whose output is added to the output of decoder layer k (arm 4)
+  xattn_aligned  the additive arm's mergers (not zero-initialised), read through AlignedXAttn: each visual token
+            attends over all geometry tokens of the video instead of receiving its own one by addition; options
+            rope3 (3-axis RoPE on frame, row, col) and local_bias (learned locality bias, init lam, mu)
 
 Defaults follow the released SpatialStack checkpoint: VGGT layers (11, 17, 23) paired in order with decoder layers
 (0, 1, 2) (their geometry_encoder_layers / geometry_fusion_layers). The fusion runs in a forward hook on those decoder
@@ -29,9 +32,9 @@ from transformers import AutoModelForImageTextToText, AutoProcessor
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 from mvp.fusion.inputs import EVAL_PIXELS, InputBuilder
-from mvp.fusion.modules import AdditiveMerger, GatedXAttnDense, PerceiverResampler
+from mvp.fusion.modules import AdditiveMerger, AlignedXAttn, GatedXAttnDense, PerceiverResampler
 
-ARMS = ("base", "lora", "additive", "xattn")
+ARMS = ("base", "lora", "additive", "xattn", "xattn_aligned")
 # All linear layers of the language model except Gated DeltaNet's in_proj_a / in_proj_b, which output one scalar per
 # head (16-32 wide), narrower than the rank
 LORA_TARGETS = (r".*layers\.\d+\.(self_attn\.(q|k|v|o)_proj|linear_attn\.(in_proj_qkv|in_proj_z|out_proj)"
@@ -42,7 +45,8 @@ VGGT_ID = "facebook/VGGT-1B"
 class FusionVL(nn.Module):
     def __init__(self, model_id, arm, lora_r=64, lora_alpha=128, lora_dropout=0.05, vggt_layers=(11, 17, 23),
                  fusion_after=(0, 1, 2), gate="none", resampler_dim=1024, resampler_layers=8, resampler_heads=8,
-                 num_latents=256, special_tokens=False, pixels=None, grad_ckpt=False):
+                 num_latents=256, special_tokens=False, rope3=True, local_bias=True, bias_lam=1.5, bias_mu=3.0,
+                 train_frames=8, pixels=None, grad_ckpt=False):
         super().__init__()
         assert arm in ARMS, arm
         pixels = pixels or EVAL_PIXELS
@@ -59,6 +63,9 @@ class FusionVL(nn.Module):
                            vggt_layers=vggt_layers, fusion_after=fusion_after, gate=gate, resampler_dim=resampler_dim,
                            resampler_layers=resampler_layers, resampler_heads=resampler_heads, num_latents=num_latents,
                            special_tokens=special_tokens)
+        if arm == "xattn_aligned":
+            self.config.update(rope3=rope3, local_bias=local_bias, bias_lam=bias_lam, bias_mu=bias_mu,
+                               train_frames=train_frames)
         self.arm = arm
         self.pairs = dict(zip(fusion_after, vggt_layers))  # decoder layer k -> VGGT layer whose features it receives
         self.processor = AutoProcessor.from_pretrained(model_id, **pixels)
@@ -75,7 +82,7 @@ class FusionVL(nn.Module):
                     p.requires_grad_(True)
 
         self.vggt = None
-        if arm in ("additive", "xattn"):
+        if arm in ("additive", "xattn", "xattn_aligned"):
             from vggt.models.vggt import VGGT
             self.vggt = VGGT.from_pretrained(VGGT_ID).aggregator  # the heads are not needed
             self.vggt.cached_layer_indices = set(vggt_layers)  # keep only the layers we read
@@ -87,11 +94,18 @@ class FusionVL(nn.Module):
             self.blocks = nn.ModuleDict({k: GatedXAttnDense(D, D // 128, gate) for k in keys})
         if arm == "additive":
             self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D) for k in keys})
+        if arm == "xattn_aligned":
+            self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D, zero_init=False) for k in keys})
+            self.aligned = nn.ModuleDict({k: AlignedXAttn(D, D // 128, rope3, local_bias, bias_lam, bias_mu, train_frames)
+                                          for k in keys})
+        self._pos = None          # xattn_aligned: (t, r, c) of the current video's visual tokens [N, 3]
+        self.collect_attn = False  # xattn_aligned: record AlignedXAttn.attn_stats on the next forward (dev diagnostics)
+        self.attn_stats = {}
 
         self._geo = None          # geometry of the current video per injection point: {k: latents [L, D] or merged tokens [N_visual, D]}
         self._visual_mask = None  # [B, T] visual-token positions of the current forward's input_ids
         self.stats = {}           # {k: ||added||/||h|| of the last forward}, how far the injection point has opened
-        if arm in ("additive", "xattn"):
+        if arm in ("additive", "xattn", "xattn_aligned"):
             layers = self.qwen.model.language_model.layers
             for k in fusion_after:
                 layers[k].register_forward_hook(self._make_hook(str(k)))
@@ -133,6 +147,8 @@ class FusionVL(nn.Module):
                     self._geo[str(k)] = self.resamplers[str(k)](x)
                 else:
                     self._geo[str(k)] = torch.cat([self.mergers[str(k)](p) for _, p in frames])
+        if self.arm == "xattn_aligned":
+            self._pos = AlignedXAttn.positions(batch["image_grid_thw"], self.inputs.merge)
 
     def _capture_ids(self, module, args, kwargs):
         ids = kwargs.get("input_ids", args[0] if args else None)
@@ -156,7 +172,13 @@ class FusionVL(nn.Module):
                     n = int(m[0].sum())
                     assert n == len(geo) and bool((m.sum(1) == n).all()), "visual tokens != VGGT windows"
                     delta = torch.zeros_like(h)
-                    delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
+                    if self.arm == "xattn_aligned":  # visual tokens attend over the geometry tokens of the video
+                        y = h[m].view(h.shape[0], n, -1)
+                        if self.collect_attn and not torch.is_grad_enabled():
+                            self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos)
+                        delta[m] = self.aligned[key](y, geo, self._pos).reshape(-1, h.shape[-1]).to(h.dtype)
+                    else:
+                        delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
                     new = h + delta
                     ref = h[m]
                 if torch.is_grad_enabled() or not self.training:
@@ -212,12 +234,20 @@ class FusionVL(nn.Module):
             return {}
         return {k: g for k, b in self.blocks.items() if (g := b.gates())}
 
+    def bias_slopes(self):
+        """xattn_aligned with local_bias: {k: {"lam": mean over heads, "mu": ...}} of the learned locality slopes."""
+        if self.arm != "xattn_aligned" or not self.config["local_bias"]:
+            return {}
+        return {k: {"lam": b.lam.mean().item(), "mu": b.mu.mean().item()} for k, b in self.aligned.items()}
+
     def fusion_modules(self):
         """{k: the new module(s) at injection point k}, for diagnostics."""
         if self.arm == "xattn":
             return {k: (self.resamplers[k], self.blocks[k]) for k in self.blocks}
         if self.arm == "additive":
             return {k: (self.mergers[k],) for k in self.mergers}
+        if self.arm == "xattn_aligned":
+            return {k: (self.mergers[k], self.aligned[k]) for k in self.mergers}
         return {}
 
     def trainable_state(self):
