@@ -1,0 +1,88 @@
+{
+ "epoch": 5,
+ "step": 7625,
+ "ckpt": "results/train/2B_xa_bias/ckpt_epoch5.pt",
+ "dev_acc": 73.89999999999999,
+ "epochs": [
+  {
+   "epoch": 0.5,
+   "step": 762,
+   "dev_acc": 53.31666666666666,
+   "dev_acc/all": 53.31904761904762,
+   "dev_acc/appearance_order": 53.333333333333336,
+   "dev_loss": 0.7255735585387324
+  },
+  {
+   "epoch": 1,
+   "step": 1525,
+   "dev_acc": 55.833333333333336,
+   "dev_acc/all": 55.76190476190476,
+   "dev_acc/appearance_order": 55.333333333333336,
+   "dev_loss": 0.6897351332113777
+  },
+  {
+   "epoch": 1.5,
+   "step": 2287,
+   "dev_acc": 56.87777777777779,
+   "dev_acc/all": 57.89523809523809,
+   "dev_acc/appearance_order": 64.0,
+   "dev_loss": 0.7061435753191021
+  },
+  {
+   "epoch": 2,
+   "step": 3050,
+   "dev_acc": 61.311111111111096,
+   "dev_acc/all": 61.40952380952381,
+   "dev_acc/appearance_order": 62.0,
+   "dev_loss": 0.6790232483769806
+  },
+  {
+   "epoch": 2.5,
+   "step": 3812,
+   "dev_acc": 62.85,
+   "dev_acc/all": 62.82380952380952,
+   "dev_acc/appearance_order": 62.666666666666664,
+   "dev_loss": 0.6549807266450264
+  },
+  {
+   "epoch": 3,
+   "step": 4575,
+   "dev_acc": 66.3,
+   "dev_acc/all": 65.2095238095238,
+   "dev_acc/appearance_order": 58.666666666666664,
+   "dev_loss": 0.6968887973839129
+  },
+  {
+   "epoch": 3.5,
+   "step": 5337,
+   "dev_acc": 67.46666666666665,
+   "dev_acc/all": 66.59047619047618,
+   "dev_acc/appearance_order": 61.333333333333336,
+   "dev_loss": 0.710486054756272
+  },
+  {
+   "epoch": 4,
+   "step": 6100,
+   "dev_acc": 71.53333333333332,
+   "dev_acc/all": 70.07619047619048,
+   "dev_acc/appearance_order": 61.333333333333336,
+   "dev_loss": 0.7546661806778169
+  },
+  {
+   "epoch": 4.5,
+   "step": 6862,
+   "dev_acc": 72.9111111111111,
+   "dev_acc/all": 71.35238095238095,
+   "dev_acc/appearance_order": 62.0,
+   "dev_loss": 0.8764974244883362
+  },
+  {
+   "epoch": 5,
+   "step": 7625,
+   "dev_acc": 73.89999999999999,
+   "dev_acc/all": 71.72380952380952,
+   "dev_acc/appearance_order": 58.666666666666664,
+   "dev_loss": 0.8510920135068222
+  }
+ ]
+}

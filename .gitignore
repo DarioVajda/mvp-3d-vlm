@@ -86,3 +86,9 @@ results/baselines/vg_llm/*_merged/per_question.jsonl
 wandb/
 results/train/**/*.pt
 results/train/**/wandb/
+# training runs: keep args, best-epoch dev metrics and eval summaries; drop per-step logs, per-question predictions,
+# dev ids and environment freezes
+results/train/**/log.jsonl
+results/train/**/dev_ids.txt
+results/train/**/freeze.txt
+results/train/**/eval/**/*.jsonl
