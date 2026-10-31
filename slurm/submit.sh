@@ -9,6 +9,8 @@
 # The command runs from the project root; the log goes to logs/<job name>_<job id>.out, or to
 # logs/<LOGDIR>/<job name>_<job id>.out with LOGDIR set (e.g. LOGDIR=baselines/vg_llm slurm/submit.sh ...).
 # Prints the job id.
+# Hugging Face caches go to the group's shared cache, never to ~/.cache/huggingface; HF_HOME
+# stays at home so the token stays private. pip runs without a cache.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 CONTAINER=/shared/workspace/povejmo/containers/transformers_deepspeed_latest.sqsh
@@ -25,6 +27,8 @@ out=$(sbatch --parsable -p frida -A povejmo -c 16 --mem 128G -t 01:00:00 --gres 
     --constraint 'GPU_BRD:B300|GPU_BRD:B200' \
     -J mvp -o "$LOGS/%x_%j.out" "${opts[@]}" \
     --wrap "srun --export=ALL,MELLANOX_VISIBLE_DEVICES=none --container-image=$CONTAINER --container-mounts=/shared:/shared \
-        env HOME=$HOME PYTHONUNBUFFERED=1 bash -c 'cd $ROOT && export PATH=$ROOT/.venv/bin:\$PATH && echo [\$(hostname)] && $cmd'")
+        env HOME=$HOME PYTHONUNBUFFERED=1 \
+        HF_HUB_CACHE=/shared/workspace/povejmo/huggingface_cache/hub HF_DATASETS_CACHE=/shared/workspace/povejmo/huggingface_cache/datasets HF_XET_CACHE=/shared/workspace/povejmo/huggingface_cache/xet HF_ASSETS_CACHE=/shared/workspace/povejmo/huggingface_cache/assets PIP_NO_CACHE_DIR=1 \
+        bash -c 'cd $ROOT && export PATH=$ROOT/.venv/bin:\$PATH && echo [\$(hostname)] && $cmd'")
 # sbatch may print a cluster banner before the id; keep only the id (--parsable gives "id" or "id;cluster")
 echo "$out" | grep -oE '^[0-9]+' | tail -1
