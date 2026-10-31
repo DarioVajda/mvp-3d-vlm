@@ -1,0 +1,88 @@
+{
+ "epoch": 4.5,
+ "step": 6862,
+ "ckpt": "results/train/2B_v4_additive_nm1e-5_s1/ckpt_epoch4.5.pt",
+ "dev_acc": 73.12222222222222,
+ "epochs": [
+  {
+   "epoch": 0.5,
+   "step": 762,
+   "dev_acc": 58.883333333333326,
+   "dev_acc/all": 58.94761904761905,
+   "dev_acc/appearance_order": 59.333333333333336,
+   "dev_loss": 0.6984051341741857
+  },
+  {
+   "epoch": 1,
+   "step": 1525,
+   "dev_acc": 58.17222222222222,
+   "dev_acc/all": 57.09999999999999,
+   "dev_acc/appearance_order": 50.666666666666664,
+   "dev_loss": 0.7229242888974472
+  },
+  {
+   "epoch": 1.5,
+   "step": 2287,
+   "dev_acc": 62.9,
+   "dev_acc/all": 61.81904761904762,
+   "dev_acc/appearance_order": 55.333333333333336,
+   "dev_loss": 0.6801122960909991
+  },
+  {
+   "epoch": 2,
+   "step": 3050,
+   "dev_acc": 63.51111111111112,
+   "dev_acc/all": 62.43809523809523,
+   "dev_acc/appearance_order": 56.0,
+   "dev_loss": 0.6864000347298636
+  },
+  {
+   "epoch": 2.5,
+   "step": 3812,
+   "dev_acc": 65.10000000000001,
+   "dev_acc/all": 64.08571428571429,
+   "dev_acc/appearance_order": 58.0,
+   "dev_loss": 0.6876580036861796
+  },
+  {
+   "epoch": 3,
+   "step": 4575,
+   "dev_acc": 67.36666666666666,
+   "dev_acc/all": 65.93333333333334,
+   "dev_acc/appearance_order": 57.333333333333336,
+   "dev_loss": 0.6892741028691681
+  },
+  {
+   "epoch": 3.5,
+   "step": 5337,
+   "dev_acc": 70.38333333333334,
+   "dev_acc/all": 69.18571428571428,
+   "dev_acc/appearance_order": 62.0,
+   "dev_loss": 0.7209984148052376
+  },
+  {
+   "epoch": 4,
+   "step": 6100,
+   "dev_acc": 71.67777777777778,
+   "dev_acc/all": 70.2,
+   "dev_acc/appearance_order": 61.333333333333336,
+   "dev_loss": 0.7222441337477993
+  },
+  {
+   "epoch": 4.5,
+   "step": 6862,
+   "dev_acc": 73.12222222222222,
+   "dev_acc/all": 70.86666666666666,
+   "dev_acc/appearance_order": 57.333333333333336,
+   "dev_loss": 0.8666275239326584
+  },
+  {
+   "epoch": 5,
+   "step": 7625,
+   "dev_acc": 72.78333333333333,
+   "dev_acc/all": 70.76666666666667,
+   "dev_acc/appearance_order": 58.666666666666664,
+   "dev_loss": 0.8756274585992517
+  }
+ ]
+}
