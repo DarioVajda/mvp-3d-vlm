@@ -9,7 +9,9 @@ Arms:
             a cross-attention block whose output is added to the output of decoder layer k (arm 4)
   xattn_aligned  the additive arm's mergers (not zero-initialised), read through AlignedXAttn: each visual token
             attends over all geometry tokens of the video instead of receiving its own one by addition; options
-            rope3 (3-axis RoPE on frame, row, col) and local_bias (learned locality bias, init lam, mu)
+            rope3 (3-axis RoPE on frame, row, col) and local_bias (learned locality bias, init lam, mu); pe="3d"
+            makes both 3D (RoPE on frame, x, y, z and a 3D-distance bias, init nu) from VGGT's point head, which is
+            then loaded too (mvp.fusion.points)
 
 Defaults follow the released SpatialStack checkpoint: VGGT layers (11, 17, 23) paired in order with decoder layers
 (0, 1, 2) (their geometry_encoder_layers / geometry_fusion_layers). The fusion runs in a forward hook on those decoder
@@ -33,6 +35,7 @@ from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 from mvp.fusion.inputs import EVAL_PIXELS, InputBuilder
 from mvp.fusion.modules import AdditiveMerger, AlignedXAttn, GatedXAttnDense, PerceiverResampler
+from mvp.fusion.points import cell_points
 
 ARMS = ("base", "lora", "additive", "xattn", "xattn_aligned")
 # All linear layers of the language model except Gated DeltaNet's in_proj_a / in_proj_b, which output one scalar per
@@ -46,7 +49,7 @@ class FusionVL(nn.Module):
     def __init__(self, model_id, arm, lora_r=64, lora_alpha=128, lora_dropout=0.05, vggt_layers=(11, 17, 23),
                  fusion_after=(0, 1, 2), gate="none", resampler_dim=1024, resampler_layers=8, resampler_heads=8,
                  num_latents=256, special_tokens=False, rope3=True, local_bias=True, bias_lam=1.5, bias_mu=3.0,
-                 train_frames=8, pixels=None, grad_ckpt=False):
+                 train_frames=8, pe="grid", bias_nu=1.5, pe_dmax=10.0, pixels=None, grad_ckpt=False):
         super().__init__()
         assert arm in ARMS, arm
         pixels = pixels or EVAL_PIXELS
@@ -66,6 +69,9 @@ class FusionVL(nn.Module):
         if arm == "xattn_aligned":
             self.config.update(rope3=rope3, local_bias=local_bias, bias_lam=bias_lam, bias_mu=bias_mu,
                                train_frames=train_frames)
+            if pe != "grid":  # v5 (grid) configs stay as they were
+                self.config.update(pe=pe, bias_nu=bias_nu, pe_dmax=pe_dmax)
+        self.pe, self.pe_dmax = (pe, pe_dmax) if arm == "xattn_aligned" else ("grid", pe_dmax)
         self.arm = arm
         self.pairs = dict(zip(fusion_after, vggt_layers))  # decoder layer k -> VGGT layer whose features it receives
         self.processor = AutoProcessor.from_pretrained(model_id, **pixels)
@@ -81,12 +87,17 @@ class FusionVL(nn.Module):
                     p.data = p.data.float()  # fp32 trainable weights; matmuls run under bf16 autocast
                     p.requires_grad_(True)
 
-        self.vggt = None
+        self.vggt = self.point_head = None
         if arm in ("additive", "xattn", "xattn_aligned"):
             from vggt.models.vggt import VGGT
-            self.vggt = VGGT.from_pretrained(VGGT_ID).aggregator  # the heads are not needed
+            full = VGGT.from_pretrained(VGGT_ID)
+            self.vggt = full.aggregator  # the other heads are not needed
             self.vggt.cached_layer_indices = set(vggt_layers)  # keep only the layers we read
             self.vggt.requires_grad_(False).eval()
+            if self.pe == "3d":  # per-pixel 3D points for the 3D position signals; reads aggregator layers 4/11/17/23
+                self.point_head = full.point_head.requires_grad_(False).eval()
+                self.vggt.cached_layer_indices |= set(self.point_head.intermediate_layer_idx)
+            del full
         keys = [str(k) for k in fusion_after]
         if arm == "xattn":
             self.resamplers = nn.ModuleDict({k: PerceiverResampler(2048, resampler_dim, D, num_latents, resampler_layers,
@@ -96,9 +107,10 @@ class FusionVL(nn.Module):
             self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D) for k in keys})
         if arm == "xattn_aligned":
             self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D, zero_init=False) for k in keys})
-            self.aligned = nn.ModuleDict({k: AlignedXAttn(D, D // 128, rope3, local_bias, bias_lam, bias_mu, train_frames)
-                                          for k in keys})
+            self.aligned = nn.ModuleDict({k: AlignedXAttn(D, D // 128, rope3, local_bias, bias_lam, bias_mu, train_frames,
+                                                          pe=pe, nu=bias_nu) for k in keys})
         self._pos = None          # xattn_aligned: (t, r, c) of the current video's visual tokens [N, 3]
+        self._pts = None          # xattn_aligned, pe="3d": ScenePoints of the current video's merged cells
         self.collect_attn = False  # xattn_aligned: record AlignedXAttn.attn_stats on the next forward (dev diagnostics)
         self.attn_stats = {}
 
@@ -120,23 +132,32 @@ class FusionVL(nn.Module):
         super().train(mode)
         if self.vggt is not None:
             self.vggt.eval()
+        if self.point_head is not None:
+            self.point_head.eval()
         return self
 
     @torch.no_grad()
     def vggt_frames(self, images, grid):
-        """{VGGT layer: per frame (special tokens [5, 2048], patch grid [h, w, 2048])} for the layers in use."""
+        """{VGGT layer: per frame (special tokens [5, 2048], patch grid [h, w, 2048])} for the layers in use, and the
+        ScenePoints of the merged cells when the point head is loaded (pe="3d"), else None."""
         with torch.autocast("cuda", dtype=torch.bfloat16):
             out, ps = self.vggt(images[None])
+        scene = None
+        if self.point_head is not None:  # fp32, as VGGT runs its heads (autocast off)
+            with torch.autocast("cuda", enabled=False):
+                toks = [o.float() if o is not None else None for o in out]
+                pts, conf = self.point_head(toks, images=images[None].float(), patch_start_idx=ps)
+            scene = cell_points(pts[0], conf[0], grid, self.pe_dmax, merge=self.inputs.merge)
         Hp, Wp = images.shape[-2] // 14, images.shape[-1] // 14
         res = {}
         for L in set(self.pairs.values()):
             tok = out[L][0]  # [T, 5 + P, 2048]
             patches = tok[:, ps:].reshape(len(tok), Hp, Wp, -1)
             res[L] = [(tok[t, :ps], patches[t, :h, :w]) for t, (_, h, w) in enumerate(grid.tolist())]
-        return res
+        return res, scene
 
     def set_geometry(self, batch):
-        per_layer = self.vggt_frames(batch["vggt_images"], batch["image_grid_thw"])
+        per_layer, self._pts = self.vggt_frames(batch["vggt_images"], batch["image_grid_thw"])
         self._geo = {}
         with torch.autocast("cuda", dtype=torch.bfloat16):
             for k, L in self.pairs.items():
@@ -175,8 +196,8 @@ class FusionVL(nn.Module):
                     if self.arm == "xattn_aligned":  # visual tokens attend over the geometry tokens of the video
                         y = h[m].view(h.shape[0], n, -1)
                         if self.collect_attn and not torch.is_grad_enabled():
-                            self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos)
-                        delta[m] = self.aligned[key](y, geo, self._pos).reshape(-1, h.shape[-1]).to(h.dtype)
+                            self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos, self._pts)
+                        delta[m] = self.aligned[key](y, geo, self._pos, self._pts).reshape(-1, h.shape[-1]).to(h.dtype)
                     else:
                         delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
                     new = h + delta
@@ -235,9 +256,12 @@ class FusionVL(nn.Module):
         return {k: g for k, b in self.blocks.items() if (g := b.gates())}
 
     def bias_slopes(self):
-        """xattn_aligned with local_bias: {k: {"lam": mean over heads, "mu": ...}} of the learned locality slopes."""
+        """xattn_aligned with local_bias: {k: {"lam": mean over heads, "mu": ...}} of the learned locality slopes, or
+        {k: {"nu": ...}} for the 3D-distance bias."""
         if self.arm != "xattn_aligned" or not self.config["local_bias"]:
             return {}
+        if self.pe == "3d":
+            return {k: {"nu": b.nu.mean().item()} for k, b in self.aligned.items()}
         return {k: {"lam": b.lam.mean().item(), "mu": b.mu.mean().item()} for k, b in self.aligned.items()}
 
     def fusion_modules(self):

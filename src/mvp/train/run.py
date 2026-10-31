@@ -45,7 +45,7 @@ from mvp.train.data import MicroBatches, epoch_plan, load_appearance, load_vlm3r
 
 
 def is_slope(name):
-    return name.startswith("aligned.") and name.rsplit(".", 1)[-1] in ("lam", "mu")
+    return name.startswith("aligned.") and name.rsplit(".", 1)[-1] in ("lam", "mu", "nu")
 
 
 def parse():
@@ -80,7 +80,12 @@ def parse():
                     help="xattn_aligned: learned locality bias -lam*(|dr|+|dc|) - mu*[other frame] on the logits")
     ap.add_argument("--bias-lam", type=float, default=1.5, help="xattn_aligned: initial lam (per head)")
     ap.add_argument("--bias-mu", type=float, default=3.0, help="xattn_aligned: initial mu (per head)")
-    ap.add_argument("--bias-lr", type=float, default=1e-3, help="xattn_aligned: lr of the lam / mu slopes (Adam moves a "
+    ap.add_argument("--pe", choices=["grid", "3d"], default="grid",
+                    help="xattn_aligned: position signals on the merged grid (t, r, c), or 3D from VGGT's point head: RoPE "
+                    "on (t, x, y, z) and a bias -nu*min(3D distance, --pe-dmax) in place of the grid/frame bias")
+    ap.add_argument("--bias-nu", type=float, default=1.5, help="xattn_aligned, --pe 3d: initial nu per head, per cell")
+    ap.add_argument("--pe-dmax", type=float, default=10.0, help="xattn_aligned, --pe 3d: distance clip, in cells")
+    ap.add_argument("--bias-lr", type=float, default=1e-3, help="xattn_aligned: lr of the lam / mu / nu slopes (Adam moves a "
                     "parameter by about lr per step, so at the 1e-5 module lr they would stay at their init)")
     ap.add_argument("--lora-r", type=int, default=64)
     ap.add_argument("--lora-alpha", type=int, default=128)
@@ -91,7 +96,10 @@ def parse():
     ap.add_argument("--special-tokens", action="store_true", help="xattn: also feed VGGT camera/register tokens")
     ap.add_argument("--no-grad-ckpt", action="store_true")
     ap.add_argument("--workers", type=int, default=6)
-    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--seed", type=int, default=0, help="data: train subsample, dev split; also init and order unless "
+                    "--init-seed is given")
+    ap.add_argument("--init-seed", type=int, default=None, help="init of the new modules and LoRA, dropout and the "
+                    "training order, with the data and dev split of --seed fixed (seed-variance reruns; default: --seed)")
     ap.add_argument("--wandb-entity", default="slolama", help="W&B team (the account has no personal entity)")
     ap.add_argument("--wandb-project", default="mvp-geometry-fusion")
     ap.add_argument("--wandb-name", default=None, help="default: the --out directory name")
@@ -115,11 +123,13 @@ def main():
                                                    "host": os.uname().nodename, "gpu": torch.cuda.get_device_name()}, indent=1))
         (out / "freeze.txt").write_text(subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True).stdout)
 
-    torch.manual_seed(args.seed)  # same init of the new modules on every rank (DDP also broadcasts rank 0's)
+    init_seed = args.seed if args.init_seed is None else args.init_seed
+    torch.manual_seed(init_seed)  # same init of the new modules on every rank (DDP also broadcasts rank 0's)
     model = FusionVL(args.model, args.arm, lora_r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                      vggt_layers=args.vggt_layers, fusion_after=args.fusion_after, gate=args.gate,
                      special_tokens=args.special_tokens, resampler_layers=args.resampler_layers, rope3=args.rope3,
                      local_bias=args.local_bias, bias_lam=args.bias_lam, bias_mu=args.bias_mu, train_frames=args.nframes,
+                     pe=args.pe, bias_nu=args.bias_nu, pe_dmax=args.pe_dmax,
                      pixels=TRAIN_PIXELS,
                      grad_ckpt=not args.no_grad_ckpt).to(dev)
     model.train()
@@ -143,7 +153,7 @@ def main():
     if rank == 0 and dev_set:
         (out / "dev_ids.txt").write_text("\n".join(str(s["id"]) for s in dev_set))
         print(f"dev: {len(dev_set)} questions on {len({s['video'] for s in dev_set})} held-out videos", flush=True)
-    steps_per_epoch = len(rank_steps(epoch_plan(samples, 0, args.seed, args.max_q), args.mb_per_step, W, rank))
+    steps_per_epoch = len(rank_steps(epoch_plan(samples, 0, init_seed, args.max_q), args.mb_per_step, W, rank))
     total = args.epochs * steps_per_epoch if args.max_steps is None else min(args.max_steps, args.epochs * steps_per_epoch)
     warm = max(1, round(args.warmup * total))
     groups = []  # LoRA at lr, new modules at fusion_lr; no decay on biases and norm weights (1-d), as in HF's Trainer
@@ -236,7 +246,7 @@ def main():
     if dev_set:
         log_dev(dev_eval(generate=True), 0)  # untrained reference
     for epoch in range(args.epochs):
-        steps = rank_steps(epoch_plan(samples, epoch, args.seed, args.max_q), args.mb_per_step, W, rank)
+        steps = rank_steps(epoch_plan(samples, epoch, init_seed, args.max_q), args.mb_per_step, W, rank)
         flat = [mb for mbs, _ in steps for mb in mbs]
         loader = iter(DataLoader(MicroBatches(flat, model.inputs, args.nframes), batch_size=None, shuffle=False,
                                  num_workers=args.workers, pin_memory=True, prefetch_factor=2 if args.workers else None))
@@ -278,7 +288,7 @@ def main():
                     g = rec["gates"]
                     gs = f" gates xattn {min(v['xattn'] for v in g.values()):+.4f}..{max(v['xattn'] for v in g.values()):+.4f}" if g else ""
                     gs += " inject " + " ".join(f"{i}:{v:.3f}" for i, v in rec["inject"].items()) if rec["inject"] else ""
-                    gs += " lam/mu " + " ".join(f"{i}:{v['lam']:.2f}/{v['mu']:.2f}" for i, v in rec["bias"].items()) if "bias" in rec else ""
+                    gs += " bias " + " ".join(f"{i}:" + "/".join(f"{x:.2f}" for x in v.values()) for i, v in rec["bias"].items()) if "bias" in rec else ""
                     print(f"step {step}/{total} ep {epoch} loss {rec['loss']:.4f} lr {rec['lr']:.2e} gnorm {rec['grad_norm']:.3f} "
                           f"q {rec['questions']} tok {rec['tokens']} {rec['step_time']:.2f}s mem {rec['peak_mem_gb']:.1f}G{gs}", flush=True)
             k = next((k for k in range(1, args.evals_per_epoch) if step == epoch * steps_per_epoch + marks[k]), None)

@@ -10,7 +10,9 @@
   AlignedXAttn        Qwen's visual tokens (queries) attend over the AdditiveMerger's geometry tokens of the same video
                       (keys / values), which are aligned one-to-one with them; optional 3-axis RoPE on (frame, row,
                       col) and an optional learned locality bias; output projection zero-initialised, visual tokens
-                      only, no FFW (the aligned cross-attention arm).
+                      only, no FFW (the aligned cross-attention arm). pe="3d" swaps both position signals for their 3D
+                      versions from VGGT's point head (mvp.fusion.points): RoPE on (frame, x, y, z) and a 3D-distance
+                      bias.
 """
 import math
 
@@ -143,24 +145,41 @@ class AlignedXAttn(nn.Module):
     so 32 evaluation frames fall between the 8 trained positions instead of past them. q.k then depends only on the
     offset between query and key. The locality bias (local_bias=True) has one learned slope pair (lam_h, mu_h) per head.
     W_o is zero-initialised: the block adds nothing at init. Returns the update to add to the visual tokens only.
+
+    pe="3d" (needs the video's ScenePoints, mvp.fusion.points; xyz in merged-cell units, camera-0 frame) replaces both:
+      RoPE: 8 pairs each for (t~, x, y, z); t~ as above with theta^(-j / 8); x, y, z with 2 pi / w_j, wavelengths w_j
+            geometric from 1.5 to 100 cells (W3D)
+      bias: -nu_h * min(|xyz_i - xyz_j|, d_max) (ScenePoints.dist), one learned slope nu_h per head, init nu
     """
 
-    AXES = (10, 11, 11)  # rotary pairs for (t~, r, c)
+    AXES = (10, 11, 11)   # rotary pairs for (t~, r, c)
+    AXES_3D = (8, 8, 8, 8)  # rotary pairs for (t~, x, y, z)
+    W3D = (1.5, 100.0)    # shortest and longest wavelength of the x, y, z pairs, in cells
 
-    def __init__(self, dim, heads, rope=True, local_bias=True, lam=1.5, mu=3.0, train_frames=8, theta=100.0):
+    def __init__(self, dim, heads, rope=True, local_bias=True, lam=1.5, mu=3.0, train_frames=8, theta=100.0, pe="grid",
+                 nu=1.5):
         super().__init__()
+        assert pe in ("grid", "3d"), pe
         self.heads, self.head_dim = heads, dim // heads
-        self.rope, self.local_bias, self.train_frames = rope, local_bias, train_frames
+        self.rope, self.local_bias, self.train_frames, self.pe = rope, local_bias, train_frames, pe
         self.norm_q, self.norm_kv = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.q, self.k, self.v, self.o = (nn.Linear(dim, dim, bias=False) for _ in range(4))
         nn.init.zeros_(self.o.weight)
-        if local_bias:
+        if local_bias and pe == "grid":
             self.lam = nn.Parameter(torch.full((heads,), float(lam)))
             self.mu = nn.Parameter(torch.full((heads,), float(mu)))
+        if local_bias and pe == "3d":
+            self.nu = nn.Parameter(torch.full((heads,), float(nu)))
         if rope:
-            assert 2 * sum(self.AXES) <= self.head_dim, (self.AXES, self.head_dim)
-            axis = torch.cat([torch.full((n,), a) for a, n in enumerate(self.AXES)])
-            freq = torch.cat([theta ** (-torch.arange(n, dtype=torch.float) / n) for n in self.AXES])
+            axes = self.AXES if pe == "grid" else self.AXES_3D
+            assert 2 * sum(axes) <= self.head_dim, (axes, self.head_dim)
+            axis = torch.cat([torch.full((n,), a) for a, n in enumerate(axes)])
+            if pe == "grid":
+                freq = torch.cat([theta ** (-torch.arange(n, dtype=torch.float) / n) for n in axes])
+            else:
+                n_t, n_s = axes[0], axes[1]
+                w = torch.logspace(math.log10(self.W3D[0]), math.log10(self.W3D[1]), n_s)
+                freq = torch.cat([theta ** (-torch.arange(n_t, dtype=torch.float) / n_t)] + [2 * math.pi / w] * 3)
             self.register_buffer("rope_axis", axis, persistent=False)
             self.register_buffer("rope_freq", freq, persistent=False)
 
@@ -173,11 +192,14 @@ class AlignedXAttn(nn.Module):
             out.append(torch.stack([torch.full_like(r, t), r, c], -1).reshape(-1, 3))
         return torch.cat(out).to(grid.device)
 
-    def rotary(self, pos):
-        """cos, sin [N, n_pairs] of the RoPE3 angles for positions [N, 3] (t, r, c)."""
+    def rotary(self, pos, pts=None):
+        """cos, sin [N, n_pairs] of the rotary angles: coordinates (t~, r, c) from positions [N, 3] (t, r, c), or
+        (t~, x, y, z) with x, y, z from ScenePoints (pe="3d")."""
         T = int(pos[:, 0].max()) + 1
         p = pos.float()
         p[:, 0] = p[:, 0] * (self.train_frames - 1) / max(T - 1, 1)  # t~
+        if self.pe == "3d":
+            p = torch.cat([p[:, :1], pts.xyz.float()], 1)
         ang = p[:, self.rope_axis] * self.rope_freq
         return ang.cos(), ang.sin()
 
@@ -187,44 +209,53 @@ class AlignedXAttn(nn.Module):
         cos, sin = cos.to(x.dtype), sin.to(x.dtype)
         return torch.cat([x1 * cos - x2 * sin, x2 * cos + x1 * sin, rest], -1)
 
-    def bias(self, pos, dtype):
-        """Additive attention mask [1, H, N, N]: -lam_h * (|dr| + |dc|) - mu_h * [t != t']."""
+    def bias(self, pos, dtype, pts=None):
+        """Additive attention mask [1, H, N, N]: -lam_h * (|dr| + |dc|) - mu_h * [t != t'], or -nu_h * dist (pe="3d")."""
+        if self.pe == "3d":
+            return -(self.nu[:, None, None] * pts.dist)[None].to(dtype)
         p = pos.float()
         d = (p[:, None, 1:] - p[None, :, 1:]).abs().sum(-1)
         other = (p[:, None, 0] != p[None, :, 0]).float()
         return -(self.lam[:, None, None] * d + self.mu[:, None, None] * other)[None].to(dtype)
 
-    def project(self, y, g, pos):
+    def project(self, y, g, pos, pts=None):
+        assert self.pe == "grid" or pts is not None, "pe='3d' needs the video's ScenePoints"
         B, N, _ = y.shape
         split = lambda t: t.view(t.shape[0], N, self.heads, self.head_dim).transpose(1, 2)
         gn = self.norm_kv(g)[None]
         q, k, v = split(self.q(self.norm_q(y))), split(self.k(gn)), split(self.v(gn))
         if self.rope:
-            cos, sin = self.rotary(pos)
+            cos, sin = self.rotary(pos, pts)
             q, k = self.apply_rotary(q, cos, sin), self.apply_rotary(k, cos, sin)
         return q, k.expand(B, -1, -1, -1), v.expand(B, -1, -1, -1)
 
-    def forward(self, y, g, pos):  # y [B, N, D] visual tokens of each sequence; g [N, D] geometry; pos [N, 3]
+    def forward(self, y, g, pos, pts=None):  # y [B, N, D] visual tokens; g [N, D] geometry; pos [N, 3]; pts: ScenePoints
         B, N, D = y.shape
-        q, k, v = self.project(y, g, pos)
-        mask = self.bias(pos, q.dtype) if self.local_bias else None
+        q, k, v = self.project(y, g, pos, pts)
+        mask = self.bias(pos, q.dtype, pts) if self.local_bias else None
         out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
         return self.o(out.transpose(1, 2).reshape(B, N, D))
 
     @torch.no_grad()
-    def attn_stats(self, y, g, pos, n_query=512):
+    def attn_stats(self, y, g, pos, pts=None, n_query=512):
         """Attention diagnostics on up to n_query visual tokens of the first sequence, averaged over heads and
-        queries: mass on the query's own cell, on its own frame, and the entropy of the attention row (nats)."""
-        q, k, _ = self.project(y[:1], g, pos)
+        queries: mass on the query's own cell, on its own frame, and the entropy of the attention row (nats). With
+        ScenePoints also the correspondence mass: on keys in other frames within 1 cell of the query in 3D."""
+        q, k, _ = self.project(y[:1], g, pos, pts)
         idx = torch.linspace(0, y.shape[1] - 1, min(n_query, y.shape[1]), device=y.device).long()
         logits = (q[0][:, idx].float() @ k[0].float().transpose(-1, -2)) / math.sqrt(self.head_dim)  # [H, n, N]
         if self.local_bias:
-            logits = logits + self.bias(pos, torch.float)[0][:, idx]
+            logits = logits + self.bias(pos, torch.float, pts)[0][:, idx]
         a = logits.softmax(-1)
         own = a[:, torch.arange(len(idx)), idx]
         same = (pos[None, :, 0] == pos[idx, 0][:, None]).float()  # [n, N]
         out = {"self_mass": own.mean().item(), "frame_mass": (a * same).sum(-1).mean().item(),
                "entropy": -(a * a.clamp_min(1e-12).log()).sum(-1).mean().item()}
-        if self.local_bias:
+        if pts is not None:
+            corr = (1 - same) * (pts.dist[idx] <= 1).float()
+            out["corr_mass"] = (a * corr).sum(-1).mean().item()
+        if self.local_bias and self.pe == "grid":
             out.update(lam=self.lam.mean().item(), mu=self.mu.mean().item())
+        if self.local_bias and self.pe == "3d":
+            out.update(nu=self.nu.mean().item())
         return out
