@@ -1,0 +1,6 @@
+2B_v7_lora_s0 step10750 210537
+2B_v7_lora_s1 step10750 210538
+2B_v7_additive_s0 step10750 210539
+2B_v7_additive_s1 step6750 210540
+2B_v7_xa3_both_s0 step7750 210541
+2B_v7_xa3_both_s1 step9750 210542
