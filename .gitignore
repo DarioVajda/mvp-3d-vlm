@@ -92,3 +92,6 @@ results/train/**/log.jsonl
 results/train/**/dev_ids.txt
 results/train/**/freeze.txt
 results/train/**/eval/**/*.jsonl
+results/train/smoke_*/
+results/train/2B_xa_both_s1/
+results/train/**/submitted
