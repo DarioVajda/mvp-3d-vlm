@@ -14,6 +14,15 @@ dev_* keys in log.jsonl (no "loss" key). dev_acc (what select_best uses) is the 
 dev_acc/all also includes appearance order. --appearance adds VSI-590K's appearance-order questions to training
 (data.load_appearance), with their own held-out dev videos.
 Schedule: linear warmup over --warmup of all steps, then one cosine from --lr down to --min-lr * --lr at the last step.
+--schedule wsd (warmup-stable-decay, for training-length studies): a trunk warms up linearly over --warmup-steps and
+then stays at the peak lr for --stable-steps; it never decays. At every --branch-steps step it logs dev accuracy and
+saves the full training state (state_step<N>.pt: trainable weights, optimizer, lr schedule, step, RNG). A branch,
+  python -m mvp.train.run --branch-of results/train/<trunk> --branch-step N [--decay-steps 750]
+reruns the trunk's arguments (its args.json) from that state, continuing the trunk's data order exactly, with the lr
+decaying linearly to 0 over --decay-steps, then logs dev accuracy and saves final.pt into <trunk>/branches/step<N>/.
+Branches never log to W&B (mvp.train.wsd_collect adds them to the trunk's run once everything has finished).
+--vsi590k adds VSI-590K's questions of the six VSI-Bench tasks on all its video sources (data.load_vsi590k); --cap
+then applies per task to the pooled VLM-3R + VSI-590K questions.
 Loss: each question's mean answer-token loss, averaged over the questions of the step (all GPUs), so every question
 counts once whatever its answer length or micro-batch. Writes to --out: args.json, freeze.txt, log.jsonl (one line per
 step: loss, lr, gates, grad norm, time, memory), ckpt_epoch<k>.pt and final.pt (config + trainable weights only).
@@ -30,6 +39,7 @@ import random
 import subprocess
 import sys
 import time
+from collections import Counter
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -41,7 +51,8 @@ from torch.utils.data import DataLoader
 from mvp.fusion.inputs import TRAIN_PIXELS
 from mvp.fusion.model import ARMS, FusionVL, count_params
 from mvp.paths import ROOT
-from mvp.train.data import MicroBatches, epoch_plan, load_appearance, load_vlm3r, rank_steps, score_answer, to_device
+from mvp.train.data import (MicroBatches, cap_per_task, epoch_plan, load_appearance, load_vlm3r, load_vsi590k,
+                            rank_steps, score_answer, to_device)
 
 
 def is_slope(name):
@@ -50,9 +61,9 @@ def is_slope(name):
 
 def parse():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--arm", required=True, choices=[a for a in ARMS if a != "base"])
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--model")
+    ap.add_argument("--arm", choices=[a for a in ARMS if a != "base"])
+    ap.add_argument("--out")
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--max-steps", type=int, default=None, help="stop after this many steps (smoke tests)")
     ap.add_argument("--lr", type=float, default=1e-4)
@@ -104,7 +115,32 @@ def parse():
     ap.add_argument("--wandb-project", default="mvp-geometry-fusion")
     ap.add_argument("--wandb-name", default=None, help="default: the --out directory name")
     ap.add_argument("--no-wandb", action="store_true")
-    return ap.parse_args()
+    ap.add_argument("--vsi590k", action="store_true", help="add VSI-590K's six non-appearance VSI-Bench tasks (all "
+                    "video sources); --cap then applies per task to VLM-3R + VSI-590K together")
+    ap.add_argument("--schedule", choices=["cosine", "wsd"], default="cosine")
+    ap.add_argument("--warmup-steps", type=int, default=750, help="wsd: linear warmup steps")
+    ap.add_argument("--stable-steps", type=int, default=10000, help="wsd trunk: steps at the peak lr after warmup")
+    ap.add_argument("--branch-steps", type=int, nargs="*", default=[], help="wsd trunk: global steps at which to log dev "
+                    "accuracy and save the full training state for a decay branch")
+    ap.add_argument("--eval-every", type=int, default=1000, help="wsd: dev accuracy every this many steps")
+    ap.add_argument("--branch-of", default=None, help="wsd branch: trunk directory (its args.json is reused)")
+    ap.add_argument("--branch-step", type=int, default=None, help="wsd branch: trunk step to branch from")
+    ap.add_argument("--decay-steps", type=int, default=750, help="wsd branch: linear decay to 0 over this many steps")
+    args = ap.parse_args()
+    args.resume = None
+    if args.branch_of:  # everything as in the trunk, except the output, the state to start from and the decay
+        trunk = Path(args.branch_of)
+        assert args.branch_step is not None, "--branch-of needs --branch-step"
+        saved = json.loads((trunk / "args.json").read_text())
+        for k in ("world_size", "git_commit", "host", "gpu"):
+            saved.pop(k, None)
+        branch = {"branch_of": str(trunk), "branch_step": args.branch_step, "decay_steps": args.decay_steps,
+                  "out": str(trunk / "branches" / f"step{args.branch_step}"), "no_wandb": True,
+                  "resume": str(trunk / f"state_step{args.branch_step}.pt")}
+        args = argparse.Namespace(**{**vars(args), **saved, **branch})
+        assert args.schedule == "wsd", "branches decay a wsd trunk"
+    assert args.model and args.arm and args.out, "--model, --arm and --out (or --branch-of)"
+    return args
 
 
 def main():
@@ -138,10 +174,22 @@ def main():
         print("trainable parameters:", {k: f"{v / 1e6:.1f}M" for k, v in count_params(model).items()}, flush=True)
     ddp = DDP(model, device_ids=[local], broadcast_buffers=False) if W > 1 else model
 
+    uncapped = args.vsi590k  # the cap then applies to the pooled sources below
     if args.dev_videos:
-        samples, dev_set = load_vlm3r(args.cap, args.seed, args.dev_videos, args.dev_per_task)
+        samples, dev_set = load_vlm3r(10**9 if uncapped else args.cap, args.seed, args.dev_videos, args.dev_per_task)
     else:
-        samples, dev_set = load_vlm3r(args.cap, args.seed), []
+        samples, dev_set = load_vlm3r(10**9 if uncapped else args.cap, args.seed), []
+    if args.vsi590k:
+        assert args.appearance, "--vsi590k holds out the appearance-order dev videos too, so it needs --appearance"
+        # every video held out for dev (VLM-3R dev scenes and the appearance-order dev videos) is held out here as well
+        _, _, ao_held = load_appearance(args.seed, {s["video"] for s in dev_set}, args.ao_dev_videos, args.ao_dev_q,
+                                        return_held=True)
+        extra = load_vsi590k(ao_held | {s["video"] for s in dev_set})
+        if rank == 0:
+            print(f"VSI-590K: {len(extra)} questions on {len({s['video'] for s in extra})} videos added; pooled per task "
+                  f"before the cap of {args.cap}: " + ", ".join(
+                      f"{t} {n}" for t, n in sorted(Counter(s['task'] for s in samples + extra).items())), flush=True)
+        samples = cap_per_task(samples + extra, args.cap, args.seed)
     if args.appearance:
         ao_train, ao_dev = load_appearance(args.seed, {s["video"] for s in dev_set}, args.ao_dev_videos, args.ao_dev_q)
         if args.ao_cap is not None:
@@ -154,8 +202,16 @@ def main():
         (out / "dev_ids.txt").write_text("\n".join(str(s["id"]) for s in dev_set))
         print(f"dev: {len(dev_set)} questions on {len({s['video'] for s in dev_set})} held-out videos", flush=True)
     steps_per_epoch = len(rank_steps(epoch_plan(samples, 0, init_seed, args.max_q), args.mb_per_step, W, rank))
-    total = args.epochs * steps_per_epoch if args.max_steps is None else min(args.max_steps, args.epochs * steps_per_epoch)
-    warm = max(1, round(args.warmup * total))
+    resume = torch.load(args.resume, map_location="cpu", weights_only=False) if args.resume else None
+    if args.schedule == "wsd":
+        warm = args.warmup_steps
+        decay_from = resume["step"] if resume else None
+        total = decay_from + args.decay_steps if resume else warm + args.stable_steps
+        if args.max_steps is not None:
+            total = min(total, args.max_steps)
+    else:
+        total = args.epochs * steps_per_epoch if args.max_steps is None else min(args.max_steps, args.epochs * steps_per_epoch)
+        warm = max(1, round(args.warmup * total))
     groups = []  # LoRA at lr, new modules at fusion_lr; no decay on biases and norm weights (1-d), as in HF's Trainer
     for is_lora, lr in ((True, args.lr), (False, args.fusion_lr or args.lr)):
         ps = [p for n, p in model.named_parameters() if p.requires_grad and ("lora_" in n) == is_lora and not is_slope(n)]
@@ -168,14 +224,37 @@ def main():
         groups.append({"params": slopes, "lr": args.bias_lr, "weight_decay": 0.0})
     opt = torch.optim.AdamW(groups, lr=args.lr, weight_decay=args.weight_decay)
     floor = args.min_lr
-    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: (s + 1) / warm if s < warm else floor + (1 - floor) *
-                                              0.5 * (1 + math.cos(math.pi * (s - warm) / max(1, total - warm))))
+    if args.schedule == "wsd":  # the factor for optimizer update s (0-based); a branch's last update is at 1/decay_steps
+        def factor(s):
+            if s < warm:
+                return (s + 1) / warm
+            return 1.0 if decay_from is None or s < decay_from else max(0.0, 1 - (s - decay_from) / args.decay_steps)
+    else:
+        def factor(s):
+            return (s + 1) / warm if s < warm else floor + (1 - floor) * 0.5 * (1 + math.cos(math.pi * (s - warm) / max(1, total - warm)))
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, factor)
+    step = 0
+    if resume:  # a wsd branch: the trunk's weights, optimizer moments, schedule position, step and RNG
+        missing, unexpected = model.load_state_dict(resume["state"], strict=False)
+        trainable = {n for n, p in model.named_parameters() if p.requires_grad}
+        assert not unexpected and not (trainable & set(missing)) and set(resume["state"]) == trainable
+        opt.load_state_dict(resume["opt"])
+        sched.load_state_dict(resume["sched"])
+        step = resume["step"]
+        torch.set_rng_state(resume["rng"]["cpu"])
+        torch.cuda.set_rng_state(resume["rng"]["cuda"], dev)
+        random.setstate(resume["rng"]["python"])
+        assert sched.last_epoch == step, (sched.last_epoch, step)
+        del resume
     if rank == 0:
-        print(f"{len(samples)} questions, {steps_per_epoch} steps/epoch, {total} steps, warmup {warm}, lr floor {args.lr * floor:.1e}, "
+        sched_s = (f"wsd: warmup {warm}, " + (f"decay from {decay_from} to 0 over {args.decay_steps}" if decay_from is not None
+                   else f"stable to {total}, branch states at {args.branch_steps}")) if args.schedule == "wsd" else \
+            f"warmup {warm}, lr floor {args.lr * floor:.1e}"
+        print(f"{len(samples)} questions, {steps_per_epoch} steps/epoch, {total} steps, {sched_s}, "
               f"{args.mb_per_step // W} micro-batches per GPU per step, world size {W}", flush=True)
 
     accum = args.mb_per_step // W
-    step, t_start = 0, time.time()
+    t_start = time.time()
     log = open(out / "log.jsonl", "a") if rank == 0 else None
     run = None
     if rank == 0 and not args.no_wandb:
@@ -183,6 +262,8 @@ def main():
         run = wandb.init(entity=args.wandb_entity, project=args.wandb_project, name=args.wandb_name or out.name, dir=str(out),
                          config={**json.loads((out / "args.json").read_text()), "params": count_params(model),
                                  "questions": len(samples), "steps_per_epoch": steps_per_epoch, "total_steps": total})
+        (out / "wandb_run.json").write_text(json.dumps({"id": run.id, "entity": args.wandb_entity,
+                                                        "project": args.wandb_project}))  # for mvp.train.wsd_collect
     def dev_eval(generate=False):
         """Mean per-question answer loss on dev (and VSI-style accuracy per task with generate=True), all ranks."""
         if not dev_mbs and W == 1:
@@ -243,10 +324,25 @@ def main():
         if rank == 0:
             model.save(out / name)
 
-    if dev_set:
+    def save_state(path):
+        """Everything a wsd branch needs to continue exactly where the trunk is; written atomically (the watcher
+        submits a branch as soon as the file exists)."""
+        if rank == 0:
+            tmp = path.with_name(path.name + ".tmp")
+            torch.save({"config": model.config, "state": model.trainable_state(), "opt": opt.state_dict(),
+                        "sched": sched.state_dict(), "step": step,
+                        "rng": {"cpu": torch.get_rng_state(), "cuda": torch.cuda.get_rng_state(dev),
+                                "python": random.getstate()}}, tmp)
+            os.replace(tmp, path)
+
+    wsd = args.schedule == "wsd"
+    if dev_set and not args.resume:
         log_dev(dev_eval(generate=True), 0)  # untrained reference
-    for epoch in range(args.epochs):
+    start_epoch, offset = divmod(step, steps_per_epoch)  # a branch continues the trunk's data order from its step
+    for epoch in range(start_epoch, math.ceil(total / steps_per_epoch) if wsd else args.epochs):
         steps = rank_steps(epoch_plan(samples, epoch, init_seed, args.max_q), args.mb_per_step, W, rank)
+        if epoch == start_epoch:
+            steps = steps[offset:]
         flat = [mb for mbs, _ in steps for mb in mbs]
         loader = iter(DataLoader(MicroBatches(flat, model.inputs, args.nframes), batch_size=None, shuffle=False,
                                  num_workers=args.workers, pin_memory=True, prefetch_factor=2 if args.workers else None))
@@ -291,12 +387,26 @@ def main():
                     gs += " bias " + " ".join(f"{i}:" + "/".join(f"{x:.2f}" for x in v.values()) for i, v in rec["bias"].items()) if "bias" in rec else ""
                     print(f"step {step}/{total} ep {epoch} loss {rec['loss']:.4f} lr {rec['lr']:.2e} gnorm {rec['grad_norm']:.3f} "
                           f"q {rec['questions']} tok {rec['tokens']} {rec['step_time']:.2f}s mem {rec['peak_mem_gb']:.1f}G{gs}", flush=True)
+            if wsd:
+                if step in args.branch_steps and not args.resume:  # trunk: dev accuracy and a branch state
+                    log_dev(dev_eval(generate=True), epoch, branch_state=f"state_step{step}.pt")
+                    save_state(out / f"state_step{step}.pt")
+                elif dev_set and step == total:  # end of a branch (or of a trunk without a state there)
+                    log_dev(dev_eval(generate=True), epoch, **({"decayed_from": decay_from} if decay_from is not None else {}))
+                elif dev_set and step % args.eval_every == 0:
+                    log_dev(dev_eval(generate=True), epoch)
+                elif dev_set and step % args.dev_every == 0:
+                    log_dev(dev_eval(), epoch)
+                continue
             k = next((k for k in range(1, args.evals_per_epoch) if step == epoch * steps_per_epoch + marks[k]), None)
             if k is not None:  # mid-epoch accuracy point + checkpoint
                 save_point(epoch, epoch + k / args.evals_per_epoch)
             elif dev_set and step % args.dev_every == 0 and step % steps_per_epoch != 0:
                 log_dev(dev_eval(), epoch)
-        if step >= (epoch + 1) * steps_per_epoch:
+        if wsd:
+            if step >= total:
+                break
+        elif step >= (epoch + 1) * steps_per_epoch:
             save_point(epoch, epoch + 1)  # loss + accuracy at every epoch end
     if rank == 0:
         model.save(out / "final.pt")

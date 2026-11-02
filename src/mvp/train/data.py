@@ -12,6 +12,7 @@
 import json
 import math
 import random
+import time
 from collections import defaultdict
 
 import torch
@@ -60,7 +61,7 @@ def load_vlm3r(cap=3000, seed=0, dev_videos=0, dev_per_task=100):
     return out, dev
 
 
-def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150):
+def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150, return_held=False):
     """VSI-590K appearance-order questions (all 16,162: there are no more): (train, dev) lists of samples.
 
     Dev holds out whole videos: every video in `held_videos` (the VLM-3R dev videos, so a ScanNet scene is held out
@@ -91,7 +92,46 @@ def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150):
         train += [s for s in by_src[src] if s["video"] not in held]
         k = math.ceil(dev_q / len(by_src))
         dev += dev_src if len(dev_src) <= k else rng.sample(dev_src, k)
-    return train, dev
+    return (train, dev, held) if return_held else (train, dev)  # held: every held-out video, sampled into dev or not
+
+
+# VSI-590K question types that are VSI-Bench tasks (appearance order comes from load_appearance), in dev's task names.
+# Not used: relative_size_object, absolute_direction_object, relative_count, relative_*_camera (no VSI-Bench task) and
+# the image rows (no video). VSI-590K has no route-planning questions.
+VSI590K_TASKS = {"relative_direction_object": "rel_direction", "relative_distance_object": "rel_distance",
+                 "absolute_distance_object": "abs_distance", "absolute_size_object": "obj_size",
+                 "absolute_size_room": "room_size", "absolute_count": "counting"}
+
+
+def load_vsi590k(held_videos=()):
+    """VSI-590K's questions of the six VSI-Bench tasks other than appearance order, on every video source (ScanNet,
+    ScanNet++ v2, ARKitScenes, ADT, S3DIS, ProcTHOR), as samples. Skipped: videos in `held_videos` (dev, so no dev
+    scene is trained on), and videos that failed prep_vsi590k's decode check. None of the videos is a VSI-Bench test
+    scene (checked by scene id for ScanNet, ScanNet++ and ARKitScenes; ADT, S3DIS and ProcTHOR are not in VSI-Bench).
+    Templates are paraphrases of VSI-Bench's, some in other units (cm, inches); answers are letters or numbers."""
+    from mvp.train.prep_vsi590k import MANIFEST, media_path
+    ok = {p for p, r in json.loads(MANIFEST.read_text()).items() if r["ok"]}
+    held = set(held_videos)
+    out = []
+    for i, r in enumerate(map(json.loads, open(VSI590K))):
+        if "video" not in r or r["question_type"] not in VSI590K_TASKS:
+            continue
+        video = media_path(r["video"])
+        if video in held or video not in ok:
+            continue
+        q = r["conversations"][0]["value"].replace("<image>", "").strip()
+        out.append({"id": f"vsi590k-{i}", "video": video, "task": VSI590K_TASKS[r["question_type"]], "question": q,
+                    "answer": r["conversations"][1]["value"].strip()})
+    return out
+
+
+def cap_per_task(samples, cap, seed=0):
+    """At most `cap` samples per task (seeded, uniform over the pooled sources)."""
+    rng = random.Random(f"cap-{seed}")
+    by_task = defaultdict(list)
+    for s in samples:
+        by_task[s["task"]].append(s)
+    return [s for t in sorted(by_task) for s in (by_task[t] if len(by_task[t]) <= cap else rng.sample(by_task[t], cap))]
 
 
 def score_answer(pred, answer):
@@ -147,7 +187,14 @@ class MicroBatches(Dataset):
 
     def __getitem__(self, i):
         mb = self.mbs[i]
-        frames, idx = uniform_frames(TRAIN_MEDIA / mb[0]["video"], self.nframes)
+        for attempt in range(3):  # decord occasionally fails to seek near the end of a video under load (EOF retry
+            try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises
+                frames, idx = uniform_frames(TRAIN_MEDIA / mb[0]["video"], self.nframes)
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(2)
         batch = self.builder.build(frames, [s["question"] for s in mb], [s["answer"] for s in mb])
         batch["meta"] = {"video": mb[0]["video"], "ids": [s["id"] for s in mb], "tasks": [s["task"] for s in mb],
                          "frame_indices": idx}
