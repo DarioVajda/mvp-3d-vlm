@@ -1,0 +1,513 @@
+<title>JE-xattn Proposal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column (~74ch) for prose; diagrams and tables break out to the full 1040px measure. Same tokens as the Geometry Fusion Notebook. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --ink-2: #4a505b; --ink-3: #737a86;
+  --rule: #dde1e7; --rule-2: #eceff3; --accent: #3d3a8f; --accent-soft: #e9e8f6;
+  --geo: #eb6834; --geo-soft: #fdeee6; --llm: #2a78d6; --llm-soft: #e6f0fb; --loss: #1baf7a; --loss-soft: #e4f6ee;
+  --warn-bg: #fff6e0; --warn: #8a5a00;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121418; --panel: #1a1d22; --ink: #eceef2; --ink-2: #b4bac5; --ink-3: #868d99;
+  --rule: #2e333b; --rule-2: #23272d; --accent: #a9a6f0; --accent-soft: #26253f;
+  --geo: #f0824f; --geo-soft: #3a2519; --llm: #4a93ec; --llm-soft: #16283d; --loss: #2fc48c; --loss-soft: #143126;
+  --warn-bg: #3a2f14; --warn: #f0c060; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121418; --panel: #1a1d22; --ink: #eceef2; --ink-2: #b4bac5; --ink-3: #868d99;
+  --rule: #2e333b; --rule-2: #23272d; --accent: #a9a6f0; --accent-soft: #26253f;
+  --geo: #f0824f; --geo-soft: #3a2519; --llm: #4a93ec; --llm-soft: #16283d; --loss: #2fc48c; --loss-soft: #143126;
+  --warn-bg: #3a2f14; --warn: #f0c060; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 80px; }
+.prose { max-width: 74ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 26px; font-weight: 600; }
+h3 { font-size: 18px; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 20px; display: grid; gap: 6px; }
+a { color: var(--accent); }
+code { font-family: var(--f-mono); font-size: 0.88em; }
+.eyebrow { font: 500 12px/1.2 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+header.top { display: grid; gap: 14px; padding-bottom: 28px; border-bottom: 1px solid var(--rule); }
+header.top .q { font-size: 18px; color: var(--ink-2); max-width: 70ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font: 13px var(--f-mono); color: var(--ink-3); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+nav.toc a { font: 500 13px var(--f-body); text-decoration: none; color: var(--ink-2); padding: 4px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--panel); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+section { display: grid; gap: 18px; padding-block: 40px 8px; scroll-margin-top: 16px; }
+.sec-head { display: grid; gap: 6px; }
+.lede { color: var(--ink-2); }
+.status { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 10px 14px; font-size: 14px; }
+.key { display: grid; gap: 10px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px; }
+.key p { font-size: 16px; }
+figure { margin: 0; display: grid; gap: 10px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 18px 14px; min-width: 0; }
+figcaption { font-size: 13.5px; color: var(--ink-2); max-width: 90ch; }
+.scroll { overflow-x: auto; min-width: 0; }
+svg.diag { max-width: 100%; height: auto; display: block; color: var(--ink); }
+svg.diag text { font-family: var(--f-body); font-size: 12px; fill: currentColor; }
+svg.diag .t2 { font-size: 11px; fill: var(--ink-2); }
+svg.diag .mono { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-3); }
+svg.diag .hd { font-family: var(--f-display); font-size: 14px; font-weight: 600; }
+svg.diag .box { fill: var(--panel); stroke: var(--rule); stroke-width: 1.2; }
+svg.diag .frozen { fill: var(--rule-2); stroke: var(--rule); stroke-width: 1.2; }
+svg.diag .llm { fill: var(--llm-soft); stroke: var(--llm); stroke-width: 1.2; }
+svg.diag .geo { fill: var(--geo-soft); stroke: var(--geo); stroke-width: 1.2; }
+svg.diag .loss { fill: var(--loss-soft); stroke: var(--loss); stroke-width: 1.2; }
+svg.diag .wire { stroke: currentColor; stroke-width: 1.3; fill: none; }
+svg.diag .wire-geo { stroke: var(--geo); stroke-width: 1.5; fill: none; }
+svg.diag .wire-llm { stroke: var(--llm); stroke-width: 1.5; fill: none; }
+svg.diag .wire-loss { stroke: var(--loss); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+svg.diag .wire-stop { stroke: var(--ink-3); stroke-width: 1.3; fill: none; stroke-dasharray: 2 3; }
+svg.diag .ah { fill: currentColor; } svg.diag .ah-geo { fill: var(--geo); } svg.diag .ah-llm { fill: var(--llm); } svg.diag .ah-loss { fill: var(--loss); }
+svg.diag .cell-q { fill: var(--llm-soft); stroke: var(--llm); stroke-width: 0.6; }
+svg.diag .cell-g { fill: var(--geo-soft); stroke: var(--geo); stroke-width: 0.6; }
+svg.diag .cell-hi { fill: var(--accent); stroke: var(--accent); }
+svg.diag .divider { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 3 3; }
+.math { font-family: var(--f-mono); font-size: 13.5px; line-height: 1.7; background: var(--bg); border: 1px solid var(--rule-2); border-radius: 6px; padding: 12px 16px; overflow-x: auto; white-space: pre; }
+.math i { font-style: normal; color: var(--ink-3); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+thead th { font: 500 12px var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 600; border-top: 1px solid var(--rule); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+.chip { display: inline-block; font: 500 11px var(--f-mono); padding: 1px 7px; border-radius: 4px; border: 1px solid var(--rule); color: var(--ink-2); vertical-align: 2px; margin-left: 6px; }
+.chip.rec { color: var(--accent); border-color: var(--accent); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 14px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 560px) { dl { grid-template-columns: 1fr; gap: 2px 0; } dd { margin-bottom: 8px; } }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">MPhil ACS · MVP project · design proposal · 2026-10-26</div>
+  <h1>JE-xattn Proposal</h1>
+  <p class="q">A shared embedding space inside the geometry cross-attention, defined by a JEPA-style predictive loss between what the language model sees at an image region and VGGT's geometry of the same region.</p>
+  <div class="meta"><span>Base: Qwen3.5-2B</span><span>Geometry: VGGT-1B, frozen</span><span>Builds on run v3's cross-attention arm</span><span>Companion: <a href="https://claude.ai/artifact/4FjcTJT64mjCgab7h95Xcz">Geometry Fusion Notebook</a></span></div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#why">Why</a><a href="#what">What changes</a><a href="#grid">Region correspondence</a><a href="#math">The 2×2 math</a><a href="#jepa">The objective</a><a href="#intuition">Why it suits geometry</a><a href="#monitor">What we'd watch</a><a href="#cost">Cost of a pilot</a><a href="#lit">What the literature says</a><a href="#open">Open decisions</a>
+  </nav>
+  <p class="status">Status: proposal only. Nothing has been built or run. Run v3 (2B and 4B, all three arms) is training; its results decide whether this is worth doing.</p>
+</header>
+
+<section id="why">
+  <div class="sec-head"><div class="eyebrow">The problem this addresses</div><h2>The answer loss is too sparse to teach geometry</h2></div>
+  <div class="key">
+    <p>Every fusion module we have trained so far learns only from the answer loss: one letter or one number per question, about 25k questions on 1,201 scenes. That signal is easy to satisfy without using geometry.</p>
+    <p>Run v2 showed the symptom. In epoch 1 the additive arm reached the same training loss as LoRA-only (0.99 vs 0.92) yet scored 11 points lower on held-out VSI scenes. The cross-attention arm, whose queries and 256 latents share no notion of image location, ran away in epoch 3 and lost most on the two relational tasks (relative distance −27, relative direction −19 vs LoRA).</p>
+  </div>
+  <div class="prose">
+    <p>The proposal adds a second, dense training signal: at every visual token of every frame, the LLM's hidden state must be able to predict the geometry embedding of the same image region. No labels, no scene identity to memorise, and a target that changes as the camera moves. The same embeddings serve as the cross-attention's keys, so the attention block starts with a built-in notion of "the geometry of the place I'm looking at".</p>
+  </div>
+</section>
+
+<section id="what">
+  <div class="sec-head"><div class="eyebrow">Architecture</div><h2>What changes relative to the v3 cross-attention arm</h2>
+    <p class="lede prose">Both diagrams show one injection point (after LLM layer k, with VGGT layer L). Everything else, including LoRA, the three injection points and the zero-initialised output projections, stays as in v3.</p></div>
+  <figure>
+    <div class="scroll">
+    <svg class="diag" viewBox="0 0 1000 420" width="1000" style="min-width:720px" role="img" aria-label="Left: the v3 cross-attention block, where LLM hidden states query 256 resampler latents that carry no image location. Right: the proposed JE-xattn block, where 2x2 VGGT windows are embedded one per Qwen visual token into a shared space S; LLM queries are projected into the same S; a predictor and an EMA target encoder add a training-only alignment loss at the visual positions.">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-geo" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="al" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-llm" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-loss" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <text x="20" y="28" class="hd">v3 cross-attention (as running now)</text>
+      <rect class="frozen" x="20" y="60" width="150" height="48" rx="6"/>
+      <text x="95" y="80" text-anchor="middle">VGGT layer L</text><text x="95" y="97" text-anchor="middle" class="t2">patch tokens, all frames</text>
+      <rect class="geo" x="20" y="150" width="150" height="48" rx="6"/>
+      <text x="95" y="170" text-anchor="middle">Perceiver resampler</text><text x="95" y="187" text-anchor="middle" class="t2">→ 256 latents, no location</text>
+      <path class="wire-geo" d="M95,108 V148" marker-end="url(#ag)"/>
+      <rect class="llm" x="230" y="60" width="170" height="48" rx="6"/>
+      <text x="315" y="80" text-anchor="middle">LLM hidden state h</text><text x="315" y="97" text-anchor="middle" class="t2">after layer k, all tokens</text>
+      <rect class="box" x="230" y="150" width="170" height="64" rx="6"/>
+      <text x="315" y="172" text-anchor="middle">cross-attention</text><text x="315" y="188" text-anchor="middle" class="t2">q = W<tspan baseline-shift="sub" font-size="9">q</tspan>h · k,v = W<tspan baseline-shift="sub" font-size="9">k,v</tspan>latents</text><text x="315" y="204" text-anchor="middle" class="mono">in LLM width D</text>
+      <path class="wire-llm" d="M315,108 V148" marker-end="url(#al)"/>
+      <path class="wire-geo" d="M170,174 H228" marker-end="url(#ag)"/>
+      <rect class="box" x="230" y="246" width="170" height="40" rx="6"/>
+      <text x="315" y="271" text-anchor="middle">FFW (zero-init) · residual</text>
+      <path class="wire" d="M315,214 V244" marker-end="url(#a)"/>
+      <path class="wire" d="M315,286 V320" marker-end="url(#a)"/>
+      <text x="315" y="338" text-anchor="middle" class="t2">to layer k+1</text>
+      <text x="20" y="392" class="t2">Query and key live in different spaces; the only training</text>
+      <text x="20" y="408" class="t2">signal is the answer loss. Correspondence must be discovered.</text>
+      <line class="divider" x1="470" y1="20" x2="470" y2="410"/>
+      <text x="500" y="28" class="hd">Proposed JE-xattn</text>
+      <rect class="frozen" x="500" y="60" width="150" height="48" rx="6"/>
+      <text x="575" y="80" text-anchor="middle">VGGT layer L</text><text x="575" y="97" text-anchor="middle" class="t2">patch tokens, all frames</text>
+      <rect class="geo" x="500" y="150" width="150" height="64" rx="6"/>
+      <text x="575" y="170" text-anchor="middle">2×2 window → MLP</text><text x="575" y="186" text-anchor="middle" class="t2">one g<tspan baseline-shift="sub" font-size="9">i</tspan> per visual token</text><text x="575" y="203" text-anchor="middle" class="mono">in shared space S</text>
+      <path class="wire-geo" d="M575,108 V148" marker-end="url(#ag)"/>
+      <rect class="llm" x="710" y="60" width="170" height="48" rx="6"/>
+      <text x="795" y="80" text-anchor="middle">LLM hidden state h</text><text x="795" y="97" text-anchor="middle" class="t2">after layer k, all tokens</text>
+      <rect class="box" x="710" y="150" width="170" height="64" rx="6"/>
+      <text x="795" y="172" text-anchor="middle">cross-attention in S</text><text x="795" y="188" text-anchor="middle" class="t2">q = W<tspan baseline-shift="sub" font-size="9">q</tspan>LN(h) · k,v = W<tspan baseline-shift="sub" font-size="9">k,v</tspan>g</text><text x="795" y="204" text-anchor="middle" class="mono">out: S→D, zero-init</text>
+      <path class="wire-llm" d="M795,108 V148" marker-end="url(#al)"/>
+      <path class="wire-geo" d="M650,174 H708" marker-end="url(#ag)"/>
+      <rect class="box" x="710" y="246" width="170" height="40" rx="6"/>
+      <text x="795" y="271" text-anchor="middle">FFW (zero-init) · residual</text>
+      <path class="wire" d="M795,214 V244" marker-end="url(#a)"/>
+      <path class="wire" d="M795,286 V320" marker-end="url(#a)"/>
+      <text x="795" y="338" text-anchor="middle" class="t2">to layer k+1</text>
+      <rect class="loss" x="500" y="246" width="150" height="64" rx="6"/>
+      <text x="575" y="266" text-anchor="middle">alignment loss</text><text x="575" y="282" text-anchor="middle" class="t2">P(v<tspan baseline-shift="sub" font-size="9">i</tspan>) ≈ sg[ḡ<tspan baseline-shift="sub" font-size="9">i</tspan>]  (L1)</text><text x="575" y="299" text-anchor="middle" class="mono">training only</text>
+      <path class="wire-loss" d="M710,96 C690,96 680,230 652,262" marker-end="url(#ao)"/>
+      <text x="662" y="236" class="t2" text-anchor="end">v<tspan baseline-shift="sub" font-size="9">i</tspan> = h at visual token i</text>
+      <path class="wire-stop" d="M575,214 V244" marker-end="url(#a)"/>
+      <text x="586" y="233" class="mono">EMA copy, stop-grad</text>
+      <text x="500" y="392" class="t2">Keys and the alignment target are the same embeddings g<tspan baseline-shift="sub" font-size="9">i</tspan>, one per region.</text>
+      <text x="500" y="408" class="t2">A query from region i is pulled toward key i before any answer is seen.</text>
+    </svg>
+    </div>
+    <figcaption>The two differences that matter: (1) keys are region-level windows aligned to Qwen's visual tokens instead of 256 location-free latents, and (2) a training-only predictive loss ties the LLM's view of region i to the geometry embedding of region i, which is also key i. Inference is unchanged in form; only the key count differs.</figcaption>
+  </figure>
+</section>
+
+<section id="grid">
+  <div class="sec-head"><div class="eyebrow">Why 2×2 windows</div><h2>One geometry token per visual token, on the same grid</h2></div>
+  <div class="two">
+    <figure>
+      <svg class="diag" viewBox="0 0 440 300" role="img" aria-label="One 640 by 480 frame. Left grid: Qwen's 20 by 15 merged visual tokens. Right grid: VGGT's 40 by 30 patches grouped into 20 by 15 windows of 2 by 2. The highlighted cell is the same image region in both.">
+        <text x="20" y="22" class="hd">Qwen: 20×15 visual tokens</text>
+        <text x="20" y="40" class="t2">16 px patches, 2×2 merged → 32 px per token</text>
+        <g>
+          <rect x="20" y="52" width="180" height="135" class="cell-q"/>
+          <path class="wire" stroke-width="0.4" d="M20,61 H200 M20,70 H200 M20,79 H200 M20,88 H200 M20,97 H200 M20,106 H200 M20,115 H200 M20,124 H200 M20,133 H200 M20,142 H200 M20,151 H200 M20,160 H200 M20,169 H200 M20,178 H200 M29,52 V187 M38,52 V187 M47,52 V187 M56,52 V187 M65,52 V187 M74,52 V187 M83,52 V187 M92,52 V187 M101,52 V187 M110,52 V187 M119,52 V187 M128,52 V187 M137,52 V187 M146,52 V187 M155,52 V187 M164,52 V187 M173,52 V187 M182,52 V187 M191,52 V187"/>
+          <rect x="83" y="97" width="9" height="9" class="cell-hi"/>
+        </g>
+        <text x="20" y="210" class="t2">token i</text>
+        <text x="240" y="22" class="hd">VGGT: 20×15 windows</text>
+        <text x="240" y="40" class="t2">14 px patches at 560×420, 2×2 per window</text>
+        <g>
+          <rect x="240" y="52" width="180" height="135" class="cell-g"/>
+          <path class="wire" stroke-width="0.25" d="M240,56.5 H420 M240,65.5 H420 M240,74.5 H420 M240,83.5 H420 M240,92.5 H420 M240,101.5 H420 M240,110.5 H420 M240,119.5 H420 M240,128.5 H420 M240,137.5 H420 M240,146.5 H420 M240,155.5 H420 M240,164.5 H420 M240,173.5 H420 M240,182.5 H420 M244.5,52 V187 M253.5,52 V187 M262.5,52 V187 M271.5,52 V187 M280.5,52 V187 M289.5,52 V187 M298.5,52 V187 M307.5,52 V187 M316.5,52 V187 M325.5,52 V187 M334.5,52 V187 M343.5,52 V187 M352.5,52 V187 M361.5,52 V187 M370.5,52 V187 M379.5,52 V187 M388.5,52 V187 M397.5,52 V187 M406.5,52 V187 M415.5,52 V187"/>
+          <path class="wire" stroke-width="0.6" d="M240,61 H420 M240,70 H420 M240,79 H420 M240,88 H420 M240,97 H420 M240,106 H420 M240,115 H420 M240,124 H420 M240,133 H420 M240,142 H420 M240,151 H420 M240,160 H420 M240,169 H420 M240,178 H420 M249,52 V187 M258,52 V187 M267,52 V187 M276,52 V187 M285,52 V187 M294,52 V187 M303,52 V187 M312,52 V187 M321,52 V187 M330,52 V187 M339,52 V187 M348,52 V187 M357,52 V187 M366,52 V187 M375,52 V187 M384,52 V187 M393,52 V187 M402,52 V187 M411,52 V187"/>
+          <rect x="303" y="97" width="9" height="9" class="cell-hi"/>
+        </g>
+        <text x="240" y="210" class="t2">window i (4 patches, concatenated: 8192-d)</text>
+        <path class="wire-geo" d="M312,101 C330,101 300,30 200,30 C150,30 100,60 92,97" marker-end="url(#ag)" stroke-dasharray="4 3"/>
+        <text x="20" y="240" class="t2">Same image region, same index on both grids.</text>
+        <text x="20" y="256" class="t2">Per 8-frame video: 2,400 tokens and 2,400 windows.</text>
+        <text x="20" y="272" class="t2">At 32-frame eval: 9,600 each.</text>
+      </svg>
+      <figcaption>Qwen and VGGT see the same frame at resolutions chosen so their grids coincide (SpatialStack's construction, already used by our additive arm). The window is a concatenation, not a pooling, so no VGGT information is dropped.</figcaption>
+    </figure>
+    <figure>
+      <h3>Alternatives and why not</h3>
+      <table>
+        <thead><tr><th>Geometry side</th><th>Tokens per frame</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td><strong>2×2 windows</strong> <span class="chip rec">proposed</span></td><td class="num">300</td><td>None of the below. One target per visual token; inputs identical to the additive arm.</td></tr>
+          <tr><td>Raw VGGT patches</td><td class="num">1,200</td><td>Four geometry tokens per visual token: the predictive target is ambiguous, and 38,400 keys at 32-frame eval.</td></tr>
+          <tr><td>Resampler latents (v3)</td><td class="num">256 per video</td><td>No location. Alignment can only be video-level, a weak and shortcut-prone signal. The setup that ran away in v2.</td></tr>
+          <tr><td>4×4 windows</td><td class="num">75</td><td>Cheaper, but one geometry token per four visual tokens: the per-token target is lost again.</td></tr>
+        </tbody>
+      </table>
+      <figcaption>Cost of the proposed choice: 2,400 keys per training video, about one extra self-attention layer's worth of compute at each of the three injection points.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="math">
+  <div class="sec-head"><div class="eyebrow">The arithmetic behind the window</div><h2>The 2×2 math: why the grids coincide exactly</h2>
+    <p class="lede prose">Two encoders with different patch sizes see the same frame. The window factor, the VGGT input resolution and the token index are all forced by requiring that one geometry token covers exactly the pixels of one Qwen visual token.</p></div>
+  <div class="two">
+    <figure>
+      <h3>1. Each encoder's token pitch</h3>
+<div class="math">Qwen3.5 vision encoder
+  patch        p<i>q</i> = 16 px
+  spatial merge m = 2            <i>(2×2 patches → 1 visual token)</i>
+  token pitch   s<i>q</i> = m·p<i>q</i> = 32 px
+  frame 640×480 → 640/32 × 480/32 = 20 × 15 = 300 tokens
+
+VGGT-1B (DINOv2 backbone)
+  patch        p<i>g</i> = 14 px
+  no merge: one 2048-d token per patch</div>
+      <figcaption>Qwen's frames are resized to multiples of 32 by its own "smart resize"; 640×480 already is. The 2×2 merge is Qwen's, not ours.</figcaption>
+    </figure>
+    <figure>
+      <h3>2. Choose VGGT's resolution so the patch grids match</h3>
+<div class="math">Want VGGT's patch grid = Qwen's patch grid = 40 × 30.
+  W<i>g</i> = 40 · p<i>g</i> = 40 · 14 = 560      H<i>g</i> = 30 · 14 = 420
+
+Equivalent: resize the frame by ρ = p<i>g</i> / p<i>q</i> = 14/16 = 7/8 on both axes
+  640 · 7/8 = 560     480 · 7/8 = 420     <i>(aspect ratio preserved)</i>
+
+This never needs rounding: Qwen sizes are multiples of 32,
+and 32 · 7/8 = 28 = 2·p<i>g</i>, so ρ·W<i>q</i> is always a multiple of 2·14.</div>
+      <figcaption>This is the "Qwen grid × 14 px" rule already in <code>fusion/inputs.py</code> (TRAIN_PIXELS) and the reason the additive arm feeds VGGT 560×420 frames.</figcaption>
+    </figure>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg class="diag" viewBox="0 0 760 250" width="760" style="min-width:560px" role="img" aria-label="One visual token drawn at pixel scale: a 32 by 32 pixel Qwen cell made of four 16 pixel patches, and the matching 28 by 28 pixel VGGT window made of four 14 pixel patches, related by the scale factor seven eighths. Both cover the same image region.">
+      <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <text x="20" y="26" class="hd">Qwen token (r, c)</text>
+      <text x="20" y="44" class="t2">in the 640×480 frame</text>
+      <rect x="20" y="60" width="128" height="128" class="cell-q"/>
+      <path class="wire-llm" d="M84,60 V188 M20,124 H148"/>
+      <text x="52" y="96" text-anchor="middle" class="mono">16 px</text><text x="116" y="96" text-anchor="middle" class="mono">16 px</text>
+      <text x="52" y="160" text-anchor="middle" class="mono">16 px</text><text x="116" y="160" text-anchor="middle" class="mono">16 px</text>
+      <text x="84" y="208" text-anchor="middle" class="t2">x ∈ [32c, 32c+32)</text>
+      <text x="84" y="224" text-anchor="middle" class="t2">y ∈ [32r, 32r+32)</text>
+      <path class="wire" d="M170,124 H260" marker-end="url(#c)"/>
+      <text x="215" y="112" text-anchor="middle" class="t2">× 7/8</text>
+      <text x="215" y="142" text-anchor="middle" class="mono">resize</text>
+      <text x="290" y="26" class="hd">VGGT window (r, c)</text>
+      <text x="290" y="44" class="t2">in the 560×420 frame</text>
+      <rect x="290" y="68" width="112" height="112" class="cell-g"/>
+      <path class="wire-geo" d="M346,68 V180 M290,124 H402"/>
+      <text x="318" y="100" text-anchor="middle" class="mono">14 px</text><text x="374" y="100" text-anchor="middle" class="mono">14 px</text>
+      <text x="318" y="156" text-anchor="middle" class="mono">14 px</text><text x="374" y="156" text-anchor="middle" class="mono">14 px</text>
+      <text x="346" y="208" text-anchor="middle" class="t2">x ∈ [28c, 28c+28)</text>
+      <text x="346" y="224" text-anchor="middle" class="t2">y ∈ [28r, 28r+28)</text>
+      <text x="440" y="26" class="hd">Same region</text>
+      <text x="440" y="60" class="t2">Map the VGGT window back to frame pixels (÷ 7/8):</text>
+      <text x="440" y="82" class="mono">[28c, 28c+28) · 8/7 = [32c, 32c+32)</text>
+      <text x="440" y="110" class="t2">Exact for every (r, c): the window's four 14-px</text>
+      <text x="440" y="126" class="t2">patches tile the same pixels as the token's four</text>
+      <text x="440" y="142" class="t2">16-px patches. Any other window factor k gives</text>
+      <text x="440" y="158" class="t2">k²/4 geometry tokens per visual token.</text>
+      <text x="440" y="190" class="t2">Patch sub-indices inside the window:</text>
+      <text x="440" y="208" class="mono">(2r, 2c)  (2r, 2c+1)  (2r+1, 2c)  (2r+1, 2c+1)</text>
+      <text x="440" y="224" class="t2">row-major, the order Qwen's merger uses for its own 2×2.</text>
+    </svg>
+    </div>
+    <figcaption>One visual token at pixel scale. The window factor must equal Qwen's merge factor m = 2; with ρ = 7/8 the two cells are the same pixels, so "window i" and "token i" refer to one image region.</figcaption>
+  </figure>
+  <div class="two">
+    <figure>
+      <h3>3. The window operation and the shared index</h3>
+<div class="math">VGGT patch tokens of frame f:  p<i>f</i>[i, j] ∈ ℝ²⁰⁴⁸,  i &lt; 30, j &lt; 40
+
+window (r, c), r &lt; 15, c &lt; 20:
+  w<i>f</i>[r, c] = [ RMSNorm(p<i>f</i>[2r, 2c]) ; RMSNorm(p<i>f</i>[2r, 2c+1]) ;
+              RMSNorm(p<i>f</i>[2r+1, 2c]) ; RMSNorm(p<i>f</i>[2r+1, 2c+1]) ] ∈ ℝ⁸¹⁹²
+  g<i>f</i>[r, c] = MLP(w<i>f</i>[r, c])        <i>8192 → 4096 → S (GELU between)</i>
+
+flattened index, matching Qwen's row-major visual-token order:
+  i = f·300 + r·20 + c,   i &lt; F·300          <i>F frames</i>
+
+so for every i:  g<i>i</i> is the geometry of the pixels behind visual token i.</div>
+      <figcaption>Concatenation keeps all 4 × 2048 numbers, so a depth edge that crosses the window is still visible to the MLP; a mean-pool would blur it. The alignment loss pairs h<sub>i</sub> with g<sub>i</sub> using this index, with no learned matching.</figcaption>
+    </figure>
+    <figure>
+      <h3>4. Sizes and cost that follow</h3>
+<div class="math">keys per video      N = F · 300        8 frames: 2,400    32 frames: 9,600
+LLM sequence        T ≈ N + text        ≈ 2,500 / ≈ 9,700
+window MLP          8192·4096 + 4096·S ≈ 37.7M params per injection point
+                    (S = 1024; the additive arm's merger is the same shape with S = D)
+
+cross-attention FLOPs per injection point, per video (QKᵀ and AV):
+  ≈ 4 · T · N · S  =  4 · 2,500 · 2,400 · 1024  ≈ 2.5·10¹⁰
+LLM self-attention at that layer, for comparison:
+  ≈ 4 · T² · D     =  4 · 2,500² · 2048        ≈ 5.1·10¹⁰
+
+At 32 frames both grow ~16×, so the ratio stays ≈ ½.</div>
+      <figcaption>The cross-attention costs about half of one self-attention layer at each of the three injection points, in training and at 32-frame evaluation alike. Scores are computed by the fused SDPA kernel, so the T × N matrix is never materialised.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="jepa">
+  <div class="sec-head"><div class="eyebrow">The objective</div><h2>A JEPA-style predictive loss defines the shared space</h2>
+    <p class="lede prose">JEPA, in one sentence: learn a representation by predicting the <em>embedding</em> of something you cannot see from the embedding of something you can, rather than predicting pixels. Both sides map into one space (joint embedding); the loss is a regression in that space (predictive), not a contrast against negatives.</p></div>
+  <figure>
+    <div class="scroll">
+    <svg class="diag" viewBox="0 0 1000 300" width="1000" style="min-width:680px" role="img" aria-label="Context path: the LLM hidden state at visual token i is projected into S and passed through a predictor P. Target path: the VGGT window i goes through an EMA copy of the geometry embedding with stop-gradient. The L1 distance between the two is the alignment loss. The trainable geometry embedding, which produces the cross-attention keys, is updated by gradient from the answer loss and by the EMA rule toward the target.">
+      <defs>
+        <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-geo" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="bl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-llm" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="bo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-loss" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <text x="20" y="28" class="hd">Context path (what the LLM sees)</text>
+      <rect class="llm" x="20" y="48" width="200" height="48" rx="6"/>
+      <text x="120" y="68" text-anchor="middle">h<tspan baseline-shift="sub" font-size="9">i</tspan>: LLM hidden state</text><text x="120" y="85" text-anchor="middle" class="t2">at visual token i, after layer k</text>
+      <rect class="box" x="260" y="48" width="150" height="48" rx="6"/>
+      <text x="335" y="68" text-anchor="middle">LN → Linear</text><text x="335" y="85" text-anchor="middle" class="t2">D → S (1024)</text>
+      <rect class="box" x="450" y="48" width="150" height="48" rx="6"/>
+      <text x="525" y="68" text-anchor="middle">predictor P</text><text x="525" y="85" text-anchor="middle" class="t2">2-layer MLP in S</text>
+      <path class="wire-llm" d="M220,72 H258" marker-end="url(#bl)"/>
+      <path class="wire" d="M410,72 H448" marker-end="url(#b)"/>
+      <text x="20" y="178" class="hd">Target path (what the geometry is)</text>
+      <rect class="frozen" x="20" y="198" width="200" height="48" rx="6"/>
+      <text x="120" y="218" text-anchor="middle">VGGT window i</text><text x="120" y="235" text-anchor="middle" class="t2">frozen encoder, 8192-d</text>
+      <rect class="geo" x="260" y="198" width="150" height="48" rx="6"/>
+      <text x="335" y="218" text-anchor="middle">geometry embedding E</text><text x="335" y="235" text-anchor="middle" class="t2">trainable · gives keys g<tspan baseline-shift="sub" font-size="9">i</tspan></text>
+      <rect class="geo" x="450" y="198" width="150" height="48" rx="6" stroke-dasharray="4 3"/>
+      <text x="525" y="218" text-anchor="middle">target Ē = EMA(E)</text><text x="525" y="235" text-anchor="middle" class="t2">no gradient · m: 0.996→1</text>
+      <path class="wire-geo" d="M220,222 H258" marker-end="url(#bg)"/>
+      <path class="wire-stop" d="M410,222 H448" marker-end="url(#b)"/>
+      <text x="429" y="212" class="mono" text-anchor="middle">copy</text>
+      <path class="wire-geo" d="M335,198 V140 H335" /><text x="345" y="150" class="t2">g<tspan baseline-shift="sub" font-size="9">i</tspan> → cross-attention keys and values</text>
+      <rect class="loss" x="660" y="118" width="180" height="64" rx="6"/>
+      <text x="750" y="140" text-anchor="middle">alignment loss</text><text x="750" y="156" text-anchor="middle" class="t2">‖ P(v<tspan baseline-shift="sub" font-size="9">i</tspan>) − sg[ḡ<tspan baseline-shift="sub" font-size="9">i</tspan>] ‖<tspan baseline-shift="sub" font-size="9">1</tspan></text><text x="750" y="173" text-anchor="middle" class="mono">mean over visual tokens</text>
+      <path class="wire-loss" d="M600,72 C640,72 640,140 658,140" marker-end="url(#bo)"/>
+      <path class="wire-loss" d="M600,222 C640,222 640,160 658,160" marker-end="url(#bo)"/>
+      <rect class="box" x="880" y="118" width="100" height="64" rx="6"/>
+      <text x="930" y="142" text-anchor="middle">L<tspan baseline-shift="sub" font-size="9">total</tspan></text><text x="930" y="160" text-anchor="middle" class="t2">answer + λ·align</text><text x="930" y="174" text-anchor="middle" class="mono">λ ≈ 0.5</text>
+      <path class="wire" d="M840,150 H878" marker-end="url(#b)"/>
+      <text x="660" y="226" class="t2">Gradient flows back into the context path (LoRA, the</text>
+      <text x="660" y="242" class="t2">S-projection, P) only. E is trained by the answer loss</text>
+      <text x="660" y="258" class="t2">through the keys; Ē follows E slowly and is never trained.</text>
+    </svg>
+    </div>
+    <figcaption>V-JEPA's recipe transplanted: a predictor on the context side, an EMA target with stop-gradient on the target side, L1 in latent space. Here the "masked" content is not hidden patches of the same modality but a different modality (geometry) of the same region.</figcaption>
+  </figure>
+  <div class="prose">
+    <dl>
+      <dt>Why predictive, not reconstructive</dt><dd>VGGT's 2048-d features carry a lot that is irrelevant to answering questions (register noise, view-specific detail). Predicting a <em>learned</em> embedding lets the target side discard what is unpredictable, which is V-JEPA's argument against pixel reconstruction. The shared space can settle on the stable geometric content of a region.</dd>
+      <dt>Why not contrastive</dt><dd>InfoNCE would push region i away from region i+1. Neighbouring regions on the same wall genuinely share geometry, and the space should reflect that. A regression loss has no such pressure.</dd>
+      <dt>Why it does not collapse</dt><dd>The target is a slowly moving EMA copy with stop-gradient. If the context side output a constant, the target would keep moving and the loss would not stay low. The predictor absorbs the "which parts are predictable" question so the space itself does not have to. This is the BYOL / V-JEPA mechanism; its known failure (EMA too fast) is monitorable.</dd>
+      <dt>Where the analogy stops</dt><dd>Meta's JEPAs pre-train a video encoder from scratch. We are not learning geometry; VGGT has it. We use the JEPA objective as an <em>alignment</em> signal between a frozen geometry encoder and a language model, closer in role to LLaVA's projector pre-training, with the JEPA machinery borrowed to make the alignment dense and collapse-resistant.</dd>
+    </dl>
+  </div>
+</section>
+
+<section id="intuition">
+  <div class="sec-head"><div class="eyebrow">Why this suits geometric encoding</div><h2>A prediction task you can only solve by understanding geometry</h2></div>
+  <div class="prose">
+    <p>Ask what the LLM's hidden state at region i would need to contain to predict region i's geometry embedding. Not pixels, not colour, not the object's name. It needs whatever varies with depth, surface shape and camera pose. The only way to drive the loss down is to put geometric information into the hidden state at the visual positions, in a form that lines up with VGGT's notion of it.</p>
+    <p>That is the capability the answer loss failed to install. The alignment loss supplies it at every one of the 2,400 visual tokens of every video, labelled by region, with no shortcut through scene identity: the target for region i changes as the camera moves, and there are no answers to memorise.</p>
+  </div>
+  <div class="two">
+    <figure>
+      <h3>What each signal can teach</h3>
+      <table>
+        <thead><tr><th></th><th>Answer loss</th><th>Alignment loss</th></tr></thead>
+        <tbody>
+          <tr><td>Supervision per video</td><td>about 13 answers (one token each)</td><td>2,400 region targets × 3 injection points</td></tr>
+          <tr><td>Needs labels</td><td>yes (VLM-3R QA)</td><td>no; any video works</td></tr>
+          <tr><td>Can be satisfied by scene identity</td><td>yes (1,201 scenes, 13 questions each)</td><td>no; target changes with the camera</td></tr>
+          <tr><td>Teaches "which key belongs to this query"</td><td>only indirectly</td><td>directly: query i is pulled toward key i</td></tr>
+          <tr><td>Helps text tokens</td><td>yes</td><td>indirectly: text queries use the same space the visual tokens were aligned in</td></tr>
+        </tbody>
+      </table>
+    </figure>
+    <figure>
+      <h3>What it should fix, concretely</h3>
+      <ul>
+        <li><strong>Relational tasks.</strong> "Is the chair closer than the table" needs the geometry at two specific regions. With queries and keys in one space, attention becomes a geometric lookup: retrieve the 3D description of the region being looked at, and of regions that look similar. v2's cross-attention lost 27 and 19 points on exactly these tasks.</li>
+        <li><strong>Early-epoch generalisation gap.</strong> The additive arm matched LoRA's training loss at epoch 1 but not its test score. A dense, label-free signal should raise dev accuracy at the same training loss. The dev split from v3 measures this.</li>
+        <li><strong>Stability.</strong> The block has a meaningful attention pattern from the first steps, so it should not need to open wide to be useful. The v2 runaway (injection ratio 0.6 → 1.5) would show as a failure of this prediction.</li>
+      </ul>
+      <figcaption>Appearance order and route planning are not expected to improve: VGGT carries no frame order, and the alignment loss does not add any.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="monitor">
+  <div class="sec-head"><div class="eyebrow">Instrumentation</div><h2>What we would watch, and what would tell us it failed</h2></div>
+  <figure>
+    <table>
+      <thead><tr><th>Monitor</th><th>Logged</th><th>Healthy</th><th>Failure it catches</th></tr></thead>
+      <tbody>
+        <tr><td>Per-dimension std of g<sub>i</sub> and P(v<sub>i</sub>)</td><td>every step</td><td>stays well above 0 in most dimensions</td><td>collapse to a constant (EMA too fast, λ too high)</td></tr>
+        <tr><td>Alignment loss on dev scenes</td><td>every 200 steps</td><td>falls, tracks train alignment loss</td><td>alignment that memorises training scenes</td></tr>
+        <tr><td>Retrieval: fraction of visual tokens i whose top attention key is window i (or one of its 8 neighbours)</td><td>each epoch end, dev</td><td>rises well above chance (1/2,400)</td><td>a shared space that does not encode location</td></tr>
+        <tr><td>Injection ratio ‖added‖ / ‖h‖</td><td>every step</td><td>below about 0.6, no jumps</td><td>the v2 runaway</td></tr>
+        <tr><td>Linear probe: depth from h<sub>i</sub> after layers 2, 8, 16</td><td>once per checkpoint</td><td>higher than for the v3 xattn checkpoint</td><td>geometry aligned but not used downstream</td></tr>
+        <tr><td>Dev accuracy per task</td><td>each epoch end</td><td>relational tasks up vs v3 xattn</td><td>the whole hypothesis</td></tr>
+      </tbody>
+    </table>
+    <figcaption>The first three are new; the last three already exist in the v3 training loop or are a short job on saved checkpoints.</figcaption>
+  </figure>
+  <div class="prose">
+    <p><strong>Two honest risks.</strong> VGGT layer 11 still carries texture, so the target space could partly encode appearance, which would make alignment partly trivial; the dev retrieval check and the probe would show that. And the EMA target drifts during training, so the keys change under the attention block; the injection-ratio and retrieval curves would show whether that destabilises it.</p>
+  </div>
+</section>
+
+<section id="cost">
+  <div class="sec-head"><div class="eyebrow">Budget</div><h2>Cost of trying it on a small subset</h2>
+    <p class="lede prose">2B model, one B300. v3's cross-attention arm runs at 3.1 s/step with 256 keys; 2,400 keys plus the alignment MLP should give about 3.5–4 s/step and a few GB more than v3's 26 GB peak.</p></div>
+  <div class="two">
+    <figure>
+      <h3>Four-arm subset pilot</h3>
+      <table>
+        <thead><tr><th>Item</th><th>Setting</th><th class="num">Time</th></tr></thead>
+        <tbody>
+          <tr><td>Data</td><td>cap 1,000 per task: 5.6k questions; 60 dev videos held out</td><td class="num">–</td></tr>
+          <tr><td>Training, per run</td><td>3 epochs ≈ 660 steps</td><td class="num">≈ 45 min</td></tr>
+          <tr><td>Dev eval, per run</td><td>560 dev questions at each epoch end</td><td class="num">≈ 5 min</td></tr>
+          <tr><td>Final eval, per run</td><td>1,000-question VSI subset, 32 frames, best-dev epoch</td><td class="num">≈ 10 min</td></tr>
+          <tr><td>Runs</td><td>JE-xattn; JE-xattn with λ = 0 (ablation); LoRA-only and additive at the same cap and epochs</td><td class="num">4 × ≈ 1 h</td></tr>
+          <tr><td>Checks</td><td>4-step GPU check; 2-epoch smoke of the chain</td><td class="num">≈ 15 min</td></tr>
+          <tr class="total"><td>Total GPU</td><td></td><td class="num">≈ 4 B300-h</td></tr>
+          <tr><td>Engineering</td><td>new arm, loss, EMA, monitors, checks; in a separate worktree</td><td class="num">≈ 1 day</td></tr>
+        </tbody>
+      </table>
+      <figcaption>At this size the subset gives about ±3 points, enough to see whether the design is in the right range and whether the loss and retrieval behave, not the final ranking.</figcaption>
+    </figure>
+    <figure>
+      <h3>Cheaper de-risking first</h3>
+      <ol>
+        <li><strong>Linear probe on the v3 checkpoints, about 10 min.</strong> How much VGGT geometry is recoverable from the LLM hidden states at the visual positions after injection. If a lot is, "geometry is not reaching the latent space" is not the bottleneck and the alignment loss would not fix it.</li>
+        <li><strong>Alignment-only stage, about 20 min.</strong> Train just the shared space and predictor on unlabelled ScanNet video, no QA. Check dev alignment loss and retrieval. If this does not work, the full run will not either.</li>
+        <li><strong>Then the four-arm pilot.</strong></li>
+      </ol>
+      <figcaption>Order: build and check (no training) → probe → alignment-only → pilot. v3's results arrive first and may change the design: if the 10× lower fusion lr already fixes cross-attention, the case for this weakens.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="lit">
+  <div class="sec-head"><div class="eyebrow">Deep research, 2026-10-26 · about 100 papers, 2022–2026</div><h2>What the literature says about this design</h2>
+    <p class="lede prose">Nobody has combined a latent-prediction loss on LLM hidden states with geometry cross-attention keys. The two halves exist separately: “inject geometry, next-token loss only” (SpatialStack, VLM-3R, VG-LLM, Spatial-MLLM, GUIDE, Stream3D-VLM, SpaceMind) and “align hidden states to frozen VGGT, discard at inference” (3DRS, Spatial Forcing, MVRD, GLaD). The closest prior work is <strong>Spa3R</strong> (arXiv 2602.21186): JEPA-style L1 + cosine prediction of frozen VGGT and DINOv3 features at novel views, done <em>outside</em> the LLM, whose latents then become K/V of a zero-init cross-attention adapter. Its ablations: cross-attention 58.6 vs appending 51.1 VSI-Bench; predicted latents 58.6 vs raw VGGT 55.1; VGGT + DINOv3 58.6 vs VGGT alone 57.5. <strong>JARVIS</strong> (2512.15885) is the one JEPA inside an LLM: frozen DINOv2 target, the LLM's first quarter as predictor, best at layer 8 of 32 only.</p></div>
+  <figure>
+    <table>
+      <thead><tr><th>Design choice</th><th>Verdict</th><th>Strongest evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Grid-aligned 2×2 window keys, one per visual token</td><td class="pos-v"><strong>supported</strong></td><td>Location-free resamplers lose 10–30 points on spatial/OCR subsets (Honeybee 45.6 vs 56.3; Cambrian-1 27.1 vs 55.5; NVLM OCR loss plateau); Spa3R xattn 58.6 vs append 51.1</td></tr>
+        <tr><td>Zero-init output, FFW branch, text tokens as queries</td><td><strong>supported</strong></td><td>Flamingo −4.2 without the gate and unstable, −3.8 without FFW; LLaMA-Adapter 83.85 vs 40.77 for random gate init; GUIDE ungated injection degrades with depth</td></tr>
+        <tr><td>Injection after LLM layers 0–2</td><td><strong>supported</strong></td><td>SpatialStack 67.52 at layers 0/1/2; GUIDE deep-layer injection gives no gain</td></tr>
+        <tr><td>Alignment loss read at layers 0–2</td><td><strong>contradicted</strong></td><td>Every layer sweep puts the optimum at ¼–¾ depth: JARVIS 8/32; ANCHOR 10/32; VaLR 12/27 (front worst); MVRD layer 7 scores 53.9, below plain SFT 57.7; Spatial Forcing 24/32; OLA-VLM probes peak at 12–24</td></tr>
+        <tr><td>Three alignment points with independent predictors</td><td><strong>contradicted</strong></td><td>ROCKET: independent per-layer projectors 96.4 → 80.0, one shared projector 98.2; VIRAL layers 14–18 collapse to 49.6 from 59.7</td></tr>
+        <tr><td>EMA target of the trainable key embedding</td><td><strong>unsupported; closest analogue collapsed</strong></td><td>No MLLM paper uses an EMA target. CrossJEPA App. A: adding an EMA branch “frequently suffered from model collapse” (91.7 vs 94.2 frozen); C-JEPA and AD-L-JEPA: EMA alone insufficient; SALT, Spa3R, JARVIS: a frozen teacher needs no EMA or stop-gradient</td></tr>
+        <tr><td>Predictive regression rather than InfoNCE</td><td><strong>supported, hedged</strong></td><td>VL-JEPA: cosine best on VQA; LLM-JEPA cosine 71.5 vs L2 2.2; but Latent Denoising adds a relational-KL term against collapse</td></tr>
+        <tr><td>L1 on normalised targets</td><td><strong>weak; cosine safer</strong></td><td>JARVIS cosine 51.7 vs smooth-L1 49.1; Spa3R uses L1 + cosine; V-JEPA's “L1 more stable” is anecdotal</td></tr>
+        <tr><td>λ ≈ 0.5, constant</td><td><strong>supported</strong></td><td>Spatial Forcing: 0.5 best, 2.5 drops to 86.6; PRe: 0.5 default, 2.0 degrades; VaLR 0.5; nobody schedules λ</td></tr>
+        <tr><td>Raw VGGT windows as the only target</td><td><strong>risky for order and scale tasks</strong></td><td>VLM-3R: VGGT room size −9.7, appearance order −4.0 vs CUT3R; MVRD: per-token VGGT distillation drops appearance order 38.5 → 19.6; Render to Reason: VGGT latents −1.5 VSI; Spa3R and VaLR gain from mixing a semantic teacher</td></tr>
+        <tr><td>No frame-index embedding on multi-frame keys</td><td><strong>contradicted</strong></td><td>Flamingo attending to all previous images −7.2; NVLM tile tags +5.5 DocVQA; VLM-3R view token +1.8; Spatial Forcing loses 10 points without PE on VGGT targets</td></tr>
+        <tr><td>Retrieval monitor (query i → key i)</td><td><strong>novel</strong></td><td>No precedent; nearest are Flamingo gate curves, 3DRS correspondence cosine (correlates with accuracy), SALT's student-loss R² 0.951</td></tr>
+      </tbody>
+    </table>
+    <figcaption>Two more calibration points. Geometry adds only +2.4 to +3.2 VSI over a data-matched fine-tune in every paper that reports both (SpatialStack +2.76), and Cambrian-S reaches 67.5 with no geometry encoder, so a ±3-point subset pilot cannot rank arms; judge the pilot on mechanism signals. And V-JEPA 2 is a poor geometry source (NYUv2 depth RMSE 0.642 vs DINOv2 0.372), with no V-JEPA or VL-JEPA result on any 3D QA benchmark.</figcaption>
+  </figure>
+  <div class="prose">
+    <p><strong>Revisions this suggests</strong> (not yet adopted; see open decisions): (1) make the target a <em>frozen</em> projection of the VGGT window, with EMA as an ablation rather than the default; (2) keep injection at layers 0–2 but read the alignment loss from a middle layer (around 8–12 of 24), where it demonstrably helps, instead of at the injection layers; (3) share one predictor across injection points; (4) add a frame-index embedding to the keys; (5) pre-register appearance order, room size and MMSI as regression gates; (6) consider mixing a semantic target (DINOv3) with VGGT, as Spa3R and VaLR do.</p>
+  </div>
+</section>
+
+<section id="open">
+  <div class="sec-head"><div class="eyebrow">Decisions still open</div><h2>What has been decided and what has not</h2></div>
+  <figure>
+    <table>
+      <thead><tr><th>Choice</th><th>Options</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Geometry side of the cross-attention</td><td>2×2 windows · resampler latents</td><td><strong>Decided: 2×2 windows</strong></td></tr>
+        <tr><td>Alignment objective</td><td>JEPA with a frozen target (now recommended by the literature review) · JEPA with EMA target (original proposal; closest analogue collapsed) · contrastive InfoNCE</td><td>open</td></tr>
+        <tr><td>Where the alignment loss is read</td><td>at the injection layers 0–2 (original proposal; contradicted by every layer sweep) · one middle layer, about 8–12 of 24 (literature)</td><td>open</td></tr>
+        <tr><td>Predictor sharing</td><td>one predictor per injection point (original) · one shared predictor (ROCKET)</td><td>open</td></tr>
+        <tr><td>Frame-index embedding on keys</td><td>none (original, keeps parity with v3) · learned per-frame embedding (Flamingo, NVLM, VLM-3R evidence)</td><td>open</td></tr>
+        <tr><td>Runs in the first round</td><td>JE-xattn + λ = 0 ablation (proposed) · JE-xattn only · also JE-additive</td><td>open</td></tr>
+        <tr><td>Timing</td><td>build and check now, launch after the 2B v3 results (proposed) · launch as soon as checks pass</td><td>open; nothing runs without a go-ahead</td></tr>
+        <tr><td>Defaults unless changed</td><td colspan="2">λ = 0.5 · L1 on LayerNorm'd targets · EMA momentum 0.996 → 1.0 · S = 1024-d · VGGT 11/17/23 → after LLM layers 0/1/2 · v3 training settings · no frame-index embedding</td></tr>
+      </tbody>
+    </table>
+  </figure>
+</section>
+
+<footer>Literature review: <code>reports/JEPA alignment in spatial VLMs.md</code> and the four note files under <code>research_notes/</code> in the proposal worktree. Sources: run v2 and v3 logs under <code>results/train/</code>; <code>docs/idea.md</code>; <code>fusion/inputs.py</code> and <code>fusion/modules.py</code> for the grid construction; V-JEPA 2 (arXiv 2506.09985); SpatialStack (arXiv 2603.27437). The DT-JEPA and AdaJEPA references in the original list were not verified.</footer>
+</div>

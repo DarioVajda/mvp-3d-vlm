@@ -1,0 +1,742 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Geometry Fusion Notebook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column (~74ch) for prose; figures and tables break out to a wider measure. Lab-notebook entries, newest first. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --ink-2: #4a505b; --ink-3: #737a86;
+  --rule: #dde1e7; --rule-2: #eceff3; --accent: #3d3a8f; --accent-soft: #e9e8f6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --good: #1d7a3a; --bad: #b3322f; --good-bg: #e6f3ea; --bad-bg: #f9e7e6;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121418; --panel: #1a1d22; --ink: #eceef2; --ink-2: #b4bac5; --ink-3: #868d99;
+  --rule: #2e333b; --rule-2: #23272d; --accent: #a9a6f0; --accent-soft: #26253f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --good: #6cc68a; --bad: #ef7f7c; --good-bg: #17291d; --bad-bg: #331b1b; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121418; --panel: #1a1d22; --ink: #eceef2; --ink-2: #b4bac5; --ink-3: #868d99;
+  --rule: #2e333b; --rule-2: #23272d; --accent: #a9a6f0; --accent-soft: #26253f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --good: #6cc68a; --bad: #ef7f7c; --good-bg: #17291d; --bad-bg: #331b1b; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 80px; }
+.prose { max-width: 74ch; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 26px; font-weight: 600; }
+h3 { font-size: 18px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.eyebrow { font: 500 12px/1.2 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+header.top { display: grid; gap: 14px; padding-bottom: 28px; border-bottom: 1px solid var(--rule); }
+header.top .q { font-size: 18px; color: var(--ink-2); max-width: 70ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font: 13px var(--f-mono); color: var(--ink-3); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+nav.toc a { font: 500 13px var(--f-body); text-decoration: none; color: var(--ink-2); padding: 4px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--panel); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+section { display: grid; gap: 18px; padding-block: 40px 8px; scroll-margin-top: 16px; }
+.sec-head { display: grid; gap: 6px; }
+.lede { color: var(--ink-2); }
+
+.verdict { display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 22px 24px; }
+.ranking { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; font: 600 24px var(--f-display); }
+.ranking .gt { color: var(--ink-3); font-weight: 500; }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.d1 { background: var(--s1); } .d2 { background: var(--s2); } .d3 { background: var(--s3); }
+ul.findings { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+ul.findings li { padding-left: 2px; }
+
+figure { margin: 0; display: grid; gap: 10px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 18px 14px; min-width: 0; }
+figcaption { font-size: 13.5px; color: var(--ink-2); max-width: 80ch; }
+.scroll { overflow-x: auto; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; width: fit-content; }
+.seg button { font: 500 13px var(--f-body); color: var(--ink-2); background: transparent; border: 0; padding: 6px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.fig-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend .ref { display: inline-flex; align-items: center; gap: 6px; }
+.legend .ref i { width: 16px; border-top: 1.5px dashed var(--ink-3); display: inline-block; }
+
+/* diagram */
+#arch text { font-family: var(--f-body); fill: var(--ink); }
+#arch .small { font-size: 11.5px; fill: var(--ink-2); }
+#arch .tiny { font: 10.5px var(--f-mono); fill: var(--ink-3); }
+#arch .box { fill: var(--panel); stroke: var(--rule); stroke-width: 1.2; }
+#arch .frozen { fill: var(--rule-2); stroke: var(--rule); }
+#arch .llm { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
+#arch .wire { stroke: var(--ink-3); stroke-width: 1.4; fill: none; }
+#arch .geo { stroke: var(--s2); stroke-width: 1.6; fill: none; }
+#arch .mod { fill: var(--panel); stroke: var(--s2); stroke-width: 1.4; }
+#arch .plus { fill: var(--panel); stroke: var(--s2); stroke-width: 1.6; }
+#arch .arrow { fill: var(--ink-3); }
+#arch .arrow-geo { fill: var(--s2); }
+#arch[data-arm="xattn"] .geo, #arch[data-arm="xattn"] .mod, #arch[data-arm="xattn"] .plus { stroke: var(--s3); }
+#arch[data-arm="xattn"] .arrow-geo { fill: var(--s3); }
+#arch[data-arm="lora"] .g-geo { opacity: 0.12; }
+#arch .only-add, #arch .only-x { display: none; }
+#arch[data-arm="additive"] .only-add, #arch[data-arm="xattn"] .only-x { display: inline; }
+.arm-note { font-size: 14px; color: var(--ink-2); max-width: 80ch; min-height: 3em; }
+
+/* charts */
+.chart text { font: 11.5px var(--f-mono); fill: var(--ink-3); }
+.chart .grid { stroke: var(--rule-2); stroke-width: 1; }
+.chart .axis { stroke: var(--rule); stroke-width: 1; }
+.chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .ref { stroke: var(--ink-3); stroke-dasharray: 4 4; stroke-width: 1.2; }
+.chart .reflabel { fill: var(--ink-2); }
+.chart .endlab { font: 500 12px var(--f-body); fill: var(--ink); }
+.chart .cross { stroke: var(--ink-3); stroke-width: 1; opacity: 0; }
+.chart.hover .cross { opacity: 0.6; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgb(0 0 0 / 0.12); display: grid; gap: 3px; min-width: 150px; }
+.tip b { font: 600 12px var(--f-mono); color: var(--ink-2); }
+.tip .row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.tip .row span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.tip .row span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+.chart-box { position: relative; min-width: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+thead th { font: 500 12px var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.best { font-weight: 600; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.sig { display: inline-block; font: 500 11px var(--f-mono); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.sig.neg { background: var(--bad-bg); } .sig.pos { background: var(--good-bg); } .sig.ns { color: var(--ink-3); border: 1px solid var(--rule); }
+tr.diff td:first-child, tr.diff th:first-child { font-weight: 500; }
+td.diff-cell { background: var(--accent-soft); }
+
+/* log */
+.log { display: grid; gap: 0; }
+.entry { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--rule-2); }
+.entry .when { font: 12.5px var(--f-mono); color: var(--ink-3); padding-top: 2px; }
+.entry h3 { font-size: 16px; margin-bottom: 4px; }
+.entry p { color: var(--ink-2); font-size: 14px; }
+.status { display: inline-block; font: 500 11px var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--rule); color: var(--ink-2); margin-left: 6px; vertical-align: 2px; }
+.status.open { color: var(--accent); border-color: var(--accent); }
+.status.done { color: var(--good); border-color: var(--good); }
+.status.super { color: var(--ink-3); text-decoration: line-through; }
+@media (max-width: 560px) { .entry { grid-template-columns: 1fr; gap: 4px; } }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">MPhil ACS · MVP project · research notebook</div>
+  <h1>Geometry Fusion Notebook</h1>
+  <p class="q">Does a VLM use 3D geometry better when it reads VGGT features through <strong>cross-attention</strong> than when they are <strong>added</strong> to its visual tokens (SpatialStack-style)? Both arms get the same VGGT layers, injection points and training budget; a LoRA-only arm is the control.</p>
+  <div class="meta"><span>Base: Qwen3.5-2B</span><span>Geometry: VGGT-1B (frozen)</span><span>Train: VLM-3R ScanNet QA</span><span>Run v3 done: 2B and 4B</span><span>Last updated 2026-10-27</span></div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#v3">Where we stand (v3)</a><a href="#v3-curves">v3 charts</a><a href="#arch-sec">Architecture</a><a href="#now">v2 findings</a><a href="#v2">Run v2 results</a><a href="#tasks">Per task</a><a href="#train">Training dynamics</a><a href="#pilot">Pilot</a><a href="#spatialstack">vs SpatialStack</a><a href="#decisions">Decisions</a><a href="#next">Next steps</a>
+  </nav>
+</header>
+
+<section id="v3">
+  <div class="sec-head"><div class="eyebrow">Current state · run v3 · Qwen3.5-2B and 4B · 6 epochs · LoRA lr 1e-4, new modules 1e-5 · cap 6k</div><h2>Where we stand</h2></div>
+  <div class="verdict">
+    <div class="ranking" aria-label="Ranking on full VSI-Bench">
+      <span class="chip"><span class="dot d2"></span>Additive</span><span class="gt">&gt;</span>
+      <span class="chip"><span class="dot d1"></span>LoRA only</span><span class="gt">&gt;</span>
+      <span class="chip"><span class="dot d3"></span>Cross-attention</span>
+    </div>
+    <p class="lede">First positive geometry result. On the <strong>full VSI-Bench (5,130 questions, 32 frames)</strong>, each arm at its best-dev checkpoint: additive 55.0, LoRA 52.7, cross-attention 49.0. Additive − LoRA <strong>+2.4 [+0.9, +3.8]</strong>, close to SpatialStack's published +2.8 (4B, full fine-tuning). Cross-attention − LoRA −3.7 [−5.1, −2.2]; cross-attention − additive −6.1 [−7.5, −4.6]. Intervals: 95% paired bootstrap, stratified by task.</p>
+    <p class="lede"><strong>On Qwen3.5-4B the additive gain shrinks to a tie:</strong> additive 59.0, LoRA 58.7, cross-attention 51.0. Additive − LoRA <strong>+0.3 [−1.1, +1.6]</strong>; cross-attention − LoRA −7.7 [−9.1, −6.3]. The 4B LoRA control keeps appearance-order ability that the 2B loses (50.6 vs 24.8), and additive gives up 15 points on that one task; on the other seven tasks additive leads by about 2.5. Scaling 2B → 4B is worth +6.0 [+4.7, +7.4] for LoRA and +3.9 [+2.4, +5.3] for additive.</p>
+  </div>
+  <figure>
+    <h3>Overall, full VSI-Bench at 32 frames, best-dev checkpoint</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Base</th><th class="num">LoRA only</th><th class="num">Additive</th><th class="num">Cross-attn</th><th class="num">additive − LoRA</th><th class="num">xattn − LoRA</th><th class="num">xattn − additive</th></tr></thead>
+      <tbody>
+        <tr><td>Qwen3.5-2B</td><td class="num">52.7</td><td class="num best">55.0</td><td class="num">49.0</td><td class="num pos">+2.4 [+0.9, +3.8]</td><td class="num neg">−3.7 [−5.1, −2.2]</td><td class="num neg">−6.1 [−7.5, −4.6]</td></tr>
+        <tr><td>Qwen3.5-4B</td><td class="num">58.7</td><td class="num best">59.0</td><td class="num">51.0</td><td class="num">+0.3 [−1.1, +1.6]</td><td class="num neg">−7.7 [−9.1, −6.3]</td><td class="num neg">−8.0 [−9.5, −6.4]</td></tr>
+        <tr><td style="color:var(--ink-3)">SpatialStack-4B, published (full fine-tuning, 4-dataset mix)</td><td class="num" style="color:var(--ink-3)">64.8 (data-only)</td><td class="num" style="color:var(--ink-3)">67.5</td><td class="num" style="color:var(--ink-3)">–</td><td class="num" style="color:var(--ink-3)">+2.8</td><td class="num" style="color:var(--ink-3)">–</td><td class="num" style="color:var(--ink-3)">–</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>5,130 questions; 95% paired bootstrap intervals, 1,000 resamples stratified by task. Our LoRA + ScanNet-only recipe sits 6 points below SpatialStack's data-only control; the geometry increment is in the same range as theirs at 2B and vanishes at 4B.</figcaption>
+  </figure>
+  <figure>
+    <h3>Full VSI-Bench by task, 32 frames</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Task</th><th>In training data</th><th class="num">LoRA only</th><th class="num">Additive</th><th class="num">Cross-attn</th><th class="num">Additive − LoRA</th></tr></thead>
+      <tbody>
+        <tr><td>Relative direction</td><td>yes</td><td class="num">70.7</td><td class="num best">82.3</td><td class="num">61.7</td><td class="num pos">+11.6</td></tr>
+        <tr><td>Room size</td><td>yes</td><td class="num">54.4</td><td class="num best">64.2</td><td class="num">58.5</td><td class="num pos">+9.8</td></tr>
+        <tr><td>Absolute distance</td><td>yes</td><td class="num">44.1</td><td class="num best">52.5</td><td class="num">41.4</td><td class="num pos">+8.4</td></tr>
+        <tr><td>Relative distance</td><td>yes</td><td class="num">59.0</td><td class="num best">59.3</td><td class="num">53.9</td><td class="num">+0.3</td></tr>
+        <tr><td>Route planning</td><td>no</td><td class="num best">40.2</td><td class="num best">40.2</td><td class="num">33.0</td><td class="num">0.0</td></tr>
+        <tr><td>Object counting</td><td>yes</td><td class="num best">65.9</td><td class="num">65.0</td><td class="num">64.7</td><td class="num">−0.9</td></tr>
+        <tr><td>Object size</td><td>yes</td><td class="num best">62.5</td><td class="num">61.2</td><td class="num">58.7</td><td class="num">−1.3</td></tr>
+        <tr><td>Appearance order</td><td>no</td><td class="num best">24.8</td><td class="num">15.7</td><td class="num">20.4</td><td class="num neg">−9.1</td></tr>
+        <tr><td><strong>Overall</strong></td><td></td><td class="num">52.7</td><td class="num best">55.0</td><td class="num">49.0</td><td class="num pos">+2.4</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Sorted by the additive gain. Full VSI-Bench has hundreds of questions per task, so per-task standard errors are about 1.5–3 points; the three largest gains are well outside that.</figcaption>
+  </figure>
+  <figure>
+    <h3>Qwen3.5-4B: full VSI-Bench by task, 32 frames</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Task</th><th>In training data</th><th class="num">LoRA only</th><th class="num">Additive</th><th class="num">Cross-attn</th><th class="num">Additive − LoRA</th></tr></thead>
+      <tbody>
+        <tr><td>Room size</td><td>yes</td><td class="num">55.7</td><td class="num best">63.9</td><td class="num">58.9</td><td class="num pos">+8.2</td></tr>
+        <tr><td>Relative direction</td><td>yes</td><td class="num">75.8</td><td class="num best">82.4</td><td class="num">69.0</td><td class="num pos">+6.6</td></tr>
+        <tr><td>Absolute distance</td><td>yes</td><td class="num">49.0</td><td class="num best">54.5</td><td class="num">43.7</td><td class="num pos">+5.5</td></tr>
+        <tr><td>Object counting</td><td>yes</td><td class="num">65.9</td><td class="num best">67.8</td><td class="num">63.9</td><td class="num">+1.9</td></tr>
+        <tr><td>Object size</td><td>yes</td><td class="num best">63.8</td><td class="num">62.7</td><td class="num">58.2</td><td class="num">−1.1</td></tr>
+        <tr><td>Route planning</td><td>no</td><td class="num best">42.3</td><td class="num">41.2</td><td class="num">38.1</td><td class="num">−1.1</td></tr>
+        <tr><td>Relative distance</td><td>yes</td><td class="num best">66.2</td><td class="num">63.8</td><td class="num">57.3</td><td class="num">−2.4</td></tr>
+        <tr><td>Appearance order</td><td>no</td><td class="num best">50.6</td><td class="num">35.4</td><td class="num">19.3</td><td class="num neg">−15.2</td></tr>
+        <tr><td><strong>Overall</strong></td><td></td><td class="num">58.7</td><td class="num best">59.0</td><td class="num">51.0</td><td class="num">+0.3</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Same pattern as the 2B on the geometric tasks (room size, relative direction, absolute distance all up 5–8 points), but the 4B LoRA control is twice as good at appearance order as the 2B and the geometry arms are not. That one order-dependent task cancels the overall gain. Dev accuracy at epoch 6: LoRA 73.9, additive 74.7, cross-attention 72.9; every arm again peaked at the last epoch. Training 8.4–9.3 h per arm on one B300.</figcaption>
+  </figure>
+  <figure>
+    <h3>Our 4B arms against SpatialStack-Qwen3.5-4B, full VSI-Bench at 32 frames</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Task</th><th class="num">Qwen3.5-4B zero-shot (paper)</th><th class="num">Ours: LoRA only</th><th class="num">Ours: additive</th><th class="num">SpatialStack-4B (our reproduction)</th><th class="num">additive − SpatialStack</th></tr></thead>
+      <tbody>
+        <tr><td>Route planning</td><td class="num">34.0</td><td class="num">42.3</td><td class="num">41.2</td><td class="num">41.8</td><td class="num">−0.6</td></tr>
+        <tr><td>Absolute distance</td><td class="num">36.5</td><td class="num">49.0</td><td class="num">54.5</td><td class="num">55.4</td><td class="num">−0.9</td></tr>
+        <tr><td>Relative direction</td><td class="num">57.5</td><td class="num">75.8</td><td class="num">82.4</td><td class="num">83.9</td><td class="num">−1.5</td></tr>
+        <tr><td>Object counting</td><td class="num">56.5</td><td class="num">65.9</td><td class="num">67.8</td><td class="num">70.8</td><td class="num">−3.0</td></tr>
+        <tr><td>Relative distance</td><td class="num">60.3</td><td class="num">66.2</td><td class="num">63.8</td><td class="num">66.8</td><td class="num">−3.0</td></tr>
+        <tr><td>Room size</td><td class="num">53.8</td><td class="num">55.7</td><td class="num">63.9</td><td class="num">69.1</td><td class="num neg">−5.2</td></tr>
+        <tr><td>Object size</td><td class="num">67.5</td><td class="num">63.8</td><td class="num">62.7</td><td class="num">69.0</td><td class="num neg">−6.3</td></tr>
+        <tr><td>Appearance order</td><td class="num">62.3</td><td class="num">50.6</td><td class="num">35.4</td><td class="num">83.0</td><td class="num neg">−47.6</td></tr>
+        <tr><td><strong>Overall</strong></td><td class="num">53.6</td><td class="num">58.7</td><td class="num">59.0</td><td class="num best">67.5</td><td class="num neg">−8.5</td></tr>
+        <tr><td style="color:var(--ink-3)">SpatialStack's own data-only control</td><td class="num" style="color:var(--ink-3)" colspan="3">64.8 overall (no per-task breakdown published)</td><td class="num" style="color:var(--ink-3)">+2.8 from geometry</td><td></td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Sorted by the gap. SpatialStack numbers are our reproduction of the released checkpoint (67.53 vs 67.5 reported; relative direction is the question-weighted mean of its easy/medium/hard splits). On five tasks our LoRA-trained additive arm is within 3 points of SpatialStack despite 26k ScanNet-only questions vs their 212k four-dataset mix with full fine-tuning. Appearance order alone accounts for 5.9 of the 8.5-point gap: SpatialStack trains on 1.9k VSI appearance-order questions and keeps the base model's 62.3, while our ScanNet-only fine-tune drives it to 35.4. Object size is the one task where our fine-tuning falls below zero-shot (67.5 → 62.7). MMSI: SpatialStack-4B 28.0 vs 32.2 zero-shot; v3 was not evaluated on MMSI.</figcaption>
+  </figure>
+  <figure>
+    <h3>Dev curves (60 held-out ScanNet videos, 560 questions)</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Arm</th><th class="num">ep 1</th><th class="num">ep 2</th><th class="num">ep 3</th><th class="num">ep 4</th><th class="num">ep 5</th><th class="num">ep 6</th></tr></thead>
+      <tbody>
+        <tr><td colspan="7" class="eyebrow" style="padding-top:12px">Dev accuracy (mean of 6 tasks, %)</td></tr>
+        <tr><td><span class="chip"><span class="dot d1"></span>LoRA only</span></td><td class="num">56.3</td><td class="num">60.2</td><td class="num">65.4</td><td class="num">66.3</td><td class="num">67.9</td><td class="num best">71.4</td></tr>
+        <tr><td><span class="chip"><span class="dot d2"></span>Additive</span></td><td class="num">58.6</td><td class="num">61.8</td><td class="num">66.4</td><td class="num">71.3</td><td class="num">73.4</td><td class="num best">73.5</td></tr>
+        <tr><td><span class="chip"><span class="dot d3"></span>Cross-attention</span></td><td class="num">49.8</td><td class="num">55.8</td><td class="num">62.5</td><td class="num">69.1</td><td class="num">69.8</td><td class="num best">69.9</td></tr>
+        <tr><td colspan="7" class="eyebrow" style="padding-top:12px">Dev loss</td></tr>
+        <tr><td><span class="chip"><span class="dot d1"></span>LoRA only</span></td><td class="num">0.804</td><td class="num best">0.773</td><td class="num">0.792</td><td class="num">0.805</td><td class="num">1.010</td><td class="num">1.312</td></tr>
+        <tr><td><span class="chip"><span class="dot d2"></span>Additive</span></td><td class="num">0.807</td><td class="num">0.750</td><td class="num">0.759</td><td class="num best">0.750</td><td class="num">0.934</td><td class="num">1.239</td></tr>
+        <tr><td><span class="chip"><span class="dot d3"></span>Cross-attention</span></td><td class="num">0.844</td><td class="num">0.811</td><td class="num">0.796</td><td class="num best">0.767</td><td class="num">0.941</td><td class="num">1.194</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Dev accuracy picked epoch 6 for every arm. Dev loss bottoms out at epochs 2–4 and then climbs while accuracy keeps rising: the models grow overconfident on the questions they still get wrong. Selecting on loss would have picked an earlier, worse checkpoint.</figcaption>
+  </figure>
+  <div class="prose">
+    <ul class="findings">
+      <li><strong>Additive gains exactly where geometry should help:</strong> relative direction +11.6, room size +9.8, absolute distance +8.4. It loses on appearance order (−9.1), the order-dependent task we flagged at design time: it has no training data and VGGT is permutation-equivariant beyond the first frame.</li>
+      <li><strong>The lower fusion lr is what changed the additive result.</strong> Its injection ratio now settles at 0.13–0.25 (v2: 0.4–0.6), and its dev accuracy is at or above LoRA's at every epoch. On held-out scenes there is no sign of the scene-fingerprint shortcut proposed after v2.</li>
+      <li><strong>Cross-attention no longer runs away, and its gradient spikes are a warmup artefact, not persistent instability.</strong> All 70 (2B) and 78 (4B) steps with gradient norm above 50 fall inside the 559-step warmup; the last is at step 493 / 512, and after warmup its median gradient norm (3.95 / 3.12) matches additive's (3.92 / 3.00). The giant first-step norms (6,469 / 7,294 vs about 250–350 for the other arms) come from the zero-initialised output projections: their gradient is large before the block has any scale, and clipping at 1.0 absorbs it. Every arm shares the same 10–12 spikes at steps 1–12. Corrected 2026-10-27; an earlier version of this page called the arm “still unstable”.</li>
+      <li><strong>Injection ratio is a per-video quantity, and one training video doubles it.</strong> The logged ratio is from the last micro-batch of each step, so the curve is per-video noise around a slow trend. The three largest jumps (steps 4165, 4893, 5558: mean ratio 0.21 → 0.37, point 2 from 0.17 to 0.46 for additive; point 1 from 0.21 to 0.42 for cross-attention) are the same video every epoch, <code>scene0152_00</code>, a dark office with large uniform carpet and blank walls, in both the 2B and 4B runs. The likely mechanism is small Qwen hidden-state norms on low-texture regions rather than large VGGT features; the activation study below would settle it.</li>
+      <li><strong>Correlations (log-based, small n).</strong> Across the six runs, dev accuracy at epoch 6 tracks full-VSI score (r = +0.87), so dev selection is doing its job. Within each geometry run, the dev-accuracy advantage over the size-matched LoRA grows as the injection ratio opens (additive r = +0.70, cross-attention r = +0.84 over 12 epoch-points each), but pooled across arms the correlation is zero: cross-attention sits at a higher ratio with a lower advantage. More injection is not better in itself; what the vector contains is. Per task on dev, additive's advantage is concentrated in relative direction (+11 at both sizes) and absolute distance; it loses on counting at 4B (−6.3).</li>
+      <li><strong>Training may be stopping early.</strong> All three arms peak at the final epoch. LoRA's dev accuracy still rose 3.5 points in epoch 6; additive and cross-attention flattened (+0.1).</li>
+      <li><strong>The 1,000-question subset is too noisy for differences this small.</strong> On it, v3 scores LoRA 55.2, additive 54.6, cross-attention 50.4, so the subset would have called LoRA vs additive the other way. Final comparisons should use full VSI-Bench. Against v2 on the same subset, every arm improved (LoRA +2.2, additive +5.4, cross-attention +6.7).</li>
+      <li><strong>Dev accuracy (70–75) is far above VSI (49–59):</strong> dev is in-distribution ScanNet with the six training tasks; VSI adds ARKitScenes, ScanNet++ and two unseen tasks.</li>
+      <li><strong>Appearance order decides the 4B headline.</strong> The 4B control keeps order reasoning (50.6) and the geometry arms lose it (35.4 / 19.3). This matches VLM-3R and MVRD, which both found VGGT-based injection or distillation hurts appearance order: VGGT is permutation-equivariant beyond the first frame and the injected features carry no frame order. A frame-index embedding on the geometry tokens, or appearance-order training data, is the obvious fix before any further comparison.</li>
+      <li><strong>Cross-attention is consistently 6–8 points behind additive at both sizes</strong>, with the same instability signature (gradient-norm spikes). The literature review found no precedent for our design's query/key space; the JE-xattn proposal addresses exactly this.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="v3-curves">
+  <div class="sec-head"><div class="eyebrow">Run v3 · all six runs · 6 epochs · 931 steps per epoch</div><h2>Results at a glance, and how they developed</h2>
+    <p class="lede prose">Every run: full VSI-Bench per task at the best-dev checkpoint, then the curves behind it. Switch between the 2B and 4B base with the toggle; hover any chart for exact values.</p></div>
+  <figure>
+    <h3>Full VSI-Bench at 32 frames, best-dev checkpoint (epoch 6 in every run)</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Run</th><th class="num">Overall</th><th class="num">Count</th><th class="num">Abs dist</th><th class="num">Size</th><th class="num">Room</th><th class="num">Rel dist</th><th class="num">Rel dir</th><th class="num">Route</th><th class="num">Appear</th><th class="num">Dev acc</th><th class="num">Train loss ep 6</th><th class="num">Grad spikes</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip"><span class="dot d1"></span>2B LoRA only</span></td><td class="num">52.7</td><td class="num">65.9</td><td class="num">44.1</td><td class="num">62.5</td><td class="num">54.4</td><td class="num">59.0</td><td class="num">70.7</td><td class="num">40.2</td><td class="num">24.8</td><td class="num">71.4</td><td class="num">0.222</td><td class="num">11</td></tr>
+        <tr><td><span class="chip"><span class="dot d2"></span>2B additive</span></td><td class="num best">55.0</td><td class="num">65.0</td><td class="num best">52.5</td><td class="num">61.2</td><td class="num best">64.2</td><td class="num">59.3</td><td class="num best">82.3</td><td class="num">40.2</td><td class="num">15.7</td><td class="num best">73.5</td><td class="num">0.237</td><td class="num">10</td></tr>
+        <tr><td><span class="chip"><span class="dot d3"></span>2B cross-attention</span></td><td class="num">49.0</td><td class="num">64.7</td><td class="num">41.4</td><td class="num">58.7</td><td class="num">58.5</td><td class="num">53.9</td><td class="num">61.7</td><td class="num">33.0</td><td class="num">20.4</td><td class="num">69.9</td><td class="num">0.285</td><td class="num">70</td></tr>
+        <tr><td><span class="chip"><span class="dot d1"></span>4B LoRA only</span></td><td class="num">58.7</td><td class="num">65.9</td><td class="num">49.0</td><td class="num best">63.8</td><td class="num">55.7</td><td class="num best">66.2</td><td class="num">75.8</td><td class="num best">42.3</td><td class="num best">50.6</td><td class="num">73.9</td><td class="num">0.125</td><td class="num">12</td></tr>
+        <tr><td><span class="chip"><span class="dot d2"></span>4B additive</span></td><td class="num best">59.0</td><td class="num best">67.8</td><td class="num best">54.5</td><td class="num">62.7</td><td class="num">63.9</td><td class="num">63.8</td><td class="num best">82.4</td><td class="num">41.2</td><td class="num">35.4</td><td class="num best">74.7</td><td class="num">0.158</td><td class="num">14</td></tr>
+        <tr><td><span class="chip"><span class="dot d3"></span>4B cross-attention</span></td><td class="num">51.0</td><td class="num">63.9</td><td class="num">43.7</td><td class="num">58.2</td><td class="num">58.9</td><td class="num">57.3</td><td class="num">69.0</td><td class="num">38.1</td><td class="num">19.3</td><td class="num">72.9</td><td class="num">0.203</td><td class="num">78</td></tr>
+        <tr><td style="color:var(--ink-3)">SpatialStack-4B, our reproduction</td><td class="num" style="color:var(--ink-3)">67.5</td><td class="num" style="color:var(--ink-3)">70.8</td><td class="num" style="color:var(--ink-3)">55.4</td><td class="num" style="color:var(--ink-3)">69.0</td><td class="num" style="color:var(--ink-3)">69.1</td><td class="num" style="color:var(--ink-3)">66.8</td><td class="num" style="color:var(--ink-3)">83.9</td><td class="num" style="color:var(--ink-3)">41.8</td><td class="num" style="color:var(--ink-3)">83.0</td><td class="num" style="color:var(--ink-3)">–</td><td class="num" style="color:var(--ink-3)">–</td><td class="num" style="color:var(--ink-3)">–</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Bold: best of the three arms within each base size. Dev acc is the mean over the six dev tasks at epoch 6 (560 questions on 60 held-out ScanNet videos). Train loss is the epoch-6 mean. Grad spikes counts optimizer steps with gradient norm above 50 before clipping; the cross-attention arms' maxima were 6,469 (2B) and 7,294 (4B) against about 250–350 for the others.</figcaption>
+  </figure>
+  <figure>
+    <div class="fig-top">
+      <div class="seg" role="group" aria-label="Base model for the curves">
+        <button type="button" data-sz="2B" aria-pressed="true">Qwen3.5-2B</button>
+        <button type="button" data-sz="4B" aria-pressed="false">Qwen3.5-4B</button>
+      </div>
+      <div class="legend"><span class="chip"><span class="dot d1"></span>LoRA only</span><span class="chip"><span class="dot d2"></span>Additive</span><span class="chip"><span class="dot d3"></span>Cross-attention</span></div>
+    </div>
+    <div class="two">
+      <div class="chart-box" id="c-devacc"></div>
+      <div class="chart-box" id="c-devloss"></div>
+      <div class="chart-box" id="c-train"></div>
+      <div class="chart-box" id="c-inject"></div>
+    </div>
+    <figcaption><strong>Dev accuracy</strong> rises for all arms through epoch 6 and ranks additive ≥ LoRA > cross-attention at both sizes from epoch 3 on; cross-attention starts 7–10 points behind. <strong>Dev loss</strong> (every 200 steps) bottoms out in epochs 2–4 and then climbs while accuracy keeps improving, so loss-based selection would have picked an earlier, worse checkpoint; the rise is overconfidence on the questions still answered wrong, not a drop in accuracy. <strong>Training loss</strong> (50-step moving average) falls the same way for every arm; the geometry arms are never ahead of LoRA on training loss, so the additive gain is generalisation, not fit. <strong>Injection ratio</strong> ‖added‖/‖h‖ (mean of the three points, 50-step average) grows slowly under the 1e-5 fusion lr and settles at 0.15–0.3, versus 0.4–0.6 (additive) and 1.5 (cross-attention) in v2.</figcaption>
+  </figure>
+</section>
+
+<section id="now">
+  <div class="sec-head"><div class="eyebrow">Superseded by v3 · run v2, 10 epochs</div><h2>Run v2 findings</h2></div>
+  <div class="verdict">
+    <div class="ranking" aria-label="Ranking on VSI-Bench">
+      <span class="chip"><span class="dot d1"></span>LoRA only</span><span class="gt">&gt;</span>
+      <span class="chip"><span class="dot d2"></span>Additive</span><span class="gt">&gt;</span>
+      <span class="chip"><span class="dot d3"></span>Cross-attention</span>
+    </div>
+    <p class="lede">The reverse of the hypothesis. On the 1,000-question VSI subset at 32 frames, epoch 10: additive is 3.7 points below LoRA [−6.5, −0.9] and cross-attention 9.3 below [−12.7, −5.9]. MMSI is flat (24–26%) for all arms.</p>
+    <p class="lede"><strong>Baselines.</strong> “LoRA only” is the fine-tuned 2B control: same data, schedule and LoRA, no geometry. Zero-shot Qwen3.5-2B on the same 1,000 questions scores 36.2 at 32 frames, 28.7 at 8 frames and 26.3 on MMSI, so every fine-tuned arm is far above zero-shot on VSI. Much of that jump is answer format: zero-shot often writes reasoning instead of an option letter, for example in 58 of 100 appearance-order answers.</p>
+  </div>
+  <div class="prose">
+    <ul class="findings">
+      <li><strong>Opening the geometry path costs 11–14 points at epoch 1.</strong> Additive climbs back to within about 3.5 points by epochs 5–8; cross-attention stalls about 8 points down.</li>
+      <li><strong>The two geometry arms fail differently.</strong> At epoch 10, cross-attention loses almost entirely on the two relational multiple-choice tasks (relative distance −27, relative direction −19 vs LoRA), which are also the two tasks with the most training data. Additive loses a few points on most tasks but gains on room size (+9; 61% of answers within 20% of the truth vs 47% for LoRA) and slightly on relative direction. Some geometric signal is getting through.</li>
+      <li><strong>Cross-attention had a runaway in epoch 3 and never recovered.</strong> Its injection ratio doubled (0.6 → 1.4 at layer 0) during the gradient blow-up around step 1,580 and stayed there. From then on the block writes a vector 1.5× the residual stream into every token, text included, at layers 0–2. The v2 cross-attention result is therefore not a fair test of the design.</li>
+      <li><strong>Additive generalises worse from the very first epoch.</strong> In epoch 1 its training loss tracks LoRA's (0.99 vs 0.92), yet VSI is 11 points lower, evenly across ScanNet, ARKitScenes and ScanNet++ (so not a VGGT domain shift). Two candidate causes: VGGT features act as a per-scene fingerprint that makes memorising the 1,201 training videos easier (the dev split tests this), or rank-64 LoRA cannot re-adapt layers 3–23 to the altered visual tokens the way full fine-tuning can.</li>
+      <li><strong>Appearance order is not the explanation.</strong> LoRA's 67 at epoch 1 is a transient; by epoch 2 every arm sits at or below chance (25 / 16 / 24 at epoch 10), and all arms over-predict “A”. Fine-tuning on VLM-3R destroys this ability regardless of geometry. (Corrected 2026-10-26: an earlier version of this page blamed the gap on appearance order.)</li>
+      <li><strong>Training loss ranks the arms backwards and cannot pick a winner.</strong> LoRA and additive memorise the training set from about epoch 6; LoRA's best VSI score is at epoch 1.</li>
+      <li><strong>Our recipe differs from SpatialStack's in ways that likely matter:</strong> 10× the learning rate on everything, 10 epochs instead of 1, a narrow 15.8k-question dataset, and LoRA instead of full fine-tuning.</li>
+      <li><strong>Best-epoch numbers are chosen on the test set.</strong> There was no dev split in v2; one now exists for the next run.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="arch-sec">
+  <div class="sec-head"><div class="eyebrow">How the arms differ</div><h2>Architecture</h2>
+    <p class="lede prose">All arms share the frozen Qwen vision encoder, frozen VGGT and LoRA (r64) on the LLM. They differ only in how geometry from three VGGT layers reaches the first three LLM layers.</p></div>
+  <figure>
+    <div class="fig-top">
+      <div class="seg" role="group" aria-label="Arm">
+        <button type="button" id="arm-lora" data-arm="lora" aria-pressed="false">LoRA only</button>
+        <button type="button" id="arm-add" data-arm="additive" aria-pressed="true">Additive</button>
+        <button type="button" id="arm-x" data-arm="xattn" aria-pressed="false">Cross-attention</button>
+      </div>
+      <span class="eyebrow">Run v2 configuration</span>
+    </div>
+    <div class="scroll">
+    <svg id="arch" data-arm="additive" viewBox="0 0 1000 400" width="1000" style="max-width:100%;height:auto;min-width:640px" role="img" aria-label="Pipeline diagram: frames go to the Qwen vision encoder and to VGGT; VGGT layers 11, 17 and 23 feed one module each, whose output enters the LLM after decoder layers 0, 1 and 2.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrow-geo" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <!-- inputs -->
+      <rect class="box" x="16" y="170" width="120" height="64" rx="6"/>
+      <text x="76" y="196" text-anchor="middle" font-weight="600" font-size="13">8 frames</text>
+      <text x="76" y="214" text-anchor="middle" class="small">as separate images</text>
+      <rect class="frozen" x="180" y="62" width="150" height="58" rx="6"/>
+      <text x="255" y="86" text-anchor="middle" font-weight="600" font-size="13">Qwen vision encoder</text>
+      <text x="255" y="104" text-anchor="middle" class="small">frozen · 300 tok/frame</text>
+      <rect class="box" x="180" y="148" width="150" height="40" rx="6"/>
+      <text x="255" y="173" text-anchor="middle" class="small">question text</text>
+      <g class="g-geo">
+        <rect class="frozen" x="180" y="290" width="150" height="76" rx="6"/>
+        <text x="255" y="316" text-anchor="middle" font-weight="600" font-size="13">VGGT-1B aggregator</text>
+        <text x="255" y="334" text-anchor="middle" class="small">frozen · 560×420 input</text>
+        <text x="255" y="352" text-anchor="middle" class="tiny">24 layers, 2048-d</text>
+      </g>
+      <path class="wire" d="M136,190 C158,190 158,91 178,91" marker-end="url(#ah)"/>
+      <path class="wire g-geo" d="M136,214 C158,214 158,328 178,328" marker-end="url(#ah)"/>
+      <!-- LLM -->
+      <text x="380" y="44" class="tiny">LLM · Qwen3.5-2B · LoRA r64 on all linear layers</text>
+      <rect class="llm" x="380" y="88" width="88" height="60" rx="6"/><text x="424" y="116" text-anchor="middle" font-weight="600" font-size="13">layer 0</text><text x="424" y="134" text-anchor="middle" class="tiny">+LoRA</text>
+      <rect class="llm" x="510" y="88" width="88" height="60" rx="6"/><text x="554" y="116" text-anchor="middle" font-weight="600" font-size="13">layer 1</text><text x="554" y="134" text-anchor="middle" class="tiny">+LoRA</text>
+      <rect class="llm" x="640" y="88" width="88" height="60" rx="6"/><text x="684" y="116" text-anchor="middle" font-weight="600" font-size="13">layer 2</text><text x="684" y="134" text-anchor="middle" class="tiny">+LoRA</text>
+      <rect class="llm" x="770" y="88" width="110" height="60" rx="6"/><text x="825" y="116" text-anchor="middle" font-weight="600" font-size="13">layers 3–23</text><text x="825" y="134" text-anchor="middle" class="tiny">+LoRA</text>
+      <rect class="box" x="912" y="98" width="76" height="40" rx="6"/><text x="950" y="123" text-anchor="middle" class="small">answer</text>
+      <path class="wire" d="M330,91 C355,91 355,110 378,110" marker-end="url(#ah)"/>
+      <path class="wire" d="M330,168 C355,168 355,128 378,128" marker-end="url(#ah)"/>
+      <line class="wire" x1="468" y1="118" x2="508" y2="118" marker-end="url(#ah)"/>
+      <line class="wire" x1="598" y1="118" x2="638" y2="118" marker-end="url(#ah)"/>
+      <line class="wire" x1="728" y1="118" x2="768" y2="118" marker-end="url(#ah)"/>
+      <line class="wire" x1="880" y1="118" x2="910" y2="118" marker-end="url(#ah)"/>
+      <!-- geometry path -->
+      <g class="g-geo">
+        <circle class="plus" cx="489" cy="118" r="9"/><path d="M484,118 h10 M489,113 v10" stroke="var(--ink)" stroke-width="1.4"/>
+        <circle class="plus" cx="619" cy="118" r="9"/><path d="M614,118 h10 M619,113 v10" stroke="var(--ink)" stroke-width="1.4"/>
+        <circle class="plus" cx="749" cy="118" r="9"/><path d="M744,118 h10 M749,113 v10" stroke="var(--ink)" stroke-width="1.4"/>
+        <rect class="mod" x="434" y="196" width="110" height="52" rx="6"/>
+        <rect class="mod" x="564" y="196" width="110" height="52" rx="6"/>
+        <rect class="mod" x="694" y="196" width="110" height="52" rx="6"/>
+        <g class="only-add">
+          <text x="489" y="218" text-anchor="middle" font-weight="600" font-size="12.5">merger 0</text><text x="489" y="236" text-anchor="middle" class="tiny">2×2 → MLP</text>
+          <text x="619" y="218" text-anchor="middle" font-weight="600" font-size="12.5">merger 1</text><text x="619" y="236" text-anchor="middle" class="tiny">2×2 → MLP</text>
+          <text x="749" y="218" text-anchor="middle" font-weight="600" font-size="12.5">merger 2</text><text x="749" y="236" text-anchor="middle" class="tiny">2×2 → MLP</text>
+          <text x="820" y="186" class="small">added at visual-token positions only</text>
+        </g>
+        <g class="only-x">
+          <text x="489" y="218" text-anchor="middle" font-weight="600" font-size="12.5">resampler 0</text><text x="489" y="236" text-anchor="middle" class="tiny">→ xattn + FFW</text>
+          <text x="619" y="218" text-anchor="middle" font-weight="600" font-size="12.5">resampler 1</text><text x="619" y="236" text-anchor="middle" class="tiny">→ xattn + FFW</text>
+          <text x="749" y="218" text-anchor="middle" font-weight="600" font-size="12.5">resampler 2</text><text x="749" y="236" text-anchor="middle" class="tiny">→ xattn + FFW</text>
+          <text x="820" y="186" class="small">all tokens query 256 latents</text>
+        </g>
+        <line class="geo" x1="489" y1="196" x2="489" y2="130" marker-end="url(#ahg)"/>
+        <line class="geo" x1="619" y1="196" x2="619" y2="130" marker-end="url(#ahg)"/>
+        <line class="geo" x1="749" y1="196" x2="749" y2="130" marker-end="url(#ahg)"/>
+        <path class="geo" d="M330,306 H489 V250" marker-end="url(#ahg)"/>
+        <path class="geo" d="M330,328 H619 V250" marker-end="url(#ahg)"/>
+        <path class="geo" d="M330,350 H749 V250" marker-end="url(#ahg)"/>
+        <text x="345" y="300" class="tiny">layer 11</text>
+        <text x="345" y="322" class="tiny">layer 17</text>
+        <text x="345" y="344" class="tiny">layer 23</text>
+        <text x="434" y="276" class="small">one module per injection point, nothing shared · output layer zero-initialised</text>
+      </g>
+    </svg>
+    </div>
+    <p class="arm-note" id="arm-note" aria-live="polite"></p>
+  </figure>
+</section>
+
+<section id="v2">
+  <div class="sec-head"><div class="eyebrow">Run v2 · 10 epochs · lr 1e-4 · warmup 10% · cosine to 1e-5</div><h2>Run v2 results</h2>
+    <p class="lede prose">VSI-Bench stratified subset (1,000 questions, 100 per question type) after every epoch. Hover the chart for exact values.</p></div>
+  <figure>
+    <div class="fig-top">
+      <div class="seg" role="group" aria-label="Frames at evaluation">
+        <button type="button" id="fr-32" data-fr="f32" aria-pressed="true">32 frames</button>
+        <button type="button" id="fr-8" data-fr="f8" aria-pressed="false">8 frames</button>
+      </div>
+      <div class="legend"><span class="chip"><span class="dot d1"></span>LoRA only</span><span class="chip"><span class="dot d2"></span>Additive</span><span class="chip"><span class="dot d3"></span>Cross-attention</span><span class="ref" id="ref-leg"><i></i>Pilot LoRA, epoch 3 (56.6)</span><span class="ref"><i style="border-top-style:dotted"></i><span id="zs-leg">Zero-shot 2B (36.2)</span></span></div>
+    </div>
+    <div class="chart-box" id="vsi-box"></div>
+    <figcaption>VSI overall (%) by epoch. Every fine-tuned arm is far above zero-shot from epoch 1. The geometry arms start 11–14 points below LoRA and only partly recover, and every arm ends below the 3-epoch pilot LoRA.</figcaption>
+  </figure>
+
+  <figure>
+    <h3>All models on the same 1,000 questions</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th class="num">VSI 8 fr</th><th class="num">VSI 32 fr</th><th class="num">MMSI</th><th class="num">VSI 32 fr vs zero-shot</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--ink-2)">Qwen3.5-2B zero-shot (frames as images)</td><td class="num">28.7</td><td class="num">36.2</td><td class="num">26.3</td><td class="num" style="color:var(--ink-3)">–</td></tr>
+        <tr><td>Pilot LoRA only, epoch 3</td><td class="num" style="color:var(--ink-3)">–</td><td class="num best">56.6</td><td class="num" style="color:var(--ink-3)">–</td><td class="num pos">+20.4</td></tr>
+        <tr><td><span class="chip"><span class="dot d1"></span>LoRA only, v2 epoch 10</span></td><td class="num">50.0</td><td class="num">53.0</td><td class="num">26.3</td><td class="num pos">+16.8</td></tr>
+        <tr><td><span class="chip"><span class="dot d2"></span>Additive, v2 epoch 10</span></td><td class="num">46.7</td><td class="num">49.2</td><td class="num">26.4</td><td class="num pos">+13.0</td></tr>
+        <tr><td><span class="chip"><span class="dot d3"></span>Cross-attention, v2 epoch 10</span></td><td class="num">41.8</td><td class="num">43.7</td><td class="num">24.2</td><td class="num pos">+7.5</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Fine-tuning lifts VSI by 7–20 points but leaves MMSI where zero-shot started. Part of the VSI lift is answer format: zero-shot often writes out reasoning instead of an option letter (58 of 100 appearance-order answers), and fine-tuning teaches it to answer directly.</figcaption>
+  </figure>
+
+  <div class="two">
+    <figure>
+      <h3>Paired differences on VSI</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Comparison</th><th class="num">32 fr, best ep</th><th class="num">32 fr, ep 10</th><th class="num">8 fr, ep 10</th></tr></thead>
+        <tbody>
+          <tr><td>additive − LoRA</td><td class="num neg">−3.5</td><td class="num neg">−3.7</td><td class="num neg">−3.3</td></tr>
+          <tr><td></td><td class="num mono" style="color:var(--ink-3)">[−6.7, −0.6]</td><td class="num" style="color:var(--ink-3)">[−6.5, −0.9]</td><td class="num" style="color:var(--ink-3)">[−6.4, −0.0]</td></tr>
+          <tr><td>xattn − LoRA</td><td class="num neg">−8.2</td><td class="num neg">−9.3</td><td class="num neg">−8.1</td></tr>
+          <tr><td></td><td class="num" style="color:var(--ink-3)">[−11.6, −4.5]</td><td class="num" style="color:var(--ink-3)">[−12.7, −5.9]</td><td class="num" style="color:var(--ink-3)">[−11.3, −5.0]</td></tr>
+          <tr><td>xattn − additive</td><td class="num neg">−4.7</td><td class="num neg">−5.6</td><td class="num neg">−4.8</td></tr>
+          <tr><td></td><td class="num" style="color:var(--ink-3)">[−8.2, −1.8]</td><td class="num" style="color:var(--ink-3)">[−8.9, −2.4]</td><td class="num" style="color:var(--ink-3)">[−8.1, −1.8]</td></tr>
+        </tbody>
+      </table></div>
+      <figcaption>Points of VSI overall, 95% paired bootstrap interval in brackets (1,000 resamples, stratified by task). Best epochs: LoRA 1, additive 8, xattn 7. All intervals exclude zero.</figcaption>
+    </figure>
+    <figure>
+      <h3>MMSI-Bench</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Arm</th><th class="num">ep 2</th><th class="num">ep 5</th><th class="num">ep 10</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip"><span class="dot d1"></span>LoRA only</span></td><td class="num">26.2</td><td class="num">25.3</td><td class="num">26.3</td></tr>
+          <tr><td><span class="chip"><span class="dot d2"></span>Additive</span></td><td class="num">24.4</td><td class="num">25.5</td><td class="num">26.4</td></tr>
+          <tr><td><span class="chip"><span class="dot d3"></span>Cross-attention</span></td><td class="num">23.8</td><td class="num">24.7</td><td class="num">24.2</td></tr>
+          <tr><td style="color:var(--ink-3)">Zero-shot 2B</td><td class="num" colspan="3" style="color:var(--ink-3)">26.3</td></tr>
+        </tbody>
+      </table></div>
+      <figcaption>1,000 questions, chance 25%. Every pairwise interval includes zero (for example xattn − additive at epoch 10: −2.2 [−5.8, +1.0]). VSI training does not transfer to MMSI for any arm.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="tasks">
+  <div class="sec-head"><div class="eyebrow">Where the gap comes from</div><h2>Per-task scores</h2>
+    <p class="lede prose">VSI at 32 frames, each arm at its best epoch (LoRA 1, additive 8, xattn 7). Zero-shot Qwen3.5-2B (same questions, 32 frames) for reference; highest fine-tuned score per row in bold. Route planning and appearance order are absent from our training data.</p></div>
+  <figure>
+    <div class="scroll"><table>
+      <thead><tr><th>Task</th><th>In training data</th><th class="num">Zero-shot</th><th class="num">LoRA only</th><th class="num">Additive</th><th class="num">Cross-attn</th><th class="num">Additive − LoRA</th></tr></thead>
+      <tbody id="task-body"></tbody>
+    </table></div>
+    <figcaption>Each task has about 100 questions, so per-task standard errors are around 5 points. Read single-task differences under 10 points as noise.</figcaption>
+  </figure>
+</section>
+
+<section id="train">
+  <div class="sec-head"><div class="eyebrow">What training looked like</div><h2>Training dynamics</h2></div>
+  <div class="two">
+    <figure>
+      <div class="chart-box" id="loss-box"></div>
+      <figcaption>Epoch-mean training loss. LoRA and additive reach near zero (final 0.033 and 0.060): they memorise the 15.8k questions from about epoch 6. Cross-attention spiked in epoch 3 (loss 7.05 near step 1,580) and ended at 0.50.</figcaption>
+    </figure>
+    <figure>
+      <h3>Run facts</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Arm</th><th class="num">New params</th><th class="num">Inject ratio</th><th class="num">Wall time</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip"><span class="dot d1"></span>LoRA only</span></td><td class="num">0</td><td class="num">–</td><td class="num">4:07</td></tr>
+          <tr><td><span class="chip"><span class="dot d2"></span>Additive</span></td><td class="num">125.9M</td><td class="num">0.3–0.6</td><td class="num">4:51</td></tr>
+          <tr><td><span class="chip"><span class="dot d3"></span>Cross-attention</span></td><td class="num">466.7M</td><td class="num">0.7–1.5</td><td class="num">5:11</td></tr>
+        </tbody>
+      </table></div>
+      <figcaption>Inject ratio is ‖added‖ / ‖hidden state‖ at each injection point, logged every step. Cross-attention's ratio at layer 0 was 0.74 after epoch 1, 0.62 after epoch 2, then 1.40 after epoch 3 (the blow-up) and 1.5–1.8 for the rest of training. Additive stayed at 0.4–0.6. Cross-attention also had 52 steps with gradient norm above 50 (max 2,792). New parameters for cross-attention: 315.6M in resamplers plus 151.1M in blocks. Wall time is h:mm on one B300, 6,310 steps.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="pilot">
+  <div class="sec-head"><div class="eyebrow">2026-10-24 · superseded design</div><h2>Pilot (3 epochs)</h2></div>
+  <div class="prose" style="display:grid;gap:12px">
+    <p>VSI at 32 frames, epoch 3: <strong>LoRA 56.6</strong>, <strong>cross-attention 56.5</strong>, <strong>additive 42.5</strong>.</p>
+    <p>The pilot used one shared module injected before all six softmax-attention layers (3, 7, 11, 15, 19, 23), VGGT layer 23 only, 3% warmup with cosine to zero. Cross-attention used Flamingo tanh gates. Those gates never opened, so the cross-attention arm was effectively LoRA. The additive arm was not a faithful SpatialStack control. Both problems led to the v2 redesign.</p>
+  </div>
+</section>
+
+<section id="spatialstack">
+  <div class="sec-head"><div class="eyebrow">Checked against SpatialStack code, commit b84ebaa</div><h2>Our additive arm vs SpatialStack</h2>
+    <p class="lede prose">The architecture matches; the training recipe mostly does not. Rows where we differ are highlighted.</p></div>
+  <figure>
+    <div class="scroll"><table>
+      <thead><tr><th></th><th>SpatialStack (Qwen3.5-4B release)</th><th>Ours (2B_v2_additive)</th></tr></thead>
+      <tbody>
+        <tr><td>VGGT layers → injection</td><td>11, 17, 23 → after LLM layers 0, 1, 2</td><td>same</td></tr>
+        <tr><td>Mergers</td><td>3 separate; RMSNorm, 2×2 concat, MLP 8192→4096→D; last linear zero-init</td><td>same</td></tr>
+        <tr><td>Where added</td><td>visual-token positions</td><td>same</td></tr>
+        <tr><td>VGGT input / frames</td><td>Qwen grid × 14 px; frames as images</td><td>same</td></tr>
+        <tr><td>Frozen</td><td>VGGT, Qwen vision encoder, projector</td><td>same</td></tr>
+        <tr class="diff"><td>Base model</td><td>Qwen3.5-4B</td><td class="diff-cell">Qwen3.5-2B</td></tr>
+        <tr class="diff"><td>LLM training</td><td>full fine-tuning</td><td class="diff-cell">LoRA r64, α128</td></tr>
+        <tr class="diff"><td>LLM lr</td><td>1e-5</td><td class="diff-cell">1e-4</td></tr>
+        <tr class="diff"><td>Merger lr</td><td>1e-5 (<code>mm_projector_lr</code>)</td><td class="diff-cell">1e-4</td></tr>
+        <tr class="diff"><td>Data</td><td>SPAR 234k, LLaVA-Hound 64k, VLM-3R ScanNet, VSI appearance order</td><td class="diff-cell">VLM-3R ScanNet only, 15.8k questions, 6 tasks</td></tr>
+        <tr class="diff"><td>Epochs</td><td>1</td><td class="diff-cell">10</td></tr>
+        <tr class="diff"><td>Global batch</td><td>64</td><td class="diff-cell">32 questions</td></tr>
+        <tr class="diff"><td>Warmup / floor</td><td>3% / cosine to 0</td><td class="diff-cell">10% / cosine to 0.1 × peak</td></tr>
+        <tr class="diff"><td>Weight decay</td><td>0.01</td><td class="diff-cell">0</td></tr>
+        <tr class="diff"><td>Training frames</td><td>4–8</td><td class="diff-cell">8</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Our working explanation (untested): the 10× higher learning rate and 10 epochs on a narrow dataset open the mergers fast and then overfit. The missing appearance-order data accounts for the biggest per-task loss. SpatialStack's published gain from geometry is +2.8 over its own data-only control, with all weights trainable.</figcaption>
+  </figure>
+</section>
+
+<section id="decisions">
+  <div class="sec-head"><div class="eyebrow">Newest first</div><h2>Decision log</h2></div>
+  <div class="log">
+    <div class="entry"><div class="when">2026-10-26</div><div><h3>Run v3: all three arms, bigger cap, split learning rates, dev-selected final eval <span class="status done">done</span></h3><p>Changes applied to every arm: per-task cap 6,000 (about 26k questions vs 15.8k; the three largest tasks double, the three smallest are unchanged), LoRA lr 1e-4 with the new modules at 1e-5 (SpatialStack's merger lr), weight decay 0.01 on matrices only, 6 epochs (about the same optimizer-step count as v2's 10). Dev split as below. The checkpoint with the highest dev accuracy is evaluated on the <strong>full VSI-Bench (5,130 questions) at 32 frames</strong>, in a job queued with a Slurm dependency so it starts the moment training ends. No per-epoch subset evals, no 8-frame or MMSI eval. Jobs 206880–206885; 4.1–5.1 h training per arm. Result: additive 55.0 > LoRA 52.7 > cross-attention 49.0 on full VSI. On Qwen3.5-4B (jobs 206907–206913, 8.4–9.3 h per arm): additive 59.0 ≈ LoRA 58.7 > cross-attention 51.0.</p></div></div>
+    <div class="entry"><div class="when">2026-10-26</div><div><h3>Cross-attention stays ungated in v3 <span class="status done">adopted</span></h3><p>The runaway is addressed by the 10× lower learning rate on the new modules rather than a gate, so the additive and cross-attention arms stay structurally matched. If the injection ratio runs away again, a bounded gate is the next step.</p></div></div>
+    <div class="entry"><div class="when">2026-10-26</div><div><h3>Add a held-out dev split <span class="status done">built</span></h3><p>60 whole videos held out (scene-level), up to 100 dev questions per task. Dev loss at step 0, every 200 steps and at each epoch end; dev accuracy (VSI scoring) at step 0 and each epoch end. Checkpoints will be chosen on dev, not on VSI. Smoke test passed.</p></div></div>
+    <div class="entry"><div class="when">2026-10-26</div><div><h3>Report best and final epoch side by side <span class="status done">adopted</span></h3><p>Until runs have a dev split, best-epoch scores are test-set selection and are shown only next to epoch 10.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24 eve</div><div><h3>Additive arm = SpatialStack recipe <span class="status done">adopted</span></h3><p>VGGT 11/17/23 → three separate mergers → added after LLM layers 0/1/2. Replaces the pilot's shared merger at six layers.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24 eve</div><div><h3>Cross-attention at the same points, no gate <span class="status done">adopted</span></h3><p>Same VGGT layers and injection points as additive; one resampler and one xattn+FFW block per point. Tanh gates replaced by zero-initialised output projections, because the pilot's gates never opened.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24 eve</div><div><h3>No weight sharing across injection points <span class="status done">adopted</span></h3><p>Each depth gets its own merger or resampler, as in SpatialStack.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24 eve</div><div><h3>10 epochs, LoRA, lr 1e-4; warmup 10%, cosine to 0.1 × peak <span class="status done">adopted</span></h3><p>Longer training to let the model adapt to a new modality. LoRA kept for cost. Under review: v2 shows memorisation from epoch 6 and LoRA peaking at epoch 1.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24</div><div><h3>Frames as images, VGGT on the fly <span class="status done">adopted</span></h3><p>Each frame is a separate image (SpatialStack's protocol; needed for per-frame alignment with VGGT). One video per micro-batch, 4 micro-batches per step; VGGT runs inside the model, no feature cache.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24</div><div><h3>Pilot: shared module before six layers, VGGT layer 23 <span class="status super">superseded</span></h3><p>Gave LoRA 56.6, xattn 56.5 (gates closed), additive 42.5. Replaced by the v2 design.</p></div></div>
+    <div class="entry"><div class="when">2026-10-24</div><div><h3>Qwen3.5-2B first, 4B for headline runs <span class="status done">both run in v3</span></h3><p>2B to debug the pipeline and get early numbers; 4B is SpatialStack's base, so its 67.5 can serve as a reference.</p></div></div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="sec-head"><div class="eyebrow">Proposed · not launched</div><h2>Next steps</h2></div>
+  <div class="log">
+    <div class="entry"><div class="when">2026-10-27</div><div><h3>Run v3 on Qwen3.5-4B <span class="status done">done</span></h3><p>Same flags, all three arms, chained full-VSI eval on the best-dev checkpoint. Additive 59.0, LoRA 58.7, cross-attention 51.0; additive − LoRA +0.3 [−1.1, +1.6]. See the tables above.</p></div></div>
+    <div class="entry"><div class="when">proposed</div><div><h3>JE-xattn: a JEPA-aligned shared query/key space for the cross-attention arm <span class="status open">proposal</span></h3><p>2×2-window VGGT keys on Qwen's token grid plus a predictive alignment loss between LLM hidden states and the geometry embedding of the same region. Design, the 2×2 arithmetic, intuition, monitors and a 4-GPU-hour pilot plan: <a href="https://claude.ai/artifact/QrsAZhjPoWfrrLGijrEgWC">JE-xattn Proposal</a>. A literature review of about 100 papers found no prior work combining the two; it recommends a frozen rather than EMA target, reading the loss at a middle layer, one shared predictor, and a frame-index embedding on the keys. Nothing built or run.</p></div></div>
+    <div class="entry"><div class="when">open</div><div><h3>Give the geometry path frame order <span class="status open">next experiment candidate</span></h3><p>Appearance order is now the single task that separates the arms at 4B (−15 for additive). Options: a learned frame-index embedding added to each VGGT window before the merger or resampler, or adding VSI-style appearance-order training data as SpatialStack does. Cheap to test on the 2B additive arm with the v3 recipe.</p></div></div>
+    <div class="entry"><div class="when">idea</div><div><h3>Train longer <span class="status open">idea</span></h3><p>Every arm's best dev checkpoint was the last one, and LoRA was still improving. An 8-epoch run would show where dev accuracy peaks.</p></div></div>
+    <div class="entry"><div class="when">idea</div><div><h3>Fix cross-attention stability <span class="status open">idea</span></h3><p>70 gradient-norm spikes above 50 even at fusion lr 1e-5. Candidates: a bounded tanh gate with a small non-zero init, a lower lr for the blocks only, or tighter clipping on the fusion parameters.</p></div></div>
+    <div class="entry"><div class="when">idea</div><div><h3>Measure the released SpatialStack checkpoint's injection ratio <span class="status open">idea</span></h3><p>One short GPU job on the cached SpatialStack-Qwen3.5-4B: if its mergers add about 0.1× the hidden state where ours add 0.5×, our mergers opened too far.</p></div></div>
+    <div class="entry"><div class="when">idea</div><div><h3>One full-fine-tuning additive run at lr 1e-5 <span class="status open">user's call</span></h3><p>Diagnostic to separate “LoRA cannot re-adapt” from “geometry features are a memorisation shortcut”. Breaks the LoRA-everywhere rule, so not scheduled.</p></div></div>
+    <div class="entry"><div class="when">open</div><div><h3>Protect order-dependent tasks <span class="status open">idea</span></h3><p>Appearance order is the main casualty. Options: add appearance-order training data (as SpatialStack does), or a learned frame-index embedding on the VGGT features.</p></div></div>
+    <div class="entry"><div class="when">open</div><div><h3>Stabilise cross-attention <span class="status open">v3 tests the lr fix</span></h3><p>52 gradient-norm spikes above 50 and an injection ratio up to 1.5 in v2. v3 lowers the fusion lr 10×; if that is not enough, add a bounded gate or a smaller output-projection init.</p></div></div>
+    <div class="entry"><div class="when">housekeeping</div><div><h3>First commit <span class="status open">pending</span></h3><p>wandb now logs online to the <code>slolama</code> entity (v2 runs synced there on 2026-10-26). Nothing is committed yet.</p></div></div>
+  </div>
+</section>
+
+<footer>Sources: <code>results/train/{2B,4B}_v3_*/eval/best/vsi_f32_full.jsonl</code>, <code>best_epoch.json</code> and <code>log.jsonl</code> of each v3 run; <code>results/train/2B_v2_*/eval/epoch*/</code> summaries and per-question files, <code>log.jsonl</code> of each run, <code>docs/idea.md</code>, and SpatialStack's <code>scripts/train/train.sh</code>. Bootstrap intervals computed from per-question scores.</footer>
+</div>
+
+<script>
+(() => {
+  const ARMS = [
+    { key: "lora", name: "LoRA only", color: "var(--s1)" },
+    { key: "additive", name: "Additive", color: "var(--s2)" },
+    { key: "xattn", name: "Cross-attention", color: "var(--s3)" },
+  ];
+  const VSI = {
+    f32: { lora: [54.2,50.0,50.6,50.6,51.4,51.8,52.2,52.5,52.3,53.0], additive: [43.0,42.4,43.8,45.5,49.3,49.2,49.6,50.6,49.2,49.2], xattn: [40.4,42.6,43.1,41.1,44.7,44.3,45.9,44.7,44.2,43.7] },
+    f8:  { lora: [50.7,45.0,47.2,47.5,48.6,48.2,51.0,50.2,49.6,50.0], additive: [43.1,41.3,43.8,42.4,47.6,46.9,47.0,47.0,46.9,46.7], xattn: [39.3,43.1,42.7,40.3,44.0,44.8,44.5,43.4,43.3,41.8] },
+  };
+  const LOSS = { lora: [0.825,0.777,0.706,0.616,0.519,0.399,0.263,0.14,0.057,0.018], additive: [0.855,0.847,0.801,0.742,0.662,0.537,0.399,0.246,0.11,0.037], xattn: [0.906,0.885,0.988,0.834,0.803,0.768,0.714,0.63,0.503,0.367] };
+  const TASKS = [
+    ["Object counting","yes",69.2,69.4,70.4,61.1], ["Absolute distance","yes",42.4,39.8,35.9,32.8], ["Object size","yes",63.6,57.0,54.6,53.9],
+    ["Room size","yes",53.2,66.6,57.0,48.4], ["Relative distance","yes",58.0,49.0,37.0,37.0], ["Relative direction","yes",50.0,69.3,49.7,22.0],
+    ["Route planning","no",30.0,34.0,38.0,25.0], ["Appearance order","no",67.0,20.0,25.0,9.0],
+  ];
+
+  // per-task table
+  const tb = document.getElementById("task-body");
+  for (const [t, inData, a, b, c, z] of TASKS) {
+    const m = Math.max(a, b, c), d = b - a;
+    const cell = v => `<td class="num${v === m ? " best" : ""}">${v.toFixed(1)}</td>`;
+    const cls = Math.abs(d) < 10 ? "" : d > 0 ? "pos" : "neg";
+    tb.insertAdjacentHTML("beforeend", `<tr><td>${t}</td><td>${inData}</td><td class="num" style="color:var(--ink-3)">${z.toFixed(1)}</td>${cell(a)}${cell(b)}${cell(c)}<td class="num ${cls}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toFixed(1)}</td></tr>`);
+  }
+
+  // line chart
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  function lineChart(box, { series, ymin, ymax, yticks, fmt, title, refs, unit }) {
+    box.innerHTML = "";
+    const W = 640, H = 300, L = 46, R = 112, T = 28, B = 36;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img", "aria-label": title, style: "width:100%;height:auto;display:block" }, box);
+    const x = i => L + (i / 9) * (W - L - R), y = v => T + (1 - (v - ymin) / (ymax - ymin)) * (H - T - B);
+    el("text", { x: L, y: 14, style: "font:500 12px var(--f-body);fill:var(--ink-2)" }, svg).textContent = title;
+    for (const t of yticks) { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "grid" }, svg); const tx = el("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end" }, svg); tx.textContent = fmt(t); }
+    el("line", { x1: L, x2: W - R, y1: H - B, y2: H - B, class: "axis" }, svg);
+    for (let i = 0; i < 10; i++) { const tx = el("text", { x: x(i), y: H - B + 18, "text-anchor": "middle" }, svg); tx.textContent = i + 1; }
+    el("text", { x: (L + W - R) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = "epoch";
+    for (const r of refs || []) {
+      el("line", { x1: L, x2: W - R, y1: y(r.v), y2: y(r.v), class: "ref", "stroke-dasharray": r.dot ? "1.5 3" : "4 4" }, svg);
+      el("text", { x: W - R - 4, y: y(r.v) - 5, "text-anchor": "end", class: "reflabel" }, svg).textContent = r.label;
+    }
+    const ends = [];
+    for (const a of ARMS) {
+      const d = series[a.key];
+      el("path", { d: d.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(""), class: "line", stroke: a.color }, svg);
+      el("circle", { cx: x(9), cy: y(d[9]), r: 4, fill: a.color, stroke: "var(--panel)", "stroke-width": 2 }, svg);
+      ends.push({ a, v: d[9], y: y(d[9]) });
+    }
+    ends.sort((p, q) => p.y - q.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+    for (const e of ends) { const t = el("text", { x: W - R + 10, y: e.y + 4, class: "endlab" }, svg); t.textContent = `${e.a.name.replace("Cross-attention", "Xattn")} ${fmt(e.v, true)}`; }
+    const cross = el("line", { y1: T, y2: H - B, class: "cross" }, svg);
+    const dots = ARMS.map(a => el("circle", { r: 4.5, fill: a.color, stroke: "var(--panel)", "stroke-width": 2, opacity: 0 }, svg));
+    const hit = el("rect", { x: L - 10, y: T, width: W - L - R + 20, height: H - T - B, fill: "transparent" }, svg);
+    const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+    const show = evt => {
+      const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+      const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const i = Math.max(0, Math.min(9, Math.round((p.x - L) / (W - L - R) * 9)));
+      svg.classList.add("hover"); cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i));
+      ARMS.forEach((a, k) => { dots[k].setAttribute("cx", x(i)); dots[k].setAttribute("cy", y(series[a.key][i])); dots[k].setAttribute("opacity", 1); });
+      const rows = ARMS.map(a => ({ a, v: series[a.key][i] })).sort((p, q) => q.v - p.v);
+      tip.innerHTML = `<b>Epoch ${i + 1}</b>` + rows.map(r => `<div class="row"><span><span class="dot" style="background:${r.a.color}"></span>${r.a.name}</span><span>${fmt(r.v, true)}${unit}</span></div>`).join("");
+      tip.hidden = false;
+      const bw = box.clientWidth, sx = bw / W, left = x(i) * sx;
+      tip.style.left = (left + 14 + 170 > bw ? left - 14 - tip.offsetWidth : left + 14) + "px";
+      tip.style.top = (T * sx + 4) + "px";
+    };
+    const hide = () => { svg.classList.remove("hover"); dots.forEach(d => d.setAttribute("opacity", 0)); tip.hidden = true; };
+    hit.addEventListener("pointermove", show); hit.addEventListener("pointerdown", show); hit.addEventListener("pointerleave", hide);
+  }
+
+  let fr = "f32";
+  const drawVSI = () => {
+    const zs = fr === "f32" ? 36.2 : 28.7;
+    const refs = [{ v: zs, label: `zero-shot ${zs}`, dot: true }];
+    if (fr === "f32") refs.push({ v: 56.6, label: "pilot LoRA 56.6" });
+    lineChart(document.getElementById("vsi-box"), { series: VSI[fr], ymin: 25, ymax: 60, yticks: [25,30,35,40,45,50,55,60], fmt: (v, p) => p ? v.toFixed(1) : v, title: `VSI overall, ${fr === "f32" ? 32 : 8} frames (%)`, refs, unit: "" });
+    document.getElementById("ref-leg").hidden = fr !== "f32";
+    document.getElementById("zs-leg").textContent = `Zero-shot 2B (${zs})`;
+  };
+  drawVSI();
+  lineChart(document.getElementById("loss-box"), { series: LOSS, ymin: 0, ymax: 1, yticks: [0,0.25,0.5,0.75,1], fmt: (v, p) => p ? v.toFixed(3) : v.toFixed(2), title: "Training loss, epoch mean", refs: [], unit: "" });
+  document.querySelectorAll("[data-fr]").forEach(b => b.addEventListener("click", () => {
+    fr = b.dataset.fr; document.querySelectorAll("[data-fr]").forEach(o => o.setAttribute("aria-pressed", o === b)); drawVSI();
+  }));
+
+  // architecture toggle
+  const NOTES = {
+    lora: "LoRA only: no geometry. The LLM sees Qwen's visual tokens and the question; only the LoRA adapters train. VSI 53.0 at epoch 10 (32 frames).",
+    additive: "Additive (SpatialStack recipe): each VGGT layer's patch tokens are grouped 2×2 to line up with Qwen's merged visual tokens, passed through their own MLP, and added to the hidden state at the visual-token positions after LLM layers 0, 1 and 2. 125.9M new parameters. VSI 49.2 at epoch 10.",
+    xattn: "Cross-attention: each VGGT layer's tokens from all frames are compressed by their own Perceiver resampler to 256 latents. After LLM layers 0, 1 and 2, every token (text included) attends to those latents through a cross-attention + FFW block whose output projections start at zero. 466.7M new parameters. VSI 43.7 at epoch 10.",
+  };
+  const arch = document.getElementById("arch"), note = document.getElementById("arm-note");
+  const setArm = k => { arch.dataset.arm = k; note.textContent = NOTES[k]; document.querySelectorAll("[data-arm]").forEach(o => { if (o.tagName === "BUTTON") o.setAttribute("aria-pressed", o.dataset.arm === k); }); };
+  document.querySelectorAll("button[data-arm]").forEach(b => b.addEventListener("click", () => setArm(b.dataset.arm)));
+  setArm("additive");
+})();
+</script>
+<script id="v3-curves-data" type="application/json">{"2B_v3_lora":{"steps_per_epoch":931,"train_loss":[[1,2.049],[26,1.2176],[51,1.0025],[76,0.8178],[101,0.8374],[126,0.8267],[151,0.7705],[176,0.7482],[201,0.7612],[226,0.764],[251,0.7642],[276,0.7558],[301,0.7317],[326,0.7499],[351,0.7619],[376,0.776],[401,0.7795],[426,0.7439],[451,0.754],[476,0.7495],[501,0.729],[526,0.7533],[551,0.7579],[576,0.7364],[601,0.7625],[626,0.7552],[651,0.7302],[676,0.7272],[701,0.725],[726,0.7393],[751,0.7458],[776,0.766],[801,0.7634],[826,0.7503],[851,0.7728],[876,0.7957],[901,0.765],[926,0.734],[951,0.7283],[976,0.6837],[1001,0.651],[1026,0.6914],[1051,0.7313],[1076,0.6996],[1101,0.6898],[1126,0.7083],[1151,0.7066],[1176,0.7263],[1201,0.7036],[1226,0.662],[1251,0.6813],[1276,0.7091],[1301,0.7064],[1326,0.6935],[1351,0.6808],[1376,0.6769],[1401,0.6942],[1426,0.7125],[1451,0.6991],[1476,0.6948],[1501,0.6903],[1526,0.6677],[1551,0.6654],[1576,0.6546],[1601,0.6559],[1626,0.6866],[1651,0.7018],[1676,0.6632],[1701,0.6312],[1726,0.6535],[1751,0.6689],[1776,0.6715],[1801,0.6503],[1826,0.642],[1851,0.6374],[1876,0.6177],[1901,0.6133],[1926,0.5887],[1951,0.5854],[1976,0.608],[2001,0.6185],[2026,0.6172],[2051,0.599],[2076,0.5958],[2101,0.6025],[2126,0.6181],[2151,0.6112],[2176,0.5715],[2201,0.5524],[2226,0.5593],[2251,0.5716],[2276,0.5759],[2301,0.5608],[2326,0.5433],[2351,0.5667],[2376,0.5641],[2401,0.5737],[2426,0.5851],[2451,0.5656],[2476,0.5659],[2501,0.57],[2526,0.5844],[2551,0.5865],[2576,0.5832],[2601,0.5761],[2626,0.5772],[2651,0.5603],[2676,0.5618],[2701,0.5796],[2726,0.5779],[2751,0.582],[2776,0.5631],[2801,0.5367],[2826,0.4984],[2851,0.4682],[2876,0.486],[2901,0.519],[2926,0.4993],[2951,0.4661],[2976,0.4824],[3001,0.4882],[3026,0.4864],[3051,0.4872],[3076,0.486],[3101,0.4919],[3126,0.4912],[3151,0.4697],[3176,0.4806],[3201,0.524],[3226,0.5246],[3251,0.5173],[3276,0.495],[3301,0.4806],[3326,0.4722],[3351,0.4775],[3376,0.5089],[3401,0.4939],[3426,0.4699],[3451,0.4776],[3476,0.4684],[3501,0.4426],[3526,0.4291],[3551,0.4488],[3576,0.4839],[3601,0.4582],[3626,0.422],[3651,0.4497],[3676,0.4611],[3701,0.4656],[3726,0.4758],[3751,0.4197],[3776,0.3604],[3801,0.3452],[3826,0.3651],[3851,0.3817],[3876,0.3567],[3901,0.3435],[3926,0.358],[3951,0.3478],[3976,0.3245],[4001,0.3197],[4026,0.3557],[4051,0.368],[4076,0.3629],[4101,0.3739],[4126,0.3613],[4151,0.3487],[4176,0.3445],[4201,0.3534],[4226,0.3446],[4251,0.3441],[4276,0.3757],[4301,0.3636],[4326,0.321],[4351,0.3292],[4376,0.3433],[4401,0.3313],[4426,0.3348],[4451,0.3629],[4476,0.3701],[4501,0.3521],[4526,0.3478],[4551,0.3514],[4576,0.3568],[4601,0.3509],[4626,0.3505],[4651,0.3462],[4676,0.3044],[4701,0.2674],[4726,0.2429],[4751,0.2198],[4776,0.216],[4801,0.2201],[4826,0.2269],[4851,0.2243],[4876,0.22],[4901,0.2163],[4926,0.2215],[4951,0.2225],[4976,0.2126],[5001,0.198],[5026,0.2124],[5051,0.2361],[5076,0.2257],[5101,0.2274],[5126,0.2181],[5151,0.2151],[5176,0.2187],[5201,0.2146],[5226,0.2265],[5251,0.2269],[5276,0.2085],[5301,0.2115],[5326,0.2325],[5351,0.2294],[5376,0.2132],[5401,0.2227],[5426,0.2319],[5451,0.2171],[5476,0.2128],[5501,0.2213],[5526,0.2133],[5551,0.202],[5576,0.2217]],"dev_loss":[[0,1.4477],[200,0.8081],[400,0.8453],[600,0.8244],[800,0.8412],[931,0.8042],[1000,0.811],[1200,0.8052],[1400,0.7934],[1600,0.8027],[1800,0.7684],[1862,0.7728],[2000,0.8316],[2200,0.8482],[2400,0.7771],[2600,0.7881],[2793,0.7921],[2800,0.8029],[3000,0.799],[3200,0.878],[3400,0.8501],[3600,0.881],[3724,0.8051],[3800,0.8976],[4000,0.9924],[4200,1.0224],[4400,0.9946],[4600,0.9962],[4655,1.0096],[4800,1.2332],[5000,1.3761],[5200,1.3158],[5400,1.3192],[5586,1.3122]],"dev_acc":[[0,33.28],[931,56.33],[1862,60.22],[2793,65.43],[3724,66.3],[4655,67.89],[5586,71.38]],"dev_task":{"abs_distance":[[0,30.7],[931,41.9],[1862,42.3],[2793,52.1],[3724,53.0],[4655,53.1],[5586,59.0]],"counting":[[0,46.9],[931,67.3],[1862,63.6],[2793,65.0],[3724,71.2],[4655,70.8],[5586,73.3]],"obj_size":[[0,46.1],[931,59.1],[1862,65.1],[2793,69.5],[3724,70.6],[4655,72.6],[5586,74.5]],"rel_direction":[[0,14.0],[931,61.0],[1862,69.0],[2793,77.0],[3724,77.0],[4655,79.0],[5586,79.0]],"rel_distance":[[0,27.0],[931,51.0],[1862,62.0],[2793,64.0],[3724,58.0],[4655,62.0],[5586,66.0]],"room_size":[[0,35.0],[931,57.7],[1862,59.3],[2793,65.0],[3724,68.0],[4655,69.8],[5586,76.5]]},"inject":[],"grad_spikes":11,"grad_max":334.3,"epoch_loss":[0.7734,0.6801,0.5804,0.4787,0.3513,0.2216]},"2B_v3_additive":{"steps_per_epoch":931,"train_loss":[[1,2.049],[26,1.2057],[51,0.9961],[76,0.815],[101,0.8287],[126,0.8183],[151,0.7612],[176,0.7372],[201,0.7491],[226,0.7432],[251,0.7247],[276,0.7166],[301,0.7118],[326,0.7278],[351,0.7352],[376,0.7461],[401,0.7481],[426,0.7486],[451,0.7689],[476,0.7397],[501,0.7113],[526,0.7353],[551,0.7566],[576,0.7516],[601,0.7633],[626,0.7563],[651,0.7431],[676,0.7429],[701,0.7339],[726,0.7336],[751,0.744],[776,0.7568],[801,0.7464],[826,0.7468],[851,0.762],[876,0.7893],[901,0.7958],[926,0.7583],[951,0.7154],[976,0.6749],[1001,0.6563],[1026,0.6973],[1051,0.7313],[1076,0.6962],[1101,0.6917],[1126,0.7015],[1151,0.6948],[1176,0.7159],[1201,0.6966],[1226,0.6449],[1251,0.6816],[1276,0.7172],[1301,0.7003],[1326,0.6982],[1351,0.6862],[1376,0.671],[1401,0.6698],[1426,0.6925],[1451,0.6948],[1476,0.673],[1501,0.6684],[1526,0.6559],[1551,0.6459],[1576,0.6413],[1601,0.6385],[1626,0.6628],[1651,0.6948],[1676,0.6464],[1701,0.618],[1726,0.6427],[1751,0.6541],[1776,0.6591],[1801,0.6148],[1826,0.6094],[1851,0.6084],[1876,0.5965],[1901,0.6057],[1926,0.5849],[1951,0.5574],[1976,0.5819],[2001,0.6112],[2026,0.6059],[2051,0.5908],[2076,0.5868],[2101,0.5974],[2126,0.5905],[2151,0.5711],[2176,0.5414],[2201,0.5358],[2226,0.5525],[2251,0.5555],[2276,0.5561],[2301,0.5379],[2326,0.5314],[2351,0.5599],[2376,0.5521],[2401,0.5625],[2426,0.5672],[2451,0.549],[2476,0.5475],[2501,0.5504],[2526,0.5723],[2551,0.5739],[2576,0.564],[2601,0.5495],[2626,0.5544],[2651,0.5389],[2676,0.5354],[2701,0.5528],[2726,0.5525],[2751,0.5631],[2776,0.5502],[2801,0.5267],[2826,0.4908],[2851,0.4445],[2876,0.4672],[2901,0.5218],[2926,0.495],[2951,0.4596],[2976,0.4706],[3001,0.461],[3026,0.4614],[3051,0.4773],[3076,0.481],[3101,0.483],[3126,0.4787],[3151,0.4705],[3176,0.4779],[3201,0.5077],[3226,0.5125],[3251,0.5094],[3276,0.4962],[3301,0.4697],[3326,0.4421],[3351,0.4536],[3376,0.4884],[3401,0.4769],[3426,0.4606],[3451,0.4706],[3476,0.4573],[3501,0.4304],[3526,0.4133],[3551,0.4291],[3576,0.476],[3601,0.4508],[3626,0.4023],[3651,0.4267],[3676,0.4402],[3701,0.442],[3726,0.4635],[3751,0.4166],[3776,0.361],[3801,0.3451],[3826,0.3562],[3851,0.3802],[3876,0.3627],[3901,0.3544],[3926,0.3674],[3951,0.35],[3976,0.3224],[4001,0.3153],[4026,0.3477],[4051,0.3556],[4076,0.3501],[4101,0.3634],[4126,0.3581],[4151,0.3454],[4176,0.3431],[4201,0.3452],[4226,0.3315],[4251,0.3411],[4276,0.3772],[4301,0.3702],[4326,0.328],[4351,0.34],[4376,0.3488],[4401,0.3304],[4426,0.3393],[4451,0.357],[4476,0.3589],[4501,0.3559],[4526,0.3521],[4551,0.3534],[4576,0.3645],[4601,0.3495],[4626,0.3444],[4651,0.3452],[4676,0.3054],[4701,0.2741],[4726,0.2619],[4751,0.2415],[4776,0.2294],[4801,0.231],[4826,0.2347],[4851,0.238],[4876,0.2404],[4901,0.2335],[4926,0.2392],[4951,0.2452],[4976,0.2474],[5001,0.2321],[5026,0.2273],[5051,0.247],[5076,0.2404],[5101,0.2321],[5126,0.2264],[5151,0.2364],[5176,0.2381],[5201,0.2296],[5226,0.2414],[5251,0.2458],[5276,0.2312],[5301,0.2376],[5326,0.2585],[5351,0.2537],[5376,0.2351],[5401,0.2276],[5426,0.2413],[5451,0.2364],[5476,0.2273],[5501,0.2265],[5526,0.2177],[5551,0.2125],[5576,0.228]],"dev_loss":[[0,1.4477],[200,0.7832],[400,0.8021],[600,0.8369],[800,0.8033],[931,0.8067],[1000,0.7813],[1200,0.7875],[1400,0.8001],[1600,0.765],[1800,0.7397],[1862,0.7503],[2000,0.751],[2200,0.7858],[2400,0.7724],[2600,0.7868],[2793,0.7589],[2800,0.7945],[3000,0.7915],[3200,0.822],[3400,0.7794],[3600,0.78],[3724,0.7504],[3800,0.816],[4000,0.9103],[4200,0.8706],[4400,0.945],[4600,0.9337],[4655,0.9341],[4800,1.1578],[5000,1.1639],[5200,1.2044],[5400,1.1957],[5586,1.2395]],"dev_acc":[[0,33.28],[931,58.58],[1862,61.79],[2793,66.43],[3724,71.28],[4655,73.35],[5586,73.52]],"dev_task":{"abs_distance":[[0,30.7],[931,43.1],[1862,39.6],[2793,53.1],[3724,59.5],[4655,63.7],[5586,65.7]],"counting":[[0,46.9],[931,64.9],[1862,62.9],[2793,68.0],[3724,73.4],[4655,73.6],[5586,72.3]],"obj_size":[[0,46.1],[931,60.3],[1862,64.9],[2793,67.8],[3724,67.8],[4655,77.3],[5586,73.8]],"rel_direction":[[0,14.0],[931,74.0],[1862,79.0],[2793,75.0],[3724,88.0],[4655,89.0],[5586,90.0]],"rel_distance":[[0,27.0],[931,50.0],[1862,64.0],[2793,62.0],[3724,68.0],[4655,61.0],[5586,62.0]],"room_size":[[0,35.0],[931,59.2],[1862,60.3],[2793,72.7],[3724,71.0],[4655,75.5],[5586,77.3]]},"inject":[[1,0.0,0.0,0.0],[26,0.003,0.003,0.004],[51,0.006,0.007,0.009],[76,0.013,0.014,0.02],[101,0.021,0.023,0.032],[126,0.031,0.035,0.049],[151,0.042,0.049,0.066],[176,0.052,0.061,0.083],[201,0.058,0.072,0.099],[226,0.061,0.084,0.111],[251,0.063,0.098,0.121],[276,0.066,0.112,0.13],[301,0.074,0.121,0.135],[326,0.076,0.123,0.132],[351,0.076,0.13,0.136],[376,0.079,0.139,0.148],[401,0.081,0.148,0.155],[426,0.081,0.15,0.155],[451,0.081,0.153,0.161],[476,0.082,0.154,0.167],[501,0.078,0.146,0.157],[526,0.081,0.149,0.155],[551,0.095,0.154,0.164],[576,0.108,0.155,0.159],[601,0.111,0.151,0.145],[626,0.107,0.151,0.148],[651,0.107,0.154,0.15],[676,0.112,0.148,0.14],[701,0.122,0.142,0.142],[726,0.128,0.143,0.152],[751,0.128,0.15,0.154],[776,0.124,0.157,0.151],[801,0.13,0.162,0.148],[826,0.138,0.175,0.145],[851,0.135,0.184,0.153],[876,0.135,0.179,0.167],[901,0.133,0.178,0.173],[926,0.133,0.182,0.168],[951,0.135,0.182,0.168],[976,0.139,0.182,0.171],[1001,0.143,0.185,0.171],[1026,0.142,0.18,0.163],[1051,0.144,0.176,0.156],[1076,0.152,0.179,0.161],[1101,0.158,0.178,0.16],[1126,0.166,0.18,0.155],[1151,0.168,0.179,0.157],[1176,0.167,0.172,0.158],[1201,0.169,0.173,0.157],[1226,0.169,0.178,0.158],[1251,0.171,0.181,0.16],[1276,0.174,0.171,0.161],[1301,0.174,0.166,0.167],[1326,0.176,0.171,0.177],[1351,0.175,0.175,0.172],[1376,0.173,0.176,0.16],[1401,0.17,0.174,0.151],[1426,0.175,0.173,0.148],[1451,0.184,0.185,0.161],[1476,0.187,0.193,0.169],[1501,0.179,0.197,0.171],[1526,0.171,0.199,0.173],[1551,0.174,0.2,0.172],[1576,0.172,0.192,0.166],[1601,0.168,0.184,0.164],[1626,0.175,0.192,0.163],[1651,0.182,0.198,0.156],[1676,0.186,0.193,0.156],[1701,0.186,0.189,0.16],[1726,0.185,0.189,0.158],[1751,0.186,0.193,0.153],[1776,0.189,0.206,0.158],[1801,0.184,0.202,0.16],[1826,0.179,0.2,0.165],[1851,0.181,0.204,0.171],[1876,0.182,0.207,0.165],[1901,0.18,0.204,0.161],[1926,0.183,0.203,0.165],[1951,0.189,0.211,0.17],[1976,0.194,0.207,0.168],[2001,0.196,0.202,0.167],[2026,0.196,0.214,0.172],[2051,0.2,0.227,0.176],[2076,0.205,0.227,0.18],[2101,0.209,0.223,0.186],[2126,0.212,0.226,0.19],[2151,0.209,0.223,0.181],[2176,0.206,0.214,0.172],[2201,0.206,0.213,0.173],[2226,0.204,0.218,0.174],[2251,0.202,0.221,0.173],[2276,0.2,0.215,0.174],[2301,0.198,0.215,0.176],[2326,0.195,0.217,0.172],[2351,0.198,0.216,0.172],[2376,0.205,0.219,0.182],[2401,0.206,0.22,0.18],[2426,0.206,0.219,0.178],[2451,0.204,0.22,0.179],[2476,0.208,0.22,0.176],[2501,0.215,0.221,0.178],[2526,0.218,0.226,0.184],[2551,0.218,0.231,0.184],[2576,0.217,0.228,0.177],[2601,0.211,0.222,0.172],[2626,0.207,0.219,0.174],[2651,0.21,0.22,0.179],[2676,0.217,0.225,0.182],[2701,0.22,0.227,0.18],[2726,0.213,0.224,0.18],[2751,0.21,0.219,0.176],[2776,0.213,0.215,0.172],[2801,0.216,0.217,0.18],[2826,0.214,0.22,0.184],[2851,0.21,0.215,0.181],[2876,0.215,0.221,0.18],[2901,0.222,0.228,0.184],[2926,0.221,0.226,0.181],[2951,0.216,0.226,0.178],[2976,0.216,0.229,0.18],[3001,0.217,0.226,0.18],[3026,0.22,0.225,0.184],[3051,0.225,0.227,0.189],[3076,0.229,0.234,0.191],[3101,0.225,0.236,0.193],[3126,0.222,0.23,0.191],[3151,0.226,0.231,0.188],[3176,0.227,0.23,0.186],[3201,0.225,0.235,0.185],[3226,0.229,0.245,0.188],[3251,0.231,0.243,0.187],[3276,0.227,0.237,0.181],[3301,0.224,0.231,0.183],[3326,0.222,0.226,0.187],[3351,0.225,0.231,0.182],[3376,0.227,0.233,0.179],[3401,0.23,0.232,0.179],[3426,0.232,0.23,0.187],[3451,0.229,0.233,0.187],[3476,0.227,0.234,0.183],[3501,0.227,0.236,0.185],[3526,0.23,0.244,0.186],[3551,0.23,0.235,0.182],[3576,0.229,0.229,0.175],[3601,0.232,0.232,0.177],[3626,0.234,0.232,0.18],[3651,0.235,0.232,0.183],[3676,0.23,0.229,0.182],[3701,0.227,0.231,0.178],[3726,0.229,0.235,0.179],[3751,0.23,0.237,0.179],[3776,0.229,0.234,0.182],[3801,0.226,0.231,0.186],[3826,0.229,0.231,0.186],[3851,0.231,0.232,0.187],[3876,0.227,0.233,0.186],[3901,0.227,0.235,0.183],[3926,0.231,0.24,0.181],[3951,0.23,0.242,0.182],[3976,0.232,0.244,0.187],[4001,0.236,0.248,0.184],[4026,0.233,0.244,0.176],[4051,0.233,0.234,0.183],[4076,0.234,0.237,0.184],[4101,0.233,0.242,0.179],[4126,0.234,0.246,0.187],[4151,0.235,0.245,0.191],[4176,0.233,0.24,0.196],[4201,0.232,0.242,0.194],[4226,0.234,0.241,0.185],[4251,0.235,0.241,0.189],[4276,0.235,0.237,0.188],[4301,0.238,0.241,0.191],[4326,0.237,0.243,0.194],[4351,0.235,0.243,0.188],[4376,0.234,0.245,0.194],[4401,0.233,0.241,0.191],[4426,0.235,0.242,0.181],[4451,0.237,0.246,0.186],[4476,0.238,0.244,0.194],[4501,0.241,0.241,0.192],[4526,0.242,0.249,0.189],[4551,0.237,0.249,0.193],[4576,0.234,0.248,0.195],[4601,0.237,0.248,0.193],[4626,0.235,0.247,0.191],[4651,0.234,0.256,0.191],[4676,0.236,0.251,0.188],[4701,0.237,0.25,0.192],[4726,0.237,0.259,0.193],[4751,0.236,0.254,0.186],[4776,0.237,0.251,0.189],[4801,0.236,0.252,0.192],[4826,0.234,0.248,0.189],[4851,0.234,0.245,0.186],[4876,0.238,0.246,0.187],[4901,0.238,0.243,0.192],[4926,0.238,0.245,0.191],[4951,0.236,0.244,0.188],[4976,0.233,0.245,0.188],[5001,0.235,0.251,0.19],[5026,0.238,0.252,0.19],[5051,0.24,0.249,0.187],[5076,0.237,0.242,0.183],[5101,0.233,0.24,0.182],[5126,0.231,0.237,0.18],[5151,0.235,0.24,0.183],[5176,0.235,0.241,0.186],[5201,0.232,0.24,0.183],[5226,0.234,0.243,0.179],[5251,0.239,0.249,0.187],[5276,0.236,0.242,0.19],[5301,0.232,0.238,0.184],[5326,0.234,0.242,0.181],[5351,0.237,0.243,0.181],[5376,0.238,0.247,0.183],[5401,0.236,0.244,0.182],[5426,0.236,0.239,0.183],[5451,0.237,0.243,0.181],[5476,0.235,0.249,0.183],[5501,0.239,0.248,0.184],[5526,0.242,0.247,0.183],[5551,0.239,0.249,0.187],[5576,0.236,0.251,0.194]],"grad_spikes":10,"grad_max":353.3,"epoch_loss":[0.7661,0.6685,0.5635,0.4657,0.35,0.2375]},"2B_v3_xattn":{"steps_per_epoch":931,"train_loss":[[1,2.0307],[26,0.9692],[51,0.8696],[76,0.8195],[101,0.8461],[126,0.8306],[151,0.7791],[176,0.7633],[201,0.773],[226,0.7861],[251,0.7914],[276,0.7863],[301,0.7801],[326,0.7973],[351,0.8038],[376,0.8227],[401,0.8259],[426,0.801],[451,0.8068],[476,0.7913],[501,0.7998],[526,0.8192],[551,0.8083],[576,0.8028],[601,0.8224],[626,0.8286],[651,0.8224],[676,0.8173],[701,0.7974],[726,0.8042],[751,0.8209],[776,0.8309],[801,0.828],[826,0.8185],[851,0.8246],[876,0.8506],[901,0.8338],[926,0.7959],[951,0.7973],[976,0.7685],[1001,0.7413],[1026,0.7748],[1051,0.8027],[1076,0.7828],[1101,0.781],[1126,0.7899],[1151,0.7707],[1176,0.7716],[1201,0.769],[1226,0.7425],[1251,0.7624],[1276,0.7806],[1301,0.7743],[1326,0.7649],[1351,0.7578],[1376,0.7541],[1401,0.7595],[1426,0.7818],[1451,0.7689],[1476,0.749],[1501,0.7419],[1526,0.7409],[1551,0.738],[1576,0.7356],[1601,0.7391],[1626,0.7522],[1651,0.7652],[1676,0.739],[1701,0.7102],[1726,0.7206],[1751,0.7347],[1776,0.7287],[1801,0.7096],[1826,0.7081],[1851,0.6973],[1876,0.6845],[1901,0.7011],[1926,0.6877],[1951,0.664],[1976,0.6787],[2001,0.7035],[2026,0.7061],[2051,0.6901],[2076,0.6808],[2101,0.6908],[2126,0.6966],[2151,0.6818],[2176,0.6569],[2201,0.6352],[2226,0.6404],[2251,0.6516],[2276,0.6457],[2301,0.6365],[2326,0.6346],[2351,0.6444],[2376,0.6297],[2401,0.6391],[2426,0.6448],[2451,0.6143],[2476,0.6114],[2501,0.631],[2526,0.6558],[2551,0.6447],[2576,0.6425],[2601,0.6465],[2626,0.6462],[2651,0.6205],[2676,0.6168],[2701,0.6344],[2726,0.6327],[2751,0.6451],[2776,0.6136],[2801,0.5764],[2826,0.5468],[2851,0.5245],[2876,0.5413],[2901,0.5775],[2926,0.5646],[2951,0.5221],[2976,0.5235],[3001,0.5241],[3026,0.5323],[3051,0.5512],[3076,0.5433],[3101,0.5406],[3126,0.5468],[3151,0.5424],[3176,0.5408],[3201,0.5777],[3226,0.5888],[3251,0.5718],[3276,0.5522],[3301,0.539],[3326,0.5296],[3351,0.5244],[3376,0.5554],[3401,0.5448],[3426,0.523],[3451,0.5384],[3476,0.5211],[3501,0.4923],[3526,0.4769],[3551,0.4943],[3576,0.533],[3601,0.5081],[3626,0.4691],[3651,0.4941],[3676,0.5087],[3701,0.5069],[3726,0.5089],[3751,0.4533],[3776,0.3973],[3801,0.3917],[3826,0.4195],[3851,0.4343],[3876,0.415],[3901,0.4029],[3926,0.4102],[3951,0.4058],[3976,0.3812],[4001,0.3678],[4026,0.4104],[4051,0.4327],[4076,0.4162],[4101,0.4206],[4126,0.4179],[4151,0.3993],[4176,0.3894],[4201,0.3926],[4226,0.3825],[4251,0.4008],[4276,0.4352],[4301,0.424],[4326,0.3805],[4351,0.3877],[4376,0.4041],[4401,0.3849],[4426,0.4028],[4451,0.4295],[4476,0.4172],[4501,0.4134],[4526,0.4173],[4551,0.4046],[4576,0.4054],[4601,0.394],[4626,0.3997],[4651,0.3903],[4676,0.3478],[4701,0.3267],[4726,0.3114],[4751,0.2929],[4776,0.2783],[4801,0.2766],[4826,0.2716],[4851,0.2676],[4876,0.2825],[4901,0.2887],[4926,0.2937],[4951,0.2848],[4976,0.2694],[5001,0.2637],[5026,0.2823],[5051,0.3008],[5076,0.286],[5101,0.2872],[5126,0.272],[5151,0.2813],[5176,0.2978],[5201,0.2794],[5226,0.2958],[5251,0.2914],[5276,0.262],[5301,0.2735],[5326,0.3024],[5351,0.2948],[5376,0.2743],[5401,0.2872],[5426,0.2951],[5451,0.2874],[5476,0.291],[5501,0.2811],[5526,0.2681],[5551,0.2648],[5576,0.2871]],"dev_loss":[[0,1.4503],[200,0.8349],[400,0.88],[600,0.9153],[800,0.8783],[931,0.8441],[1000,0.8401],[1200,0.8265],[1400,0.7993],[1600,0.8053],[1800,0.7941],[1862,0.8106],[2000,0.7941],[2200,0.7879],[2400,0.7693],[2600,0.7758],[2793,0.7961],[2800,0.8023],[3000,0.8165],[3200,0.7743],[3400,0.7594],[3600,0.7696],[3724,0.7673],[3800,0.8141],[4000,0.926],[4200,0.9032],[4400,0.9424],[4600,0.905],[4655,0.9406],[4800,1.1222],[5000,1.1811],[5200,1.1616],[5400,1.1959],[5586,1.1938]],"dev_acc":[[0,33.0],[931,49.8],[1862,55.84],[2793,62.5],[3724,69.1],[4655,69.84],[5586,69.89]],"dev_task":{"abs_distance":[[0,29.4],[931,32.1],[1862,42.8],[2793,43.8],[3724,55.4],[4655,53.1],[5586,56.6]],"counting":[[0,45.7],[931,64.7],[1862,62.9],[2793,70.0],[3724,73.9],[4655,71.0],[5586,71.5]],"obj_size":[[0,45.9],[931,59.0],[1862,66.2],[2793,67.2],[3724,69.8],[4655,71.8],[5586,71.4]],"rel_direction":[[0,14.0],[931,38.0],[1862,43.0],[2793,68.0],[3724,74.0],[4655,76.0],[5586,73.0]],"rel_distance":[[0,28.0],[931,50.0],[1862,57.0],[2793,59.0],[3724,68.0],[4655,70.0],[5586,69.0]],"room_size":[[0,35.0],[931,55.0],[1862,63.2],[2793,67.0],[3724,73.5],[4655,77.2],[5586,77.8]]},"inject":[[1,0.0,0.0,0.0],[26,0.006,0.005,0.006],[51,0.014,0.012,0.013],[76,0.029,0.026,0.028],[101,0.043,0.041,0.047],[126,0.053,0.056,0.067],[151,0.065,0.071,0.085],[176,0.084,0.086,0.102],[201,0.104,0.102,0.117],[226,0.116,0.113,0.13],[251,0.123,0.119,0.135],[276,0.138,0.133,0.143],[301,0.148,0.144,0.152],[326,0.154,0.151,0.153],[351,0.16,0.165,0.159],[376,0.168,0.171,0.166],[401,0.181,0.173,0.172],[426,0.186,0.184,0.181],[451,0.199,0.183,0.181],[476,0.209,0.183,0.177],[501,0.228,0.209,0.181],[526,0.24,0.209,0.179],[551,0.229,0.182,0.165],[576,0.247,0.181,0.163],[601,0.25,0.191,0.165],[626,0.259,0.195,0.159],[651,0.258,0.19,0.163],[676,0.276,0.173,0.159],[701,0.309,0.164,0.158],[726,0.299,0.165,0.166],[751,0.277,0.17,0.168],[776,0.246,0.204,0.171],[801,0.233,0.258,0.172],[826,0.242,0.228,0.168],[851,0.257,0.191,0.174],[876,0.263,0.2,0.182],[901,0.255,0.197,0.189],[926,0.246,0.199,0.192],[951,0.247,0.2,0.208],[976,0.236,0.197,0.207],[1001,0.227,0.183,0.178],[1026,0.229,0.179,0.169],[1051,0.228,0.182,0.176],[1076,0.228,0.186,0.184],[1101,0.243,0.2,0.185],[1126,0.257,0.244,0.189],[1151,0.259,0.241,0.189],[1176,0.26,0.201,0.183],[1201,0.261,0.198,0.182],[1226,0.267,0.21,0.196],[1251,0.271,0.21,0.198],[1276,0.266,0.218,0.185],[1301,0.259,0.23,0.188],[1326,0.257,0.219,0.197],[1351,0.266,0.221,0.203],[1376,0.271,0.237,0.197],[1401,0.275,0.243,0.187],[1426,0.285,0.234,0.188],[1451,0.285,0.233,0.194],[1476,0.28,0.234,0.195],[1501,0.274,0.238,0.188],[1526,0.269,0.238,0.188],[1551,0.26,0.226,0.184],[1576,0.245,0.21,0.172],[1601,0.26,0.205,0.172],[1626,0.281,0.211,0.184],[1651,0.281,0.215,0.188],[1676,0.281,0.214,0.193],[1701,0.281,0.219,0.199],[1726,0.282,0.217,0.198],[1751,0.277,0.217,0.196],[1776,0.287,0.224,0.204],[1801,0.291,0.21,0.198],[1826,0.277,0.202,0.186],[1851,0.269,0.209,0.188],[1876,0.254,0.215,0.185],[1901,0.24,0.213,0.182],[1926,0.238,0.216,0.182],[1951,0.257,0.223,0.19],[1976,0.285,0.224,0.201],[2001,0.283,0.223,0.198],[2026,0.267,0.225,0.198],[2051,0.262,0.224,0.198],[2076,0.268,0.217,0.191],[2101,0.273,0.212,0.19],[2126,0.267,0.206,0.188],[2151,0.269,0.205,0.187],[2176,0.281,0.216,0.192],[2201,0.294,0.231,0.196],[2226,0.294,0.236,0.196],[2251,0.288,0.237,0.209],[2276,0.297,0.236,0.217],[2301,0.308,0.235,0.208],[2326,0.298,0.235,0.201],[2351,0.288,0.238,0.196],[2376,0.3,0.246,0.198],[2401,0.306,0.236,0.199],[2426,0.303,0.243,0.196],[2451,0.3,0.266,0.197],[2476,0.301,0.253,0.201],[2501,0.301,0.227,0.199],[2526,0.293,0.224,0.198],[2551,0.28,0.228,0.196],[2576,0.27,0.222,0.195],[2601,0.265,0.227,0.196],[2626,0.269,0.227,0.189],[2651,0.272,0.223,0.185],[2676,0.279,0.231,0.189],[2701,0.293,0.235,0.195],[2726,0.297,0.235,0.197],[2751,0.296,0.232,0.194],[2776,0.291,0.231,0.192],[2801,0.288,0.228,0.191],[2826,0.286,0.234,0.197],[2851,0.282,0.239,0.203],[2876,0.281,0.243,0.202],[2901,0.282,0.249,0.198],[2926,0.284,0.248,0.197],[2951,0.285,0.243,0.195],[2976,0.289,0.235,0.194],[3001,0.291,0.234,0.196],[3026,0.291,0.231,0.198],[3051,0.293,0.232,0.201],[3076,0.292,0.241,0.201],[3101,0.287,0.244,0.2],[3126,0.283,0.246,0.197],[3151,0.276,0.244,0.193],[3176,0.267,0.235,0.19],[3201,0.263,0.233,0.192],[3226,0.267,0.23,0.196],[3251,0.27,0.229,0.198],[3276,0.272,0.225,0.198],[3301,0.278,0.225,0.201],[3326,0.282,0.232,0.203],[3351,0.288,0.232,0.204],[3376,0.29,0.232,0.204],[3401,0.286,0.231,0.203],[3426,0.283,0.231,0.204],[3451,0.287,0.237,0.206],[3476,0.288,0.236,0.206],[3501,0.292,0.231,0.205],[3526,0.295,0.235,0.202],[3551,0.292,0.229,0.197],[3576,0.292,0.231,0.2],[3601,0.294,0.241,0.204],[3626,0.298,0.242,0.205],[3651,0.301,0.241,0.203],[3676,0.3,0.239,0.2],[3701,0.299,0.242,0.199],[3726,0.297,0.237,0.198],[3751,0.294,0.229,0.198],[3776,0.285,0.231,0.197],[3801,0.279,0.239,0.197],[3826,0.285,0.237,0.198],[3851,0.288,0.231,0.2],[3876,0.287,0.227,0.198],[3901,0.288,0.227,0.196],[3926,0.287,0.229,0.198],[3951,0.286,0.239,0.201],[3976,0.285,0.249,0.204],[4001,0.288,0.247,0.203],[4026,0.289,0.24,0.2],[4051,0.287,0.231,0.2],[4076,0.291,0.233,0.202],[4101,0.292,0.243,0.203],[4126,0.289,0.247,0.203],[4151,0.285,0.245,0.205],[4176,0.285,0.245,0.202],[4201,0.286,0.247,0.201],[4226,0.287,0.245,0.201],[4251,0.288,0.243,0.199],[4276,0.29,0.235,0.199],[4301,0.29,0.241,0.199],[4326,0.289,0.242,0.198],[4351,0.29,0.243,0.199],[4376,0.291,0.251,0.201],[4401,0.287,0.25,0.199],[4426,0.284,0.247,0.198],[4451,0.285,0.245,0.2],[4476,0.286,0.25,0.201],[4501,0.289,0.248,0.201],[4526,0.29,0.246,0.204],[4551,0.285,0.245,0.205],[4576,0.283,0.242,0.204],[4601,0.287,0.239,0.205],[4626,0.29,0.237,0.203],[4651,0.29,0.245,0.203],[4676,0.289,0.241,0.201],[4701,0.292,0.24,0.2],[4726,0.292,0.248,0.202],[4751,0.288,0.238,0.2],[4776,0.285,0.237,0.199],[4801,0.288,0.244,0.202],[4826,0.29,0.244,0.202],[4851,0.289,0.244,0.201],[4876,0.29,0.243,0.201],[4901,0.289,0.243,0.2],[4926,0.29,0.248,0.201],[4951,0.293,0.24,0.201],[4976,0.29,0.235,0.202],[5001,0.289,0.238,0.204],[5026,0.29,0.251,0.204],[5051,0.288,0.255,0.203],[5076,0.29,0.245,0.201],[5101,0.291,0.241,0.2],[5126,0.289,0.238,0.199],[5151,0.29,0.238,0.201],[5176,0.29,0.233,0.201],[5201,0.289,0.235,0.199],[5226,0.29,0.233,0.2],[5251,0.29,0.236,0.201],[5276,0.286,0.244,0.199],[5301,0.284,0.242,0.199],[5326,0.285,0.245,0.2],[5351,0.286,0.244,0.199],[5376,0.288,0.242,0.2],[5401,0.286,0.238,0.199],[5426,0.284,0.231,0.198],[5451,0.286,0.238,0.199],[5476,0.287,0.241,0.2],[5501,0.289,0.241,0.2],[5526,0.289,0.243,0.2],[5551,0.289,0.247,0.2],[5576,0.288,0.259,0.201]],"grad_spikes":70,"grad_max":6469.4,"epoch_loss":[0.8138,0.7514,0.6511,0.531,0.404,0.2854]},"4B_v3_lora":{"steps_per_epoch":931,"train_loss":[[1,3.0847],[26,1.6508],[51,1.1837],[76,0.7656],[101,0.7727],[126,0.7548],[151,0.7008],[176,0.6993],[201,0.7177],[226,0.7064],[251,0.6965],[276,0.6936],[301,0.6842],[326,0.7005],[351,0.716],[376,0.7168],[401,0.7049],[426,0.6981],[451,0.7129],[476,0.6971],[501,0.6767],[526,0.6995],[551,0.7167],[576,0.6967],[601,0.7142],[626,0.7047],[651,0.6866],[676,0.6844],[701,0.6617],[726,0.6779],[751,0.7035],[776,0.7119],[801,0.6987],[826,0.6755],[851,0.7],[876,0.7501],[901,0.7299],[926,0.6973],[951,0.6875],[976,0.6313],[1001,0.5912],[1026,0.6361],[1051,0.6801],[1076,0.6435],[1101,0.6423],[1126,0.6669],[1151,0.6512],[1176,0.6502],[1201,0.6322],[1226,0.5963],[1251,0.6324],[1276,0.666],[1301,0.6589],[1326,0.6516],[1351,0.6368],[1376,0.6296],[1401,0.6483],[1426,0.6824],[1451,0.6669],[1476,0.6535],[1501,0.6443],[1526,0.6255],[1551,0.6237],[1576,0.6137],[1601,0.608],[1626,0.6272],[1651,0.6564],[1676,0.6186],[1701,0.5887],[1726,0.6139],[1751,0.6276],[1776,0.6168],[1801,0.5884],[1826,0.594],[1851,0.5916],[1876,0.5664],[1901,0.5519],[1926,0.531],[1951,0.5164],[1976,0.5276],[2001,0.5491],[2026,0.5655],[2051,0.5563],[2076,0.541],[2101,0.5584],[2126,0.5707],[2151,0.5512],[2176,0.525],[2201,0.51],[2226,0.5183],[2251,0.5331],[2276,0.5335],[2301,0.5146],[2326,0.5039],[2351,0.5219],[2376,0.5236],[2401,0.5378],[2426,0.5407],[2451,0.5139],[2476,0.5093],[2501,0.5231],[2526,0.5526],[2551,0.5481],[2576,0.539],[2601,0.5319],[2626,0.5315],[2651,0.5066],[2676,0.5133],[2701,0.5411],[2726,0.5325],[2751,0.539],[2776,0.5261],[2801,0.494],[2826,0.4563],[2851,0.4334],[2876,0.4378],[2901,0.4539],[2926,0.4329],[2951,0.4197],[2976,0.4261],[3001,0.4133],[3026,0.4259],[3051,0.4387],[3076,0.4391],[3101,0.4328],[3126,0.439],[3151,0.4376],[3176,0.4268],[3201,0.4496],[3226,0.4481],[3251,0.4432],[3276,0.4494],[3301,0.4315],[3326,0.412],[3351,0.4305],[3376,0.4542],[3401,0.4302],[3426,0.4048],[3451,0.4218],[3476,0.4254],[3501,0.3983],[3526,0.3819],[3551,0.3982],[3576,0.4298],[3601,0.4115],[3626,0.3703],[3651,0.3934],[3676,0.4074],[3701,0.4075],[3726,0.4189],[3751,0.35],[3776,0.2738],[3801,0.2627],[3826,0.2834],[3851,0.2969],[3876,0.2933],[3901,0.2992],[3926,0.3041],[3951,0.2827],[3976,0.2606],[4001,0.2543],[4026,0.2825],[4051,0.29],[4076,0.2837],[4101,0.2902],[4126,0.2875],[4151,0.2836],[4176,0.2764],[4201,0.2715],[4226,0.2589],[4251,0.2741],[4276,0.2952],[4301,0.2925],[4326,0.2625],[4351,0.2521],[4376,0.2722],[4401,0.2774],[4426,0.2882],[4451,0.2967],[4476,0.2895],[4501,0.2904],[4526,0.287],[4551,0.2808],[4576,0.2793],[4601,0.2741],[4626,0.2807],[4651,0.2721],[4676,0.2099],[4701,0.1526],[4726,0.1372],[4751,0.1275],[4776,0.1241],[4801,0.119],[4826,0.1207],[4851,0.1299],[4876,0.1282],[4901,0.118],[4926,0.1306],[4951,0.1414],[4976,0.1301],[5001,0.126],[5026,0.1259],[5051,0.138],[5076,0.1298],[5101,0.1212],[5126,0.1199],[5151,0.1191],[5176,0.1209],[5201,0.1188],[5226,0.1282],[5251,0.1249],[5276,0.108],[5301,0.108],[5326,0.1298],[5351,0.1348],[5376,0.1216],[5401,0.1166],[5426,0.1238],[5451,0.1274],[5476,0.1285],[5501,0.123],[5526,0.1133],[5551,0.1162],[5576,0.1251]],"dev_loss":[[0,2.6307],[200,0.7538],[400,0.802],[600,0.7575],[800,0.7995],[931,0.7495],[1000,0.7619],[1200,0.7863],[1400,0.763],[1600,0.7824],[1800,0.7669],[1862,0.7815],[2000,0.8336],[2200,0.7983],[2400,0.8191],[2600,0.771],[2793,0.7527],[2800,0.7869],[3000,0.8416],[3200,0.8599],[3400,0.853],[3600,0.8363],[3724,0.8748],[3800,0.9777],[4000,1.0484],[4200,1.029],[4400,1.0389],[4600,1.0076],[4655,1.031],[4800,1.4026],[5000,1.3854],[5200,1.4115],[5400,1.4521],[5586,1.4665]],"dev_acc":[[0,33.68],[931,62.56],[1862,64.6],[2793,67.51],[3724,69.62],[4655,72.44],[5586,73.87]],"dev_task":{"abs_distance":[[0,40.4],[931,45.0],[1862,44.9],[2793,55.9],[3724,55.0],[4655,60.4],[5586,62.7]],"counting":[[0,49.5],[931,64.5],[1862,67.5],[2793,71.1],[3724,72.7],[4655,76.5],[5586,77.9]],"obj_size":[[0,57.2],[931,66.7],[1862,70.2],[2793,70.2],[3724,73.0],[4655,76.4],[5586,76.6]],"rel_direction":[[0,0.0],[931,78.0],[1862,77.0],[2793,81.0],[3724,81.0],[4655,86.0],[5586,84.0]],"rel_distance":[[0,0.0],[931,60.0],[1862,66.0],[2793,62.0],[3724,66.0],[4655,63.0],[5586,66.0]],"room_size":[[0,55.0],[931,61.2],[1862,62.0],[2793,64.8],[3724,70.0],[4655,72.3],[5586,76.0]]},"inject":[],"grad_spikes":12,"grad_max":235.1,"epoch_loss":[0.7337,0.6311,0.5328,0.4242,0.2802,0.125]},"4B_v3_additive":{"steps_per_epoch":931,"train_loss":[[1,3.0906],[26,1.6369],[51,1.1782],[76,0.7664],[101,0.7701],[126,0.7509],[151,0.696],[176,0.6954],[201,0.7141],[226,0.6977],[251,0.6887],[276,0.6877],[301,0.6679],[326,0.6818],[351,0.7129],[376,0.7223],[401,0.7015],[426,0.6884],[451,0.7206],[476,0.7153],[501,0.688],[526,0.7281],[551,0.7494],[576,0.7267],[601,0.7495],[626,0.7335],[651,0.7221],[676,0.7308],[701,0.7208],[726,0.7302],[751,0.7314],[776,0.7318],[801,0.7342],[826,0.7306],[851,0.7472],[876,0.7714],[901,0.7519],[926,0.7204],[951,0.7021],[976,0.6577],[1001,0.6306],[1026,0.6701],[1051,0.7047],[1076,0.6761],[1101,0.6704],[1126,0.6768],[1151,0.66],[1176,0.6805],[1201,0.6671],[1226,0.6216],[1251,0.653],[1276,0.6846],[1301,0.6816],[1326,0.6742],[1351,0.6544],[1376,0.6575],[1401,0.6637],[1426,0.6898],[1451,0.6832],[1476,0.6599],[1501,0.6606],[1526,0.6447],[1551,0.6325],[1576,0.6218],[1601,0.6177],[1626,0.6537],[1651,0.6919],[1676,0.6489],[1701,0.606],[1726,0.6152],[1751,0.634],[1776,0.6382],[1801,0.6083],[1826,0.6035],[1851,0.5869],[1876,0.5753],[1901,0.5838],[1926,0.5617],[1951,0.5391],[1976,0.563],[2001,0.58],[2026,0.5695],[2051,0.569],[2076,0.5557],[2101,0.5647],[2126,0.577],[2151,0.5542],[2176,0.5259],[2201,0.5185],[2226,0.5344],[2251,0.553],[2276,0.5499],[2301,0.5359],[2326,0.5287],[2351,0.5379],[2376,0.5324],[2401,0.5475],[2426,0.546],[2451,0.5198],[2476,0.5193],[2501,0.5333],[2526,0.5615],[2551,0.567],[2576,0.5574],[2601,0.5445],[2626,0.5392],[2651,0.5124],[2676,0.5288],[2701,0.5552],[2726,0.5439],[2751,0.5531],[2776,0.5272],[2801,0.4938],[2826,0.4639],[2851,0.4191],[2876,0.4359],[2901,0.4824],[2926,0.4635],[2951,0.4248],[2976,0.4329],[3001,0.4375],[3026,0.4415],[3051,0.4563],[3076,0.4548],[3101,0.4529],[3126,0.4626],[3151,0.4735],[3176,0.4628],[3201,0.474],[3226,0.4871],[3251,0.4757],[3276,0.4451],[3301,0.4202],[3326,0.4321],[3351,0.4502],[3376,0.4601],[3401,0.4483],[3426,0.4297],[3451,0.4405],[3476,0.4353],[3501,0.4069],[3526,0.3867],[3551,0.3977],[3576,0.4354],[3601,0.4181],[3626,0.3805],[3651,0.4126],[3676,0.4265],[3701,0.4164],[3726,0.4234],[3751,0.3715],[3776,0.3147],[3801,0.2909],[3826,0.2986],[3851,0.3292],[3876,0.3307],[3901,0.321],[3926,0.3327],[3951,0.3174],[3976,0.2942],[4001,0.29],[4026,0.3082],[4051,0.3188],[4076,0.3116],[4101,0.3223],[4126,0.3185],[4151,0.3003],[4176,0.2902],[4201,0.3005],[4226,0.2975],[4251,0.304],[4276,0.325],[4301,0.3155],[4326,0.2953],[4351,0.2977],[4376,0.2984],[4401,0.2921],[4426,0.3066],[4451,0.3216],[4476,0.3157],[4501,0.3059],[4526,0.3024],[4551,0.2993],[4576,0.3036],[4601,0.2966],[4626,0.2912],[4651,0.2903],[4676,0.2416],[4701,0.1902],[4726,0.1743],[4751,0.1685],[4776,0.1589],[4801,0.1439],[4826,0.1536],[4851,0.1592],[4876,0.1522],[4901,0.1568],[4926,0.1702],[4951,0.1662],[4976,0.1464],[5001,0.1492],[5026,0.1661],[5051,0.1711],[5076,0.1676],[5101,0.1654],[5126,0.1548],[5151,0.1607],[5176,0.161],[5201,0.1499],[5226,0.1618],[5251,0.1586],[5276,0.1403],[5301,0.1487],[5326,0.1625],[5351,0.1613],[5376,0.152],[5401,0.1571],[5426,0.1684],[5451,0.1558],[5476,0.1534],[5501,0.1533],[5526,0.1442],[5551,0.143],[5576,0.1459]],"dev_loss":[[0,2.6336],[200,0.7656],[400,0.7593],[600,0.8072],[800,0.7964],[931,0.796],[1000,0.7723],[1200,0.7622],[1400,0.7614],[1600,0.7576],[1800,0.7354],[1862,0.7356],[2000,0.7342],[2200,0.8119],[2400,0.7239],[2600,0.6958],[2793,0.7399],[2800,0.7392],[3000,0.7603],[3200,0.7392],[3400,0.7486],[3600,0.8131],[3724,0.7858],[3800,0.9011],[4000,0.9],[4200,0.8678],[4400,0.8982],[4600,0.8779],[4655,0.9252],[4800,1.225],[5000,1.2523],[5200,1.1957],[5400,1.239],[5586,1.2956]],"dev_acc":[[0,33.11],[931,57.72],[1862,66.25],[2793,69.73],[3724,71.59],[4655,73.77],[5586,74.7]],"dev_task":{"abs_distance":[[0,38.9],[931,37.1],[1862,47.2],[2793,57.3],[3724,62.5],[4655,64.2],[5586,64.5]],"counting":[[0,49.5],[931,65.7],[1862,71.6],[2793,65.9],[3724,71.7],[4655,70.7],[5586,71.6]],"obj_size":[[0,57.4],[931,64.0],[1862,66.2],[2793,68.7],[3724,72.2],[4655,75.9],[5586,74.1]],"rel_direction":[[0,0.0],[931,76.0],[1862,82.0],[2793,87.0],[3724,91.0],[4655,95.0],[5586,95.0]],"rel_distance":[[0,0.0],[931,48.0],[1862,62.0],[2793,64.0],[3724,63.0],[4655,62.0],[5586,64.0]],"room_size":[[0,52.8],[931,55.5],[1862,68.5],[2793,75.5],[3724,69.2],[4655,74.8],[5586,79.0]]},"inject":[[1,0.0,0.0,0.0],[26,0.002,0.002,0.003],[51,0.005,0.005,0.008],[76,0.01,0.012,0.017],[101,0.016,0.018,0.027],[126,0.022,0.026,0.039],[151,0.029,0.034,0.05],[176,0.036,0.043,0.062],[201,0.045,0.054,0.074],[226,0.058,0.067,0.082],[251,0.071,0.082,0.09],[276,0.077,0.094,0.097],[301,0.075,0.101,0.101],[326,0.071,0.104,0.105],[351,0.071,0.114,0.114],[376,0.075,0.125,0.12],[401,0.077,0.125,0.113],[426,0.076,0.126,0.104],[451,0.067,0.131,0.11],[476,0.059,0.135,0.115],[501,0.058,0.131,0.107],[526,0.065,0.127,0.103],[551,0.071,0.126,0.109],[576,0.067,0.126,0.123],[601,0.06,0.125,0.122],[626,0.058,0.123,0.106],[651,0.066,0.127,0.105],[676,0.074,0.129,0.11],[701,0.077,0.127,0.11],[726,0.081,0.126,0.112],[751,0.09,0.126,0.118],[776,0.096,0.123,0.123],[801,0.095,0.123,0.128],[826,0.094,0.128,0.135],[851,0.092,0.128,0.139],[876,0.094,0.129,0.142],[901,0.091,0.132,0.143],[926,0.084,0.129,0.131],[951,0.079,0.125,0.127],[976,0.078,0.13,0.136],[1001,0.082,0.128,0.132],[1026,0.085,0.122,0.122],[1051,0.088,0.124,0.124],[1076,0.091,0.128,0.13],[1101,0.094,0.129,0.125],[1126,0.095,0.13,0.126],[1151,0.094,0.13,0.13],[1176,0.093,0.13,0.134],[1201,0.095,0.136,0.137],[1226,0.093,0.148,0.132],[1251,0.091,0.152,0.125],[1276,0.097,0.152,0.129],[1301,0.107,0.154,0.134],[1326,0.11,0.151,0.135],[1351,0.106,0.142,0.132],[1376,0.103,0.141,0.129],[1401,0.099,0.145,0.128],[1426,0.096,0.146,0.126],[1451,0.097,0.15,0.137],[1476,0.1,0.149,0.142],[1501,0.102,0.153,0.14],[1526,0.101,0.154,0.141],[1551,0.103,0.147,0.136],[1576,0.105,0.142,0.13],[1601,0.104,0.139,0.132],[1626,0.105,0.144,0.133],[1651,0.107,0.154,0.134],[1676,0.108,0.16,0.138],[1701,0.112,0.165,0.144],[1726,0.113,0.162,0.146],[1751,0.114,0.16,0.143],[1776,0.113,0.166,0.14],[1801,0.111,0.157,0.134],[1826,0.113,0.152,0.138],[1851,0.115,0.159,0.152],[1876,0.113,0.16,0.147],[1901,0.114,0.153,0.135],[1926,0.117,0.149,0.142],[1951,0.122,0.152,0.145],[1976,0.123,0.159,0.14],[2001,0.118,0.166,0.141],[2026,0.113,0.16,0.138],[2051,0.111,0.153,0.133],[2076,0.112,0.157,0.133],[2101,0.115,0.167,0.138],[2126,0.119,0.175,0.142],[2151,0.12,0.177,0.142],[2176,0.121,0.176,0.144],[2201,0.122,0.17,0.143],[2226,0.121,0.163,0.142],[2251,0.121,0.165,0.15],[2276,0.123,0.16,0.152],[2301,0.124,0.155,0.147],[2326,0.123,0.157,0.145],[2351,0.126,0.163,0.152],[2376,0.129,0.169,0.16],[2401,0.127,0.166,0.153],[2426,0.124,0.162,0.148],[2451,0.122,0.167,0.149],[2476,0.126,0.172,0.146],[2501,0.129,0.169,0.146],[2526,0.125,0.164,0.151],[2551,0.119,0.16,0.151],[2576,0.118,0.159,0.144],[2601,0.12,0.159,0.141],[2626,0.122,0.16,0.141],[2651,0.124,0.168,0.145],[2676,0.124,0.174,0.147],[2701,0.126,0.175,0.143],[2726,0.127,0.172,0.142],[2751,0.126,0.171,0.143],[2776,0.124,0.168,0.142],[2801,0.124,0.167,0.143],[2826,0.125,0.166,0.138],[2851,0.123,0.161,0.134],[2876,0.125,0.165,0.135],[2901,0.125,0.167,0.137],[2926,0.122,0.164,0.136],[2951,0.123,0.166,0.139],[2976,0.125,0.169,0.145],[3001,0.129,0.17,0.143],[3026,0.13,0.168,0.145],[3051,0.131,0.168,0.149],[3076,0.131,0.177,0.15],[3101,0.128,0.177,0.151],[3126,0.127,0.171,0.149],[3151,0.128,0.172,0.148],[3176,0.128,0.173,0.149],[3201,0.128,0.176,0.148],[3226,0.128,0.179,0.149],[3251,0.129,0.182,0.151],[3276,0.13,0.183,0.15],[3301,0.13,0.178,0.154],[3326,0.128,0.175,0.155],[3351,0.129,0.174,0.148],[3376,0.128,0.171,0.147],[3401,0.127,0.172,0.15],[3426,0.129,0.17,0.151],[3451,0.13,0.172,0.148],[3476,0.131,0.175,0.146],[3501,0.133,0.178,0.147],[3526,0.135,0.185,0.146],[3551,0.136,0.186,0.145],[3576,0.137,0.185,0.144],[3601,0.136,0.184,0.146],[3626,0.135,0.184,0.148],[3651,0.135,0.187,0.149],[3676,0.133,0.186,0.151],[3701,0.133,0.183,0.148],[3726,0.132,0.179,0.143],[3751,0.131,0.177,0.138],[3776,0.129,0.174,0.14],[3801,0.129,0.173,0.147],[3826,0.131,0.173,0.146],[3851,0.133,0.176,0.143],[3876,0.131,0.176,0.143],[3901,0.131,0.176,0.14],[3926,0.131,0.178,0.14],[3951,0.129,0.177,0.143],[3976,0.129,0.18,0.145],[4001,0.129,0.185,0.14],[4026,0.128,0.18,0.132],[4051,0.128,0.171,0.136],[4076,0.13,0.174,0.137],[4101,0.132,0.179,0.138],[4126,0.134,0.185,0.148],[4151,0.134,0.187,0.154],[4176,0.134,0.185,0.155],[4201,0.134,0.184,0.154],[4226,0.135,0.182,0.152],[4251,0.137,0.184,0.154],[4276,0.137,0.18,0.147],[4301,0.135,0.18,0.149],[4326,0.135,0.181,0.151],[4351,0.135,0.176,0.147],[4376,0.135,0.173,0.152],[4401,0.135,0.172,0.148],[4426,0.136,0.174,0.141],[4451,0.135,0.177,0.147],[4476,0.136,0.173,0.154],[4501,0.139,0.173,0.151],[4526,0.139,0.177,0.15],[4551,0.137,0.177,0.152],[4576,0.137,0.178,0.152],[4601,0.138,0.179,0.152],[4626,0.138,0.178,0.153],[4651,0.138,0.185,0.152],[4676,0.139,0.184,0.149],[4701,0.139,0.185,0.153],[4726,0.139,0.191,0.153],[4751,0.138,0.189,0.147],[4776,0.136,0.188,0.151],[4801,0.136,0.186,0.154],[4826,0.136,0.185,0.149],[4851,0.136,0.185,0.147],[4876,0.138,0.185,0.149],[4901,0.136,0.18,0.152],[4926,0.136,0.179,0.154],[4951,0.136,0.179,0.15],[4976,0.135,0.18,0.148],[5001,0.136,0.183,0.15],[5026,0.136,0.183,0.153],[5051,0.136,0.181,0.15],[5076,0.135,0.179,0.145],[5101,0.134,0.176,0.143],[5126,0.133,0.172,0.141],[5151,0.134,0.175,0.144],[5176,0.136,0.178,0.147],[5201,0.134,0.178,0.143],[5226,0.134,0.18,0.14],[5251,0.137,0.184,0.145],[5276,0.137,0.18,0.148],[5301,0.134,0.178,0.148],[5326,0.135,0.182,0.145],[5351,0.136,0.183,0.146],[5376,0.137,0.183,0.149],[5401,0.136,0.181,0.146],[5426,0.135,0.178,0.144],[5451,0.136,0.182,0.143],[5476,0.136,0.187,0.147],[5501,0.136,0.184,0.15],[5526,0.137,0.182,0.145],[5551,0.136,0.183,0.148],[5576,0.134,0.184,0.155]],"grad_spikes":14,"grad_max":260.3,"epoch_loss":[0.7484,0.6503,0.546,0.4387,0.3067,0.1582]},"4B_v3_xattn":{"steps_per_epoch":931,"train_loss":[[1,3.0906],[26,1.0321],[51,0.8519],[76,0.7518],[101,0.7795],[126,0.7731],[151,0.7213],[176,0.7217],[201,0.7298],[226,0.7226],[251,0.7307],[276,0.7496],[301,0.7404],[326,0.7459],[351,0.7661],[376,0.7844],[401,0.7769],[426,0.7505],[451,0.7652],[476,0.7734],[501,0.7591],[526,0.7958],[551,0.8156],[576,0.7826],[601,0.7981],[626,0.7915],[651,0.7934],[676,0.7983],[701,0.7875],[726,0.7847],[751,0.7963],[776,0.8129],[801,0.794],[826,0.7865],[851,0.8118],[876,0.8324],[901,0.7993],[926,0.7678],[951,0.7556],[976,0.7073],[1001,0.6873],[1026,0.7333],[1051,0.7601],[1076,0.734],[1101,0.7276],[1126,0.7351],[1151,0.7272],[1176,0.7345],[1201,0.7111],[1226,0.6686],[1251,0.7052],[1276,0.7439],[1301,0.7433],[1326,0.7267],[1351,0.7033],[1376,0.6959],[1401,0.7206],[1426,0.7432],[1451,0.7214],[1476,0.7214],[1501,0.7287],[1526,0.7112],[1551,0.6925],[1576,0.6965],[1601,0.6944],[1626,0.7041],[1651,0.7419],[1676,0.7032],[1701,0.6569],[1726,0.6817],[1751,0.6917],[1776,0.6801],[1801,0.6765],[1826,0.6826],[1851,0.6518],[1876,0.6262],[1901,0.6379],[1926,0.6269],[1951,0.6174],[1976,0.623],[2001,0.6319],[2026,0.6445],[2051,0.6275],[2076,0.6187],[2101,0.6362],[2126,0.6397],[2151,0.6193],[2176,0.5823],[2201,0.5676],[2226,0.5856],[2251,0.5992],[2276,0.5943],[2301,0.5789],[2326,0.5746],[2351,0.5922],[2376,0.5743],[2401,0.5911],[2426,0.6012],[2451,0.5703],[2476,0.5724],[2501,0.5821],[2526,0.5973],[2551,0.6003],[2576,0.5966],[2601,0.5807],[2626,0.5937],[2651,0.578],[2676,0.5715],[2701,0.5901],[2726,0.5836],[2751,0.5922],[2776,0.5674],[2801,0.5478],[2826,0.5235],[2851,0.4858],[2876,0.4996],[2901,0.5294],[2926,0.5082],[2951,0.4761],[2976,0.487],[3001,0.4851],[3026,0.4965],[3051,0.5174],[3076,0.5087],[3101,0.5],[3126,0.5079],[3151,0.5026],[3176,0.4956],[3201,0.5211],[3226,0.5212],[3251,0.5198],[3276,0.5148],[3301,0.4895],[3326,0.4762],[3351,0.4886],[3376,0.5103],[3401,0.4906],[3426,0.4735],[3451,0.4908],[3476,0.4777],[3501,0.4542],[3526,0.4372],[3551,0.4562],[3576,0.5002],[3601,0.4736],[3626,0.4271],[3651,0.4572],[3676,0.4732],[3701,0.467],[3726,0.4793],[3751,0.425],[3776,0.3652],[3801,0.3421],[3826,0.3655],[3851,0.3838],[3876,0.3645],[3901,0.3653],[3926,0.369],[3951,0.3524],[3976,0.3351],[4001,0.3276],[4026,0.354],[4051,0.3633],[4076,0.3595],[4101,0.3745],[4126,0.3599],[4151,0.3437],[4176,0.3415],[4201,0.3543],[4226,0.3467],[4251,0.3498],[4276,0.3714],[4301,0.3706],[4326,0.345],[4351,0.3437],[4376,0.3502],[4401,0.3386],[4426,0.356],[4451,0.3683],[4476,0.3502],[4501,0.3386],[4526,0.3489],[4551,0.3584],[4576,0.3595],[4601,0.34],[4626,0.3372],[4651,0.3396],[4676,0.2921],[4701,0.2595],[4726,0.2431],[4751,0.2128],[4776,0.1955],[4801,0.1938],[4826,0.1991],[4851,0.2035],[4876,0.2023],[4901,0.2015],[4926,0.2166],[4951,0.2113],[4976,0.1947],[5001,0.1915],[5026,0.2009],[5051,0.2165],[5076,0.2047],[5101,0.1992],[5126,0.1942],[5151,0.1981],[5176,0.2121],[5201,0.1996],[5226,0.2034],[5251,0.2015],[5276,0.1796],[5301,0.1884],[5326,0.2172],[5351,0.2141],[5376,0.2001],[5401,0.1995],[5426,0.2064],[5451,0.2064],[5476,0.2006],[5501,0.1875],[5526,0.1761],[5551,0.1822],[5576,0.2031]],"dev_loss":[[0,2.6336],[200,0.7734],[400,0.8065],[600,0.853],[800,0.83],[931,0.8274],[1000,0.8163],[1200,0.8009],[1400,0.7934],[1600,0.8002],[1800,0.7859],[1862,0.7962],[2000,0.7994],[2200,0.7821],[2400,0.7319],[2600,0.7597],[2793,0.7415],[2800,0.763],[3000,0.8103],[3200,0.7956],[3400,0.8213],[3600,0.8049],[3724,0.8132],[3800,0.9081],[4000,0.9719],[4200,0.9268],[4400,0.9546],[4600,0.9415],[4655,0.9967],[4800,1.2551],[5000,1.2681],[5200,1.3106],[5400,1.3367],[5586,1.3593]],"dev_acc":[[0,33.11],[931,52.96],[1862,61.05],[2793,63.98],[3724,67.02],[4655,71.78],[5586,72.86]],"dev_task":{"abs_distance":[[0,38.9],[931,41.9],[1862,48.3],[2793,48.2],[3724,55.7],[4655,57.9],[5586,59.6]],"counting":[[0,49.5],[931,61.8],[1862,64.3],[2793,69.4],[3724,71.9],[4655,70.1],[5586,72.6]],"obj_size":[[0,57.4],[931,56.2],[1862,66.2],[2793,65.6],[3724,73.7],[4655,74.5],[5586,77.6]],"rel_direction":[[0,0.0],[931,62.0],[1862,72.0],[2793,79.0],[3724,81.0],[4655,85.0],[5586,85.0]],"rel_distance":[[0,0.0],[931,54.0],[1862,55.0],[2793,59.0],[3724,50.0],[4655,64.0],[5586,63.0]],"room_size":[[0,52.8],[931,41.8],[1862,60.5],[2793,62.7],[3724,69.8],[4655,79.2],[5586,79.3]]},"inject":[[1,0.0,0.0,0.0],[26,0.009,0.008,0.007],[51,0.019,0.018,0.016],[76,0.039,0.037,0.036],[101,0.056,0.056,0.058],[126,0.076,0.073,0.074],[151,0.097,0.088,0.09],[176,0.118,0.102,0.104],[201,0.141,0.116,0.12],[226,0.164,0.129,0.135],[251,0.175,0.139,0.156],[276,0.181,0.149,0.176],[301,0.196,0.158,0.172],[326,0.208,0.161,0.161],[351,0.219,0.163,0.153],[376,0.232,0.163,0.15],[401,0.25,0.169,0.153],[426,0.251,0.205,0.146],[451,0.235,0.215,0.15],[476,0.237,0.188,0.164],[501,0.242,0.182,0.177],[526,0.24,0.221,0.2],[551,0.249,0.214,0.181],[576,0.271,0.165,0.149],[601,0.279,0.164,0.146],[626,0.269,0.169,0.142],[651,0.284,0.167,0.142],[676,0.252,0.164,0.15],[701,0.232,0.16,0.154],[726,0.282,0.157,0.161],[751,0.289,0.155,0.16],[776,0.286,0.156,0.16],[801,0.288,0.161,0.162],[826,0.276,0.167,0.181],[851,0.262,0.196,0.228],[876,0.251,0.261,0.229],[901,0.228,0.236,0.203],[926,0.207,0.168,0.233],[951,0.212,0.174,0.238],[976,0.217,0.184,0.241],[1001,0.23,0.193,0.258],[1026,0.251,0.194,0.247],[1051,0.261,0.19,0.226],[1076,0.258,0.197,0.195],[1101,0.251,0.199,0.201],[1126,0.256,0.191,0.242],[1151,0.264,0.184,0.236],[1176,0.268,0.19,0.191],[1201,0.289,0.196,0.182],[1226,0.279,0.189,0.176],[1251,0.248,0.186,0.171],[1276,0.252,0.227,0.186],[1301,0.247,0.264,0.196],[1326,0.269,0.238,0.182],[1351,0.273,0.201,0.179],[1376,0.297,0.202,0.191],[1401,0.3,0.215,0.213],[1426,0.247,0.216,0.235],[1451,0.246,0.198,0.223],[1476,0.258,0.184,0.19],[1501,0.268,0.195,0.183],[1526,0.272,0.199,0.2],[1551,0.272,0.203,0.203],[1576,0.266,0.193,0.189],[1601,0.258,0.187,0.19],[1626,0.255,0.191,0.196],[1651,0.264,0.204,0.193],[1676,0.271,0.207,0.193],[1701,0.27,0.198,0.197],[1726,0.283,0.205,0.207],[1751,0.285,0.22,0.199],[1776,0.272,0.242,0.187],[1801,0.298,0.234,0.189],[1826,0.304,0.205,0.188],[1851,0.276,0.196,0.186],[1876,0.261,0.204,0.193],[1901,0.253,0.198,0.196],[1926,0.253,0.196,0.188],[1951,0.256,0.2,0.188],[1976,0.258,0.191,0.203],[2001,0.254,0.197,0.203],[2026,0.257,0.204,0.202],[2051,0.261,0.207,0.202],[2076,0.265,0.225,0.198],[2101,0.269,0.221,0.203],[2126,0.274,0.215,0.206],[2151,0.281,0.237,0.2],[2176,0.277,0.236,0.191],[2201,0.273,0.215,0.197],[2226,0.281,0.209,0.205],[2251,0.297,0.21,0.202],[2276,0.295,0.206,0.196],[2301,0.28,0.202,0.193],[2326,0.27,0.201,0.204],[2351,0.269,0.206,0.203],[2376,0.274,0.22,0.201],[2401,0.265,0.21,0.211],[2426,0.258,0.193,0.211],[2451,0.263,0.204,0.209],[2476,0.27,0.214,0.205],[2501,0.269,0.211,0.198],[2526,0.266,0.208,0.194],[2551,0.27,0.207,0.192],[2576,0.273,0.206,0.197],[2601,0.271,0.211,0.199],[2626,0.271,0.214,0.198],[2651,0.276,0.212,0.201],[2676,0.282,0.207,0.198],[2701,0.287,0.209,0.192],[2726,0.284,0.215,0.187],[2751,0.277,0.211,0.182],[2776,0.268,0.206,0.183],[2801,0.263,0.201,0.194],[2826,0.261,0.195,0.197],[2851,0.261,0.194,0.184],[2876,0.26,0.199,0.183],[2901,0.256,0.218,0.191],[2926,0.252,0.23,0.202],[2951,0.247,0.223,0.209],[2976,0.246,0.207,0.214],[3001,0.253,0.195,0.208],[3026,0.259,0.189,0.193],[3051,0.262,0.19,0.192],[3076,0.266,0.201,0.192],[3101,0.265,0.204,0.192],[3126,0.263,0.203,0.193],[3151,0.261,0.209,0.2],[3176,0.253,0.21,0.198],[3201,0.249,0.207,0.198],[3226,0.256,0.208,0.195],[3251,0.264,0.201,0.197],[3276,0.266,0.194,0.202],[3301,0.267,0.191,0.204],[3326,0.265,0.191,0.199],[3351,0.262,0.192,0.185],[3376,0.258,0.194,0.19],[3401,0.247,0.198,0.187],[3426,0.241,0.2,0.186],[3451,0.245,0.2,0.196],[3476,0.253,0.199,0.194],[3501,0.257,0.197,0.189],[3526,0.255,0.199,0.195],[3551,0.251,0.199,0.198],[3576,0.25,0.197,0.206],[3601,0.25,0.201,0.214],[3626,0.252,0.2,0.212],[3651,0.251,0.198,0.197],[3676,0.249,0.194,0.202],[3701,0.249,0.192,0.226],[3726,0.249,0.191,0.227],[3751,0.247,0.191,0.204],[3776,0.248,0.193,0.202],[3801,0.251,0.2,0.223],[3826,0.254,0.203,0.218],[3851,0.259,0.204,0.203],[3876,0.259,0.208,0.195],[3901,0.259,0.202,0.2],[3926,0.258,0.202,0.202],[3951,0.258,0.21,0.208],[3976,0.257,0.213,0.206],[4001,0.255,0.208,0.208],[4026,0.256,0.203,0.215],[4051,0.258,0.204,0.211],[4076,0.262,0.208,0.206],[4101,0.263,0.209,0.205],[4126,0.261,0.209,0.203],[4151,0.262,0.214,0.2],[4176,0.264,0.215,0.197],[4201,0.265,0.214,0.2],[4226,0.267,0.212,0.211],[4251,0.269,0.213,0.213],[4276,0.267,0.204,0.2],[4301,0.269,0.201,0.199],[4326,0.271,0.199,0.208],[4351,0.272,0.2,0.219],[4376,0.274,0.203,0.215],[4401,0.269,0.198,0.198],[4426,0.263,0.195,0.192],[4451,0.263,0.2,0.192],[4476,0.265,0.207,0.202],[4501,0.263,0.203,0.206],[4526,0.263,0.205,0.196],[4551,0.261,0.207,0.196],[4576,0.259,0.205,0.199],[4601,0.265,0.205,0.196],[4626,0.267,0.206,0.2],[4651,0.264,0.213,0.199],[4676,0.262,0.208,0.192],[4701,0.263,0.211,0.191],[4726,0.263,0.216,0.204],[4751,0.26,0.205,0.201],[4776,0.257,0.208,0.197],[4801,0.259,0.212,0.202],[4826,0.258,0.211,0.198],[4851,0.257,0.21,0.195],[4876,0.26,0.209,0.191],[4901,0.259,0.213,0.19],[4926,0.26,0.215,0.214],[4951,0.263,0.21,0.214],[4976,0.26,0.211,0.191],[5001,0.257,0.212,0.191],[5026,0.257,0.213,0.206],[5051,0.256,0.21,0.21],[5076,0.257,0.207,0.205],[5101,0.257,0.204,0.204],[5126,0.254,0.201,0.197],[5151,0.257,0.2,0.194],[5176,0.259,0.199,0.19],[5201,0.258,0.2,0.195],[5226,0.259,0.197,0.197],[5251,0.26,0.201,0.198],[5276,0.257,0.203,0.204],[5301,0.256,0.204,0.199],[5326,0.257,0.204,0.203],[5351,0.257,0.199,0.207],[5376,0.26,0.201,0.208],[5401,0.259,0.204,0.198],[5426,0.258,0.204,0.19],[5451,0.261,0.206,0.203],[5476,0.258,0.205,0.205],[5501,0.258,0.203,0.206],[5526,0.26,0.205,0.208],[5551,0.258,0.206,0.207],[5576,0.257,0.213,0.216]],"grad_spikes":78,"grad_max":7293.7,"epoch_loss":[0.7809,0.7074,0.5976,0.4889,0.3534,0.2035]}}</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById("v3-curves-data").textContent);
+  const ARMS = [["lora", "LoRA only", "var(--s1)"], ["additive", "Additive", "var(--s2)"], ["xattn", "Cross-attention", "var(--s3)"]];
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  function xyChart(box, { series, xmin, xmax, ymin, ymax, xticks, yticks, xlabel, title, fmt, vlines, markers }) {
+    box.innerHTML = "";
+    const W = 520, H = 290, L = 50, R = 16, T = 28, B = 40;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img", "aria-label": title, style: "width:100%;height:auto;display:block" }, box);
+    const x = v => L + (v - xmin) / (xmax - xmin) * (W - L - R), y = v => T + (1 - (v - ymin) / (ymax - ymin)) * (H - T - B);
+    el("text", { x: L, y: 14, style: "font:500 12px var(--f-body);fill:var(--ink-2)" }, svg).textContent = title;
+    for (const t of yticks) { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "grid" }, svg); el("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end" }, svg).textContent = fmt(t); }
+    for (const v of vlines || []) el("line", { x1: x(v), x2: x(v), y1: T, y2: H - B, class: "grid" }, svg);
+    el("line", { x1: L, x2: W - R, y1: H - B, y2: H - B, class: "axis" }, svg);
+    for (const [v, lab] of xticks) el("text", { x: x(v), y: H - B + 18, "text-anchor": "middle" }, svg).textContent = lab;
+    el("text", { x: (L + W - R) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = xlabel;
+    for (const s of series) {
+      const pts = s.points.filter(p => p[1] >= ymin && p[1] <= ymax || true);
+      el("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(Math.min(ymax, Math.max(ymin, p[1]))).toFixed(1)}`).join(""), class: "line", stroke: s.color, "stroke-width": s.thin ? 1.4 : 2 }, svg);
+      if (markers) for (const p of pts) el("circle", { cx: x(p[0]), cy: y(p[1]), r: 3.2, fill: s.color, stroke: "var(--panel)", "stroke-width": 1.5 }, svg);
+    }
+    const cross = el("line", { y1: T, y2: H - B, class: "cross" }, svg);
+    const dots = series.map(s => el("circle", { r: 4.5, fill: s.color, stroke: "var(--panel)", "stroke-width": 2, opacity: 0 }, svg));
+    const hit = el("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent" }, svg);
+    const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+    const nearest = (pts, xv) => pts.reduce((a, p) => Math.abs(p[0] - xv) < Math.abs(a[0] - xv) ? p : a, pts[0]);
+    const show = evt => {
+      const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+      const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const xv = xmin + (p.x - L) / (W - L - R) * (xmax - xmin);
+      const rows = series.map((s, k) => { const q = nearest(s.points, xv); dots[k].setAttribute("cx", x(q[0])); dots[k].setAttribute("cy", y(q[1])); dots[k].setAttribute("opacity", 1); return { s, q }; });
+      const xr = rows[0].q[0];
+      svg.classList.add("hover"); cross.setAttribute("x1", x(xr)); cross.setAttribute("x2", x(xr));
+      tip.innerHTML = `<b>${series[0].xlab ? series[0].xlab(xr) : xr}</b>` + rows.sort((a, b) => b.q[1] - a.q[1]).map(r => `<div class="row"><span><span class="dot" style="background:${r.s.color}"></span>${r.s.name}</span><span>${fmt(r.q[1], true)}</span></div>`).join("");
+      tip.hidden = false;
+      const bw = box.clientWidth, sx = bw / W, left = x(xr) * sx;
+      tip.style.left = (left + 14 + 170 > bw ? left - 14 - tip.offsetWidth : left + 14) + "px";
+      tip.style.top = (T * sx + 4) + "px";
+    };
+    const hide = () => { svg.classList.remove("hover"); dots.forEach(d => d.setAttribute("opacity", 0)); tip.hidden = true; };
+    hit.addEventListener("pointermove", show); hit.addEventListener("pointerdown", show); hit.addEventListener("pointerleave", hide);
+  }
+  const SPE = 931, TOTAL = 5586;
+  const epochTicks = [[0, "0"], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]];
+  const stepTicks = [0, 1, 2, 3, 4, 5, 6].map(e => [e * SPE, String(e)]);
+  const epochLines = [1, 2, 3, 4, 5, 6].map(e => e * SPE);
+  const epLab = s => `Step ${s} (epoch ${(s / SPE).toFixed(2)})`;
+  function draw(size) {
+    const runs = ARMS.map(([k, name, color]) => ({ k, name, color, d: DATA[`${size}_v3_${k}`] }));
+    xyChart(document.getElementById("c-devacc"), { title: `Dev accuracy (%) · ${size}`, xlabel: "epoch", xmin: 0, xmax: 6, ymin: 30, ymax: 80, xticks: epochTicks, yticks: [30, 40, 50, 60, 70, 80], fmt: (v, p) => p ? v.toFixed(1) : v, markers: true,
+      series: runs.map(r => ({ name: r.name, color: r.color, points: r.d.dev_acc.map(([s, v]) => [s / SPE, v]), xlab: e => `Epoch ${Math.round(e)}` })) });
+    xyChart(document.getElementById("c-devloss"), { title: `Dev loss · ${size}`, xlabel: "epoch", xmin: 0, xmax: TOTAL, ymin: 0.6, ymax: 1.6, xticks: stepTicks, yticks: [0.6, 0.8, 1.0, 1.2, 1.4, 1.6], fmt: (v, p) => p ? v.toFixed(3) : v.toFixed(1), vlines: epochLines, markers: false,
+      series: runs.map(r => ({ name: r.name, color: r.color, points: r.d.dev_loss, xlab: epLab })) });
+    xyChart(document.getElementById("c-train"), { title: `Training loss, 50-step average · ${size}`, xlabel: "epoch", xmin: 0, xmax: TOTAL, ymin: 0, ymax: 1.2, xticks: stepTicks, yticks: [0, 0.3, 0.6, 0.9, 1.2], fmt: (v, p) => p ? v.toFixed(3) : v.toFixed(1), vlines: epochLines,
+      series: runs.map(r => ({ name: r.name, color: r.color, points: r.d.train_loss, xlab: epLab })) });
+    xyChart(document.getElementById("c-inject"), { title: `Injection ratio ‖added‖/‖h‖, mean of 3 points · ${size}`, xlabel: "epoch", xmin: 0, xmax: TOTAL, ymin: 0, ymax: 0.4, xticks: stepTicks, yticks: [0, 0.1, 0.2, 0.3, 0.4], fmt: (v, p) => p ? v.toFixed(3) : v.toFixed(1), vlines: epochLines,
+      series: runs.filter(r => r.d.inject.length).map(r => ({ name: r.name, color: r.color, points: r.d.inject.map(([s, a, b, c]) => [s, (a + b + c) / 3]), xlab: epLab })) });
+  }
+  draw("2B");
+  document.querySelectorAll("button[data-sz]").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("button[data-sz]").forEach(o => o.setAttribute("aria-pressed", o === b)); draw(b.dataset.sz);
+  }));
+})();
+</script>
+
+</body></html>
