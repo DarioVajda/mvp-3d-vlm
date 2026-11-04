@@ -83,3 +83,5 @@ results/baselines/vg_llm/*_merged/per_question.jsonl
 
 # pip-installed CUDA toolkit and locally built wheels (slurm/install_linear_attn_kernels.sh)
 .build/
+research_notes/ext/
+research_notes/exports/vsi_full_results.csv*
