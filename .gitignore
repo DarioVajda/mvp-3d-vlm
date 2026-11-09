@@ -92,3 +92,6 @@ results/train/**/log.jsonl
 results/train/**/dev_ids.txt
 results/train/**/freeze.txt
 results/train/**/eval/**/*.jsonl
+
+# Scene sheet-related ignores
+tasks/vggt_data/scenes
