@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Direction Questions, Up Close</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: summary across both questions, then a question switcher; every section below follows the selected question. Arm = orange (additive) / aqua (cross-attention) everywhere; objects keep their own three hues with a role label. */
+:root { --bg:#f6f7f9; --panel:#fff; --ink:#14171c; --ink2:#4a505b; --ink3:#737a86; --rule:#dde1e7; --rule2:#eceff3; --accent:#3d3a8f; --soft:#e9e8f6;
+  --add:#eb6834; --xa:#1baf7a; --base:#8a909b; --good:#1d7a3a; --bad:#b3322f; --warn-bg:#fff6e0; --warn:#8a5a00;
+  --o0:#e34948; --o1:#2a78d6; --o2:#6250d6;
+  --disp:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121418; --panel:#1a1d22; --ink:#eceef2; --ink2:#b4bac5; --ink3:#868d99; --rule:#2e333b; --rule2:#23272d; --accent:#a9a6f0; --soft:#26253f;
+  --add:#d95926; --xa:#199e70; --base:#7c8491; --good:#6cc68a; --bad:#ef7f7c; --warn-bg:#3a2f14; --warn:#f0c060; --o0:#e66767; --o1:#3987e5; --o2:#9085e9; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#121418; --panel:#1a1d22; --ink:#eceef2; --ink2:#b4bac5; --ink3:#868d99; --rule:#2e333b; --rule2:#23272d; --accent:#a9a6f0; --soft:#26253f;
+  --add:#d95926; --xa:#199e70; --base:#7c8491; --good:#6cc68a; --bad:#ef7f7c; --warn-bg:#3a2f14; --warn:#f0c060; --o0:#e66767; --o1:#3987e5; --o2:#9085e9; color-scheme:dark; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 var(--body); }
+main { max-width:1080px; margin:0 auto; padding:40px 16px 80px; display:grid; gap:34px; }
+h1,h2,h3 { font-family:var(--disp); line-height:1.15; text-wrap:balance; margin:0; }
+h1 { font-size:clamp(30px,5vw,40px); font-weight:600; } h2 { font-size:23px; font-weight:600; } h3 { font-size:16.5px; font-weight:600; }
+p, ul, ol { margin:0; max-width:78ch; } ul, ol { padding-left:20px; display:grid; gap:7px; } code { font-family:var(--mono); font-size:.88em; }
+.eyebrow { font:500 12px/1.2 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); }
+header, section { display:grid; gap:12px; } .sub { color:var(--ink2); font-size:16px; max-width:80ch; } .small { font-size:13.5px; color:var(--ink2); }
+.panel { background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:14px 16px; min-width:0; display:grid; gap:10px; }
+.verdict { border-left:4px solid var(--accent); }
+.warnbox { background:var(--warn-bg); border-left:4px solid var(--warn); } .warnbox b { color:var(--warn); }
+.eq { font-family:var(--mono); font-size:.93em; background:var(--rule2); padding:1px 6px; border-radius:4px; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr)); gap:14px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:12px; }
+.card { background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:12px 14px; display:grid; gap:6px; align-content:start; }
+.card .n { font:500 11.5px var(--mono); color:var(--accent); letter-spacing:.06em; text-transform:uppercase; } .card p { font-size:14px; color:var(--ink2); }
+.big { font:600 24px/1.1 var(--mono); font-variant-numeric:tabular-nums; }
+.pill { display:inline-block; font:500 12px var(--mono); padding:2px 8px; border-radius:10px; border:1px solid var(--rule); }
+.pill.ok { color:var(--good); border-color:var(--good); } .pill.no { color:var(--bad); border-color:var(--bad); }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+th,td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--rule2); vertical-align:top; }
+thead th { font:500 11.5px var(--mono); letter-spacing:.03em; text-transform:uppercase; color:var(--ink3); border-bottom:1px solid var(--rule); }
+td.num,th.num { text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.tok { font-family:var(--mono); font-size:12.5px; }
+.scroll { overflow-x:auto; }
+.ctitle { font:600 15.5px var(--disp); } .csub { font-size:13px; color:var(--ink2); margin-top:-8px; }
+.legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--ink2); align-items:center; }
+.chip { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+.ring { display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid var(--base); margin-right:6px; vertical-align:-1px; }
+.tickm { display:inline-block; width:14px; height:0; border-top:2px solid var(--ink); margin-right:6px; vertical-align:middle; }
+.ln { display:inline-block; width:22px; height:0; border-top:2px solid; margin-right:6px; vertical-align:middle; }
+.grad { display:inline-block; width:90px; height:10px; border-radius:3px; background:linear-gradient(90deg, rgba(255,214,10,0), rgba(255,214,10,1)); border:1px solid var(--rule); margin:0 6px; vertical-align:-1px; }
+.controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.controls .lbl { font:500 12px var(--mono); color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-right:4px; }
+button { font:500 13px var(--body); color:var(--ink); background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:5px 10px; cursor:pointer; }
+button[aria-pressed="true"] { background:var(--soft); border-color:var(--accent); }
+button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.qswitch { position:sticky; top:0; z-index:4; background:var(--bg); padding:10px 0; border-bottom:1px solid var(--rule); display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.qswitch button { padding:8px 14px; font-size:14px; }
+.viewer { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:12px; }
+.viewer figure { margin:0; display:grid; gap:6px; } .viewer figcaption { font-size:13px; color:var(--ink2); }
+canvas { width:100%; height:auto; border-radius:6px; display:block; background:var(--rule2); }
+.strip { display:grid; grid-template-columns:repeat(16,minmax(44px,1fr)); gap:4px; overflow-x:auto; }
+.strip button { padding:0; border-width:2px; position:relative; overflow:hidden; line-height:0; }
+.strip img { width:100%; height:auto; display:block; opacity:.85; }
+.strip span { position:absolute; left:2px; top:2px; font:500 10px/1 var(--mono); color:#fff; background:rgba(0,0,0,.55); padding:2px 3px; border-radius:3px; }
+.strip button[aria-pressed="true"] { border-color:var(--accent); } .strip button[aria-pressed="true"] img { opacity:1; }
+.sheet img { width:100%; height:auto; border-radius:6px; display:block; }
+svg { width:100%; height:auto; display:block; }
+svg .grid { stroke:var(--rule2); } svg .axis { stroke:var(--rule); } svg .tick { font:11px var(--mono); fill:var(--ink3); }
+svg .axlab { font:500 12px var(--body); fill:var(--ink2); } svg .cat { font:12px var(--body); fill:var(--ink); } svg .ref { stroke:var(--ink3); stroke-dasharray:4 3; }
+svg .ptitle { font:600 13px var(--disp); fill:var(--ink); } svg .reflab { font:11px var(--body); fill:var(--ink3); }
+.tip { position:fixed; pointer-events:none; background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:6px 9px; font:12px var(--mono);
+  color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.12); display:none; z-index:9; white-space:pre; }
+.heat td.num { color:var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style></head>
+<body><main>
+<header>
+  <div class="eyebrow">MVP project · interpretability · v10 cross-attention vs additive · seed 0, step 5,750 · 5 Nov 2026</div>
+  <h1>Two Direction Questions, Up Close</h1>
+  <p class="sub">Two "hard" relative-direction questions from VSI-Bench, chosen because the two models disagree and every named object is visible: in one only cross-attention (<code>xa3_qknu</code>) is right, in the other only the additive model is. Each is followed through SAM 3 object masks, saliency, cross-attention and J-lens readouts at ten decoder layers.</p>
+</header>
+
+<section class="panel verdict">
+  <h2>What the two questions show</h2>
+  <ul>
+    <li><b>Both models answer in letter space, late.</b> At the answer position the option letters only take over from layer 17. Before that the J-lens reads generic words ("Option", "Neutral"). Neither model reads a direction word (front, back, left, right) as its top choice there; they mostly sit in the hundreds or thousands.</li>
+    <li><b>The cross-attention failure is decided by layer 17.</b> In question 3655 it reads "B" (back-left) at layer 17 already, and "back" climbs to rank 46 at its answer position, against rank 879 in the additive model, which answers C correctly with 98% confidence.</li>
+    <li><b>In the success, the target's cells read from the standing point.</b> In question 3584 ("standing by the window"), at layer 0 the towel's cells put 10× more attention on the window than the 3D bias alone would give, and the backpack's cells 5.7× more. In the failure the target's cells read the standing point (the printer) only at bias level. Two questions with noisy masks make this a lead, not a result.</li>
+    <li><b>Salient cells read as the question's objects; the geometry doesn't read as words.</b> At the five most salient cells the question's object words rank 0–10 at most layers (up to about 140 late in 3584), against hundreds to tens of thousands at random cells. In 3584 the most salient cell reads "towel" at every layer from 0 to 22. The geometry each model adds is 13–57% of a cell's activation, yet reads as noise tokens.</li>
+  </ul>
+</section>
+
+<div class="qswitch" role="group" aria-label="Question">
+  <span class="eyebrow">Question</span>
+  <button id="q-3584" aria-pressed="true">3584 · cross-attention right</button>
+  <button id="q-3655" aria-pressed="false">3655 · additive right</button>
+</div>
+
+<section>
+  <h2 id="h-q"></h2>
+  <div class="panel">
+    <p id="q-text"></p>
+    <p class="small" id="q-opts"></p>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th>Answer</th><th class="num">Margin m</th><th class="num">P(correct letter)</th></tr></thead>
+      <tbody id="t-ans"></tbody></table></div>
+    <p class="small">The margin is the log-odds of the correct letter against the other three; P(correct letter) = σ(m) is the probability of the correct letter among the four. A model can pick the right letter with P below 0.5 when no single wrong letter beats it.</p>
+  </div>
+  <div class="cards" id="roles"></div>
+</section>
+
+<section>
+  <h2>Object masks</h2>
+  <div class="grid2">
+    <figure class="panel sheet" style="margin:0"><div class="ctitle">SAM 3 masks on all 32 frames</div><div class="csub">Cells where a mask covers more than 25%; the number is the frame</div>
+      <div class="legend" id="lg-masks"></div><img id="img-masks" alt="SAM 3 masks on all 32 frames"></figure>
+    <div class="panel warnbox"><p id="mask-eye"></p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Saliency, frame by frame</h2>
+  <div class="panel">
+    <div class="ctitle">Where each model's answer depends on its input</div>
+    <div class="csub">Pick a frame and a map; each heat map is scaled to its own model's 99th percentile over all 32 frames</div>
+    <div class="controls" role="group" aria-label="Map"><span class="lbl">Map</span><button id="b-dest" aria-pressed="true">Geometry injection (dest)</button><button id="b-vis" aria-pressed="false">Qwen visual (vis)</button></div>
+    <div class="strip" id="strip" role="group" aria-label="Frame"></div>
+    <div class="legend"><span>Heat: low<span class="grad"></span>high</span><span id="lg-view"></span></div>
+    <div class="viewer">
+      <figure><canvas id="cv-obj" width="640" height="480" aria-label="Frame with object masks"></canvas><figcaption>Frame and object masks</figcaption></figure>
+      <figure><canvas id="cv-xa" width="640" height="480" aria-label="Cross-attention saliency"></canvas><figcaption><span class="chip" style="background:var(--xa)"></span>xa3_qknu</figcaption></figure>
+      <figure><canvas id="cv-add" width="640" height="480" aria-label="Additive saliency"></canvas><figcaption><span class="chip" style="background:var(--add)"></span>additive</figcaption></figure>
+    </div>
+    <p class="small"><b>Bright</b>: the answer margin is sensitive to what enters this cell (the geometry for dest, the image for vis). <b>Dark</b>: it barely is. The heat is a size, ‖input ⊙ gradient‖, so a bright cell can push toward the right answer or away from it.</p>
+  </div>
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Object enrichment</div>
+    <div class="csub">Share of saliency on each object's cells ÷ share of cells it covers, over the frames where it is detected</div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa)"></span>xa3_qknu, dest</span><span><span class="chip" style="background:var(--add)"></span>additive, dest</span><span><span class="tickm"></span>same model, vis</span><span><span class="tickm" style="border-top-style:dashed;border-color:var(--ink3)"></span>1 = no preference</span></div>
+    <div id="c-enr"></div>
+    <p class="small" id="enr-cap"></p>
+  </figure>
+</section>
+
+<section>
+  <h2>Cross-attention between the objects</h2>
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">How much each object's cells read from another object</div>
+    <div class="csub">xa3_qknu, mean attention of X's cells that lands on Y's cells, per decoder layer, learned against the 3D bias alone</div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa);border-radius:50%"></span>learned attention</span><span><span class="ring"></span>3D bias alone</span><span><span class="tickm" style="border-color:var(--ink3)"></span>uniform attention</span></div>
+    <div id="c-pairs"></div>
+    <p class="small" id="pairs-cap"></p>
+  </figure>
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Where one object's cells read from, frame by frame</div>
+    <div class="csub">Attention of the chosen object's cells, summed per frame; red marks the frames where that object is visible</div>
+    <div class="controls" role="group" aria-label="Source object" id="ex-objs"><span class="lbl">From</span></div>
+    <div class="controls" role="group" aria-label="Layer"><span class="lbl">Layer</span><button id="ex-l0" aria-pressed="true">0</button><button id="ex-l1" aria-pressed="false">1</button><button id="ex-l2" aria-pressed="false">2</button></div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa)"></span>learned attention</span><span><span class="chip" style="background:var(--base)"></span>3D bias alone</span><span><span class="chip" style="background:var(--bad)"></span>frame where the source object is visible</span></div>
+    <div id="c-ex"></div>
+    <div class="cards" id="ex-stats"></div>
+    <div class="ctitle" style="font-size:14px">The four frames that receive the most learned attention</div>
+    <div class="csub">Heat = attention from the source object's cells; outlines = every object's cells in its colour</div>
+    <div class="viewer" id="ex-frames" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))"></div>
+  </figure>
+</section>
+
+<section>
+  <h2>J-lens across layers</h2>
+  <p class="sub">The J-lens (Anthropic, "A global workspace in language models") turns a hidden state at layer ℓ into a ranking of all 151k tokens: <span class="eq">rank(J_ℓ h)</span>, where J_ℓ is the average Jacobian from layer ℓ to the last layer, fitted on this checkpoint. Rank 0 means the token is the lens's top reading. Both lenses are fitted as in v7 (text: 30 Wikipedia passages; visual: 3 VSI videos), so they are coarse.</p>
+  <div class="controls" role="group" aria-label="Lens"><span class="lbl">Lens</span><button id="b-lv" aria-pressed="true">visual lens</button><button id="b-lt" aria-pressed="false">text lens</button></div>
+  <div class="grid2">
+    <figure class="panel" style="margin:0"><div class="ctitle">Do visual cells read as the question's objects?</div>
+      <div class="csub">Median rank of the question's object words, xa3_qknu; lower is better (rank 0 = top)</div>
+      <div class="legend" id="lg-r"></div><div id="c-rank-xa"></div></figure>
+    <figure class="panel" style="margin:0"><div class="ctitle">The same for the additive model</div>
+      <div class="csub">Median rank of the question's object words, additive; lower is better (rank 0 = top)</div>
+      <div class="legend" id="lg-r2"></div><div id="c-rank-add"></div></figure>
+  </div>
+  <p class="small">"Most salient cells" are each model's own five highest-saliency cells and "random cells" five fixed random ones; for both, the rank is the best of the question's object words. "Object cells" are the three cells each SAM 3 mask covers most, ranked on that object's own word.</p>
+  <div class="grid2">
+    <figure class="panel" style="margin:0"><div class="ctitle">When does the answer form?</div>
+      <div class="csub">Rank of the correct letter at the answer position, by layer</div>
+      <div class="legend"><span><span class="ln" style="border-color:var(--xa)"></span>xa3_qknu</span><span><span class="ln" style="border-color:var(--add)"></span>additive</span></div>
+      <div id="c-ans"></div></figure>
+    <figure class="panel" style="margin:0"><div class="ctitle">How much the geometry changes a cell</div>
+      <div class="csub">‖h with geometry − h without‖ ÷ ‖h without‖, median over the read cells, by layer</div>
+      <div class="legend"><span><span class="ln" style="border-color:var(--xa)"></span>xa3_qknu</span><span><span class="ln" style="border-color:var(--add)"></span>additive</span><span><span class="ln" style="border-color:var(--ink3);border-top-style:dashed"></span>object cells</span><span><span class="ln" style="border-color:var(--ink3)"></span>most salient cells</span></div>
+      <div id="c-delta"></div></figure>
+  </div>
+  <div class="panel scroll">
+    <div class="ctitle">What the answer position reads, layer by layer</div>
+    <div class="csub">Top 3 tokens of the J-lens at the last prompt token, and the rank of each direction word</div>
+    <table><thead><tr><th class="num">Layer</th><th>xa3_qknu top tokens</th><th class="num">front</th><th class="num">back</th><th class="num">left</th><th class="num">right</th><th>additive top tokens</th><th class="num">front</th><th class="num">back</th><th class="num">left</th><th class="num">right</th></tr></thead><tbody id="t-final"></tbody></table>
+  </div>
+  <div class="panel scroll">
+    <div class="ctitle">What the object cells read, layer by layer</div>
+    <div class="csub">Top 3 J-lens tokens at the cell each SAM 3 mask covers most, and at the most salient cell; choose the model</div>
+    <div class="controls" role="group" aria-label="Model"><span class="lbl">Model</span><button id="b-mx" aria-pressed="true">xa3_qknu</button><button id="b-ma" aria-pressed="false">additive</button></div>
+    <table><thead id="th-cells"></thead><tbody id="t-cells"></tbody></table>
+    <p class="small">Tokens in other languages are shown with an English gloss, as in the lens's reference code. The geometry delta at the same cells reads as noise tokens at every layer (for example "пара (pair)", "了不起 (amazing)", "/csv"), as in v7.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Interpretation</h2>
+  <div class="panel" id="interp"></div>
+</section>
+
+<section>
+  <h2>How far this goes</h2>
+  <ul>
+    <li><b>Two questions, one seed.</b> Everything here is an example. Run-to-run noise in the maps is 6–12% (bf16 on different GPUs), and the cross-attention "success" in 3584 is narrow (P = 0.48).</li>
+    <li><b>Masks are noisy</b>, in 3655 especially: the printer mask spills onto the desk and notice boards, the door onto an air-conditioning unit and shelves. Object-level numbers inherit these errors.</li>
+    <li><b>Small masks inflate enrichment.</b> The towel in 3584 covers only 3.4 cells per frame, so a few salient cells on it give 9–15×.</li>
+    <li><b>Coarse lenses.</b> 30 text passages and 3 videos per lens, as in v7; ranks in the hundreds are weak evidence either way.</li>
+    <li><b>Next:</b> the same measures over all 179 object questions with SAM 3, comparing "target reads from start" between correct and wrong answers.</li>
+  </ul>
+</section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+const DATA = /*DATA*/;
+const LAY = DATA.layers;
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, a, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const tip = document.getElementById("tip");
+const showTip = (ev, s) => { tip.textContent = s; tip.style.display = "block"; tip.style.left = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (ev.clientY + 14) + "px"; };
+const hideTip = () => tip.style.display = "none";
+const hover = (n, s) => { n.addEventListener("pointermove", ev => showTip(ev, s)); n.addEventListener("pointerleave", hideTip); };
+const axes = (svg, W, H, m, xlab, ylab) => {
+  el("text", { class: "axlab", x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" }, svg).textContent = xlab;
+  el("text", { class: "axlab", transform: `translate(14,${(m.t + H - m.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, svg).textContent = ylab; };
+const OC = ["--o0", "--o1", "--o2"];
+const ROLE = { start: "standing by", facing: "facing", target: "asked about" };
+const NOTES = {
+  3584: {
+    eye: "<b>Masks, checked by eye: roughly right.</b> The window (red) is found in 12 frames, mostly correctly, but also on a fuse box beside the door (frames 15–17). The backpack (blue) is plausible: dark bags on a chair and on the shelf. The towel (violet) is only a few small detections on hanging cloth (frames 1, 9, 16, 23–26), 3.4 cells per frame, so its numbers rest on very few cells.",
+    enr: "Both models put by far the most saliency on the towel, the object being asked about (13× and 9× on dest), but its tiny mask caps nothing: 3.4 cells per frame make this ratio jumpy. The difference between the models is in the other two: additive leans on the backpack (2.3×), cross-attention on the window (1.8×), the standing point.",
+    pairs: "At layer 0 the towel's cells (target) put 9.0% of their attention on the window (start), against 0.9% under the bias alone, 10×. The backpack's cells (facing) put 4.9% there, 5.7×. Layers 1 and 2 shift: the towel reads the backpack (3.2× at layer 1) and the window reads the towel (3.5× at layer 2). The question's geometry is exactly this triangle.",
+    interp: `<ol>
+      <li><b>Both models find the towel.</b> The most salient cell of the cross-attention model (frame 9) reads "towel / 毛巾 / cloth / rag" at every layer from 0 to 22, and the towel has the highest enrichment in both models. So the failure of the additive model is not about not seeing the object.</li>
+      <li><b>The difference is the reference frame.</b> To answer, a model has to place the towel relative to a viewer standing at the window and facing the backpack. In cross-attention, the towel's and the backpack's cells read from the window 10× and 5.7× more than the 3D bias alone gives, at the first layer. Additive has no such mechanism: its saliency leans on the backpack instead (2.3× against 1.4×).</li>
+      <li><b>The answer forms late and stays close.</b> At the answer position "D" (correct) is the top reading from layer 17 on, but at layer 22 the lens still lists C right behind it, and the model's own probability of D is only 0.48. The additive model settles on C (front-right) at layer 17 in the same way. Neither model ranks "left" or "right" highly at that position; they choose among letters.</li>
+      <li><b>So this is a narrow win.</b> Cross-attention is right with less than even odds, and the evidence for the mechanism is one layer of one question. It's a clear hypothesis to test across many questions: does "target reads from start" predict correct answers?</li>
+    </ol>`
+  },
+  3655: {
+    eye: "<b>Masks, checked by eye: mixed.</b> The printer (red) covers the large copier in frames 2–3 but spills over the desk, and also lands on notice boards and a cabinet (12–16, 30). The table (blue) is right in frames 5, 27 and 29 and wrong on a wall area (16). The door (violet) is partly right (21, 28) but also covers an air-conditioning unit (8) and shelves (25). The printer mask is very large, 42 cells per frame.",
+    enr: "The two models look almost the same: both put most saliency on the printer (1.8–1.9×, the standing point), little on the table (0.5–0.6×, below no preference) and about average on the door (1.0×). The vis ticks sit at or a little above the bars. Saliency alone does not tell the correct model from the wrong one here.",
+    pairs: "The door's cells (target) read the printer (start) at exactly the bias level at layer 0 (10.6% against 10.8%) and well below it at layers 1–2 (0.64×, 0.47×). The printer's cells read the door less than the bias at every layer (0.38–0.88×). What rises is table → door at layers 1–2 (2.3–2.9×). The standing point never becomes a strong source.",
+    interp: `<ol>
+      <li><b>The cross-attention model sees the same things.</b> Its saliency pattern and enrichment are nearly identical to the additive model's, and its most salient cells read the question's object words (rank 0) at almost every layer. So the error is not about finding the objects.</li>
+      <li><b>It doesn't tie the target to the standing point.</b> Unlike in 3584, the door's cells read from the printer only at the bias level, and less at deeper layers, while table ↔ door rises. If "target reads from start" helps in 3584, its absence here fits the error. But the printer and door masks are both noisy, so this needs the full set.</li>
+      <li><b>The wrong answer is fixed by layer 17.</b> At the answer position cross-attention reads "B" (back-left) from layer 17, and "back" climbs to rank 46 by layer 22. The additive model reads "C" (front-left, correct) from layer 17 and keeps "back" at rank 879. The front/back decision is the one that went wrong, and the lens shows it forming in the same layers in both models.</li>
+      <li><b>Confidence differs a lot.</b> Additive is right with P = 0.98; cross-attention is wrong with P(C) = 0.16. This is the larger effect of the two questions, in the additive model's favour.</li>
+    </ol>`
+  }
+};
+let Q = 3584, frame = 0, mapKey = "dest", lens = "visual", cellModel = "xa", exObj = null, exL = "0";
+const D = () => DATA[Q];
+let imgs = [];
+function loadImgs() { imgs = [...Array(32).keys()].map(t => { const i = new Image(); i.src = `q${Q}/f${String(t).padStart(2, "0")}.jpg`; return i; }); }
+
+function renderHead() {
+  const d = D();
+  document.getElementById("h-q").textContent = `Question ${d.id} · ${Q === 3584 ? "cross-attention right, additive wrong" : "additive right, cross-attention wrong"}`;
+  document.getElementById("q-text").innerHTML = `<b>${d.video.join(" / ").replace(".mp4", "")}</b> · ${d.question.split("\n")[0]}`;
+  document.getElementById("q-opts").textContent = "Options: " + d.options.join("  ·  ") + `   Correct: ${d.gt}`;
+  const sig = m => 1 / (1 + Math.exp(-m));
+  document.getElementById("t-ans").innerHTML = [["xa", "xa3_qknu (cross-attention)"], ["add", "additive"]].map(([k, n]) => { const r = d.models[k], ok = r.answer === d.gt;
+    const opt = d.options.find(o => o.trim().startsWith(r.answer)) || r.answer;
+    return `<tr><td><span class="chip" style="background:var(--${k})"></span>${n}</td><td>${opt} <span class="pill ${ok ? "ok" : "no"}">${ok ? "correct" : "wrong"}</span></td><td class="num">${r.margin.toFixed(2)}</td><td class="num">${sig(r.margin).toFixed(2)}</td></tr>`; }).join("");
+  document.getElementById("roles").innerHTML = d.objects.map((o, i) => `<div class="card"><div class="n"><span class="chip" style="background:var(${OC[i]})"></span>${ROLE[d.roles[o]] || d.roles[o]}</div><h3>${o}</h3><p>Detected in ${d.masks[o].frames} of 32 frames, ${d.masks[o].cells.toFixed(1)} cells per frame</p></div>`).join("");
+  const lgm = d.objects.map((o, i) => `<span><span class="chip" style="background:var(${OC[i]})"></span>${o} (${ROLE[d.roles[o]]})</span>`).join("");
+  document.getElementById("lg-masks").innerHTML = lgm; document.getElementById("lg-view").innerHTML = "Outlines: " + lgm;
+  document.getElementById("img-masks").src = `q${Q}/masks.jpg`;
+  document.getElementById("mask-eye").innerHTML = NOTES[Q].eye;
+  document.getElementById("enr-cap").textContent = NOTES[Q].enr;
+  document.getElementById("pairs-cap").textContent = NOTES[Q].pairs;
+  document.getElementById("interp").innerHTML = NOTES[Q].interp;
+}
+
+// ---------- viewer ----------
+function buildStrip() { const s = document.getElementById("strip"); s.innerHTML = "";
+  imgs.forEach((im, t) => { const b = document.createElement("button"); b.setAttribute("aria-pressed", t === frame); b.setAttribute("aria-label", `Frame ${t}`);
+    const c = document.createElement("img"); c.src = im.src; c.alt = ""; b.append(c); const sp = document.createElement("span"); sp.textContent = t; b.append(sp);
+    b.onclick = () => { frame = t; [...s.children].forEach((x, i) => x.setAttribute("aria-pressed", i === t)); drawViewer(); }; s.append(b); }); }
+function outlines(ctx, f) { D().objects.forEach((o, i) => { ctx.strokeStyle = css(OC[i]); ctx.lineWidth = 3; const m = D().masks[o].f;
+  for (let n = 0; n < 300; n++) if (m[f * 300 + n] > 64) ctx.strokeRect((n % 20) * 32 + 1.5, Math.floor(n / 20) * 32 + 1.5, 29, 29); }); }
+function heat(ctx, v, f) { for (let n = 0; n < 300; n++) { const a = v[f * 300 + n] / 255; if (a <= 0) continue; ctx.fillStyle = `rgba(255,214,10,${(0.08 + 0.9 * a).toFixed(3)})`; ctx.fillRect((n % 20) * 32, Math.floor(n / 20) * 32, 32, 32); } }
+function drawViewer() { const im = imgs[frame]; if (!im.complete) { im.onload = drawViewer; return; }
+  const o = document.getElementById("cv-obj").getContext("2d"); o.drawImage(im, 0, 0, 640, 480); outlines(o, frame);
+  for (const k of ["xa", "add"]) { const ctx = document.getElementById("cv-" + k).getContext("2d"); ctx.drawImage(im, 0, 0, 640, 480); ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(0, 0, 640, 480); heat(ctx, D().maps[k][mapKey], frame); outlines(ctx, frame); } }
+const setMap = k => { mapKey = k; document.getElementById("b-dest").setAttribute("aria-pressed", k === "dest"); document.getElementById("b-vis").setAttribute("aria-pressed", k === "vis"); drawViewer(); };
+document.getElementById("b-dest").onclick = () => setMap("dest"); document.getElementById("b-vis").onclick = () => setMap("vis");
+
+// ---------- enrichment ----------
+function drawEnr() { const host = document.getElementById("c-enr"); host.innerHTML = ""; const d = D(), P = d.objects;
+  const vals = P.flatMap(o => ["xa", "add"].flatMap(k => [d.models[k].enr.dest_sum[o], d.models[k].enr.vis[o]])).filter(v => v != null);
+  const ymax = Math.ceil(Math.max(2, ...vals) / 2) * 2;
+  const W = 960, H = 280, m = { l: 56, r: 12, t: 14, b: 52 }; const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Object enrichment" }); host.append(svg);
+  const Y = v => H - m.b - v / ymax * (H - m.t - m.b), bw = (W - m.l - m.r) / P.length, step = ymax > 8 ? 2 : 0.5;
+  for (let t = 0; t <= ymax + 1e-9; t += step) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = t; }
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0) }, svg); el("line", { class: "ref", x1: m.l, x2: W - m.r, y1: Y(1), y2: Y(1) }, svg);
+  P.forEach((o, i) => { const x0 = m.l + i * bw;
+    el("text", { class: "cat", x: x0 + bw / 2, y: H - m.b + 17, "text-anchor": "middle" }, svg).textContent = `${o} (${ROLE[d.roles[o]]})`;
+    ["xa", "add"].forEach((k, j) => { const v = d.models[k].enr.dest_sum[o], vv = d.models[k].enr.vis[o]; if (v == null) return; const w = bw * 0.22, x = x0 + bw * 0.27 + j * (w + 6);
+      el("rect", { x, y: Y(v), width: w, height: Y(0) - Y(v), rx: 3, fill: `var(--${k})` }, svg);
+      el("line", { x1: x - 3, x2: x + w + 3, y1: Y(vv), y2: Y(vv), stroke: "var(--ink)", "stroke-width": 2 }, svg);
+      el("text", { class: "tick", x: x + w / 2, y: Math.min(Y(v), Y(vv)) - 5, "text-anchor": "middle" }, svg).textContent = v.toFixed(1) + "×";
+      const hit = el("rect", { x: x - 3, y: m.t, width: w + 6, height: Y(0) - m.t, fill: "transparent" }, svg);
+      hover(hit, `${o} · ${k === "xa" ? "xa3_qknu" : "additive"}\ndest ${v.toFixed(2)}×\nvis  ${vv.toFixed(2)}×\narea ${(100 * d.models[k].area[o]).toFixed(1)}% of cells`); }); });
+  axes(svg, W, H, m, "Object named in the question (its role)", "Enrichment E (share ÷ area)"); }
+
+// ---------- attention pairs ----------
+function drawPairs() { const host = document.getElementById("c-pairs"); host.innerHTML = ""; const d = D(), A = d.attn.pairs, P = d.objects;
+  const pairs = []; P.forEach(x => P.forEach(y => { if (x !== y) pairs.push(`${x} -> ${y}`); }));
+  const xmax = Math.ceil(Math.max(...["0", "1", "2"].flatMap(L => pairs.flatMap(p => A[L][p] ? [A[L][p].learned, A[L][p].bias_only, A[L][p].area_y] : []))) * 50) / 50;
+  const lab = 170, pw = 240, rowH = 22, m = { t: 30, b: 50 }, W = lab + 3 * (pw + 10), H = m.t + pairs.length * rowH + m.b;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Object to object attention" }); host.append(svg);
+  pairs.forEach((p, i) => { const [x, y] = p.split(" -> "); el("text", { class: "cat", x: lab - 8, y: m.t + i * rowH + rowH / 2 + 4, "text-anchor": "end" }, svg).textContent = `${x} → ${y}`; });
+  ["0", "1", "2"].forEach((L, li) => { const x0 = lab + li * (pw + 10), X = v => x0 + v / xmax * pw;
+    el("text", { class: "ptitle", x: x0 + pw / 2, y: 16, "text-anchor": "middle" }, svg).textContent = `layer ${L}`;
+    for (let t = 0; t <= xmax + 1e-9; t += xmax / 4) { el("line", { class: "grid", x1: X(t), x2: X(t), y1: m.t, y2: m.t + pairs.length * rowH }, svg);
+      el("text", { class: "tick", x: X(t), y: m.t + pairs.length * rowH + 14, "text-anchor": "middle" }, svg).textContent = (100 * t).toFixed(1) + "%"; }
+    pairs.forEach((p, i) => { const v = A[L][p], y = m.t + i * rowH + rowH / 2; if (!v) return;
+      el("line", { x1: X(v.area_y), x2: X(v.area_y), y1: y - 6, y2: y + 6, stroke: "var(--ink3)", "stroke-width": 2 }, svg);
+      el("line", { x1: X(v.bias_only), x2: X(v.learned), y1: y, y2: y, stroke: "var(--rule)", "stroke-width": 2 }, svg);
+      el("circle", { cx: X(v.bias_only), cy: y, r: 4.5, fill: "var(--panel)", stroke: "var(--base)", "stroke-width": 2 }, svg);
+      el("circle", { cx: X(v.learned), cy: y, r: 4.5, fill: "var(--xa)", stroke: "var(--panel)", "stroke-width": 1.5 }, svg);
+      const r = v.learned / Math.max(v.bias_only, 1e-9);
+      if (r >= 2) el("text", { class: "tick", x: X(v.learned) + 7, y: y + 4 }, svg).textContent = r.toFixed(1) + "×";
+      const hit = el("rect", { x: x0, y: y - rowH / 2, width: pw, height: rowH, fill: "transparent" }, svg);
+      hover(hit, `${p.replace("->", "→")} · layer ${L}\nlearned   ${(100 * v.learned).toFixed(2)}%\nbias only ${(100 * v.bias_only).toFixed(2)}%\nuniform   ${(100 * v.area_y).toFixed(2)}%\nlearned ÷ bias ${r.toFixed(2)}×`); }); });
+  el("text", { class: "axlab", x: lab + (3 * pw + 20) / 2, y: H - 8, "text-anchor": "middle" }, svg).textContent = "Share of X's attention that lands on Y's cells";
+  el("text", { class: "axlab", x: 4, y: 16 }, svg).textContent = "X → Y"; }
+
+// ---------- attention example ----------
+function buildExObjs() { const box = document.getElementById("ex-objs"); [...box.querySelectorAll("button")].forEach(b => b.remove());
+  D().objects.forEach((o, i) => { const b = document.createElement("button"); b.setAttribute("aria-pressed", o === exObj);
+    b.innerHTML = `<span class="chip" style="background:var(${OC[i]})"></span>${o} (${ROLE[D().roles[o]]})`; b.onclick = () => { exObj = o; buildExObjs(); drawEx(); }; box.append(b); }); }
+["0", "1", "2"].forEach(L => document.getElementById("ex-l" + L).onclick = () => { exL = L; ["0", "1", "2"].forEach(x => document.getElementById("ex-l" + x).setAttribute("aria-pressed", x === L)); drawEx(); });
+function drawEx() { const d = D(), rl = d.attn.rows[`${exL}:${exObj}:learned`], rb = d.attn.rows[`${exL}:${exObj}:bias`], pres = new Set(d.masks[exObj].present);
+  const host = document.getElementById("c-ex"); host.innerHTML = "";
+  const W = 960, H = 240, m = { l: 56, r: 12, t: 12, b: 50 }, ymax = Math.max(0.1, Math.ceil(Math.max(...rl.frames, ...rb.frames) * 20) / 20);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Attention per frame" }); host.append(svg);
+  const bw = (W - m.l - m.r) / 32, Y = v => H - m.b - v / ymax * (H - m.t - m.b), st = ymax > 0.3 ? 0.1 : 0.05;
+  for (let t = 0; t <= ymax + 1e-9; t += st) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = (100 * t).toFixed(0) + "%"; }
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0) }, svg);
+  for (let f = 0; f < 32; f++) { const x = m.l + f * bw, w = bw * 0.36;
+    if (pres.has(f)) el("rect", { x: x + 2, y: H - m.b + 20, width: bw - 4, height: 4, rx: 2, fill: "var(--bad)" }, svg);
+    el("text", { class: "tick", x: x + bw / 2, y: H - m.b + 14, "text-anchor": "middle" }, svg).textContent = f;
+    el("rect", { x: x + bw * 0.12, y: Y(rl.frames[f]), width: w, height: Y(0) - Y(rl.frames[f]), rx: 2, fill: "var(--xa)" }, svg);
+    el("rect", { x: x + bw * 0.12 + w + 2, y: Y(rb.frames[f]), width: w, height: Y(0) - Y(rb.frames[f]), rx: 2, fill: "var(--base)" }, svg);
+    hover(el("rect", { x, y: m.t, width: bw, height: H - m.b - m.t, fill: "transparent" }, svg), `frame ${f}${pres.has(f) ? ` (${exObj} visible)` : ""}\nlearned   ${(100 * rl.frames[f]).toFixed(1)}%\nbias only ${(100 * rb.frames[f]).toFixed(1)}%`); }
+  axes(svg, W, H, m, "Frame (0–31)", "Share of attention");
+  document.getElementById("ex-stats").innerHTML = d.objects.map((o, i) => `<div class="card"><div class="n"><span class="chip" style="background:var(${OC[i]})"></span>on the ${o} cells${o === exObj ? " (itself)" : ""}</div><div class="big">${(100 * rl.on[o]).toFixed(1)}%</div><p>${(100 * rb.on[o]).toFixed(1)}% under the 3D bias alone · ${(rl.on[o] / Math.max(rb.on[o], 1e-9)).toFixed(1)}×</p></div>`).join("");
+  const top = rl.frames.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]);
+  const box = document.getElementById("ex-frames"); box.innerHTML = "";
+  top.forEach(f => { const fig = document.createElement("figure"), cv = document.createElement("canvas"); cv.width = 640; cv.height = 480; fig.append(cv);
+    const cap = document.createElement("figcaption"); cap.textContent = `frame ${f}: ${(100 * rl.frames[f]).toFixed(1)}% learned, ${(100 * rb.frames[f]).toFixed(1)}% bias`; fig.append(cap); box.append(fig);
+    const im = imgs[f], paint = () => { const ctx = cv.getContext("2d"); ctx.drawImage(im, 0, 0, 640, 480); ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 0, 640, 480); heat(ctx, rl.cells, f); outlines(ctx, f); };
+    im.complete ? paint() : im.addEventListener("load", paint); }); }
+
+// ---------- J-lens ----------
+const RK = [["top", "most salient cells", "var(--accent)", ""], ["own", "object cells", "var(--o0)", ""], ["rand", "random cells", "var(--base)", "5 4"]];
+const lgR = RK.map(([, n, c, d]) => `<span><span class="ln" style="border-color:${c};border-top-style:${d ? "dashed" : "solid"}"></span>${n}</span>`).join("");
+document.getElementById("lg-r").innerHTML = lgR; document.getElementById("lg-r2").innerHTML = lgR;
+function lineChart(host, series, o) { host.innerHTML = ""; const W = 480, H = 260, m = { l: 58, r: 14, t: 12, b: 46 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": o.aria }); host.append(svg);
+  const X = i => m.l + i / (LAY.length - 1) * (W - m.l - m.r);
+  const Y = o.log ? (v => m.t + Math.log10(v + 1) / Math.log10(o.ymax + 1) * (H - m.t - m.b)) : (v => H - m.b - v / o.ymax * (H - m.t - m.b));
+  for (const t of o.ticks) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = o.tf ? o.tf(t) : t; }
+  LAY.forEach((L, i) => el("text", { class: "tick", x: X(i), y: H - m.b + 15, "text-anchor": "middle" }, svg).textContent = L);
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b }, svg);
+  const cp = el("clipPath", { id: "cp-" + o.id }, el("defs", {}, svg)); el("rect", { x: m.l - 5, y: m.t - 5, width: W - m.l - m.r + 10, height: H - m.t - m.b + 10 }, cp);
+  const g = el("g", { "clip-path": `url(#cp-${o.id})` }, svg);
+  for (const s of series) { const pts = s.v.map((v, i) => [i, v]).filter(p => p[1] != null);
+    el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(Math.min(p[1], o.ymax)).toFixed(1)).join(""), fill: "none", stroke: s.c, "stroke-width": 2, "stroke-dasharray": s.d || "" }, g);
+    pts.forEach(p => { const c = el("circle", { cx: X(p[0]), cy: Y(Math.min(p[1], o.ymax)), r: 3.5, fill: s.c, stroke: "var(--panel)", "stroke-width": 1 }, g); hover(c, `${s.n} · layer ${LAY[p[0]]}\n${o.vf ? o.vf(p[1]) : p[1]}`); }); }
+  axes(svg, W, H, m, "Decoder layer", o.ylab); }
+const rankTicks = [0, 1, 10, 100, 1000, 10000];
+function drawJ() { const d = D();
+  for (const k of ["xa", "add"]) { const R = d.jl[k][lens].ranks;
+    lineChart(document.getElementById("c-rank-" + k), RK.map(([kind, n, c, dd]) => ({ n, c, d: dd, v: R[kind] })), { id: "r" + k, log: true, ymax: 20000, ticks: rankTicks, tf: t => t >= 1000 ? (t / 1000) + "k" : t, vf: v => "median rank " + Math.round(v), ylab: "Rank (log scale)", aria: "Object word ranks by layer" }); }
+  lineChart(document.getElementById("c-ans"), [["xa", "xa3_qknu"], ["add", "additive"]].map(([k, n]) => ({ n, c: `var(--${k})`, v: d.jl[k][lens].final.map(f => f.gt) })),
+    { id: "ans", log: true, ymax: 20000, ticks: rankTicks, tf: t => t >= 1000 ? (t / 1000) + "k" : t, vf: v => `correct letter at rank ${v}`, ylab: "Rank of the correct letter (log)", aria: "Answer letter rank by layer" });
+  const ds = []; for (const [k, n] of [["xa", "xa3_qknu"], ["add", "additive"]]) { ds.push({ n: n + ", object cells", c: `var(--${k})`, d: "5 4", v: d.jl[k][lens].delta.own }); ds.push({ n: n + ", most salient cells", c: `var(--${k})`, v: d.jl[k][lens].delta.top }); }
+  lineChart(document.getElementById("c-delta"), ds, { id: "dl", ymax: 0.7, ticks: [0, .1, .2, .3, .4, .5, .6, .7], tf: t => (100 * t).toFixed(0) + "%", vf: v => (100 * v).toFixed(0) + "% of the activation", ylab: "Size of the geometry's change", aria: "Geometry delta by layer" });
+  const fx = d.jl.xa[lens].final, fa = d.jl.add[lens].final, rc = v => `<td class="num" style="${v < 100 ? "font-weight:600" : "color:var(--ink3)"}">${v}</td>`;
+  document.getElementById("t-final").innerHTML = LAY.map((L, i) => `<tr><td class="num">${L}</td><td class="tok">${fx[i].top.slice(0, 3).join(" · ")}</td>${["front", "back", "left", "right"].map(w => rc(fx[i][w])).join("")}<td class="tok">${fa[i].top.slice(0, 3).join(" · ")}</td>${["front", "back", "left", "right"].map(w => rc(fa[i][w])).join("")}</tr>`).join("");
+  const C = d.jl[cellModel][lens].cells, cols = [...d.objects.filter(o => C[o]), "_top"];
+  document.getElementById("th-cells").innerHTML = `<tr><th class="num">Layer</th>${cols.map(c => c === "_top" ? `<th>most salient cell (frame ${C._top.frame})</th>` : `<th>${c} cell (frame ${C[c].frame})</th>`).join("")}</tr>`;
+  document.getElementById("t-cells").innerHTML = LAY.map((L, i) => `<tr><td class="num">${L}</td>${cols.map(c => `<td class="tok">${(C[c].raw[i] || []).slice(0, 3).join(" · ")}</td>`).join("")}</tr>`).join(""); }
+const setLens = l => { lens = l; document.getElementById("b-lv").setAttribute("aria-pressed", l === "visual"); document.getElementById("b-lt").setAttribute("aria-pressed", l === "text"); drawJ(); };
+document.getElementById("b-lv").onclick = () => setLens("visual"); document.getElementById("b-lt").onclick = () => setLens("text");
+const setCM = k => { cellModel = k; document.getElementById("b-mx").setAttribute("aria-pressed", k === "xa"); document.getElementById("b-ma").setAttribute("aria-pressed", k === "add"); drawJ(); };
+document.getElementById("b-mx").onclick = () => setCM("xa"); document.getElementById("b-ma").onclick = () => setCM("add");
+
+// ---------- question switch ----------
+function setQ(q) { Q = q; [3584, 3655].forEach(x => document.getElementById("q-" + x).setAttribute("aria-pressed", x === q));
+  const d = D(); exObj = d.objects.find(o => d.roles[o] === "target") || d.objects[0];
+  frame = d.masks[d.objects[0]].present.find(f => d.objects.every(o => d.masks[o].present.includes(f))) ?? d.masks[exObj].present[0] ?? 0;
+  loadImgs(); renderHead(); buildStrip(); drawViewer(); drawEnr(); drawPairs(); buildExObjs(); drawEx(); drawJ(); }
+document.getElementById("q-3584").onclick = () => setQ(3584); document.getElementById("q-3655").onclick = () => setQ(3655);
+setQ(3584);
+</script>
+</body></html>
