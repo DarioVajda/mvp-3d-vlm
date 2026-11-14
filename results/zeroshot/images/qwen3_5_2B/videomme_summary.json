@@ -1,0 +1,13 @@
+{
+ "bench": "videomme",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": null,
+ "arm": "base",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 2700,
+ "overall": 55.666666666666664,
+ "long": 44.55555555555556,
+ "medium": 52.77777777777778,
+ "short": 69.66666666666667
+}
