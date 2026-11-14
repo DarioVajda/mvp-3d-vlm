@@ -1,0 +1,13 @@
+[
+ {
+  "name": "ex_object_rel_direction",
+  "id": 4344,
+  "task": "object_rel_direction",
+  "cross_overlap": 0.546875,
+  "question": "If I am standing by the keyboard and facing the pillow, is the fan to my left, right, or back?\nAn object is to my back if I would have to turn at least 135 degrees in order to face it.",
+  "note": "",
+  "frames": [
+   1,
+   2,
+   8,
+   
