@@ -95,3 +95,10 @@ results/train/**/eval/**/*.jsonl
 results/train/smoke_*/
 results/train/2B_xa_both_s1/
 results/train/**/submitted
+
+# smoke tests, a crashed run and eval logs from the v7+ training and evaluation runs
+results/eval_f128_smoke/
+results/**/eval/smoke/
+results/zeroshot/images/*/smoke/
+results/train/2B_v9_fmix_lora_s0_crashed_213002/
+results/**/eval_bench.log
