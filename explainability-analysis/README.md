@@ -42,4 +42,6 @@ The code is in `src/mvp/explain/`. The raw outputs (maps, masks, attention rows,
 
    The object-saliency and final-results pages, with their frames and mask sheets, rebuild byte-identical from the saved results. The templates are in `src/mvp/explain/pages/templates/`.
 
+   The J-lens page also needs `results/jspace_v7/xa3_both_s0/readouts.jsonl`, which is not in the repository. Regenerate it with `slurm/explain.sh jspace_v7`. Without it, the page is built for the LoRA and additive models only.
+
 Model outputs vary slightly in bf16 across GPU types. For example, the answer margin for question 3004 differs in the second decimal between two runs of the same checkpoint. Re-running the analyses on another GPU can therefore move numbers slightly, while the pages built from the saved results do not change.
