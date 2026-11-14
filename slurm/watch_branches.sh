@@ -3,8 +3,10 @@
 # has written it; once the trunk has left the queue and every state is handled, submit mvp.train.wsd_collect to run
 # after all branches. Runs as a CPU-only Slurm job (slurm/wsd.sh starts it), outside the container:
 #   bash slurm/watch_branches.sh results/train/<trunk> <trunk job id> <step> [<step> ...]
+# Without steps (a --fit-epoch trunk, whose branch steps depend on the epoch length), the steps are read from the
+# trunk's args.json (branch_steps) once the trunk has written it.
 # Idempotent and restartable: a branch counts as submitted once <trunk>/branches/step<N>/submitted holds its job id.
-# BRANCH_SBATCH adds sbatch options to the branch jobs (default 1 B200/B300, 8 CPUs, 4 h); DECAY_STEPS and EVAL_ARGS
+# BRANCH_SBATCH adds sbatch options to the branch jobs (default 1 B200/B300/H100, 8 CPUs, 4 h); DECAY_STEPS and EVAL_ARGS
 # are passed on to slurm/decay_eval.sh.
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -28,6 +30,15 @@ submit_ready() {
     done
 }
 
+if (( ! ${#steps[@]} )); then
+    log "waiting for the branch steps in $trunk/args.json"
+    until [[ -f $trunk/log.jsonl ]] && grep -q '"fit_epoch": true' "$trunk/args.json" 2>/dev/null; do
+        state=$(sacct -j "$job" -X -n -o State 2>/dev/null | head -1 | tr -d ' ')
+        [[ $state =~ ^(PENDING|RUNNING|REQUEUED|)$ ]] || { log "trunk job $job ended ($state) before its first step"; exit 1; }
+        sleep "$POLL"
+    done
+    read -ra steps <<< "$(python3 -c "import json, sys; print(*json.load(open(sys.argv[1]))['branch_steps'])" "$trunk/args.json")"
+fi
 log "watching $trunk (job $job), branch steps ${steps[*]}"
 while true; do
     submit_ready

@@ -8,17 +8,22 @@
   * Step: `mb_per_step` micro-batches in total, spread over the GPUs: each rank runs mb_per_step / world_size of them
     one after the other (gradient accumulation). Different ranks and accumulation steps get different videos.
     The plan is the same for any world size, so a run on 1 GPU and on 4 GPUs sees the same steps.
+  * Frames: one count per step (step_frames), so every micro-batch of a step, on every rank, decodes the same number
+    of frames: no padding between sequences of different lengths and no rank waiting for a longer one.
 """
 import json
 import math
+import os
 import random
 import time
 from collections import defaultdict
 
+os.environ.setdefault("DECORD_EOF_RETRY_MAX", "40960")  # 4x decord's default: retries when seeking to the last frames
+
 import torch
 from torch.utils.data import Dataset
 
-from mvp.fusion.inputs import uniform_frames
+from mvp.fusion.inputs import media_frames
 from mvp.paths import DATA, TRAIN_ANN, TRAIN_MEDIA
 from mvp.reporting.train_examples import VLM3R_TASKS
 
@@ -176,25 +181,53 @@ def rank_steps(mbs, mb_per_step, world_size, rank):
     return steps
 
 
+def step_frames(n_steps, mix, seed, epoch):
+    """Frame count of each of an epoch's n_steps steps. mix: {frames: percent}, percentages summing to 100; each count
+    gets its share of the steps exactly (largest remainder), in a seeded order that depends only on (seed, epoch),
+    so a wsd branch that resumes mid-epoch sees the trunk's counts."""
+    ks = sorted(mix)
+    exact = [mix[k] / 100 * n_steps for k in ks]
+    counts = [math.floor(x) for x in exact]
+    for i in sorted(range(len(ks)), key=lambda i: counts[i] - exact[i])[:n_steps - sum(counts)]:
+        counts[i] += 1
+    out = [k for k, c in zip(ks, counts) for _ in range(c)]
+    random.Random(f"frames-{seed}-{epoch}").shuffle(out)
+    return out
+
+
+def load_mix(path):
+    """Samples of a training mix built by mvp.train.mix (one JSON object per line)."""
+    return [json.loads(l) for l in open(path)]
+
+
 class MicroBatches(Dataset):
-    """Model-ready micro-batches (InputBuilder.build output + metadata), decoded in DataLoader workers."""
+    """Model-ready micro-batches (InputBuilder.build output + metadata), decoded in DataLoader workers. nframes: one
+    count for all micro-batches, or one per micro-batch. A sample's "media" (a path under TRAIN_MEDIA or a list of
+    them; default: its "video") is what is decoded, and its "frames", if set, overrides the count (questions that name
+    frames, e.g. "frame 3 of 32"); mvp.train.mix gives such samples a group key of their own, so all samples of a
+    micro-batch share media and count."""
 
     def __init__(self, mbs, builder, nframes=8):
-        self.mbs, self.builder, self.nframes = mbs, builder, nframes
+        self.mbs, self.builder = mbs, builder
+        self.nframes = [nframes] * len(mbs) if isinstance(nframes, int) else nframes
+        assert len(self.nframes) == len(mbs), (len(self.nframes), len(mbs))
 
     def __len__(self):
         return len(self.mbs)
 
     def __getitem__(self, i):
         mb = self.mbs[i]
-        for attempt in range(3):  # decord occasionally fails to seek near the end of a video under load (EOF retry
-            try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises
-                frames, idx = uniform_frames(TRAIN_MEDIA / mb[0]["video"], self.nframes)
+        media = mb[0].get("media", mb[0]["video"])
+        media = [TRAIN_MEDIA / p for p in media] if isinstance(media, list) else TRAIN_MEDIA / media
+        k = mb[0].get("frames") or self.nframes[i]
+        for attempt in range(6):  # decord occasionally fails to seek near the end of a video under load (EOF retry
+            try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises.
+                frames, idx = media_frames(media, k)  # 3 attempts 2 s apart once failed (v9 lora_s0)
                 break
-            except Exception:
-                if attempt == 2:
-                    raise
-                time.sleep(2)
+            except Exception as e:
+                if attempt == 5:
+                    raise RuntimeError(f"cannot decode {media} ({k} frames)") from e
+                time.sleep(5 * (attempt + 1))
         batch = self.builder.build(frames, [s["question"] for s in mb], [s["answer"] for s in mb])
         batch["meta"] = {"video": mb[0]["video"], "ids": [s["id"] for s in mb], "tasks": [s["task"] for s in mb],
                          "frame_indices": idx}

@@ -14,7 +14,7 @@ Shared by training and evaluation, so both see exactly the same inputs:
 import numpy as np
 import torch
 import torch.nn.functional as F
-from decord import VideoReader, cpu
+from decord import DECORDError, VideoReader, cpu
 from PIL import Image
 from torchvision.transforms import functional as TF
 
@@ -31,6 +31,50 @@ def uniform_frames(path, k):
     n = len(vr)
     idx = np.arange(n) if n <= k else np.linspace(0, n - 1, k).astype(int)
     return [Image.fromarray(f) for f in vr.get_batch(idx.tolist()).asnumpy()], idx.tolist()
+
+
+IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png")
+
+
+def media_frames(media, k):
+    """k uniformly spaced frames of any training media, sampled as uniform_frames does (all of them if there are at
+    most k): a video file, a .gif (decoded with PIL), a directory of frame images (sorted by name) or a list of image
+    paths (an image set, in its order). Returns the PIL images (RGB) and their indices."""
+    if isinstance(media, (list, tuple)) or media.is_dir():
+        paths = sorted(p for p in media.iterdir() if p.suffix.lower() in IMAGE_SUFFIXES) if not isinstance(
+            media, (list, tuple)) else list(media)
+        assert paths, f"no images in {media}"
+        n = len(paths)
+        idx = np.arange(n) if n <= k else np.linspace(0, n - 1, k).astype(int)
+        return [Image.open(paths[i]).convert("RGB") for i in idx], idx.tolist()
+    if media.suffix.lower() == ".gif":
+        with Image.open(media) as im:
+            n = im.n_frames
+            idx = np.arange(n) if n <= k else np.linspace(0, n - 1, k).astype(int)
+            out = []
+            for i in idx:
+                im.seek(int(i))
+                out.append(im.convert("RGB"))
+        return out, idx.tolist()
+    try:
+        return uniform_frames(media, k)
+    except DECORDError:  # decord's threaded decoder fails on some VP9 videos (Something-Something v2, PhysGame)
+        return pyav_frames(media, k)
+
+
+def pyav_frames(path, k):
+    """uniform_frames with PyAV, decoding in order: one pass to count the frames, one to keep the sampled ones."""
+    import av
+    with av.open(str(path)) as c:
+        n = sum(1 for _ in c.decode(video=0))
+    assert n, f"no frames in {path}"
+    idx = np.arange(n) if n <= k else np.linspace(0, n - 1, k).astype(int)
+    want, out = set(idx.tolist()), {}
+    with av.open(str(path)) as c:
+        for i, f in enumerate(c.decode(video=0)):
+            if i in want:
+                out[i] = f.to_image().convert("RGB")
+    return [out[i] for i in idx], idx.tolist()
 
 
 class InputBuilder:
@@ -53,7 +97,16 @@ class InputBuilder:
         return {"pixel_values": out["pixel_values"], "image_grid_thw": grid, "vggt_images": vggt}
 
     def prompt_text(self, question, n_images):
-        content = [{"type": "image"} for _ in range(n_images)] + [{"type": "text", "text": question}]
+        """Images first, then the question; a question with one "<image>" placeholder per image (SPAR's
+        "Frame-0: <image>" labels) gets each image at its placeholder instead."""
+        parts = question.split("<image>")
+        if len(parts) == 1:
+            content = [{"type": "image"} for _ in range(n_images)] + [{"type": "text", "text": question}]
+        else:
+            assert len(parts) == n_images + 1, (len(parts) - 1, n_images)
+            content = [{"type": "text", "text": parts[0]}] if parts[0] else []
+            for p in parts[1:]:
+                content += [{"type": "image"}] + ([{"type": "text", "text": p}] if p else [])
         msgs = [{"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
                 {"role": "user", "content": content}]
         return self.processor.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False)
