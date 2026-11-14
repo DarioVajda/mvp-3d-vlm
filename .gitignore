@@ -108,3 +108,6 @@ results/**/eval_bench.log
 results/explain_v7/sal/**/*.npz
 results/objwords_v7/**/*.npz
 results/*_undecayed_trunk/
+
+# internal task pool and helper jobs that ran the slurm/ablation.sh runs (not part of the method)
+ablation_pool/
