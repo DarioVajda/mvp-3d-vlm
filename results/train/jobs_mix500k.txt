@@ -1,0 +1,5 @@
+4B_mix500k_additive train 217720
+2B_mix500k_xattn train 217759
+2B_mix500k_additive train 217760
+4B_mix500k_xattn train 218364
+watch 218646

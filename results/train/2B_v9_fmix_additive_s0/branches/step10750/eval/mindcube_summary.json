@@ -1,0 +1,13 @@
+{
+ "bench": "mindcube",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": "results/train/2B_v9_fmix_additive_s0/branches/step10750/final.pt",
+ "arm": "additive",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 1050,
+ "overall": 39.23809523809524,
+ "among": 37.5,
+ "around": 48.0,
+ "rotation": 33.5
+}

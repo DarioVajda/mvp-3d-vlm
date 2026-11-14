@@ -1,0 +1,9 @@
+2B_v9_fmix_lora_s0 train 213002
+2B_v9_fmix_additive_s0 train 213004
+2B_v9_fmix_xa3_both_s0 train 213006
+2B_v9_fmix_lora_s1 train 213008
+2B_v9_fmix_additive_s1 train 213010
+2B_v9_fmix_xa3_both_s1 train 213012
+watch 213014
+2B_v9_fmix_lora_s0 train 214132
+watch 214133  # rerun of lora_s0 after a decord EOF crash of 213002 at step 5493

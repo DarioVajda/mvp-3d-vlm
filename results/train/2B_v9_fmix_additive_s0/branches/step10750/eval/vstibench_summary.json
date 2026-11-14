@@ -1,0 +1,19 @@
+{
+ "bench": "vstibench",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": "results/train/2B_v9_fmix_additive_s0/branches/step10750/final.pt",
+ "arm": "additive",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 5710,
+ "overall": 52.78637285330285,
+ "camera_displacement": 26.566265060240962,
+ "camera_movement_direction": 52.85714285714286,
+ "camera_obj_abs_dist": 42.993348115299334,
+ "camera_obj_rel_dist_v1": 65.93406593406593,
+ "camera_obj_rel_dist_v2": 70.75664621676891,
+ "camera_obj_rel_dist_v3": 78.37837837837837,
+ "obj_obj_relative_pos_lr": 27.07641196013289,
+ "obj_obj_relative_pos_nf": 51.26353790613718,
+ "obj_obj_relative_pos_ud": 59.25155925155925
+}

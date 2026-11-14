@@ -1,0 +1,9 @@
+2B_v9_fmix_lora_s0: no results/train/2B_v9_fmix_lora_s0/branches/step5750/final.pt, skipped
+2B_v9_fmix_lora_s1 vsi_f128 214484
+2B_v9_fmix_additive_s0 vsi_f128 214485
+2B_v9_fmix_additive_s1 vsi_f128 214486
+2B_v9_fmix_xa3_both_s0 vsi_f128 214487
+2B_v9_fmix_xa3_both_s1 vsi_f128 214488
+2B_v7_additive_s0 vsi_f128 214489
+2B_v7_additive_s1 vsi_f128 214490
+2B_v9_fmix_lora_s0 vsi_f128 214628

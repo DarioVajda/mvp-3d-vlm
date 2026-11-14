@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_v9_fmix_additive_s0/branches/step10750/final.pt",
+ "arm": "additive",
+ "n": 1000,
+ "Attribute (Appr.)": 28.8,
+ "Attribute (Meas.)": 20.3,
+ "MSR": 20.7,
+ "Motion (Cam.)": 14.9,
+ "Motion (Obj.)": 26.3,
+ "Positional Relationship (Cam.\u2013Cam.)": 23.7,
+ "Positional Relationship (Cam.\u2013Obj.)": 33.7,
+ "Positional Relationship (Cam.\u2013Reg.)": 22.9,
+ "Positional Relationship (Obj.\u2013Obj.)": 26.6,
+ "Positional Relationship (Obj.\u2013Reg.)": 22.4,
+ "Positional Relationship (Reg.\u2013Reg.)": 37.0,
+ "overall": 24.8,
+ "parse_rate": 100.0
+}
