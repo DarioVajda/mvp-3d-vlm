@@ -88,6 +88,11 @@ def main():
     p.add_argument(
         "--top", type=int, default=40, help="rows in each summary table (default 40)"
     )
+    p.add_argument(
+        "--syntactic",
+        action="store_true",
+        help="syntactic mode: every noun phrase is a prompt, nothing based on meaning",
+    )
     args = p.parse_args()
 
     if not args.scenes_dir.is_dir():
@@ -106,7 +111,7 @@ def main():
             f"\n{'=' * 100}\n{dataset}/{scene_dir.name}: {len(questions)} questions\n{'=' * 100}"
         )
         for q in questions:
-            candidates = analyse(q["question"], args.model)
+            candidates = analyse(q["question"], args.model, args.syntactic)
             prompts = kept_prompts(candidates)
             num_questions += 1
             num_prompts += len(prompts)
@@ -124,7 +129,8 @@ def main():
             print(f"   -> {', '.join(prompts) if prompts else '(no prompts)'}")
 
     print(
-        f"\n{'=' * 100}\nSummary: {num_questions} questions from {len(scenes)} scenes, "
+        f"\n{'=' * 100}\nSummary ({'syntactic' if args.syntactic else 'full'} mode): "
+        f"{num_questions} questions from {len(scenes)} scenes, "
         f"{num_prompts / max(num_questions, 1):.2f} prompts per question, "
         f"{len(kept)} distinct prompts"
     )
