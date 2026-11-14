@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Rejects commit messages that name the coding assistant (e.g. co-author or session trailers).
+if grep -v '^#' "$1" | grep -q -i -E 'c[l]aude'; then
+    echo "commit-msg: the commit message names the coding assistant; remove those lines." >&2
+    exit 1
+fi

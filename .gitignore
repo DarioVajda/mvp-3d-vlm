@@ -102,3 +102,9 @@ results/**/eval/smoke/
 results/zeroshot/images/*/smoke/
 results/train/2B_v9_fmix_lora_s0_crashed_213002/
 results/**/eval_bench.log
+
+# explainability: per-question arrays are large (about 2.8 GB); summaries, readouts and figures are tracked.
+# The *_undecayed_trunk runs used the wrong checkpoint and are superseded by results/jspace_v7 and objwords_v7.
+results/explain_v7/sal/**/*.npz
+results/objwords_v7/**/*.npz
+results/*_undecayed_trunk/
