@@ -137,6 +137,14 @@ class AdditiveMerger(nn.Module):
         return self.mlp[2](z), self.xa(z)
 
 
+def per_head(init, heads):
+    """Initial values of a per-head slope: `init` for every head, or (lo, hi) log-spaced over the heads."""
+    if isinstance(init, (int, float)):
+        return torch.full((heads,), float(init))
+    lo, hi = init
+    return torch.logspace(math.log10(lo), math.log10(hi), heads)
+
+
 class AlignedXAttn(nn.Module):
     """Cross-attention from Qwen's visual tokens to the geometry tokens of the same video, one per visual token.
 
@@ -151,7 +159,8 @@ class AlignedXAttn(nn.Module):
     the token's (t~, r, c): 10 pairs by t~, 11 by r, 11 by c, fixed frequencies theta^(-j / n_axis); the rest of the
     head carries no position. t~ = t * (train_frames - 1) / (T - 1) puts the frames of any video on the training range,
     so 32 evaluation frames fall between the 8 trained positions instead of past them. q.k then depends only on the
-    offset between query and key. The locality bias (local_bias=True) has one learned slope pair (lam_h, mu_h) per head.
+    offset between query and key. The locality bias (local_bias=True) has one learned slope pair (lam_h, mu_h) per head,
+    init lam (or log-spaced over the heads from lam = (lo, hi), as nu below) and mu.
     W_o is zero-initialised: the block adds nothing at init. Returns the update to add to the visual tokens only.
 
     pe="3d" (needs the video's ScenePoints, mvp.fusion.points; xyz in merged-cell units, camera-0 frame) replaces both:
@@ -179,12 +188,11 @@ class AlignedXAttn(nn.Module):
         self.norm_q, self.norm_kv = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.q, self.k, self.v, self.o = (nn.Linear(dim, dim, bias=False) for _ in range(4))
         nn.init.zeros_(self.o.weight)
-        if local_bias and pe == "grid":
-            self.lam = nn.Parameter(torch.full((heads,), float(lam)))
+        if local_bias and pe == "grid":  # lam: one init for every head, or (lo, hi): log-spaced over the heads
+            self.lam = nn.Parameter(per_head(lam, heads))
             self.mu = nn.Parameter(torch.full((heads,), float(mu)))
-        if local_bias and pe == "3d":  # nu: one init for every head, or (lo, hi): log-spaced over the heads
-            self.nu = nn.Parameter(torch.full((heads,), float(nu)) if isinstance(nu, (int, float))
-                                   else torch.logspace(math.log10(nu[0]), math.log10(nu[1]), heads))
+        if local_bias and pe == "3d":  # nu: likewise
+            self.nu = nn.Parameter(per_head(nu, heads))
         if rope:
             axes = self.AXES if pe == "grid" else self.AXES_3D
             assert 2 * sum(axes) <= self.head_dim, (axes, self.head_dim)

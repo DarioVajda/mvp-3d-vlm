@@ -101,7 +101,8 @@ def parse():
                     help="xattn_aligned: 3-axis RoPE on (frame, row, col) of queries and keys")
     ap.add_argument("--local-bias", action=argparse.BooleanOptionalAction, default=True,
                     help="xattn_aligned: learned locality bias -lam*(|dr|+|dc|) - mu*[other frame] on the logits")
-    ap.add_argument("--bias-lam", type=float, default=1.5, help="xattn_aligned: initial lam (per head)")
+    ap.add_argument("--bias-lam", type=float, nargs="+", default=[1.5], help="xattn_aligned, --pe grid: initial lam per "
+                    "head; two values lo hi: log-spaced over the heads")
     ap.add_argument("--bias-mu", type=float, default=3.0, help="xattn_aligned: initial mu (per head)")
     ap.add_argument("--pe", choices=["grid", "3d"], default="grid",
                     help="xattn_aligned: position signals on the merged grid (t, r, c), or 3D from VGGT's point head: RoPE "
@@ -208,12 +209,12 @@ def main():
 
     init_seed = args.seed if args.init_seed is None else args.init_seed
     torch.manual_seed(init_seed)  # same init of the new modules on every rank (DDP also broadcasts rank 0's)
-    nu = args.bias_nu if isinstance(args.bias_nu, list) else [args.bias_nu]  # a float in the args.json of older trunks
+    one_or_pair = lambda v: (v[0] if len(v) == 1 else v) if isinstance(v, list) else v  # a float in older args.json
     model = FusionVL(args.model, args.arm, lora_r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                      vggt_layers=args.vggt_layers, fusion_after=args.fusion_after, gate=args.gate,
                      special_tokens=args.special_tokens, resampler_layers=args.resampler_layers, rope3=args.rope3,
-                     local_bias=args.local_bias, bias_lam=args.bias_lam, bias_mu=args.bias_mu, train_frames=args.nframes,
-                     pe=args.pe, bias_nu=nu[0] if len(nu) == 1 else nu, pe_dmax=args.pe_dmax,
+                     local_bias=args.local_bias, bias_lam=one_or_pair(args.bias_lam), bias_mu=args.bias_mu, train_frames=args.nframes,
+                     pe=args.pe, bias_nu=one_or_pair(args.bias_nu), pe_dmax=args.pe_dmax,
                      text_queries=args.text_queries,
                      pixels=TRAIN_PIXELS,
                      grad_ckpt=not args.no_grad_ckpt).to(dev)
