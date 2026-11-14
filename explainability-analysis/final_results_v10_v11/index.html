@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run v10/v11 Final Results</title>
+<style>
+:root{--bg:#fbfaf7;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--muted:#8a877f;--rule:#e6e3dc;--grid:#eeebe4;
+  --c0:#D9731F;--c1:#2F6DB5;--c2:#17907A;--c3:#8A55B8;--good:#2f7d4f;--bad:#b4442f}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--card:#1f1f1c;--ink:#ecebe6;--ink2:#b9b6ad;--muted:#8d8a82;--rule:#34332f;--grid:#2b2a27;
+  --c0:#F0904A;--c1:#6A9EE0;--c2:#3FBFA4;--c3:#B48AE0;--good:#6cc191;--bad:#e5806b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:30px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:20px;margin:44px 0 6px}
+.lede{color:var(--ink2);margin:0 0 22px;max-width:760px}
+.meta{color:var(--muted);font-size:13px;margin-bottom:26px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 8px}
+.tile{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 16px}
+.tile .k{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tile .v{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .s{font-size:12.5px;color:var(--ink2)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:18px 18px 10px;margin:14px 0}
+.ct{font-weight:600;font-size:15px}
+.cs{color:var(--ink2);font-size:13px;margin:2px 0 8px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin:4px 0 6px}
+.legend span{display:flex;align-items:center;gap:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+svg text{fill:var(--ink2);font-size:11.5px;font-family:inherit}
+svg .ax{fill:var(--muted)}
+svg .al{fill:var(--ink2);font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink2);font-size:12.5px}
+td .pm{color:var(--muted);font-size:11.5px}
+td .d{font-size:11.5px;margin-left:4px}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+tr.total td{font-weight:600;border-top:2px solid var(--rule)}
+.best{font-weight:650}
+.note{color:var(--ink2);font-size:14px;max-width:780px}
+.note li{margin:4px 0}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--ink2);font-size:13.5px}
+#tip{position:fixed;pointer-events:none;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:9;font-variant-numeric:tabular-nums}
+.callout{border-left:3px solid var(--c1);padding:4px 0 4px 14px;margin:14px 0;color:var(--ink2);max-width:780px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>Geometry fusion v10/v11: final results</h1>
+<p class="lede">Four ways of fusing VGGT geometry into Qwen3.5-2B, each trained with two seeds and scored on the full VSI-Bench (5,130 questions, 32 frames) at three checkpoints. At the final checkpoint the four arms are tied, and cross-attention's early lead on relative direction is gone.</p>
+<div class="meta">Checkpoints at steps 5,750, 8,250 and 10,750, each after a 750-step learning-rate decay. Results as of 8 Nov 2026.</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="callout"><b>Bottom line.</b> Overall, the arms span 0.5 points (70.3–70.8), less than the gap between two seeds of the same arm (up to 1.4). Additive is nominally first. Cross-attention led relative direction at step 5,750 on both seeds. By step 10,750 additive leads that task too. An inference-time ablation at step 5,750 found the same: the learned cross-cell attention isn't needed, but each cell's own geometry is.</div>
+
+<h2>The arms</h2>
+<table id="arms"></table>
+
+<h2>Overall score over training</h2>
+<p class="note">Lines join the means of the two seeds; dots mark the individual seeds. Every run stays inside a band under 2 points wide (69.5–71.4). The only large move is additive seed 0 at step 10,750 (+1.8). Additive seed 1 stayed flat over the same steps.</p>
+<div class="card"><div class="ct">VSI-Bench overall accuracy by checkpoint</div><div class="cs">Full benchmark, 32 frames, mean of 2 seeds (line) and each seed (dots)</div><div class="legend" id="lg1"></div><div id="ch1"></div></div>
+
+<h2>Relative direction: the lead that closed</h2>
+<p class="note">Relative direction was the one task where cross-attention led on both seeds. Over the last 2,500 steps additive gained about 2.4 points there, and every cross-attention variant fell or stayed flat.</p>
+<div class="card"><div class="ct">Relative-direction accuracy by checkpoint</div><div class="cs">VSI-Bench object_rel_direction (easy, medium and hard; 968 questions), mean of 2 seeds (line) and each seed (dots)</div><div class="legend" id="lg2"></div><div id="ch2"></div></div>
+
+<h2>Every task at the final checkpoint</h2>
+<p class="note">Step 10,750, mean of 2 seeds ± half the gap between them. Small coloured numbers are differences from additive, green where a cross-attention arm is higher and red where it is lower. Bold marks the best arm on each row. With two seeds, differences under about 1 point can't be ranked.</p>
+<div class="card" style="padding:6px 6px 2px;overflow-x:auto"><table id="tasks"></table></div>
+<details><summary>Per-seed scores at every checkpoint</summary><div class="card" style="padding:6px;overflow-x:auto"><table id="seeds"></table></div></details>
+
+<h2>Why the attention doesn't help: the swap ablation</h2>
+<p class="note">At step 5,750 (seed 0, before the lead closed), we scored the <code>xa3_qknu</code> arm again with its learned cross-attention replaced at inference, keeping all its weights. Relative direction: 968 questions. Bars show accuracy, whiskers the bootstrap 95% CI of the change against the learned model.</p>
+<div class="card"><div class="ct">Relative direction with the learned attention swapped out</div><div class="cs"><code>xa3_qknu</code> seed 0, step 5,750, 968 questions; dashed line: additive seed 0 at the same step (85.4)</div><div class="legend" id="lg3"></div><div id="ch3"></div></div>
+<table id="abl" style="margin-top:6px"></table>
+<ul class="note">
+<li><b>Removing the learned query·key term</b> (bias only) or <b>all reading from other cells</b> (own cell only) leaves accuracy within noise. The questions lost and gained nearly cancel (26/20 and 28/25).</li>
+<li><b>Replacing each cell's geometry with the scene mean</b> costs 24 points. The model depends on per-cell geometry, which is exactly what additive injection provides. Part of this drop may come from feeding the model an out-of-distribution input, and a no-geometry control would separate the two.</li>
+<li>The two longer-training results agree: once additive is trained longer it matches cross-attention, because the per-cell pathway is what both arms rely on.</li>
+</ul>
+
+<h2>Caveats</h2>
+<ul class="note">
+<li>Two seeds per arm. Differences between arms are about the size of the seed spread, so the ranking is not significant.</li>
+<li>The swap ablation was run on one arm, one seed and one checkpoint (step 5,750), and only at inference.</li>
+<li>The <code>xa3_nu</code> step-10,750 evals come from a separate re-run (job 217416). The automatic eval was killed because <code>slurm/decay_eval.sh</code> was edited while the branch was running. Training had finished and both eval files are complete.</li>
+<li>Overall = the benchmark's own summary (mean over task types), so it isn't the per-question mean.</li>
+</ul>
+</main>
+<div id="tip"></div>
+<script>
+const D={"scores": {"additive": {"0": {"5750": {"object_counting": 71.96, "object_abs_distance": 58.81, "object_size_estimation": 75.44, "room_size_estimation": 71.7, "object_rel_distance": 71.83, "object_rel_direction": 85.6, "route_planning": 38.14, "obj_appearance_order": 84.14, "overall": 69.7}, "8250": {"object_counting": 71.1, "object_abs_distance": 57.93, "object_size_estimation": 75.08, "room_size_estimation": 69.76, "object_rel_distance": 71.83, "object_rel_direction": 86.26, "route_planning": 41.75, "obj_appearance_order": 83.17, "overall": 69.61}, "10750": {"object_counting": 73.4, "object_abs_distance": 60.88, "object_size_estimation": 75.99, "room_size_estimation": 73.85, "object_rel_distance": 71.83, "object_rel_direction": 87.73, "route_planning": 42.27, "obj_appearance_order": 85.11, "overall": 71.38}}, "1": {"5750": {"object_counting": 73.12, "object_abs_distance": 57.06, "object_size_estimation": 76.04, "room_size_estimation": 72.81, "object_rel_distance": 69.15, "object_rel_direction": 86.87, "route_planning": 41.75, "obj_appearance_order": 83.66, "overall": 70.06}, "8250": {"object_counting": 72.64, "object_abs_distance": 61.16, "object_size_estimation": 76.41, "room_size_estimation": 74.79, "object_rel_distance": 70.7, "object_rel_direction": 85.67, "route_planning": 39.69, "obj_appearance_order": 80.74, "overall": 70.23}, "10750": {"object_counting": 73.29, "object_abs_distance": 58.24, "object_size_estimation": 75.23, "room_size_estimation": 72.95, "object_rel_distance": 72.25, "object_rel_direction": 88.84, "route_planning": 39.69, "obj_appearance_order": 81.39, "overall": 70.24}}}, "xa3_qknu": {"0": {"5750": {"object_counting": 71.31, "object_abs_distance": 57.65, "object_size_estimation": 75.29, "room_size_estimation": 70.62, "object_rel_distance": 71.13, "object_rel_direction": 88.71, "route_planning": 40.72, "obj_appearance_order": 84.47, "overall": 69.99}, "8250": {"object_counting": 72.0, "object_abs_distance": 58.08, "object_size_estimation": 74.91, "room_size_estimation": 67.88, "object_rel_distance": 71.13, "object_rel_direction": 89.3, "route_planning": 43.3, "obj_appearance_order": 82.36, "overall": 69.87}, "10750": {"object_counting": 73.22, "object_abs_distance": 59.34, "object_size_estimation": 75.53, "room_size_estimation": 72.81, "object_rel_distance": 71.27, "object_rel_direction": 87.57, "route_planning": 37.63, "obj_appearance_order": 81.72, "overall": 69.89}}, "1": {"5750": {"object_counting": 72.62, "object_abs_distance": 59.22, "object_size_estimation": 75.4, "room_size_estimation": 71.81, "object_rel_distance": 72.54, "object_rel_direction": 87.91, "route_planning": 41.24, "obj_appearance_order": 85.11, "overall": 70.73}, "8250": {"object_counting": 71.15, "object_abs_distance": 60.54, "object_size_estimation": 74.61, "room_size_estimation": 74.17, "object_rel_distance": 71.69, "object_rel_direction": 89.46, "route_planning": 38.66, "obj_appearance_order": 84.47, "overall": 70.59}, "10750": {"object_counting": 71.84, "object_abs_distance": 59.56, "object_size_estimation": 76.08, "room_size_estimation": 73.33, "object_rel_distance": 70.56, "object_rel_direction": 87.52, "route_planning": 40.21, "obj_appearance_order": 86.57, "overall": 70.71}}}, "xa3_nu": {"0": {"5750": {"object_counting": 73.17, "object_abs_distance": 57.41, "object_size_estimation": 75.47, "room_size_estimation": 71.6, "object_rel_distance": 72.11, "object_rel_direction": 87.3, "route_planning": 45.88, "obj_appearance_order": 83.82, "overall": 70.84}, "8250": {"object_counting": 72.35, "object_abs_distance": 60.02, "object_size_estimation": 75.04, "room_size_estimation": 71.22, "object_rel_distance": 71.41, "object_rel_direction": 86.78, "route_planning": 36.6, "obj_appearance_order": 85.76, "overall": 69.9}, "10750": {"object_counting": 72.5, "object_abs_distance": 61.57, "object_size_estimation": 75.76, "room_size_estimation": 73.44, "object_rel_distance": 72.25, "object_rel_direction": 87.1, "route_planning": 40.21, "obj_appearance_order": 84.63, "overall": 70.93}}, "1": {"5750": {"object_counting": 72.96, "object_abs_distance": 58.8, "object_size_estimation": 75.81, "room_size_estimation": 73.51, "object_rel_distance": 68.73, "object_rel_direction": 87.61, "route_planning": 38.66, "obj_appearance_order": 84.47, "overall": 70.07}, "8250": {"object_counting": 72.19, "object_abs_distance": 60.08, "object_size_estimation": 74.97, "room_size_estimation": 73.12, "object_rel_distance": 69.72, "object_rel_direction": 87.1, "route_planning": 37.63, "obj_appearance_order": 81.39, "overall": 69.53}, "10750": {"object_counting": 73.03, "object_abs_distance": 59.57, "object_size_estimation": 75.42, "room_size_estimation": 73.75, "object_rel_distance": 68.03, "object_rel_direction": 86.53, "route_planning": 39.69, "obj_appearance_order": 84.14, "overall": 70.02}}}, "xa3_nu_text": {"0": {"5750": {"object_counting": 72.85, "object_abs_distance": 56.64, "object_size_estimation": 76.18, "room_size_estimation": 68.47, "object_rel_distance": 71.41, "object_rel_direction": 88.53, "route_planning": 41.24, "obj_appearance_order": 86.57, "overall": 70.24}, "8250": {"object_counting": 71.61, "object_abs_distance": 60.12, "object_size_estimation": 76.18, "room_size_estimation": 67.88, "object_rel_distance": 73.66, "object_rel_direction": 87.23, "route_planning": 41.75, "obj_appearance_order": 84.47, "overall": 70.36}, "10750": {"object_counting": 72.35, "object_abs_distance": 62.23, "object_size_estimation": 75.4, "room_size_estimation": 73.92, "object_rel_distance": 71.97, "object_rel_direction": 89.03, "route_planning": 38.66, "obj_appearance_order": 84.14, "overall": 70.96}}, "1": {"5750": {"object_counting": 73.54, "object_abs_distance": 56.86, "object_size_estimation": 74.49, "room_size_estimation": 72.5, "object_rel_distance": 67.18, "object_rel_direction": 87.96, "route_planning": 39.69, "obj_appearance_order": 84.14, "overall": 69.55}, "8250": {"object_counting": 71.01, "object_abs_distance": 59.0, "object_size_estimation": 75.34, "room_size_estimation": 73.51, "object_rel_distance": 70.0, "object_rel_direction": 87.85, "route_planning": 40.21, "obj_appearance_order": 83.5, "overall": 70.05}, "10750": {"object_counting": 72.67, "object_abs_distance": 59.5, "object_size_estimation": 74.6, "room_size_estimation": 71.22, "object_rel_distance": 70.0, "object_rel_direction": 85.27, "route_planning": 40.21, "obj_appearance_order": 83.33, "overall": 69.6}}}}, "ablation": {"run": "2B_v10_xa3_qknu_s0", "control": "2B_v9_fmix_additive_s0", "step": 5750, "n": 1872, "groups": {"rel_direction": {"n": 968, "learned": 88.22, "control": 85.43, "bias": {"acc": 87.6, "delta": -0.62, "ci95": [-1.96, 0.72], "lost": 26, "gained": 20}, "uniform": {"acc": 63.84, "delta": -24.38, "ci95": [-27.58, -21.18], "lost": 275, "gained": 39}, "diag": {"acc": 87.91, "delta": -0.31, "ci95": [-1.86, 1.14], "lost": 28, "gained": 25}}, "rel_direction_easy": {"n": 217, "learned": 91.71, "control": 86.64, "bias": {"acc": 91.24, "delta": -0.46, "ci95": [-2.76, 1.84], "lost": 4, "gained": 3}, "uniform": {"acc": 73.27, "delta": -18.43, "ci95": [-25.35, -11.98], "lost": 51, "gained": 11}, "diag": {"acc": 90.78, "delta": -0.92, "ci95": [-3.69, 1.84], "lost": 6, "gained": 4}}, "rel_direction_medium": {"n": 378, "learned": 88.62, "control": 86.24, "bias": {"acc": 88.36, "delta": -0.26, "ci95": [-2.38, 1.85], "lost": 9, "gained": 8}, "uniform": {"acc": 63.49, "delta": -25.13, "ci95": [-30.16, -20.11], "lost": 107, "gained": 12}, "diag": {"acc": 88.62, "delta": 0.0, "ci95": [-2.38, 2.12], "lost": 9, "gained": 9}}, "rel_direction_hard": {"n": 373, "learned": 85.79, "control": 83.91, "bias": {"acc": 84.72, "delta": -1.07, "ci95": [-3.49, 1.34], "lost": 13, "gained": 9}, "uniform": {"acc": 58.71, "delta": -27.08, "ci95": [-32.44, -21.72], "lost": 117, "gained": 16}, "diag": {"acc": 85.52, "delta": -0.27, "ci95": [-2.95, 2.41], "lost": 13, "gained": 12}}, "rel_distance": {"n": 710, "learned": 71.13, "control": 71.83, "bias": {"acc": 71.83, "delta": 0.7, "ci95": [-1.55, 2.82], "lost": 29, "gained": 34}, "uniform": {"acc": 67.75, "delta": -3.38, "ci95": [-6.2, -0.42], "lost": 72, "gained": 48}, "diag": {"acc": 71.69, "delta": 0.56, "ci95": [-1.83, 2.96], "lost": 37, "gained": 41}}, "route_planning": {"n": 194, "learned": 40.72, "control": 38.14, "bias": {"acc": 42.78, "delta": 2.06, "ci95": [-2.06, 6.19], "lost": 6, "gained": 10}, "uniform": {"acc": 37.11, "delta": -3.61, "ci95": [-9.79, 2.58], "lost": 23, "gained": 16}, "diag": {"acc": 42.78, "delta": 2.06, "ci95": [-1.55, 5.67], "lost": 5, "gained": 9}}}}, "args": {"additive": {"qk_lr": null, "text_queries": null, "nu": null, "lr": 5e-05, "fusion_lr": 5e-06, "arm": "additive"}, "xa3_qknu": {"qk_lr": 0.0001, "text_queries": null, "nu": null, "lr": 5e-05, "fusion_lr": 5e-06, "arm": "xattn_aligned"}, "xa3_nu": {"qk_lr": null, "text_queries": false, "nu": null, "lr": 5e-05, "fusion_lr": 5e-06, "arm": "xattn_aligned"}, "xa3_nu_text": {"qk_lr": null, "text_queries": true, "nu": null, "lr": 5e-05, "fusion_lr": 5e-06, "arm": "xattn_aligned"}}};
+const ARMS=[["additive","additive","--c0","Per-cell geometry added to each visual token (control)"],
+ ["xa3_qknu","xa3_qknu","--c1","3D-aligned cross-attention; learnable ν per head (log-spaced 0.1–6); query/key LR 1e-4"],
+ ["xa3_nu","xa3_nu","--c2","3D-aligned cross-attention; learnable ν per head; no separate query/key LR"],
+ ["xa3_nu_text","xa3_nu_text (v11)","--c3","As xa3_nu, plus text queries"]];
+const RUN={additive:"2B_v9_fmix_additive",xa3_qknu:"2B_v10_xa3_qknu",xa3_nu:"2B_v10_xa3_nu",xa3_nu_text:"2B_v11_xa3_nu_text"};
+const STEPS=["5750","8250","10750"];
+const TASKS=[["object_counting","Object counting"],["object_abs_distance","Absolute distance"],["object_size_estimation","Object size"],["room_size_estimation","Room size"],["object_rel_distance","Relative distance"],["object_rel_direction","Relative direction"],["route_planning","Route planning"],["obj_appearance_order","Appearance order"],["overall","Overall"]];
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const sc=(a,s,st,k)=>D.scores[a][s][st][k];
+const mean=(a,st,k)=>(sc(a,"0",st,k)+sc(a,"1",st,k))/2;
+const half=(a,st,k)=>Math.abs(sc(a,"0",st,k)-sc(a,"1",st,k))/2;
+const f1=x=>x.toFixed(1), f2=x=>x.toFixed(2);
+const tip=document.getElementById("tip");
+function showTip(e,h){tip.innerHTML=h;tip.style.display="block";tip.style.left=Math.min(e.clientX+14,innerWidth-230)+"px";tip.style.top=(e.clientY+14)+"px"}
+function hideTip(){tip.style.display="none"}
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function legend(id,items){document.getElementById(id).innerHTML=items.map(([l,c,dash])=>`<span>${dash?`<svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="${c}" stroke-width="2" stroke-dasharray="4 3"/></svg>`:`<i class="sw" style="background:${c}"></i>`}${l}</span>`).join("")}
+
+// tiles
+document.getElementById("tiles").innerHTML=ARMS.map(([a,l,c])=>`<div class="tile"><div class="k"><i class="sw" style="background:var(${c})"></i>${l}</div><div class="v">${f1(mean(a,"10750","overall"))}</div><div class="s">overall, step 10,750 · seeds ${f2(sc(a,"0","10750","overall"))} / ${f2(sc(a,"1","10750","overall"))}</div></div>`).join("");
+
+// arms table
+document.getElementById("arms").innerHTML="<tr><th>Arm</th><th style='text-align:left'>What it does</th><th style='text-align:left'>Runs</th></tr>"+ARMS.map(([a,l,c,d])=>`<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><i class="sw" style="background:var(${c})"></i>${l}</span></td><td style="text-align:left;white-space:normal">${d}</td><td style="text-align:left"><code>${RUN[a]}_s0/s1</code></td></tr>`).join("");
+
+// line chart
+function lineChart(id,key,ylab){
+  const W=980,H=330,m={l:58,r:132,t:14,b:50},host=document.getElementById(id);
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,width:"100%",role:"img"},host);
+  let vals=[];ARMS.forEach(([a])=>STEPS.forEach(st=>{vals.push(sc(a,"0",st,key),sc(a,"1",st,key))}));
+  const lo=Math.floor(Math.min(...vals)-.5),hi=Math.ceil(Math.max(...vals)+.5);
+  const pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const xs=st=>m.l+pw*(STEPS.indexOf(st))/(STEPS.length-1)*0.86+pw*0.07;
+  const ys=v=>m.t+ph*(1-(v-lo)/(hi-lo));
+  const cid=id+"clip";const defs=el("defs",{},svg);const cp=el("clipPath",{id:cid},defs);el("rect",{x:m.l,y:m.t,width:pw,height:ph},cp);
+  const step=(hi-lo)>6?2:(hi-lo)>3?1:0.5;
+  for(let v=lo;v<=hi+1e-9;v+=step){el("line",{x1:m.l,x2:m.l+pw,y1:ys(v),y2:ys(v),stroke:css("--grid")},svg);const t=el("text",{x:m.l-8,y:ys(v)+4,"text-anchor":"end",class:"ax"},svg);t.textContent=v.toFixed(step<1?1:0)}
+  el("line",{x1:m.l,x2:m.l+pw,y1:m.t+ph,y2:m.t+ph,stroke:css("--rule")},svg);
+  STEPS.forEach(st=>{const t=el("text",{x:xs(st),y:m.t+ph+18,"text-anchor":"middle",class:"ax"},svg);t.textContent=(+st).toLocaleString()});
+  let t=el("text",{x:m.l+pw/2,y:H-8,"text-anchor":"middle",class:"al"},svg);t.textContent="Training step (checkpoint after a 750-step decay)";
+  t=el("text",{x:14,y:m.t+ph/2,"text-anchor":"middle",class:"al",transform:`rotate(-90 14 ${m.t+ph/2})`},svg);t.textContent=ylab;
+  const g=el("g",{"clip-path":`url(#${cid})`},svg);
+  const ends=[];
+  ARMS.forEach(([a,l,c],i)=>{
+    const col=css(c);const off=(i-1.5)*5;
+    el("polyline",{points:STEPS.map(st=>`${xs(st)+off},${ys(mean(a,st,key))}`).join(" "),fill:"none",stroke:col,"stroke-width":2,"stroke-linejoin":"round"},g);
+    STEPS.forEach(st=>{["0","1"].forEach(s=>{el("circle",{cx:xs(st)+off,cy:ys(sc(a,s,st,key)),r:3.2,fill:col,opacity:.45},g)});
+      el("circle",{cx:xs(st)+off,cy:ys(mean(a,st,key)),r:4.5,fill:col,stroke:css("--card"),"stroke-width":2},g)});
+    ends.push([ys(mean(a,"10750",key)),l,col,mean(a,"10750",key)]);
+  });
+  ends.sort((p,q)=>p[0]-q[0]);for(let i=1;i<ends.length;i++)if(ends[i][0]-ends[i-1][0]<14)ends[i][0]=ends[i-1][0]+14;
+  ends.forEach(([y,l,col,v])=>{const tt=el("text",{x:m.l+pw+10,y:y+4},svg);tt.textContent=`${l} ${f1(v)}`;tt.setAttribute("style","fill:"+col)});
+  STEPS.forEach(st=>{const r=el("rect",{x:xs(st)-pw*0.14,y:m.t,width:pw*0.28,height:ph,fill:"transparent"},svg);
+    r.addEventListener("mousemove",e=>showTip(e,`<b>Step ${(+st).toLocaleString()}</b><br>`+ARMS.map(([a,l,c])=>`<span style="display:inline-flex;align-items:center;gap:6px"><i class="sw" style="background:var(${c})"></i>${l}: <b>${f2(mean(a,st,key))}</b> <span style="color:var(--muted)">(${f2(sc(a,"0",st,key))} / ${f2(sc(a,"1",st,key))})</span></span>`).join("<br>")));
+    r.addEventListener("mouseleave",hideTip)});
+}
+const LG=ARMS.map(([a,l,c])=>[l,`var(${c})`]);
+legend("lg1",LG);legend("lg2",LG);
+lineChart("ch1","overall","VSI-Bench overall (%)");
+lineChart("ch2","object_rel_direction","Relative-direction accuracy (%)");
+
+// task table
+(function(){
+  let h="<tr><th>Task</th>"+ARMS.map(([a,l,c])=>`<th><span style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end"><i class="sw" style="background:var(${c})"></i>${l}</span></th>`).join("")+"</tr>";
+  TASKS.forEach(([k,l])=>{
+    const ms=ARMS.map(([a])=>mean(a,"10750",k));const best=Math.max(...ms);const base=ms[0];
+    h+=`<tr class="${k==="overall"?"total":""}"><td>${l}</td>`+ARMS.map(([a],i)=>{const d=ms[i]-base;
+      return `<td><span class="${Math.abs(ms[i]-best)<1e-9?"best":""}">${f1(ms[i])}</span> <span class="pm">±${f1(half(a,"10750",k))}</span>${i?`<span class="d ${d>=0?"pos":"neg"}">${d>=0?"+":"−"}${f1(Math.abs(d))}</span>`:""}</td>`}).join("")+"</tr>"});
+  document.getElementById("tasks").innerHTML=h;
+})();
+// per seed
+(function(){
+  let h="<tr><th>Arm · seed</th>"+STEPS.map(s=>`<th>overall @${(+s).toLocaleString()}</th>`).join("")+STEPS.map(s=>`<th>rel. dir. @${(+s).toLocaleString()}</th>`).join("")+"</tr>";
+  ARMS.forEach(([a,l,c])=>["0","1"].forEach(s=>{h+=`<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><i class="sw" style="background:var(${c})"></i>${l} · s${s}</span></td>`+STEPS.map(st=>`<td>${f2(sc(a,s,st,"overall"))}</td>`).join("")+STEPS.map(st=>`<td>${f1(sc(a,s,st,"object_rel_direction"))}</td>`).join("")+"</tr>"}));
+  document.getElementById("seeds").innerHTML=h;
+})();
+
+// ablation chart
+(function(){
+  const g=D.ablation.groups.rel_direction;
+  const rows=[["Learned (normal eval)",g.learned,null,"--c1"],["Bias only: softmax(3D bias), no query·key",g.bias.acc,g.bias,"--c1"],["Own cell only (additive-style pairing)",g.diag.acc,g.diag,"--c1"],["Scene-mean geometry (uniform)",g.uniform.acc,g.uniform,"--bad"]];
+  const W=980,H=60+rows.length*44,m={l:290,r:40,t:10,b:46},lo=50,hi=95,pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,width:"100%",role:"img"},document.getElementById("ch3"));
+  const xs=v=>m.l+pw*(v-lo)/(hi-lo);
+  const defs=el("defs",{},svg);const cp=el("clipPath",{id:"abclip"},defs);el("rect",{x:m.l,y:m.t,width:pw,height:ph},cp);
+  for(let v=lo;v<=hi;v+=5){el("line",{x1:xs(v),x2:xs(v),y1:m.t,y2:m.t+ph,stroke:css("--grid")},svg);const t=el("text",{x:xs(v),y:m.t+ph+16,"text-anchor":"middle",class:"ax"},svg);t.textContent=v}
+  let t=el("text",{x:m.l+pw/2,y:H-8,"text-anchor":"middle",class:"al"},svg);t.textContent="Relative-direction accuracy (%)";
+  t=el("text",{x:12,y:m.t+ph/2,"text-anchor":"middle",class:"al",transform:`rotate(-90 12 ${m.t+ph/2})`},svg);t.textContent="Attention at inference";
+  const gg=el("g",{"clip-path":"url(#abclip)"},svg);
+  const bh=22,band=ph/rows.length;
+  rows.forEach(([l,v,s,c],i)=>{const y=m.t+band*i+(band-bh)/2;const col=css(c);
+    el("rect",{x:xs(lo),y,width:Math.max(0,xs(v)-xs(lo)),height:bh,rx:4,fill:col,opacity:i===0?1:.75},gg);
+    if(s){const a=g.learned+s.ci95[0],b=g.learned+s.ci95[1];el("line",{x1:xs(a),x2:xs(b),y1:y+bh/2,y2:y+bh/2,stroke:css("--ink"),"stroke-width":1.5},gg);[a,b].forEach(q=>el("line",{x1:xs(q),x2:xs(q),y1:y+5,y2:y+bh-5,stroke:css("--ink"),"stroke-width":1.5},gg))}
+    const lt=el("text",{x:m.l-10,y:y+bh/2+4,"text-anchor":"end"},svg);lt.textContent=l;
+    const vt=el("text",{x:Math.min(xs(v)+8,W-m.r-40),y:y+bh/2+4},svg);vt.textContent=f1(v)+(s?` (${s.delta>=0?"+":"−"}${f1(Math.abs(s.delta))})`:"");vt.setAttribute("style","fill:var(--ink);font-weight:600");
+    const hit=el("rect",{x:m.l,y:m.t+band*i,width:pw,height:band,fill:"transparent"},svg);
+    hit.addEventListener("mousemove",e=>showTip(e,`<b>${l}</b><br>accuracy ${f1(v)}%`+(s?`<br>change vs learned ${s.delta>=0?"+":"−"}${f1(Math.abs(s.delta))} [${f1(s.ci95[0])}, ${f1(s.ci95[1])}]<br>questions lost / gained: ${s.lost} / ${s.gained}`:"<br>968 questions")));
+    hit.addEventListener("mouseleave",hideTip)});
+  const xa=xs(g.control);el("line",{x1:xa,x2:xa,y1:m.t,y2:m.t+ph,stroke:css("--c0"),"stroke-width":2,"stroke-dasharray":"5 4"},svg);
+  legend("lg3",[["Cross-attention (learned and swapped)","var(--c1)"],["Scene-mean geometry","var(--bad)"],["Additive seed 0, step 5,750 ("+f1(g.control)+")","var(--c0)",true],["95% CI of the change vs learned","var(--ink)"]]);
+  let h="<tr><th>Task group (n)</th><th>learned</th><th>additive</th><th>bias only</th><th>own cell only</th><th>scene mean</th></tr>";
+  const names={rel_direction:"Relative direction",rel_direction_easy:"  easy",rel_direction_medium:"  medium",rel_direction_hard:"  hard",rel_distance:"Relative distance",route_planning:"Route planning"};
+  for(const [k,r] of Object.entries(D.ablation.groups)){h+=`<tr><td>${names[k]||k} (${r.n})</td><td>${f1(r.learned)}</td><td>${f1(r.control)}</td>`+["bias","diag","uniform"].map(mm=>`<td>${f1(r[mm].acc)} <span class="d ${r[mm].delta>=0?"pos":"neg"}">${r[mm].delta>=0?"+":"−"}${f1(Math.abs(r[mm].delta))}</span></td>`).join("")+"</tr>"}
+  document.getElementById("abl").innerHTML=h;
+})();
+</script>
+</body>
+</html>
