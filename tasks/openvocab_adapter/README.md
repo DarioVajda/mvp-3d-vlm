@@ -1,14 +1,87 @@
-# OpenVocab-4D on Dario's VGGT reconstructions
+# Testing OpenVocab-4D on Dario's saved VGGT output
 
-## Quick start (Dario): run these on the cluster's login node
+## What I'm trying to do
 
-**A. Once, before the first run.** SAM 3's weights are gated:
+The scene sheets come from OpenVocab-4D. It turns a video into a list of objects with 3D positions in three stages:
+
+1. **VGGT** reconstructs the scene: camera poses and a depth map for every frame.
+2. **SAM 3** finds and segments the objects we ask about ("chair", "door", …) in each frame.
+3. **Tracking and fusion** link each object across frames and place it in 3D, using VGGT's cameras and depth. The
+   scene sheet is built from the result.
+
+Dario has already run VGGT on all the VSI-Bench videos (`data/vggt/`). So OpenVocab-4D shouldn't need to run VGGT
+again: we can **feed it Dario's saved VGGT output directly** and run only SAM 3, tracking and fusion. That's quicker,
+and every part of the project then uses the same 3D reconstruction.
+
+To make that work, `adapt_vggt.py` converts Dario's cameras and depth into the format OpenVocab-4D reads. **Before we
+build on it, I need to know whether the conversion is right**, meaning whether OpenVocab-4D gives the same answer on
+Dario's VGGT output as when it runs its own VGGT. That is what this test checks.
+
+## What the test compares
+
+For each scene, OpenVocab-4D runs twice on exactly the same frames:
+
+| | **Native** (the normal pipeline) | **Adapted** (what I want to use) |
+|---|---|---|
+| 3D reconstruction | OpenVocab-4D runs its own VGGT | Dario's saved VGGT output, converted by `adapt_vggt.py` |
+| Objects (SAM 3) | the same saved SAM 3 masks for both runs | the same saved SAM 3 masks for both runs |
+| Tracking, fusion, scene sheet | yes | yes |
+
+SAM 3 runs once, and both runs use its masks. **The only difference between the two runs is where the 3D
+reconstruction comes from.** If the conversion is right, they find the same objects in the same places. If something
+is off (cameras in the wrong convention, depth from the wrong frames, a wrong scale), the adapted run puts objects in
+the wrong places, or splits or merges them differently.
+
+At the end, the two runs' final outputs are compared:
+
+| What is compared | Passes if (provisional) |
+|---|---|
+| **Object tracks:** do both runs group the SAM 3 detections into the same objects? | at least 90% of tracked pixels get the same object |
+| **3D object positions:** is each object in the same place? | median error at most 5% of the scene's size |
+| **Scene sheets:** do both sheets list the same objects? | at least 80% of rows appear in both |
+| **Scene-sheet positions** | median error at most 5% of the scene's size |
+| **Sanity checks:** the same frames, the same masks, valid files | all must pass |
+
+Each scene gets a verdict: **MATCHES** if every pass mark is met, **DIFFERS** if not, or **INCOMPLETE** if a step
+produced nothing to measure.
+
+Some things to know about the comparison:
+
+- **The two runs can't agree perfectly.** Dario's VGGT saw all 128 frames of the video in one pass, and the native run
+  sees only the frames being tested, so the two reconstructions are slightly different. Each also has its own
+  coordinate frame and scale, so the test first lines the two reconstructions up, using the depth maps only. That's
+  why the pass marks allow small differences. They are a first guess, and we can tune them once real numbers are in.
+- **10 scenes** (listed in [`hpc/scenes.tsv`](hpc/scenes.tsv)): 4 from ScanNet, 3 from ScanNet++ and 3 from
+  ARKitScenes, so we see whether it works across datasets. For each scene, SAM 3 looks for the objects that the
+  scene's VSI-Bench questions ask about.
+- **Every other frame** (64 of the 128) to keep it cheap. That doesn't weaken the test, because both runs still see
+  exactly the same frames.
+
+## What I need from you (Dario)
+
+This has to run on the cluster: SAM 3 and VGGT need a GPU, and the dense depth maps (`data/vggt/`) are only there. I
+need you to **run one command, wait, and push the results back.** Everything is automated, and the steps are below.
+
+**Cost:** roughly 5–10 minutes per scene, about 1–2 GPU-hours in total. The 10 scenes run in parallel, so it should
+take about half an hour once the jobs start. This is an estimate, because it hasn't run on the cluster yet. Each job
+has a 1-hour limit, so it can't run away.
+
+## How to run it
+
+Run all of this on the cluster's login node, from the project checkout that has `data/vggt/`.
+
+### Step 1: SAM 3 access (once)
+
+SAM 3's weights are gated on Hugging Face.
 
 1. Accept the license at <https://huggingface.co/facebook/sam3> with your Hugging Face account.
-2. Check that the cluster is logged in to that account: `.venv/bin/hf auth whoami` should print your user name. If
-   it doesn't, run `.venv/bin/hf auth login`.
+2. Check that the cluster is logged in to that account:
+   ```bash
+   .venv/bin/hf auth whoami      # should print your user name
+   .venv/bin/hf auth login       # only if it doesn't
+   ```
 
-**B. Start everything.** From the project root, the checkout that has `data/vggt/`:
+### Step 2: start everything
 
 ```bash
 git fetch origin
@@ -17,20 +90,22 @@ git pull
 bash tasks/openvocab_adapter/hpc/start.sh
 ```
 
-`start.sh` does all of the following itself:
+`start.sh` does the rest itself, and ends by printing `All submitted`:
 
-- checks that the dense depth is there for all 10 scenes, and submits nothing if not;
-- creates `.venv-ov4d` (a separate environment; `.venv` is not touched);
-- submits the setup job, then one job per scene, then a summary job.
+1. It checks that the depth maps are there for all 10 scenes. If any are missing, it submits nothing and lists them.
+2. It creates a separate environment, `.venv-ov4d`, with SAM 3 and VGGT. It doesn't touch `.venv`.
+3. It submits a setup job (~20 minutes), then one job per scene, then a summary job. The scene jobs wait for the setup
+   job, and they are cancelled automatically if it fails.
 
-The scene jobs wait for the setup job, and they are cancelled automatically if it fails. It ends by printing
-`All submitted`.
+### Step 3: wait
 
-**C. Wait.** `squeue -u $USER` lists the jobs still queued or running. When it is empty, everything has finished. This
-hasn't been timed on the cluster yet. The guess is about half an hour once the jobs start: about 20 minutes of setup,
-then roughly 5–10 minutes per scene, with the scenes running in parallel.
+```bash
+squeue -u $USER
+```
 
-**D. Send the results back.**
+This lists the jobs still queued or running. When it's empty, everything has finished. The logs are in `logs/ov4d/`.
+
+### Step 4: push the results
 
 ```bash
 git add tasks/openvocab_adapter/results
@@ -38,465 +113,32 @@ git commit -m 'OpenVocab-4D comparison results'
 git push
 ```
 
-These are small text files only, never frames. Push them even if something failed, because each scene's `run.log`
-shows where it stopped.
+These are small text files only (reports, scene-sheet CSVs, logs), never frames: ScanNet's terms don't allow sharing
+those. **Please push even if something failed,** because each scene's `run.log` shows where it stopped.
 
-**If it goes wrong:**
-
-- `start.sh` stops with `missing: ...`: run it from the checkout that has `data/vggt/`.
-- The setup job fails: its log is in `logs/ov4d/ov4d_setup_<job id>.out`, and the scene jobs are cancelled
-  automatically. Fix the problem using the [troubleshooting table](#troubleshooting), then run `start.sh` again.
-- Anything else: push `results/` as in step D. The rest of this README explains every step in detail.
-
----
-
-This folder checks that OpenVocab-4D gives the same objects when it runs on Dario's saved VGGT reconstructions
-(`data/vggt/`, exported in `tasks/vggt_data/`) as when it runs on its own VGGT.
-
-It does this for 10 scenes (listed in `hpc/scenes.tsv`), one GPU job per scene. For each scene:
-
-1. It runs SAM 3 once on every other frame of the scene's 128 frames (64 frames), and saves the masks.
-2. It runs OpenVocab-4D's tracking and fusion twice, with those same masks:
-   - **adapted**: on Dario's VGGT geometry, converted to OpenVocab-4D's format by `adapt_vggt.py`;
-   - **native**: on OpenVocab-4D's own VGGT, run on the same frames.
-3. It builds a scene sheet (`openvocab-4D-main/scene_sheet_creation/scene_sheet_creator.py`) for each run.
-4. It compares the two runs and their scene sheets, and gives a verdict: `MATCHES`, `DIFFERS` or `INCOMPLETE`.
-
-The frames and the masks are identical, so the geometry is the only difference. If the adapter is right, both runs
-find the same objects in the same places.
-
-It all runs as Slurm jobs on the cluster: one per scene, plus a short one at the end that collects the results into
-one table. SAM 3 and VGGT need a GPU, and the dense depth that the adapted run needs is only on the cluster.
-
-Contents:
-
-- [Before you start](#before-you-start)
-- [Step 1: get the code](#step-1-get-the-code)
-- [Step 2: set up the environment (once)](#step-2-set-up-the-environment-once)
-- [Step 3: run the comparison](#step-3-run-the-comparison)
-- [Step 4: send the results back](#step-4-send-the-results-back)
-- [Step 5: read the results](#step-5-read-the-results)
-- [Settings](#settings)
-- [Troubleshooting](#troubleshooting)
-- [Running the tests without a GPU](#running-the-tests-without-a-gpu)
-- [Running the steps by hand](#running-the-steps-by-hand)
-- [How the comparison works](#how-the-comparison-works)
-- [Files](#files)
-
----
-
-## Before you start
-
-You need the following:
-
-- **An account on the cluster** that can submit to the `frida` partition with the `povejmo` account. This is what
-  `slurm/submit.sh` uses.
-- **The project checkout on the cluster** that holds `data/vggt/`. The job reads
-  `data/vggt/scannet/scene0025_01/depth.npy` and `depth_conf.npy` from it. To check:
-  ```bash
-  ls data/vggt/scannet/scene0025_01/depth.npy data/vggt/scannet/scene0025_01/depth_conf.npy
-  ```
-- **The project's `.venv`**, which already exists if you have run the project's other jobs. The job uses it only if it
-  has to re-export the scene's frames.
-- **Access to SAM 3's weights.** They are gated on Hugging Face:
-  1. Accept the license at <https://huggingface.co/facebook/sam3> while logged in to your Hugging Face account. It
-     can take a little while to be approved.
-  2. Log in on the cluster, if you haven't already. The token is saved in your home folder, which the jobs can read.
-     ```bash
-     .venv/bin/hf auth whoami      # prints your user name if you are logged in
-     .venv/bin/hf auth login       # otherwise: paste a token from https://huggingface.co/settings/tokens
-     ```
-
-The model weights (SAM 3 and VGGT-1B, a few GB in total) are downloaded the first time they are used. They go into
-the group's shared Hugging Face cache, which `slurm/submit.sh` sets up.
-
-## Step 1: get the code
-
-From the project root on the cluster:
-
-```bash
-git fetch origin
-git checkout vggt_output_adapter
-git pull
-```
-
-## Step 2: set up the environment (once)
-
-`hpc/start.sh` does steps 2 and 3 for you. This section and the next explain what it runs, so you can also run the
-steps by hand.
-
-This makes a separate Python environment, `.venv-ov4d`, for OpenVocab-4D. The project's `.venv` is not changed.
-
-**2a. Create the environment on the login node.** The container has no `ensurepip`, so this step can't run inside a
-job:
-
-```bash
-/usr/bin/python3 -m venv .venv-ov4d
-```
-
-**2b. Install everything, as a job:**
-
-```bash
-slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh
-```
-
-`slurm/submit.sh` prints the job id. To follow the job:
-
-```bash
-squeue -u $USER                         # is it queued or running?
-tail -f logs/ov4d_setup_<job id>.out    # the live log (Ctrl+C stops watching, not the job)
-```
-
-The setup does the following:
-
-- clones SAM 3 and VGGT at the commits OpenVocab-4D pins, into `openvocab-4D-main/sam3` and
-  `openvocab-4D-main/vggt` (both gitignored);
-- installs PyTorch 2.14.1 for CUDA 13.0, the same build as the project's `.venv`. OpenVocab-4D's own `install.sh`
-  uses CUDA 12.6, which does not run on the B200/B300 GPUs;
-- installs `numpy<2`, which SAM 3 and VGGT need, and the pipeline's other packages;
-- checks the result.
-
-**2c. Check that it worked.** The log should end like this:
-
-```
-numpy 1.26.x | torch 2.14.1+cu130
-GPU ok: NVIDIA B200            (or B300)
-imports ok: sam3, vggt, cv2, rerun
-Hugging Face: access to facebook/sam3 ok
-setup done
-```
-
-If it doesn't, see [Troubleshooting](#troubleshooting). You can run the setup again safely, because it reuses what is
-already there.
-
-## Step 3: run the comparison
-
-### All 10 scenes (the usual way)
-
-On the login node:
-
-```bash
-bash tasks/openvocab_adapter/hpc/submit_scenes.sh
-```
-
-This submits one job per scene in [`hpc/scenes.tsv`](hpc/scenes.tsv), and they run in parallel. Each job compares
-the two runs on every other frame (the `half` selection; see below). The script also submits an `ov4d_summary` job, which waits until
-every scene has finished and then writes `results/SUMMARY.md`. It prints every job id:
-
-```
-submitted scannet/scene0025_01 (selections: half) as job 123456
-...
-submitted the summary as job 123466; it runs once all 10 scenes have finished
-```
-
-Each scene's log is `logs/ov4d/ov4d_<dataset>__<scene>_<job id>.out`, and the same log is copied to
-`tasks/openvocab_adapter/results/<dataset>__<scene>/run.log`. Use `squeue -u $USER` to see which jobs are still
-running.
-
-**The 10 scenes** are scannet/scene0025_01, then the first landscape scenes of each dataset in name order: 4 from
-ScanNet, 3 from ScanNet++ and 3 from ARKitScenes. Each scene's SAM 3 prompts are the objects named in its VSI-Bench
-questions, which `hpc/make_scene_list.py` reads from the question templates.
-
-- To change the scenes or prompts, edit `hpc/scenes.tsv` directly, or rerun
-  `python tasks/openvocab_adapter/hpc/make_scene_list.py --per-dataset scannet=2 scannetpp=2 arkitscenes=1`.
-- Portrait ARKitScenes videos are left out. OpenVocab-4D's own VGGT loader resizes portrait frames to a different
-  shape than Dario's export, so the two runs' depth maps could not be compared pixel by pixel.
-
-### One scene only
-
-```bash
-slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
-```
-
-This runs `scannet/scene0025_01` on every other frame. For another scene, set `SCENE` and `PROMPTS` (see
-[Settings](#settings)).
-
-### What each scene's job does
-
-The job prints a `=== time step ===` line as each step starts:
-
-| Step | What happens |
-|---|---|
-| `inputs` | Finds the scene's frames (see below) and the dense depth. Records the GPU, the commit and `pip freeze` in `environment.txt` |
-| `1/5 CPU tests` | The unit tests. They must end with `OK`, or the job stops |
-| `2/5 SAM 3 masks` | SAM 3 on the frames the selections need (64 by default) × the scene's prompts. Skipped if saved masks already cover them |
-| `3/5 <selection>: adapt Dario's VGGT` | Validates Dario's cameras and depth, then writes them in OpenVocab-4D's format. Every check line starts with `ok`. If one says `FAIL`, nothing is written and the job stops |
-| `4/5 <selection>: OpenVocab-4D ...` | Tracking and fusion on the adapted geometry, then VGGT, tracking and fusion for the native run |
-| `5/5 <selection>: scene sheets and comparison` | A scene sheet for each run, then `compare.py` |
-| `summary` | The verdict for each selection |
-
-By default, each scene runs one frame selection, `half`: every other frame of the 128. Set `RUNS` to run others,
-which run one after the other (see [Settings](#settings)):
-
-| Selection | Frames | Why |
-|---|---|---|
-| `half` (default) | 64 frames: 0, 2, 4, …, 126 | Half the cost of all 128 |
-| `smoke5` | 5 nearby frames (118, 120, …, 126) | A quick check that everything runs |
-| `eval32` | The `uniform32` subset from `meta.json` | The frames the group's experiments use |
-| `all` | All 128 frames | The same frames Dario's reconstruction saw |
-
-**Using every other frame doesn't weaken the test.** Both runs always see exactly the same frames, and the adapter
-converts Dario's data the same way whichever frames are picked. Two things do change slightly. OpenVocab-4D's own VGGT
-sees 64 frames instead of 128, so it may disagree a little more with Dario's 128-frame reconstruction, which makes
-the test slightly stricter. And tracking jumps about a second between frames instead of half a second, which it
-handles well. For a spot check on all 128 frames, rerun one scene with `RUNS=all`.
-
-SAM 3 segments only the frames the chosen selections need. Its masks are kept and reused by later runs, unless those
-need frames or prompts that the saved masks lack.
-
-Where the frames come from: the job uses an existing export in `tasks/vggt_data/out/`. If there is none, it
-re-exports this one scene from `data/vggt/` into `tasks/openvocab_adapter/out/export/`, using the project's `.venv`.
-Your existing export is never changed.
-
-**How long it takes.** This hasn't been timed on the cluster yet. With the default `half`, a rough guess is 5–10
-minutes per scene: a couple of minutes for SAM 3, seconds for VGGT, and a few minutes for tracking, fusion and the
-scene sheets. That is about 1–2 GPU-hours for all 10 scenes. The first job also
-downloads the weights. The `-t` value is only the limit at which Slurm stops a job, not how long it runs. Since the
-scenes run in parallel, all 10 should take about as long as one, once the jobs start. If a job hits its limit, rerun
-it with a longer `TIME` (see [Settings](#settings)). A rerun reuses the saved SAM 3 masks.
-
-All large intermediate files (frames, depth, masks, tracks, point clouds) go to
-`tasks/openvocab_adapter/out/`, which is gitignored.
-
-## Step 4: send the results back
-
-When the summary job has finished (check with `squeue -u $USER`), commit the whole results folder:
-
-```bash
-git add tasks/openvocab_adapter/results
-git commit -m 'OpenVocab-4D comparison results'
-git push
-```
-
-This commits only small text files, a few hundred KB per scene. If the summary job didn't run, write the summary by
-hand with `.venv-ov4d/bin/python tasks/openvocab_adapter/summarize.py`. Please don't commit anything from
-`tasks/openvocab_adapter/out/`: it holds the ScanNet frames, and ScanNet's terms of use don't allow passing those on.
-
-**If the job failed,** commit `results/.../run.log` anyway, because it shows where it stopped.
-
-## Step 5: read the results
-
-Get them with `git pull` on branch `vggt_output_adapter`.
-
-**Start with `tasks/openvocab_adapter/results/SUMMARY.md`.** It has one row per scene and frame selection, with the
-verdict, the objects each run found, and the four numbers behind the verdict. A scene whose job failed still gets a
-row, saying `no result`, with the last line of its log.
-
-If most scenes say `MATCHES`, running SAM 3 directly on Dario's VGGT output gives the same result as the full
-OpenVocab-4D pipeline. If a few scenes say `DIFFERS`, look at those scenes' folders.
-
-Each scene has its own folder, `results/<dataset>__<scene>/`:
-
-```
-SUMMARY.txt                  the verdict for each selection, and the numbers behind it
-run.log                      the job's full output
-environment.txt              date, machine, GPU, commit, settings, pip freeze
-masks_manifest.json          how many objects SAM 3 found per frame and prompt
-<selection>/                 half (and any other selection that was run)
-├── comparison.json          every comparison with its status and values, plus the verdict
-├── adapted/                 OpenVocab-4D on Dario's geometry
-│   ├── objects.csv          the scene sheet: one row per object, with position, size and frames seen
-│   ├── cameras.csv          the scene sheet: one row per frame, with camera position and orientation
-│   ├── report.json          objects found per prompt
-│   ├── tracks_summary.json  tracking statistics, and which masks were used
-│   └── adapter_report.json  every validation check of Dario's data
-└── native/                  OpenVocab-4D on its own VGGT (same files, plus align_report.json from VGGT)
-```
-
-### The verdict
-
-`SUMMARY.txt` looks like this:
-
-```
-eval32: MATCHES (provisional pass marks)  {'PASS': 18, 'FAIL': 0, 'MEASURED': 7, 'BLOCKED': 0}
-   ok   tracks: share of pixels with the same identity: 0.97 (needs >= 0.9)
-   ok   objects: median 3D position error, share of scene size: 0.012 (needs <= 0.05)
-   ok   scene sheet: share of rows found in both sheets: 0.91 (needs >= 0.8)
-   ok   scene sheet: median position error, share of scene size: 0.015 (needs <= 0.05)
-   ok   no FAIL in the comparison: [] (needs [])
-```
-
-The numbers above are only an illustration, not real results.
-
-| Verdict | Meaning |
-|---|---|
-| `MATCHES` | Every pass mark below is met. OpenVocab-4D finds the same objects in the same places on Dario's geometry |
-| `DIFFERS` | A pass mark is missed, or a hard check failed (see below) |
-| `INCOMPLETE` | A step produced nothing to measure. The `needs` lines in `comparison.json` say what was missing |
-
-| Criterion | Pass mark | What it measures |
-|---|---|---|
-| Pixels with the same track identity | at least 90% | The two runs group detections into the same objects |
-| Median 3D object position error | at most 5% of the scene's size | Objects end up in the same place |
-| Scene-sheet rows found in both sheets | at least 80% | The two scene sheets list the same objects |
-| Median scene-sheet position error | at most 5% of the scene's size | The scene sheets give the same positions |
-
-These pass marks are a first guess, and nobody has agreed on them yet. Revisit them with the group once real numbers
-are in. They are `CRITERIA` at the top of `compare.py`.
-
-### The status of each comparison
-
-Each comparison in `comparison.json` has one of four statuses:
-
-- `PASS` / `FAIL`: checks that have a right answer. Both runs used the same frames in the same order, the same masks
-  (compared by fingerprint), and files in the pipeline's format. Any `FAIL` makes the verdict `DIFFERS`.
-- `MEASURED`: a number with no right answer, such as how far apart the two reconstructions are.
-- `BLOCKED`: could not run. `needs` names the missing input.
-
-### Where to look when the verdict is DIFFERS
-
-- `comparison.json` → `tracking consistency` → `per_prompt`: which prompts' tracks disagree.
-- `3D object positions after alignment` → `per_object`: the error for each object.
-- `scene sheet: objects` → `adapted_only` / `native_only`: rows that appear in only one sheet.
-- Compare `adapted/objects.csv` with `native/objects.csv` directly. Their coordinates are in different world frames
-  and scales, so compare the objects found and their `num_frames`, not the raw x, y, z.
-
-## Settings
-
-Set these in front of the submit command. `slurm/submit.sh` passes your environment on to the job.
-
-```bash
-RUNS=all bash tasks/openvocab_adapter/hpc/submit_scenes.sh
-RUNS=eval32 slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
-```
-
-For `submit_scenes.sh`:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `RUNS` | `half` | The frame selections to run for every scene: `half`, `smoke5`, `eval32`, `all`, or several |
-| `TIME` | `01:00:00` | The time limit of each scene's job |
-| `SCENES_FILE` | `hpc/scenes.tsv` | One scene per line: `<dataset>/<scene>`, a tab, then comma-separated prompts |
-
-For `run_all.sh` (one scene):
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `RUNS` | `half` | Which frame selections to run |
-| `SCENE` | `scannet/scene0025_01` | `<dataset>/<scene>`. It must have `data/vggt/<scene>/` |
-| `PROMPTS` | `chair,door,fan,keyboard,monitor,pillow,sofa,table,telephone,window` | Comma-separated objects to look for. The default is the objects named in scene0025_01's VSI-Bench questions. Change it when you change `SCENE`. Delete `out/<scene>/masks/` when you change the prompts |
-| `REID` | `0` | `1` turns on DINOv2 re-identification in both runs |
-| `PY` | `.venv-ov4d/bin/python` | The Python to use |
-| `DENSE` | `data/vggt/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
-| `DATA` | found automatically | The export folder that holds `scenes/<scene>/` |
-| `WORK`, `RESULTS` | `out/<name>`, `results/<name>` | Where the intermediate files and the results go |
-
-Results for another scene go to their own folder, `results/<dataset>__<scene>/`.
-
-## Troubleshooting
+### If something goes wrong
 
 | You see | Do this |
 |---|---|
-| `no .venv-ov4d/bin/python` | Do step 2a first, on the login node |
-| `no git in this container` | Run the two `git clone` commands it prints on the login node, then submit the setup again |
-| `no CUDA GPU visible` / `no CUDA GPU here` | Run through `slurm/submit.sh`, not directly on the login node |
-| `no kernel image is available for execution on the device` | This PyTorch build doesn't support the GPU. Check that `.venv-ov4d/bin/pip show torch` says `2.14.1+cu130` |
-| numpy fails to install (building from source) | The container's Python is too new for numpy<2. Run the setup again with `NUMPY_SPEC=numpy slurm/submit.sh ...` |
-| `no access to facebook/sam3`, `401`, `gated repo` | Accept the license on Hugging Face (see [Before you start](#before-you-start)) and check `hf auth whoami` |
-| The tests in step 1/5 fail | The environment differs from the one the tests expect. Send `run.log` |
-| `no dense depth in data/vggt/...` | Check the paths in [Before you start](#before-you-start), or set `DENSE=` |
-| `[adapter] FAIL ...` and `nothing written` | Dario's export and `data/vggt/` disagree, for example frames from another run. The line names the check. Send `run.log` |
-| `masks are (...) the image is (...)` | SAM 3 returned masks at another size. Send `run.log` |
-| `already holds a finished run` | Old masks are in the way. Delete `tasks/openvocab_adapter/out/<scene>/masks/` to run SAM 3 again |
-| The job hits the time limit | Resubmit that scene with a longer limit, or one selection at a time with `RUNS=...`. The masks are kept, so SAM 3 doesn't run again |
-| A scene's row in `SUMMARY.md` says `no result` | Its job stopped before comparing. The row shows the last line of its log, and `results/<scene>/run.log` has the rest. Resubmit just that scene with `SCENE=... PROMPTS=... slurm/submit.sh ... run_all.sh` |
-| CUDA out of memory in the VGGT stage | Unlikely on a B200, but if it happens, run `RUNS=smoke5` first and send the log |
+| `start.sh` stops with `missing: data/vggt/...` | Run it from the checkout that has `data/vggt/` |
+| The setup job fails on `facebook/sam3`, `401` or `gated repo` | Do step 1, then run `start.sh` again |
+| The setup job fails on anything else | Its log is `logs/ov4d/ov4d_setup_<job id>.out`. Check [DETAILS.md](DETAILS.md#troubleshooting), or push and send me the log |
+| A scene's job fails | Nothing to do: push the results anyway, because its `run.log` says why |
 
-## Running the tests without a GPU
+Running `start.sh` again is safe. It skips the setup if that already finished, and reuses SAM 3's masks.
 
-The tests need only numpy, Pillow and a CPU build of torch. They run the real milestone scripts and the scene sheet
-creator on a small synthetic scene, with SAM 3, VGGT, `cv2` and `rerun` replaced by small fakes. On Windows, from the
-repository root:
+## What comes back
 
-```powershell
-py -m unittest discover -s tasks/openvocab_adapter/tests
-```
+The results go to `tasks/openvocab_adapter/results/`. **`SUMMARY.md`** has one row per scene: the verdict, how many
+objects each run found, and the numbers behind the verdict. Each scene's folder has the details, including both runs'
+scene sheets (`adapted/objects.csv` and `native/objects.csv`) for comparing by eye.
 
-On Linux, use `python -m unittest discover -s tasks/openvocab_adapter/tests`.
+- **Most scenes MATCH:** the conversion works, and we can use Dario's VGGT output directly. The next step is the same
+  test with Nicolas's prompt extractor choosing the SAM 3 prompts.
+- **Some scenes DIFFER:** their `comparison.json` shows which objects or prompts disagree, and by how much.
 
-They should end with `OK`. A few tests are skipped where they don't apply, for example the tests for a machine without
-a GPU when one is present.
+---
 
-## Running the steps by hand
-
-You don't need this for the cluster job. It's useful for running one step on its own, or another frame selection.
-The commands are for PowerShell, run from the repository root. On Linux, use `python` instead of `py`.
-
-```powershell
-$scene   = 'tasks/openvocab_adapter/out/scannet__scene0025_01'
-$prompts = 'chair,door,fan,keyboard,monitor,pillow,sofa,table,telephone,window'
-$frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/frames'
-```
-
-1. **SAM 3 masks (GPU).** `--dry-run` checks the inputs without loading SAM 3.
-   ```powershell
-   py tasks/openvocab_adapter/sam3_infer.py --images $frames --frames all --prompts $prompts --out "$scene/masks" --overlays
-   ```
-2. **Adapt Dario's geometry (CPU).** `--dense-dir` is the folder with `depth.npy` and `depth_conf.npy`. Without it,
-   only the cameras are written, and tracking can't run.
-   ```powershell
-   py tasks/openvocab_adapter/adapt_vggt.py --preset eval32 --dense-dir <dense folder> --out "$scene/eval32/adapted" --overwrite
-   ```
-   Other selections: `--frames uniform:16 --label u16`, `--frames list:0,40,80 --label three`,
-   `--frames window:START:COUNT[:STRIDE]`, or `--frames subset:<name from meta.json>`.
-3. **Track and fuse on the adapted geometry (CPU is enough with saved masks).**
-   ```powershell
-   py openvocab-4D-main/trackA/milestone4_video.py --images "$scene/eval32/adapted/frames" --out "$scene/eval32/adapted" `
-      --prompts $prompts --step 1 --stages track,fuse --masks-dir "$scene/masks" --no-reid
-   ```
-4. **The native run (GPU, for VGGT).** These are the same frames, written to `native/`, with the `vggt` stage added:
-   ```powershell
-   py openvocab-4D-main/trackA/milestone4_video.py --images "$scene/eval32/adapted/frames" --out "$scene/eval32/native" `
-      --prompts $prompts --step 1 --stages vggt,track,fuse --masks-dir "$scene/masks" --no-reid
-   ```
-5. **Scene sheets:**
-   ```powershell
-   foreach ($side in 'adapted','native') {
-     py openvocab-4D-main/scene_sheet_creation/scene_sheet_creator.py --scene "$scene/eval32/$side" --prompts $prompts --size
-   }
-   ```
-6. **Compare.** This writes `$scene/eval32/comparison.json`. It runs at any stage, and anything that can't run yet is
-   reported as `BLOCKED`, along with what it needs.
-   ```powershell
-   py tasks/openvocab_adapter/compare.py --run-dir "$scene/eval32" --masks "$scene/masks"
-   ```
-
-Steps 3 to 5 need `opencv-python`, `rerun-sdk`, `numpy<2` and the VGGT repository code in `openvocab-4D-main/vggt`.
-Use a separate environment, not your system Python. Use the same `--no-reid` setting in both runs.
-
-## How the comparison works
-
-- **The two runs can't agree exactly.** Dario's poses and depth come from one VGGT pass over all 128 frames. The native
-  run's come from VGGT on only the selected frames, in chunks of 40. Each has its own world frame and scale, and VGGT's
-  output really does change with the frames it sees.
-- **Alignment.** Before any positions are compared, a similarity transform (rotation, translation and scale) is fitted
-  between the two reconstructions. It uses pixels that are confident in both depth maps, and no object information, so
-  the object errors that follow aren't circular. Errors are given as fractions of the scene's size.
-- **Tracks** are matched on their pixels, because both runs use the same masks. This needs no alignment.
-- **Scene-sheet rows** are paired through the same track matching, because a row's `track_id` is the track's id.
-  Sizes are not compared: they are extents along the world axes, and the two world frames are rotated relative to each
-  other.
-- **Before writing anything, the adapter checks Dario's data:**
-  - the camera convention (rotations are proper rotations, and the world is frame 0's camera);
-  - that every patch point projects into its own 14×14 patch;
-  - that the point-cloud colours match the JPEGs (the right frames, in the right order);
-  - that the dense depth reproduces the exported patch points (the right scene and the right frames).
-
-## Files
-
-| File | Purpose |
-|---|---|
-| `hpc/start.sh` | The quick start: checks the inputs, then submits the setup, every scene and the summary |
-| `hpc/setup_env.sh` | Step 2: installs `.venv-ov4d` and checks it |
-| `hpc/submit_scenes.sh` | Step 3: submits one `run_all.sh` job per scene in `scenes.tsv`, then the summary job |
-| `hpc/scenes.tsv` | The 10 scenes and their SAM 3 prompts |
-| `hpc/make_scene_list.py` | Writes `scenes.tsv`: picks the scenes and reads each one's objects from its questions |
-| `hpc/run_all.sh` | The whole comparison for one scene, as one job |
-| `summarize.py` | Writes `results/SUMMARY.md` from every scene's `comparison.json` |
-| `adapt_vggt.py` | Converts Dario's cameras and dense depth to OpenVocab-4D's `frames/`, `cameras.npz` and `depth.npz`, after validating them |
-| `sam3_infer.py` | Runs SAM 3 on a list of frames and saves the masks |
-| `compare.py` | Compares an adapted run with a native run, including their scene sheets, and gives the verdict |
-| `common.py` | Paths, frame-selection presets and small helpers |
-| `tests/` | CPU-only tests |
-| `results/` | The small result files committed from the cluster |
-| `../../openvocab-4D-main/trackA/saved_masks.py` | Lets milestones 3 and 4 reuse saved masks (`--masks-dir`) instead of running SAM 3 |
+More detail is in [DETAILS.md](DETAILS.md): settings, running a single scene or other frame selections, what each step
+does, how the comparison works, the full results layout, the complete troubleshooting table, and the tests that run
+without a GPU.
