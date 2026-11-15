@@ -60,26 +60,22 @@ Some notes on the comparison:
 ## Where it runs and what it costs
 
 The test runs on the cluster: SAM 3 and VGGT need a GPU, and the dense depth maps in `data/vggt/` are only there. A
-single command starts everything. After that, the only thing left is to push the results once the jobs finish.
+single command submits **one job**. After that, the only thing left is to push the results once the job finishes.
 
-**Cost:** roughly 5–10 minutes per scene, about 1–2 GPU-hours in total. The 10 scenes run in parallel, so it should
-take about half an hour once the jobs start. This is an estimate, because it hasn't run on the cluster yet. Each job
-has a 1-hour limit.
+**Cost (measured 2026-11-15, one B200):** about 1 minute of setup the first time, then about 3 minutes per scene with
+64 frames: 10 scenes took 27 minutes on one GPU. The job runs one scene per GPU at a time (5 GPUs by default), so with
+5 GPUs it takes about 10 minutes.
 
 ## How to run it
 
 Run all of this on the cluster's login node, from the project checkout that has `data/vggt/`.
 
-### Step 1: SAM 3 access (once)
+### Step 1: SAM 3 access
 
-SAM 3's weights are gated on Hugging Face.
-
-1. Accept the license at <https://huggingface.co/facebook/sam3> with your Hugging Face account.
-2. Check that the cluster is logged in to that account:
-   ```bash
-   .venv/bin/hf auth whoami      # should print your user name
-   .venv/bin/hf auth login       # only if it doesn't
-   ```
+Nothing to do on this cluster. `sam3_infer.py` loads SAM 3 through transformers from the group's cached snapshot of
+`facebook/sam3` (revision 3c879f3, the one the explainability results used), which needs no Hugging Face login.
+Elsewhere, without that cache, SAM 3's weights are gated: accept the license at <https://huggingface.co/facebook/sam3>
+and log in with `.venv/bin/hf auth login`. `--backend sam3` uses Meta's own package instead, as milestone 2 does.
 
 ### Step 2: start everything
 
@@ -93,9 +89,21 @@ bash tasks/openvocab_adapter/hpc/start.sh
 `start.sh` does the rest itself, and ends by printing `All submitted`:
 
 1. It checks that the depth maps are there for all 10 scenes. If any are missing, it submits nothing and lists them.
-2. It creates a separate environment, `.venv-ov4d`, with SAM 3 and VGGT. It doesn't touch `.venv`.
-3. It submits a setup job (~20 minutes), then one job per scene, then a summary job. The scene jobs wait for the setup
-   job, and they are cancelled automatically if it fails.
+2. It creates a separate environment, `.venv-ov4d`, and clones SAM 3 and VGGT at OpenVocab-4D's pinned commits. It
+   doesn't touch `.venv`.
+3. It submits one job (`hpc/run_packed.sh`, 5 GPUs by default): the setup if no earlier setup finished, then the
+   scenes as a queue, one scene per GPU at a time, then the summary. Scenes that already have results are skipped, so
+   submitting again continues where a job stopped.
+
+Settings: `GPUS`, `TIME`, `RUNS`, `SCENES_FILE`, `DENSE_ROOT` and `DATA` (the last two when running from a checkout
+without `data/vggt/` and `tasks/vggt_data/out/`). A short test first, on two scenes with five frames each:
+
+```bash
+RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=tasks/openvocab_adapter/hpc/scenes_smoke.tsv \
+    bash tasks/openvocab_adapter/hpc/start.sh
+```
+
+`hpc/submit_scenes.sh` still submits one job per scene, for rerunning a single scene.
 
 ### Step 3: wait
 
@@ -103,7 +111,8 @@ bash tasks/openvocab_adapter/hpc/start.sh
 squeue -u $USER
 ```
 
-This lists the jobs still queued or running. When it's empty, everything has finished. The logs are in `logs/ov4d/`.
+When the job is gone from the list, it has finished. Its log is `logs/ov4d/ov4d_compare_<job id>.out`, and each
+scene's log is in `logs/ov4d/scenes_<job id>/`.
 
 ### Step 4: push the results
 
@@ -121,13 +130,17 @@ those. **Push even if something failed,** because each scene's `run.log` shows w
 | You see | Do this |
 |---|---|
 | `start.sh` stops with `missing: data/vggt/...` | Run it from the checkout that has `data/vggt/` |
-| The setup job fails on `facebook/sam3`, `401` or `gated repo` | Do step 1, then run `start.sh` again |
-| The setup job fails on anything else | Its log is `logs/ov4d/ov4d_setup_<job id>.out`. Check [DETAILS.md](DETAILS.md#troubleshooting), or push the results and share the log |
-| A scene's job fails | Push the results anyway, because its `run.log` says why |
+| The setup fails on `facebook/sam3`, `401` or `gated repo` | The cached snapshot is missing: see step 1, then run `start.sh` again |
+| The setup fails on anything else | Its log is `logs/ov4d/scenes_<job id>/setup.out`. Check [DETAILS.md](DETAILS.md#troubleshooting), or push the results and share the log |
+| A scene fails | Push the results anyway, because its `run.log` says why |
 
 Running `start.sh` again is safe. It skips the setup if that already finished, and reuses SAM 3's masks.
 
 ## The results
+
+Flat tables of every scene's output, for analysis, are in `results/data/` (`objects.csv`, `cameras.csv`,
+`comparisons.csv`, `detections.csv`; columns in `results/data/README.md`). Rebuild them with
+`python tasks/openvocab_adapter/export_tables.py`.
 
 The results go to `tasks/openvocab_adapter/results/`. **`SUMMARY.md`** has one row per scene: the verdict, how many
 objects each run found, and the numbers behind the verdict. Each scene's folder has the details, including both runs'

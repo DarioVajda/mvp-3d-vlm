@@ -1,0 +1,3 @@
+# scene	SAM 3 prompts. Two scenes of hpc/scenes.tsv for the short test (RUNS=smoke5), see hpc/start.sh
+scannet/scene0025_01	fan,pillow,telephone,door,keyboard,chair,monitor,table,sofa,window
+arkitscenes/41159525	refrigerator,stove,table,chair,stool

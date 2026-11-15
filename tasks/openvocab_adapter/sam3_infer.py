@@ -3,6 +3,13 @@
 Runs on a machine with an NVIDIA GPU (see README.md). VGGT is neither needed nor loaded. --dry-run checks the
 inputs and prints the plan without importing torch or SAM 3.
 
+Two ways to run the same SAM 3 model (--backend):
+  transformers  (default) transformers' Sam3Model, from the group's cached snapshot of facebook/sam3 at SAM3_REV, the
+                revision the explainability results used. Needs no Hugging Face login when the snapshot is cached.
+  sam3          Meta's sam3 package, as in milestone 2. Downloads sam3.pt, which needs an accepted license (or
+                --checkpoint).
+Both run SAM 3's promptable concept segmentation, one text prompt at a time, the image encoder once per frame.
+
 Output, in --out:
 
   <stem>__masks.npz   one per frame, also when nothing was detected. The milestone 2 format:
@@ -16,6 +23,7 @@ Output, in --out:
 """
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -27,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 FORMAT = "openvocab4d-sam3-masks/v1"
+SAM3_REV = "3c879f39826c281e95690f02c7821c4de09afae7"  # as in src/mvp/explain/one_question.py
 
 
 def parse_args(argv):
@@ -37,7 +46,9 @@ def parse_args(argv):
     p.add_argument("--meta", help="meta.json for subset:NAME (default: next to the frames folder)")
     p.add_argument("--prompts", required=True, help="comma-separated noun phrases, e.g. 'chair,brick wall'")
     p.add_argument("--out", required=True, help="output folder")
-    p.add_argument("--checkpoint", help="local sam3.pt (default: download from Hugging Face, needs the accepted license)")
+    p.add_argument("--backend", choices=["transformers", "sam3"], default="transformers",
+                   help="transformers: the cached facebook/sam3 snapshot (no login); sam3: Meta's package (see above)")
+    p.add_argument("--checkpoint", help="--backend sam3 only: local sam3.pt (default: download from Hugging Face)")
     p.add_argument("--min-score", type=float, default=0.5,
                    help="keep detections from this score up; the pipeline later applies its own 0.55")
     p.add_argument("--overlays", action="store_true", help="also save a visual check per frame")
@@ -76,6 +87,52 @@ def detect(processor, image, prompts, min_score, to_numpy_masks, torch):
     return detections
 
 
+def transformers_detector(torch):
+    """detect(image, prompts, min_score) with transformers' Sam3Model; the same (mask, box, score, prompt) tuples."""
+    from transformers import Sam3Model, Sam3Processor
+
+    hub = os.environ.get("HF_HUB_CACHE", os.path.expanduser("~/.cache/huggingface/hub"))
+    snapshot = os.path.join(hub, "models--facebook--sam3", "snapshots", SAM3_REV)
+    # facebook/sam3 is gated: the cached snapshot needs no Hub access; otherwise download that revision
+    source, kwargs = (snapshot, {}) if os.path.isdir(snapshot) else ("facebook/sam3", {"revision": SAM3_REV})
+    print(f"[sam3] transformers Sam3Model from {source}")
+    processor = Sam3Processor.from_pretrained(source, **kwargs)
+    model = Sam3Model.from_pretrained(source, **kwargs).to("cuda").eval()
+    texts = {}
+
+    def detect(image, prompts, min_score):
+        width, height = image.size
+        detections = []
+        with torch.no_grad():
+            pixels = processor(images=image, return_tensors="pt").to("cuda")
+            vision = model.get_vision_features(pixel_values=pixels.pixel_values)
+            for prompt in prompts:
+                if prompt not in texts:
+                    texts[prompt] = processor(text=prompt, return_tensors="pt").to("cuda")
+                output = model(vision_embeds=vision, input_ids=texts[prompt].input_ids,
+                               attention_mask=texts[prompt].attention_mask)
+                result = processor.post_process_instance_segmentation(
+                    output, threshold=min_score, target_sizes=[(height, width)])[0]
+                masks = result["masks"].bool().cpu().numpy()
+                boxes = result["boxes"].float().cpu().numpy().reshape(-1, 4)
+                scores = result["scores"].float().cpu().numpy().reshape(-1)
+                for k in range(len(scores)):
+                    detections.append((masks[k], boxes[k], float(scores[k]), prompt))
+        return detections
+
+    return detect, f"facebook/sam3@{SAM3_REV[:7]} (transformers Sam3Model)"
+
+
+def sam3_detector(torch, checkpoint, to_numpy_masks):
+    """detect(image, prompts, min_score) with Meta's sam3 package, as in milestone 2."""
+    from sam3.model.sam3_image_processor import Sam3Processor
+    from sam3.model_builder import build_sam3_image_model
+
+    processor = Sam3Processor(build_sam3_image_model(checkpoint_path=checkpoint))
+    return (lambda image, prompts, min_score: detect(processor, image, prompts, min_score, to_numpy_masks, torch),
+            "facebook/sam3 (sam3 package)")
+
+
 def save_frame(out, path, image, detections, prompts):
     width, height = image.size
     if detections:
@@ -99,18 +156,18 @@ def run(args, frames, prompts, out):
 
     sys.path.insert(0, str(common.TRACK_A))
     from milestone2_sam3_concepts import draw_overlay, to_numpy_masks
-    from sam3.model.sam3_image_processor import Sam3Processor
-    from sam3.model_builder import build_sam3_image_model
 
     started = time.perf_counter()
-    model = build_sam3_image_model(checkpoint_path=args.checkpoint)
-    processor = Sam3Processor(model)
+    if args.backend == "transformers":
+        find, model_name = transformers_detector(torch)
+    else:
+        find, model_name = sam3_detector(torch, args.checkpoint, to_numpy_masks)
     print(f"[sam3] model loaded in {time.perf_counter() - started:.1f}s")
 
     records = []
     for i, path in enumerate(frames):
         image = Image.open(path).convert("RGB")
-        detections = detect(processor, image, prompts, args.min_score, to_numpy_masks, torch)
+        detections = find(image, prompts, args.min_score)
         save_frame(out, path, image, detections, prompts)
         if args.overlays:
             draw_overlay(image, detections).save(out / f"{path.stem}__overlay.png")
@@ -120,7 +177,7 @@ def run(args, frames, prompts, out):
         print(f"[sam3] {i + 1}/{len(frames)} {path.stem}: {sum(found.values())} detections")
 
     (out / "manifest.json").write_text(json.dumps({
-        "format": FORMAT, "model": "facebook/sam3", "prompts": prompts, "min_score": args.min_score,
+        "format": FORMAT, "model": model_name, "backend": args.backend, "prompts": prompts, "min_score": args.min_score,
         "frame_selection": args.frames, "gpu": torch.cuda.get_device_name(0),
         "seconds": round(time.perf_counter() - started, 1), "frames": records,
     }, indent=1))

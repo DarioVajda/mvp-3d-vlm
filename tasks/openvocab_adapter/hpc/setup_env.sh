@@ -22,6 +22,9 @@ rm -f .venv-ov4d/.setup_ok  # written again at the end, only if every check pass
 $PY --version
 
 clone() {  # clone <url> <dir> <commit>
+    if ! command -v git >/dev/null && [[ -d $2 ]]; then  # cloned on the login node by hpc/start.sh
+        echo "no git here: using $2 as cloned"; return
+    fi
     if [[ ! -d $2 ]]; then
         command -v git >/dev/null || { echo "no git in this container: run 'git clone $1 $2' on the login node" >&2; exit 1; }
         git clone -q "$1" "$2"
@@ -37,7 +40,9 @@ $PY -m pip install -q "torch==2.14.1+cu130" torchvision --extra-index-url https:
 # --no-deps, so that neither package can swap the CUDA 13.0 PyTorch for another build
 $PY -m pip install -q --no-deps -e $OV/vggt -e $OV/sam3
 $PY -m pip install -q "$NUMPY_SPEC" Pillow huggingface_hub einops safetensors "rerun-sdk>=0.23" "pyarrow<26" \
-    opencv-python-headless "timm>=1.0.17" ftfy regex iopath pycocotools psutil tqdm typing_extensions
+    opencv-python-headless "timm>=1.0.17" "transformers==5.20.1" "setuptools<81" \
+    ftfy regex iopath pycocotools psutil tqdm typing_extensions
+# setuptools<81: SAM 3's model_builder imports pkg_resources, which setuptools 81 removed
 
 echo "== checks =="
 $PY - <<'EOF'
@@ -50,20 +55,25 @@ print("GPU ok:", torch.cuda.get_device_name(0))
 
 import cv2, rerun  # noqa: F401
 from sam3.model_builder import build_sam3_image_model  # noqa: F401
+from transformers import Sam3Model, Sam3Processor  # noqa: F401
 from sam3.model.sam3_image_processor import Sam3Processor  # noqa: F401
 from vggt.models.vggt import VGGT  # noqa: F401
 from vggt.utils.geometry import depth_to_world_coords_points  # noqa: F401
-print("imports ok: sam3, vggt, cv2, rerun")
+print("imports ok: sam3, transformers, vggt, cv2, rerun")
 
-try:
-    from huggingface_hub import auth_check
-    auth_check("facebook/sam3")
-    print("Hugging Face: access to facebook/sam3 ok")
-except ImportError:
-    print("Hugging Face: cannot check access with this huggingface_hub; the first SAM 3 load will tell")
-except Exception as error:
-    raise SystemExit(f"Hugging Face: no access to facebook/sam3 ({type(error).__name__}). Accept the license at "
-                     "https://huggingface.co/facebook/sam3 and log in with 'hf auth login'")
+import os
+snapshot = os.path.join(os.environ.get("HF_HUB_CACHE", os.path.expanduser("~/.cache/huggingface/hub")),
+                        "models--facebook--sam3", "snapshots", "3c879f39826c281e95690f02c7821c4de09afae7")
+if os.path.isfile(os.path.join(snapshot, "model.safetensors")):
+    print("SAM 3: cached transformers snapshot found, no Hugging Face login needed (sam3_infer.py --backend transformers)")
+else:
+    try:
+        from huggingface_hub import auth_check
+        auth_check("facebook/sam3")
+        print("SAM 3: no cached snapshot, but access to facebook/sam3 ok")
+    except Exception as error:
+        raise SystemExit(f"SAM 3: no cached snapshot and no access to facebook/sam3 ({type(error).__name__}). Accept the "
+                         "license at https://huggingface.co/facebook/sam3 and log in with 'hf auth login'")
 EOF
 touch .venv-ov4d/.setup_ok
 echo "setup done"

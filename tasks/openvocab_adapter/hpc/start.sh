@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
-# Everything in one command, on the login node:
+# Everything in one command, on the login node, as one Slurm job:
 #
 #   bash tasks/openvocab_adapter/hpc/start.sh
 #
 # 1. checks the inputs of every scene in hpc/scenes.tsv, before anything is submitted
-# 2. creates .venv-ov4d if it is missing (here: the container has no ensurepip)
-# 3. submits the setup job, unless an earlier setup finished
-# 4. submits one job per scene (they wait for the setup, and are cancelled if it fails) and the summary job
+# 2. creates .venv-ov4d if it is missing, and clones SAM 3 and VGGT at OpenVocab-4D's pinned commits (both on the
+#    login node: the container has no ensurepip, and may have no git)
+# 3. submits one job (hpc/run_packed.sh) on GPUS GPUs of one node: the setup if no earlier setup finished, then every
+#    scene, one per GPU at a time, then the summary
 #
-# Settings are passed on to submit_scenes.sh (RUNS, TIME, SCENES_FILE). SETUP=1 forces the setup job to run again.
+# Settings: GPUS (default 5), TIME (default 02:00:00), RUNS, SCENES_FILE, DENSE_ROOT, DATA; SETUP=1 runs the setup
+# again. A short test first, on two scenes:
+#   RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=tasks/openvocab_adapter/hpc/scenes_smoke.tsv \
+#       bash tasks/openvocab_adapter/hpc/start.sh
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 SCENES_FILE=${SCENES_FILE:-tasks/openvocab_adapter/hpc/scenes.tsv}
 DENSE_ROOT=${DENSE_ROOT:-data/vggt}
-export SCENES_FILE DENSE_ROOT
+RUNS=${RUNS:-half}
+SETUP=${SETUP:-0}
+export SCENES_FILE DENSE_ROOT RUNS SETUP
 
 echo "== 1. inputs =="
 missing=()
@@ -45,25 +51,27 @@ else
     echo ".venv-ov4d exists"
 fi
 
-echo "== 3. setup job =="
-mkdir -p logs/ov4d
-if [[ -f .venv-ov4d/.setup_ok && ${SETUP:-0} != 1 ]]; then
-    echo "an earlier setup finished, skipping it (SETUP=1 runs it again)"
-    unset AFTER
-else
-    AFTER=$(LOGDIR=ov4d slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh)
-    export AFTER
-    echo "submitted the setup as job $AFTER (log: logs/ov4d/ov4d_setup_$AFTER.out)"
-fi
+OV=openvocab-4D-main
+clone() {  # clone <url> <dir> <commit>: the commits pinned in hpc/setup_env.sh
+    [[ -d $2 ]] || git clone -q "$1" "$2"
+    git -C "$2" checkout -q "$3"
+}
+clone https://github.com/facebookresearch/vggt $OV/vggt a288dd0f14786c93483e45524328726ab7b1b4ce
+clone https://github.com/facebookresearch/sam3 $OV/sam3 5dd401d1c5c1d5c3eedff06d41b77af824517619
+echo "SAM 3 and VGGT cloned at the pinned commits"
 
-echo "== 4. scene jobs =="
-bash tasks/openvocab_adapter/hpc/submit_scenes.sh
+echo "== 3. one job =="
+GPUS=${GPUS:-5}
+mkdir -p logs/ov4d
+id=$(LOGDIR=ov4d slurm/submit.sh -J ov4d_compare --gres "gpu:$GPUS" -c $((8 * GPUS)) --mem $((64 * GPUS))G \
+    -t "${TIME:-02:00:00}" --constraint 'GPU_BRD:B300|GPU_BRD:B200' -- bash tasks/openvocab_adapter/hpc/run_packed.sh)
+echo "submitted job $id on $GPUS GPUs (runs: $RUNS); log: logs/ov4d/ov4d_compare_$id.out"
 
 cat <<EOF
 
-All submitted. Nothing else to do until the jobs finish:
-  squeue -u \$USER            shows what is still queued or running (empty = all done)
-When the list is empty, send the results back:
+All submitted. Nothing else to do until the job finishes:
+  squeue -u \$USER            shows whether it is still queued or running (empty = done)
+When it is done, send the results back:
   git add tasks/openvocab_adapter/results
   git commit -m 'OpenVocab-4D comparison results'
   git push

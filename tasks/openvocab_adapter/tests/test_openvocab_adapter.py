@@ -92,6 +92,38 @@ class Sam3Processor:
         return {"masks": Tensor(masks), "boxes": Tensor(np.array([r[:4] for r in rects], np.float32).reshape(-1, 4)),
                 "scores": Tensor(np.array([r[4] for r in rects], np.float32))}
 """
+TRANSFORMERS_STUB = """
+import numpy as np
+RECTS = {"chair": [(8, 8, 38, 38, 0.9)], "table": [(44, 10, 80, 46, 0.8), (0, 0, 6, 6, 0.52)]}
+class _T:
+    def __init__(self, a): self.a = np.asarray(a)
+    def bool(self): return _T(self.a.astype(bool))
+    def float(self): return _T(self.a.astype(np.float32))
+    def cpu(self): return self
+    def numpy(self): return self.a
+class _Batch(dict):
+    __getattr__ = dict.__getitem__
+    def to(self, device): return self
+class Sam3Processor:
+    @classmethod
+    def from_pretrained(cls, *a, **k): return cls()
+    def __call__(self, images=None, text=None, return_tensors=None):
+        return _Batch(pixel_values=images.size) if images is not None else _Batch(input_ids=text, attention_mask=None)
+    def post_process_instance_segmentation(self, output, threshold, target_sizes):
+        (h, w), rects = target_sizes[0], [r for r in RECTS.get(output[1], []) if r[4] >= threshold]
+        masks = np.zeros((len(rects), h, w), bool)
+        for i, (x0, y0, x1, y1, _) in enumerate(rects):
+            masks[i, y0:y1, x0:x1] = True
+        return [{"masks": _T(masks), "boxes": _T(np.array([r[:4] for r in rects], np.float32).reshape(-1, 4)),
+                 "scores": _T(np.array([r[4] for r in rects], np.float32))}]
+class Sam3Model:
+    @classmethod
+    def from_pretrained(cls, *a, **k): return cls()
+    def to(self, device): return self
+    def eval(self): return self
+    def get_vision_features(self, pixel_values): return pixel_values
+    def __call__(self, vision_embeds, input_ids, attention_mask): return (vision_embeds, input_ids)
+"""
 FAKE_TORCH = """
 class _Context:
     def __enter__(self): return self
@@ -368,8 +400,23 @@ class Sam3Script(unittest.TestCase):
     def run_script(self, *extra, gpu=True):
         paths = [str(self.gpu), str(self.stubs)] if gpu else []
         env = {**os.environ, "PYTHONPATH": os.pathsep.join(paths)}
+        if "--backend" not in extra:  # the stubs fake Meta's sam3 package
+            extra = ("--backend", "sam3", *extra)
         return subprocess.run([sys.executable, str(SAM3_INFER), "--images", str(self.scene / "frames"), "--prompts", PROMPTS,
                                "--out", str(self.root / "masks"), *extra], env=env, capture_output=True, text=True)
+
+    def test_transformers_backend_gives_the_same_format(self):
+        # a stub transformers whose Sam3Model finds the same rectangles as the sam3 stub; masks above min_score only
+        (self.stubs / "transformers.py").write_text(TRANSFORMERS_STUB)
+        done = self.run_script("--backend", "transformers", "--frames", "list:0,3")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        manifest = json.loads((self.root / "masks/manifest.json").read_text())
+        self.assertEqual(manifest["backend"], "transformers")
+        self.assertIn("transformers", manifest["model"])
+        with np.load(self.root / "masks/003__masks.npz") as z:
+            self.assertEqual(z["masks"].dtype, bool)
+            self.assertEqual(z["masks"].shape[0], 3)  # chair 0.9, table 0.8 and 0.52, all above 0.5
+            self.assertEqual(sorted(z["prompt_ids"].tolist()), [0, 1, 1])
 
     def test_dry_run_needs_no_torch_or_sam3(self):
         # a torch module that raises proves the dry run never imports it
@@ -533,7 +580,8 @@ class Integration(unittest.TestCase):
         assert adapt(data, cls.adapted, "--frames", "all", "--dense-dir", str(dense)) == 0
         cls.frames = cls.adapted / "frames"
         done = subprocess.run([sys.executable, str(SAM3_INFER), "--images", str(cls.frames), "--prompts", PROMPTS,
-                               "--out", str(cls.masks)], env=cls.env(gpu=True), capture_output=True, text=True)
+                               "--out", str(cls.masks), "--backend", "sam3"],  # the stubs fake Meta's sam3 package
+                              env=cls.env(gpu=True), capture_output=True, text=True)
         assert done.returncode == 0, done.stderr
         cls.saved_run = cls.milestone4(cls.adapted, "--masks-dir", str(cls.masks))
         assert cls.saved_run.returncode == 0, cls.saved_run.stderr
