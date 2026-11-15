@@ -1,6 +1,6 @@
 """Standalone SAM 3 inference: save masks for a list of frames, for reuse by OpenVocab-4D.
 
-Runs on a machine with an NVIDIA GPU (see HPC_RUNBOOK.md). VGGT is neither needed nor loaded. --dry-run checks the
+Runs on a machine with an NVIDIA GPU (see README.md). VGGT is neither needed nor loaded. --dry-run checks the
 inputs and prints the plan without importing torch or SAM 3.
 
 Output, in --out:
@@ -95,7 +95,7 @@ def run(args, frames, prompts, out):
     import torch
 
     if not torch.cuda.is_available():
-        sys.exit("[sam3] no CUDA GPU here. This script is meant for a machine with an NVIDIA GPU; see HPC_RUNBOOK.md")
+        sys.exit("[sam3] no CUDA GPU here. This script is meant for a machine with an NVIDIA GPU; see tasks/openvocab_adapter/README.md")
 
     sys.path.insert(0, str(common.TRACK_A))
     from milestone2_sam3_concepts import draw_overlay, to_numpy_masks

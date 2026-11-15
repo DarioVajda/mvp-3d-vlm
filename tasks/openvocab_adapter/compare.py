@@ -38,7 +38,7 @@ from eval_colmap import umeyama_sim3  # noqa: E402  (import-safe: its arguments 
 SEED = 0
 NEEDS = {
     "adapted_depth": "dense depth: get depth.npy and depth_conf.npy from Dario and rerun adapt_vggt.py --dense-dir",
-    "masks": "SAM 3 masks: run sam3_infer.py on a GPU machine (HPC_RUNBOOK.md)",
+    "masks": "SAM 3 masks: run sam3_infer.py on a GPU machine (README.md)",
     "adapted_outputs": "adapted tracking and fusion: run milestone 4 --stages track,fuse --masks-dir on adapted/",
     "native_geometry": "native VGGT reference: run milestone 4 --stages vggt on a GPU machine",
     "native_outputs": "native tracking and fusion: run milestone 4 --stages track,fuse --masks-dir on native/",
