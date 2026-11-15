@@ -64,6 +64,8 @@ def parse_args():
                    help="min cosine similarity to re-identify a dormant/distant track")
     p.add_argument("--reid-radius-frac", type=float, default=0.15,
                    help="re-id search radius as a fraction of the scene diagonal")
+    p.add_argument("--masks-dir", default=None,
+                   help="reuse saved SAM 3 masks from this folder in stage track instead of running SAM 3")
     return p.parse_args()
 
 
@@ -304,16 +306,26 @@ def stage_track(frames):
     prompts = [s.strip() for s in ARGS.prompts.split(",") if s.strip()]
     conf_thr = np.percentile(conf, ARGS.conf_percentile)
 
-    from sam3.model.sam3_image_processor import Sam3Processor
-    from sam3.model_builder import build_sam3_image_model
-
     t0 = time.perf_counter()
-    model = build_sam3_image_model()
-    processor = Sam3Processor(model)
+    saved = model = processor = None
+    if ARGS.masks_dir:
+        from saved_masks import SavedMasks
+
+        # 0.55 is the detection threshold applied in the loop below
+        saved = SavedMasks(ARGS.masks_dir, prompts, frames, 0.55)
+        if not ARGS.no_reid and not torch.cuda.is_available():
+            sys.exit("[track] re-identification needs CUDA and DINOv2 weights; without a GPU pass --no-reid "
+                     "(and use it for every run being compared)")
+    else:
+        from sam3.model.sam3_image_processor import Sam3Processor
+        from sam3.model_builder import build_sam3_image_model
+
+        model = build_sam3_image_model()
+        processor = Sam3Processor(model)
     dino = None
     if not ARGS.no_reid:
         dino = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14").cuda().eval()
-    print(f"[track] SAM 3 image model loaded in {time.perf_counter() - t0:.1f}s"
+    print(f"[track] {'saved masks ready' if saved else 'SAM 3 image model loaded'} in {time.perf_counter() - t0:.1f}s"
           f"{' (+ DINOv2-S re-id)' if dino is not None else ''}")
 
     label_vols = {pi: np.zeros((S, dh, dw), np.uint16) for pi in range(len(prompts))}
@@ -321,7 +333,8 @@ def stage_track(frames):
     next_id = [1] * len(prompts)
     scene_diag = None
     tp = time.perf_counter()
-    torch.cuda.reset_peak_memory_stats()
+    if torch.cuda.is_available():  # saved masks can run on a CPU-only machine
+        torch.cuda.reset_peak_memory_stats()
 
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         for f, path in enumerate(frames):
@@ -335,15 +348,18 @@ def stage_track(frames):
             eps_far = ARGS.reid_radius_frac * scene_diag
 
             pil_img = Image.open(path).convert("RGB")
-            state = processor.set_image(pil_img)
+            state = None if saved else processor.set_image(pil_img)
             for pi, prompt in enumerate(prompts):
-                output = processor.set_text_prompt(prompt=prompt, state=state)
-                masks = output["masks"]
-                masks = masks.detach().float().cpu().numpy() if torch.is_tensor(masks) else np.asarray(masks)
-                masks = np.squeeze(masks)
-                if masks.ndim == 2:
-                    masks = masks[None]
-                scores = output["scores"].detach().float().cpu().numpy().reshape(-1)
+                if saved:
+                    masks, scores = saved.get(path, prompt)
+                else:
+                    output = processor.set_text_prompt(prompt=prompt, state=state)
+                    masks = output["masks"]
+                    masks = masks.detach().float().cpu().numpy() if torch.is_tensor(masks) else np.asarray(masks)
+                    masks = np.squeeze(masks)
+                    if masks.ndim == 2:
+                        masks = masks[None]
+                    scores = output["scores"].detach().float().cpu().numpy().reshape(-1)
                 dets = []
                 for k in range(min(len(scores), len(masks))):
                     if scores[k] < 0.55:
@@ -456,6 +472,8 @@ def stage_track(frames):
     tracks_dir.mkdir(exist_ok=True)
     summary = {"method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
                "seconds": round(time.perf_counter() - tp, 1), "peak_vram_gib": round(peak, 2)}
+    if saved:
+        summary["saved_masks"] = saved.describe()
     for pi, prompt in enumerate(prompts):
         stable = {tid: tr for tid, tr in tracks[pi].items() if tr["frames"] >= 3}
         # drop flicker tracks (seen <3 frames) from the volume

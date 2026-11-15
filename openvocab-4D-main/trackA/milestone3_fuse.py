@@ -46,6 +46,8 @@ def parse_args():
                    help="discard per-frame instance fragments smaller than this")
     p.add_argument("--max-bg-points", type=int, default=800_000,
                    help="subsample the gray background cloud to this size")
+    p.add_argument("--masks-dir", default=None,
+                   help="reuse saved SAM 3 masks from this folder instead of running SAM 3")
     return p.parse_args()
 
 
@@ -121,6 +123,24 @@ def run_sam3(image_paths, prompts, min_score, dw, dh):
     return per_frame
 
 
+def load_saved_masks(masks_dir, image_paths, prompts, min_score, dw, dh):
+    """run_sam3's result, read from saved masks."""
+    from saved_masks import SavedMasks
+
+    saved = SavedMasks(masks_dir, prompts, image_paths, min_score)
+    per_frame = []
+    for path in image_paths:
+        dets = []
+        for pi, prompt in enumerate(prompts):
+            masks, scores = saved.get(path, prompt)
+            for k in range(len(scores)):
+                if scores[k] >= min_score:
+                    dets.append((resize_mask(masks[k], dw, dh), float(scores[k]), pi))
+        per_frame.append(dets)
+    print(f"[m3] loaded saved masks from {masks_dir} ({saved.fingerprint[:12]})")
+    return per_frame
+
+
 def main():
     args = ARGS
     prompts = [s.strip() for s in args.prompts.split(",") if s.strip()]
@@ -136,7 +156,10 @@ def main():
     print(f"[m3] {S} frames @ {dw}x{dh} | prompts: {prompts}")
 
     t_start = time.perf_counter()
-    per_frame = run_sam3(image_paths, prompts, args.min_score, dw, dh)
+    if args.masks_dir:
+        per_frame = load_saved_masks(args.masks_dir, image_paths, prompts, args.min_score, dw, dh)
+    else:
+        per_frame = run_sam3(image_paths, prompts, args.min_score, dw, dh)
     sam3_secs = time.perf_counter() - t_start
 
     # unproject expects (S,H,W,1); depth.npz stores (S,H,W)
