@@ -1,5 +1,54 @@
 # OpenVocab-4D on Dario's VGGT reconstructions
 
+## Quick start (Dario): run these on the cluster's login node
+
+**A. Once, before the first run.** SAM 3's weights are gated:
+
+1. Accept the license at <https://huggingface.co/facebook/sam3> with your Hugging Face account.
+2. Check that the cluster is logged in to that account: `.venv/bin/hf auth whoami` should print your user name. If
+   it doesn't, run `.venv/bin/hf auth login`.
+
+**B. Start everything.** From the project root, the checkout that has `data/vggt/`:
+
+```bash
+git fetch origin
+git checkout vggt_output_adapter
+git pull
+bash tasks/openvocab_adapter/hpc/start.sh
+```
+
+`start.sh` does all of the following itself:
+
+- checks that the dense depth is there for all 10 scenes, and submits nothing if not;
+- creates `.venv-ov4d` (a separate environment; `.venv` is not touched);
+- submits the setup job, then one job per scene, then a summary job.
+
+The scene jobs wait for the setup job, and they are cancelled automatically if it fails. It ends by printing
+`All submitted`.
+
+**C. Wait.** `squeue -u $USER` lists the jobs still queued or running. When it is empty, everything has finished. This
+hasn't been timed on the cluster yet, but the guess is under an hour once the jobs start.
+
+**D. Send the results back.**
+
+```bash
+git add tasks/openvocab_adapter/results
+git commit -m 'OpenVocab-4D comparison results'
+git push
+```
+
+These are small text files only, never frames. Push them even if something failed, because each scene's `run.log`
+shows where it stopped.
+
+**If it goes wrong:**
+
+- `start.sh` stops with `missing: ...`: run it from the checkout that has `data/vggt/`.
+- The setup job fails: its log is in `logs/ov4d/ov4d_setup_<job id>.out`, and the scene jobs are cancelled
+  automatically. Fix the problem using the [troubleshooting table](#troubleshooting), then run `start.sh` again.
+- Anything else: push `results/` as in step D. The rest of this README explains every step in detail.
+
+---
+
 This folder checks that OpenVocab-4D gives the same objects when it runs on Dario's saved VGGT reconstructions
 (`data/vggt/`, exported in `tasks/vggt_data/`) as when it runs on its own VGGT.
 
@@ -71,6 +120,9 @@ git pull
 ```
 
 ## Step 2: set up the environment (once)
+
+`hpc/start.sh` does steps 2 and 3 for you. This section and the next explain what it runs, so you can also run the
+steps by hand.
 
 This makes a separate Python environment, `.venv-ov4d`, for OpenVocab-4D. The project's `.venv` is not changed.
 
@@ -422,6 +474,7 @@ Use a separate environment, not your system Python. Use the same `--no-reid` set
 
 | File | Purpose |
 |---|---|
+| `hpc/start.sh` | The quick start: checks the inputs, then submits the setup, every scene and the summary |
 | `hpc/setup_env.sh` | Step 2: installs `.venv-ov4d` and checks it |
 | `hpc/submit_scenes.sh` | Step 3: submits one `run_all.sh` job per scene in `scenes.tsv`, then the summary job |
 | `hpc/scenes.tsv` | The 10 scenes and their SAM 3 prompts |

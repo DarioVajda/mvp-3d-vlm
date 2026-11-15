@@ -18,6 +18,7 @@ OV=openvocab-4D-main
 NUMPY_SPEC=${NUMPY_SPEC:-"numpy>=1.26,<2"}
 
 [[ -x $PY ]] || { echo "no $PY: create it on the login node with /usr/bin/python3 -m venv .venv-ov4d" >&2; exit 1; }
+rm -f .venv-ov4d/.setup_ok  # written again at the end, only if every check passes (hpc/start.sh looks for it)
 $PY --version
 
 clone() {  # clone <url> <dir> <commit>
@@ -64,4 +65,5 @@ except Exception as error:
     raise SystemExit(f"Hugging Face: no access to facebook/sam3 ({type(error).__name__}). Accept the license at "
                      "https://huggingface.co/facebook/sam3 and log in with 'hf auth login'")
 EOF
+touch .venv-ov4d/.setup_ok
 echo "setup done"

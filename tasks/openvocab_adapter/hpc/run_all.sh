@@ -37,7 +37,7 @@ NAME=${SCENE/\//__}
 WORK=${WORK:-$A/out/$NAME}
 MASKS=$WORK/masks
 RESULTS=${RESULTS:-$A/results/$NAME}
-DENSE=${DENSE:-data/vggt/$SCENE}
+DENSE=${DENSE:-${DENSE_ROOT:-data/vggt}/$SCENE}
 
 mkdir -p "$WORK" "$RESULTS"
 exec > >(tee "$RESULTS/run.log") 2>&1

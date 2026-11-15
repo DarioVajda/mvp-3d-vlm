@@ -4,20 +4,23 @@
 #
 #   bash tasks/openvocab_adapter/hpc/submit_scenes.sh
 #
-# Optional: RUNS (default "eval32 all"), SCENES_FILE (default hpc/scenes.tsv), TIME (default 01:00:00 per scene).
+# Optional: RUNS (default "eval32 all"), SCENES_FILE (default hpc/scenes.tsv), TIME (default 01:00:00 per scene),
+# AFTER=<job id>: start the scenes only once that job has succeeded, and cancel them if it fails (used by hpc/start.sh).
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 SCENES_FILE=${SCENES_FILE:-tasks/openvocab_adapter/hpc/scenes.tsv}
 export RUNS=${RUNS:-eval32 all}
 TIME=${TIME:-01:00:00}
 export LOGDIR=ov4d
+after=()
+[[ -n ${AFTER:-} ]] && after=(--dependency="afterok:$AFTER" --kill-on-invalid-dep=yes)
 
 ids=()
 while IFS=$'\t' read -r scene prompts; do
     prompts=${prompts%$'\r'}  # in case the file was saved with Windows line endings
     [[ -z $scene || $scene == \#* ]] && continue
     name=${scene//\//__}
-    id=$(SCENE=$scene PROMPTS=$prompts slurm/submit.sh -J "ov4d_$name" -t "$TIME" -- \
+    id=$(SCENE=$scene PROMPTS=$prompts slurm/submit.sh -J "ov4d_$name" -t "$TIME" ${after[@]+"${after[@]}"} -- \
         bash tasks/openvocab_adapter/hpc/run_all.sh)
     echo "submitted $scene (selections: $RUNS) as job $id"
     ids+=("$id")
