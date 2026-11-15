@@ -764,5 +764,58 @@ class ComparisonMaths(unittest.TestCase):
             self.assertTrue(any("dtype" in p for p in compare.array_problems(path, compare.ARRAY_SPECS["depth.npz"], {})))
 
 
+class SceneList(unittest.TestCase):
+    def setUp(self):
+        sys.path.insert(0, str(ADAPTER / "hpc"))
+        import make_scene_list
+
+        self.objects_in = make_scene_list.objects_in
+
+    def check(self, kind, question, expected):
+        self.assertEqual(self.objects_in({"question_type": kind, "question": question}), expected)
+
+    def test_every_template(self):
+        self.check("object_counting", "How many table(s) are in this room?", ["table"])
+        self.check("object_size_estimation", "What is the length of the longest dimension (length, width, or height) "
+                   "of the trash bin, measured in centimeters?", ["trash bin"])
+        self.check("object_abs_distance", "Measuring from the closest point of each object, what is the distance "
+                   "between the sofa and the TV (in meters)?", ["sofa", "tv"])
+        self.check("object_rel_distance", "Measuring from the closest point of each object, which of these objects "
+                   "(chair, stool, stove, sofa) is the closest to the tv?", ["chair", "stool", "stove", "sofa", "tv"])
+        for kind, tail in (("easy", "to the left or the right of the sofa?"), ("medium", "to my left, right, or back?"),
+                           ("hard", "to my front-left, front-right, back-left, or back-right?")):
+            self.check(f"object_rel_direction_{kind}", f"If I am standing by the stove and facing the sofa, is the "
+                       f"tv {tail}", ["stove", "sofa", "tv"])
+        self.check("obj_appearance_order", "What will be the first-time appearance order of the following categories "
+                   "in the video: door, lamp, bed, mirror?", ["door", "lamp", "bed", "mirror"])
+
+    def test_skipped_and_unknown_types(self):
+        self.check("route_planning", "You are a robot beginning at the sofa", [])
+        self.check("object_counting", "A question in another wording", None)
+
+
+class Summary(unittest.TestCase):
+    def test_table_has_every_scene_including_failed_ones(self):
+        sys.path.insert(0, str(ADAPTER))
+        import summarize
+
+        report = compare.Report()
+        report.add("tracking consistency", "MEASURED", values={"pixels_with_matching_identity": 0.95})
+        report.add("object labels: objects per concept", "MEASURED",
+                   values={"adapted": {"chair": 2, "table": 1}, "native": {"chair": 2, "table": 2}})
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp)
+            (results / "scannet__a/eval32").mkdir(parents=True)
+            (results / "scannet__a/eval32/comparison.json").write_text(
+                json.dumps({"counts": report.counts(), **compare.verdict(report), "comparisons": report.rows}))
+            (results / "scannet__b").mkdir()
+            (results / "scannet__b/run.log").write_text("...\nno dense depth in data/vggt/scannet/b\n")
+            summarize.main(["--results", str(results)])
+            text = (results / "SUMMARY.md").read_text()
+        self.assertIn("| scannet/a | eval32 | **INCOMPLETE** | 3 / 4 | 95.0% |", text)
+        self.assertIn("| scannet/b | - | no result |", text)
+        self.assertIn("no dense depth", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,11 @@
+# scene<TAB>SAM 3 prompts. Made by make_scene_list.py; edit freely.
+scannet/scene0025_01	fan,pillow,telephone,door,keyboard,chair,monitor,table,sofa,window
+scannet/scene0046_01	lamp,door,towel,trash bin,nightstand,backpack,mirror,chair,tv,table,bed
+scannet/scene0149_00	trash bin,chair,refrigerator,window,microwave,counter,table
+scannet/scene0207_02	mirror,nightstand,backpack,chair,trash bin,closet,radiator,pillow,printer,refrigerator,sofa,window
+scannetpp/09c1414f1b	kettle,microwave,trash can,pillow,suitcase,refrigerator,cutting board,blanket,shoe rack,sofa,tv,plant
+scannetpp/0d2ee665be	bed,pan,trash can,microwave,computer mouse,cutting board,chair,door,keyboard,table,laptop,monitor
+scannetpp/1ada7a0617	door,computer tower,heater,telephone,keyboard,chair,whiteboard,computer mouse,bucket,monitor
+arkitscenes/41069025	sofa,stove,tv,chair,table
+arkitscenes/41159525	refrigerator,stove,table,chair,stool
+arkitscenes/42444976	dishwasher,washer,refrigerator,table,chair

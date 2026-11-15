@@ -3,7 +3,7 @@
 This folder checks that OpenVocab-4D gives the same objects when it runs on Dario's saved VGGT reconstructions
 (`data/vggt/`, exported in `tasks/vggt_data/`) as when it runs on its own VGGT.
 
-For one scene (`scannet/scene0025_01` by default), it does the following:
+It does this for 10 scenes (listed in `hpc/scenes.tsv`), one GPU job per scene. For each scene:
 
 1. It runs SAM 3 once on the scene's 128 frames and saves the masks.
 2. It runs OpenVocab-4D's tracking and fusion twice, with those same masks:
@@ -15,8 +15,8 @@ For one scene (`scannet/scene0025_01` by default), it does the following:
 The frames and the masks are identical, so the geometry is the only difference. If the adapter is right, both runs
 find the same objects in the same places.
 
-Everything below is one Slurm job on the cluster. SAM 3 and VGGT need a GPU, and the dense depth that the adapted run
-needs is only on the cluster.
+It all runs as Slurm jobs on the cluster: one per scene, plus a short one at the end that collects the results into
+one table. SAM 3 and VGGT need a GPU, and the dense depth that the adapted run needs is only on the cluster.
 
 Contents:
 
@@ -118,12 +118,47 @@ already there.
 
 ## Step 3: run the comparison
 
+### All 10 scenes (the usual way)
+
+On the login node:
+
 ```bash
-slurm/submit.sh -J ov4d_compare -t 02:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
+bash tasks/openvocab_adapter/hpc/submit_scenes.sh
 ```
 
-To follow it, use `tail -f logs/ov4d_compare_<job id>.out`. The same log is also written to
-`tasks/openvocab_adapter/results/scannet__scene0025_01/run.log`.
+This submits one job per scene in [`hpc/scenes.tsv`](hpc/scenes.tsv), and they run in parallel. Each job compares
+the `eval32` and `all` frame selections (see below). The script also submits an `ov4d_summary` job, which waits until
+every scene has finished and then writes `results/SUMMARY.md`. It prints every job id:
+
+```
+submitted scannet/scene0025_01 (selections: eval32 all) as job 123456
+...
+submitted the summary as job 123466; it runs once all 10 scenes have finished
+```
+
+Each scene's log is `logs/ov4d/ov4d_<dataset>__<scene>_<job id>.out`, and the same log is copied to
+`tasks/openvocab_adapter/results/<dataset>__<scene>/run.log`. Use `squeue -u $USER` to see which jobs are still
+running.
+
+**The 10 scenes** are scannet/scene0025_01, then the first landscape scenes of each dataset in name order: 4 from
+ScanNet, 3 from ScanNet++ and 3 from ARKitScenes. Each scene's SAM 3 prompts are the objects named in its VSI-Bench
+questions, which `hpc/make_scene_list.py` reads from the question templates.
+
+- To change the scenes or prompts, edit `hpc/scenes.tsv` directly, or rerun
+  `python tasks/openvocab_adapter/hpc/make_scene_list.py --per-dataset scannet=2 scannetpp=2 arkitscenes=1`.
+- Portrait ARKitScenes videos are left out. OpenVocab-4D's own VGGT loader resizes portrait frames to a different
+  shape than Dario's export, so the two runs' depth maps could not be compared pixel by pixel.
+
+### One scene only
+
+```bash
+slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
+```
+
+This runs `scannet/scene0025_01` with all three frame selections. For another scene, set `SCENE` and `PROMPTS` (see
+[Settings](#settings)).
+
+### What each scene's job does
 
 The job prints a `=== time step ===` line as each step starts:
 
@@ -137,7 +172,8 @@ The job prints a `=== time step ===` line as each step starts:
 | `5/5 <selection>: scene sheets and comparison` | A scene sheet for each run, then `compare.py` |
 | `summary` | The verdict for each selection |
 
-Steps 3 to 5 are repeated for three frame selections:
+Steps 3 to 5 are repeated for each frame selection. A single-scene run does all three, and `submit_scenes.sh` does
+`eval32` and `all`:
 
 | Selection | Frames | Why |
 |---|---|---|
@@ -149,35 +185,46 @@ Where the frames come from: the job uses an existing export in `tasks/vggt_data/
 re-exports this one scene from `data/vggt/` into `tasks/openvocab_adapter/out/export/`, using the project's `.venv`.
 Your existing export is never changed.
 
-It should take well under the 2-hour limit. Most of the time goes on SAM 3 and on the first download of the weights,
-but this hasn't been timed on the cluster yet. If it times out, run one selection at a time (see [Settings](#settings)).
-A rerun reuses the saved SAM 3 masks.
+**How long it takes.** This hasn't been timed on the cluster yet. A rough guess is 10–20 minutes per scene: a few
+minutes for SAM 3, seconds for VGGT, and a few minutes for tracking, fusion and the scene sheets. The first job also
+downloads the weights. The `-t` value is only the limit at which Slurm stops a job, not how long it runs. Since the
+scenes run in parallel, all 10 should take about as long as one, once the jobs start. If a job hits its limit, rerun
+it with a longer `TIME` (see [Settings](#settings)). A rerun reuses the saved SAM 3 masks.
 
 All large intermediate files (frames, depth, masks, tracks, point clouds) go to
 `tasks/openvocab_adapter/out/`, which is gitignored.
 
 ## Step 4: send the results back
 
-At the end, the job prints the command to commit the results:
+When the summary job has finished (check with `squeue -u $USER`), commit the whole results folder:
 
 ```bash
-git add tasks/openvocab_adapter/results/scannet__scene0025_01
-git commit -m 'OpenVocab-4D comparison results for scannet/scene0025_01'
+git add tasks/openvocab_adapter/results
+git commit -m 'OpenVocab-4D comparison results'
 git push
 ```
 
-This commits only small text files, a few hundred KB in total. Please don't commit anything from
+This commits only small text files, a few hundred KB per scene. If the summary job didn't run, write the summary by
+hand with `.venv-ov4d/bin/python tasks/openvocab_adapter/summarize.py`. Please don't commit anything from
 `tasks/openvocab_adapter/out/`: it holds the ScanNet frames, and ScanNet's terms of use don't allow passing those on.
 
 **If the job failed,** commit `results/.../run.log` anyway, because it shows where it stopped.
 
 ## Step 5: read the results
 
-Get them with `git pull` on branch `vggt_output_adapter`. Everything is in
-`tasks/openvocab_adapter/results/scannet__scene0025_01/`:
+Get them with `git pull` on branch `vggt_output_adapter`.
+
+**Start with `tasks/openvocab_adapter/results/SUMMARY.md`.** It has one row per scene and frame selection, with the
+verdict, the objects each run found, and the four numbers behind the verdict. A scene whose job failed still gets a
+row, saying `no result`, with the last line of its log.
+
+If most scenes say `MATCHES`, running SAM 3 directly on Dario's VGGT output gives the same result as the full
+OpenVocab-4D pipeline. If a few scenes say `DIFFERS`, look at those scenes' folders.
+
+Each scene has its own folder, `results/<dataset>__<scene>/`:
 
 ```
-SUMMARY.txt                  start here: the verdict for each selection, and the numbers behind it
+SUMMARY.txt                  the verdict for each selection, and the numbers behind it
 run.log                      the job's full output
 environment.txt              date, machine, GPU, commit, settings, pip freeze
 masks_manifest.json          how many objects SAM 3 found per frame and prompt
@@ -245,8 +292,19 @@ Each comparison in `comparison.json` has one of four statuses:
 Set these in front of the submit command. `slurm/submit.sh` passes your environment on to the job.
 
 ```bash
+RUNS=all bash tasks/openvocab_adapter/hpc/submit_scenes.sh
 RUNS=eval32 slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
 ```
+
+For `submit_scenes.sh`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `RUNS` | `eval32 all` | The frame selections to run for every scene |
+| `TIME` | `01:00:00` | The time limit of each scene's job |
+| `SCENES_FILE` | `hpc/scenes.tsv` | One scene per line: `<dataset>/<scene>`, a tab, then comma-separated prompts |
+
+For `run_all.sh` (one scene):
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -276,7 +334,8 @@ Results for another scene go to their own folder, `results/<dataset>__<scene>/`.
 | `[adapter] FAIL ...` and `nothing written` | Dario's export and `data/vggt/` disagree, for example frames from another run. The line names the check. Send `run.log` |
 | `masks are (...) the image is (...)` | SAM 3 returned masks at another size. Send `run.log` |
 | `already holds a finished run` | Old masks are in the way. Delete `tasks/openvocab_adapter/out/<scene>/masks/` to run SAM 3 again |
-| The job hits the time limit | Run one selection at a time with `RUNS=...`. The masks are kept, so SAM 3 doesn't run again |
+| The job hits the time limit | Resubmit that scene with a longer limit, or one selection at a time with `RUNS=...`. The masks are kept, so SAM 3 doesn't run again |
+| A scene's row in `SUMMARY.md` says `no result` | Its job stopped before comparing. The row shows the last line of its log, and `results/<scene>/run.log` has the rest. Resubmit just that scene with `SCENE=... PROMPTS=... slurm/submit.sh ... run_all.sh` |
 | CUDA out of memory in the VGGT stage | Unlikely on a B200, but if it happens, run `RUNS="smoke5 eval32"` first and send the log |
 
 ## Running the tests without a GPU
@@ -364,7 +423,11 @@ Use a separate environment, not your system Python. Use the same `--no-reid` set
 | File | Purpose |
 |---|---|
 | `hpc/setup_env.sh` | Step 2: installs `.venv-ov4d` and checks it |
-| `hpc/run_all.sh` | Step 3: the whole comparison as one job |
+| `hpc/submit_scenes.sh` | Step 3: submits one `run_all.sh` job per scene in `scenes.tsv`, then the summary job |
+| `hpc/scenes.tsv` | The 10 scenes and their SAM 3 prompts |
+| `hpc/make_scene_list.py` | Writes `scenes.tsv`: picks the scenes and reads each one's objects from its questions |
+| `hpc/run_all.sh` | The whole comparison for one scene, as one job |
+| `summarize.py` | Writes `results/SUMMARY.md` from every scene's `comparison.json` |
 | `adapt_vggt.py` | Converts Dario's cameras and dense depth to OpenVocab-4D's `frames/`, `cameras.npz` and `depth.npz`, after validating them |
 | `sam3_infer.py` | Runs SAM 3 on a list of frames and saves the masks |
 | `compare.py` | Compares an adapted run with a native run, including their scene sheets, and gives the verdict |
