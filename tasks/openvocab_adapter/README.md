@@ -27,7 +27,8 @@ The scene jobs wait for the setup job, and they are cancelled automatically if i
 `All submitted`.
 
 **C. Wait.** `squeue -u $USER` lists the jobs still queued or running. When it is empty, everything has finished. This
-hasn't been timed on the cluster yet, but the guess is under an hour once the jobs start.
+hasn't been timed on the cluster yet. The guess is about half an hour once the jobs start: about 20 minutes of setup,
+then roughly 5–10 minutes per scene, with the scenes running in parallel.
 
 **D. Send the results back.**
 
@@ -54,7 +55,7 @@ This folder checks that OpenVocab-4D gives the same objects when it runs on Dari
 
 It does this for 10 scenes (listed in `hpc/scenes.tsv`), one GPU job per scene. For each scene:
 
-1. It runs SAM 3 once on the scene's 128 frames and saves the masks.
+1. It runs SAM 3 once on every other frame of the scene's 128 frames (64 frames), and saves the masks.
 2. It runs OpenVocab-4D's tracking and fusion twice, with those same masks:
    - **adapted**: on Dario's VGGT geometry, converted to OpenVocab-4D's format by `adapt_vggt.py`;
    - **native**: on OpenVocab-4D's own VGGT, run on the same frames.
@@ -179,11 +180,11 @@ bash tasks/openvocab_adapter/hpc/submit_scenes.sh
 ```
 
 This submits one job per scene in [`hpc/scenes.tsv`](hpc/scenes.tsv), and they run in parallel. Each job compares
-the `eval32` and `all` frame selections (see below). The script also submits an `ov4d_summary` job, which waits until
+the two runs on every other frame (the `half` selection; see below). The script also submits an `ov4d_summary` job, which waits until
 every scene has finished and then writes `results/SUMMARY.md`. It prints every job id:
 
 ```
-submitted scannet/scene0025_01 (selections: eval32 all) as job 123456
+submitted scannet/scene0025_01 (selections: half) as job 123456
 ...
 submitted the summary as job 123466; it runs once all 10 scenes have finished
 ```
@@ -207,7 +208,7 @@ questions, which `hpc/make_scene_list.py` reads from the question templates.
 slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
 ```
 
-This runs `scannet/scene0025_01` with all three frame selections. For another scene, set `SCENE` and `PROMPTS` (see
+This runs `scannet/scene0025_01` on every other frame. For another scene, set `SCENE` and `PROMPTS` (see
 [Settings](#settings)).
 
 ### What each scene's job does
@@ -216,29 +217,40 @@ The job prints a `=== time step ===` line as each step starts:
 
 | Step | What happens |
 |---|---|
-| `inputs` | Finds the scene's 128 frames (see below) and the dense depth. Records the GPU, the commit and `pip freeze` in `environment.txt` |
+| `inputs` | Finds the scene's frames (see below) and the dense depth. Records the GPU, the commit and `pip freeze` in `environment.txt` |
 | `1/5 CPU tests` | The unit tests. They must end with `OK`, or the job stops |
-| `2/5 SAM 3 masks` | SAM 3 on all 128 frames × 10 prompts. Skipped if a finished set of masks already exists |
+| `2/5 SAM 3 masks` | SAM 3 on the frames the selections need (64 by default) × the scene's prompts. Skipped if saved masks already cover them |
 | `3/5 <selection>: adapt Dario's VGGT` | Validates Dario's cameras and depth, then writes them in OpenVocab-4D's format. Every check line starts with `ok`. If one says `FAIL`, nothing is written and the job stops |
 | `4/5 <selection>: OpenVocab-4D ...` | Tracking and fusion on the adapted geometry, then VGGT, tracking and fusion for the native run |
 | `5/5 <selection>: scene sheets and comparison` | A scene sheet for each run, then `compare.py` |
 | `summary` | The verdict for each selection |
 
-Steps 3 to 5 are repeated for each frame selection. A single-scene run does all three, and `submit_scenes.sh` does
-`eval32` and `all`:
+By default, each scene runs one frame selection, `half`: every other frame of the 128. Set `RUNS` to run others,
+which run one after the other (see [Settings](#settings)):
 
 | Selection | Frames | Why |
 |---|---|---|
+| `half` (default) | 64 frames: 0, 2, 4, …, 126 | Half the cost of all 128 |
 | `smoke5` | 5 nearby frames (118, 120, …, 126) | A quick check that everything runs |
 | `eval32` | The `uniform32` subset from `meta.json` | The frames the group's experiments use |
 | `all` | All 128 frames | The same frames Dario's reconstruction saw |
+
+**Using every other frame doesn't weaken the test.** Both runs always see exactly the same frames, and the adapter
+converts Dario's data the same way whichever frames are picked. Two things do change slightly. OpenVocab-4D's own VGGT
+sees 64 frames instead of 128, so it may disagree a little more with Dario's 128-frame reconstruction, which makes
+the test slightly stricter. And tracking jumps about a second between frames instead of half a second, which it
+handles well. For a spot check on all 128 frames, rerun one scene with `RUNS=all`.
+
+SAM 3 segments only the frames the chosen selections need. Its masks are kept and reused by later runs, unless those
+need frames or prompts that the saved masks lack.
 
 Where the frames come from: the job uses an existing export in `tasks/vggt_data/out/`. If there is none, it
 re-exports this one scene from `data/vggt/` into `tasks/openvocab_adapter/out/export/`, using the project's `.venv`.
 Your existing export is never changed.
 
-**How long it takes.** This hasn't been timed on the cluster yet. A rough guess is 10–20 minutes per scene: a few
-minutes for SAM 3, seconds for VGGT, and a few minutes for tracking, fusion and the scene sheets. The first job also
+**How long it takes.** This hasn't been timed on the cluster yet. With the default `half`, a rough guess is 5–10
+minutes per scene: a couple of minutes for SAM 3, seconds for VGGT, and a few minutes for tracking, fusion and the
+scene sheets. That is about 1–2 GPU-hours for all 10 scenes. The first job also
 downloads the weights. The `-t` value is only the limit at which Slurm stops a job, not how long it runs. Since the
 scenes run in parallel, all 10 should take about as long as one, once the jobs start. If a job hits its limit, rerun
 it with a longer `TIME` (see [Settings](#settings)). A rerun reuses the saved SAM 3 masks.
@@ -280,7 +292,7 @@ SUMMARY.txt                  the verdict for each selection, and the numbers beh
 run.log                      the job's full output
 environment.txt              date, machine, GPU, commit, settings, pip freeze
 masks_manifest.json          how many objects SAM 3 found per frame and prompt
-<selection>/                 smoke5, eval32 and all
+<selection>/                 half (and any other selection that was run)
 ├── comparison.json          every comparison with its status and values, plus the verdict
 ├── adapted/                 OpenVocab-4D on Dario's geometry
 │   ├── objects.csv          the scene sheet: one row per object, with position, size and frames seen
@@ -352,7 +364,7 @@ For `submit_scenes.sh`:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `RUNS` | `eval32 all` | The frame selections to run for every scene |
+| `RUNS` | `half` | The frame selections to run for every scene: `half`, `smoke5`, `eval32`, `all`, or several |
 | `TIME` | `01:00:00` | The time limit of each scene's job |
 | `SCENES_FILE` | `hpc/scenes.tsv` | One scene per line: `<dataset>/<scene>`, a tab, then comma-separated prompts |
 
@@ -360,7 +372,7 @@ For `run_all.sh` (one scene):
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `RUNS` | `smoke5 eval32 all` | Which frame selections to run |
+| `RUNS` | `half` | Which frame selections to run |
 | `SCENE` | `scannet/scene0025_01` | `<dataset>/<scene>`. It must have `data/vggt/<scene>/` |
 | `PROMPTS` | `chair,door,fan,keyboard,monitor,pillow,sofa,table,telephone,window` | Comma-separated objects to look for. The default is the objects named in scene0025_01's VSI-Bench questions. Change it when you change `SCENE`. Delete `out/<scene>/masks/` when you change the prompts |
 | `REID` | `0` | `1` turns on DINOv2 re-identification in both runs |
@@ -388,7 +400,7 @@ Results for another scene go to their own folder, `results/<dataset>__<scene>/`.
 | `already holds a finished run` | Old masks are in the way. Delete `tasks/openvocab_adapter/out/<scene>/masks/` to run SAM 3 again |
 | The job hits the time limit | Resubmit that scene with a longer limit, or one selection at a time with `RUNS=...`. The masks are kept, so SAM 3 doesn't run again |
 | A scene's row in `SUMMARY.md` says `no result` | Its job stopped before comparing. The row shows the last line of its log, and `results/<scene>/run.log` has the rest. Resubmit just that scene with `SCENE=... PROMPTS=... slurm/submit.sh ... run_all.sh` |
-| CUDA out of memory in the VGGT stage | Unlikely on a B200, but if it happens, run `RUNS="smoke5 eval32"` first and send the log |
+| CUDA out of memory in the VGGT stage | Unlikely on a B200, but if it happens, run `RUNS=smoke5` first and send the log |
 
 ## Running the tests without a GPU
 

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 RESULTS = Path(__file__).resolve().parent / "results"
-SELECTION_ORDER = ["smoke5", "eval32", "all"]
+SELECTION_ORDER = ["smoke5", "eval32", "half", "all"]
 
 
 def value(rows, comparison, key):

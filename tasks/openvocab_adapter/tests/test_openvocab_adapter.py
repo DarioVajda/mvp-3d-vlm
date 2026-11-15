@@ -198,6 +198,13 @@ class FrameSelection(unittest.TestCase):
         meta = {"frame_subsets": {"uniform32": [0, 4, 127]}}
         self.assertEqual(common.select_frames(common.PRESETS["eval32"], 128, meta), [0, 4, 127])
         self.assertEqual(len(common.select_frames("all", 128)), 128)
+        self.assertEqual(common.select_frames(common.PRESETS["half"], 128), list(range(0, 128, 2)))
+
+    def test_frames_sam3_needs_for_several_presets(self):
+        meta = {"frame_subsets": {"uniform32": [0, 4, 127]}}
+        self.assertEqual(common.frames_for(["half"], 128), "list:" + ",".join(map(str, range(0, 128, 2))))
+        spec = common.frames_for(["half", "eval32"], 128, meta)
+        self.assertEqual(common.select_frames(spec, 128), sorted(set(range(0, 128, 2)) | {127}))
 
     def test_list_and_window(self):
         self.assertEqual(common.select_frames("list:1,5,9", 10), [1, 5, 9])

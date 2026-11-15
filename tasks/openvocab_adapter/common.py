@@ -16,7 +16,14 @@ SCENE0025_PROMPTS = ["chair", "door", "fan", "keyboard", "monitor", "pillow", "s
 
 # smoke5: five nearby frames, so objects can reach the 3 frames milestone 4 needs to keep a track.
 # eval32: the uniform32 subset the group's experiments already use (meta.json).
-PRESETS = {"smoke5": "window:118:5:2", "eval32": "subset:uniform32", "all": "all"}
+# half: every other frame (0, 2, ..., 126), half the cost of all 128.
+PRESETS = {"smoke5": "window:118:5:2", "eval32": "subset:uniform32", "half": "window:0:64:2", "all": "all"}
+
+
+def frames_for(presets, num_frames, meta=None):
+    """The frames a set of presets needs together, as a list:... spec (what SAM 3 has to segment)."""
+    needed = sorted({i for name in presets for i in select_frames(PRESETS[name], num_frames, meta)})
+    return "list:" + ",".join(map(str, needed))
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}  # same as the pipeline
 

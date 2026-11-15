@@ -4,7 +4,7 @@
 #   slurm/submit.sh -J ov4d_compare -t 02:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
 #
 #   1. CPU tests of the adapter, loader and comparison
-#   2. SAM 3 masks for all 128 frames, saved once and reused by every run below
+#   2. SAM 3 masks for the frames the selections need, saved once and reused by every run below
 #   for each frame selection in RUNS:
 #   3. adapted: Dario's 128-frame VGGT (cameras + dense depth from data/vggt/) in OpenVocab-4D's format
 #   4. OpenVocab-4D tracking and fusion on the adapted geometry, and on its own VGGT (native), with the same masks
@@ -16,7 +16,8 @@
 # Optional settings, e.g.  RUNS=eval32 slurm/submit.sh ... -- bash tasks/openvocab_adapter/hpc/run_all.sh
 #   SCENE    scannet/scene0025_01
 #   PROMPTS  objects to find (default: those named in scene0025_01's VSI-Bench questions)
-#   RUNS     "smoke5 eval32 all"  (5 nearby frames, the uniform32 subset, all 128 frames)
+#   RUNS     "half": every other frame (64). Others: smoke5 (5 nearby frames), eval32 (the uniform32 subset),
+#            all (128 frames); several are run one after the other, e.g. RUNS="half all"
 #   REID     0; 1 turns on DINOv2 re-identification, in both runs
 #   PY       .venv-ov4d/bin/python
 #   DENSE    data/vggt/<scene>, the folder with depth.npy and depth_conf.npy
@@ -26,7 +27,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../../.."
 SCENE=${SCENE:-scannet/scene0025_01}
 PROMPTS=${PROMPTS:-chair,door,fan,keyboard,monitor,pillow,sofa,table,telephone,window}
-RUNS=${RUNS:-smoke5 eval32 all}
+RUNS=${RUNS:-half}
 PY=${PY:-.venv-ov4d/bin/python}
 REID_FLAG=--no-reid
 [[ ${REID:-0} == 1 ]] && REID_FLAG=
@@ -69,10 +70,34 @@ step "1/5 CPU tests"
 $PY -m unittest discover -s $A/tests
 
 step "2/5 SAM 3 masks"
-if [[ -f $MASKS/manifest.json ]]; then
+# only the frames the selections in RUNS use; earlier masks are reused if they cover those frames and prompts
+SAM3_FRAMES=$($PY - "$A" "$DATA/scenes/$SCENE/meta.json" $RUNS <<'EOF'
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import common
+meta = json.load(open(sys.argv[2]))
+print(common.frames_for(sys.argv[3:], meta["num_frames"], meta))
+EOF
+)
+COVERED=$($PY - "$A" "$MASKS/manifest.json" "$SAM3_FRAMES" "$FRAMES" "$PROMPTS" <<'EOF'
+import json, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import common
+manifest, spec, frames, prompts = Path(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5]
+if not manifest.is_file():
+    print("no"); sys.exit()
+images = common.list_images(frames)
+need = {images[int(i)].stem for i in spec.split(":", 1)[1].split(",")}
+saved = json.loads(manifest.read_text())
+wanted = {p.strip() for p in prompts.split(",") if p.strip()}
+print("yes" if need <= {f["stem"] for f in saved["frames"]} and wanted <= set(saved["prompts"]) else "no")
+EOF
+)
+if [[ $COVERED == yes ]]; then
     echo "reusing the finished run in $MASKS (delete it to segment again)"
 else
-    $PY $A/sam3_infer.py --images "$FRAMES" --frames all --prompts "$PROMPTS" --out "$MASKS" --overlays --overwrite
+    $PY $A/sam3_infer.py --images "$FRAMES" --frames "$SAM3_FRAMES" --prompts "$PROMPTS" --out "$MASKS" --overlays --overwrite
 fi
 cp "$MASKS/manifest.json" "$RESULTS/masks_manifest.json"
 
