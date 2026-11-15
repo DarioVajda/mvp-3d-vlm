@@ -1,0 +1,47 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 0.9,
+  "peak_vram_gib": 0.03,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "a9a1aeb0ae8fd7fd7510d3ee03c75b96bc69b4c6436d32007cf26240f3cc0ff2",
+    "frames": 64,
+    "prompts": [
+      "dishwasher",
+      "washer",
+      "refrigerator",
+      "table",
+      "chair"
+    ]
+  },
+  "dishwasher": {
+    "objects": 1,
+    "max_detections_per_track": 9,
+    "max_track_span_frames": 26,
+    "mean_track_span_frames": 26.0
+  },
+  "washer": {
+    "objects": 2,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 40,
+    "mean_track_span_frames": 24.5
+  },
+  "refrigerator": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 3,
+    "mean_track_span_frames": 3.0
+  },
+  "table": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "chair": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 5,
+    "mean_track_span_frames": 5.0
+  }
+}

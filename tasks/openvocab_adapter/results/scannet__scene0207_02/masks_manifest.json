@@ -1,0 +1,1497 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "mirror",
+  "nightstand",
+  "backpack",
+  "chair",
+  "trash bin",
+  "closet",
+  "radiator",
+  "pillow",
+  "printer",
+  "refrigerator",
+  "sofa",
+  "window"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 56.5,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "a76a0f66c9d8f3eb95f27b42f447f88b81f1dbdc66e26d99bd7bbe9745b84f53",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 3,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "babf7ecb20382e5e5de675d8814eff1054d1cabca48b03a4f6302efcda57f661",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 3,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 3
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "2a18b98d216de2f7826c52d7dd79452f2c355c9d130bec75ba4442cde0c46488",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 1,
+    "pillow": 0,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "e3ceed1735a549d4315a2cacf05a02c7aabf90752f8c43325bfa0db26b590adf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "8d2c4ef017fb0c37fcc094624cea1e5555ec5166041011bdd1cff5837f725ac0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "83b433e85fc7d1e0fd757a81ff83e74d07ad3f607cff237a7abb5ee6905018e6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 3
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "f9992abc8dc13dcb3605e544d344d11ccd4de9df8e9046e563dcb54c24cef8aa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "66dd9902fa6c7fe4625a3413e695c5787de489fd3339c11a462540993d4cb784",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 2,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 2,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 2
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "f4c843ec9a663a59b30ac2cc034a02974d1fef04f7a39c3851c563115bef718d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "9ecbff7263e1c93b0589b48e956f9dbe5d0523b6d6bd194676d6b944e429b07a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "56dff4371bf3648bf6d1c5f9fba8ae7ab221f21850b137e906316b5b0ca7e681",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "4a88f1e246a822f2fd7631b6d615b71093e8d854c59d9ba34cb1015998a3d960",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 1,
+    "pillow": 3,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "081e402e2b8fe8d5f18f73415a6d3b705ab4766d1083033c68ead18182aa84f7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 2,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "d1107b76d6c8649793096f1db953203e7dc6b0333c9ceee85056d25018de59c4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "179cd3a94481d85063c8f5744f764e67a500189a042e14f60cb944f1ed094ca0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 3,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "1ddad528a4ed5c29509918bcbce2133522a0b6a0ce1ba92139242e139efb5903",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "9cbf88321aa09e203ac882e997c6af12b472497a259732c79beb983a3d1b74be",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 3,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "d80c51be4ea3263ee82a72ad843a57f257095fda21045e7ec0be620af29d6b18",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 2,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 2,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "63ce0ac7bd641bdc169c9d4d2a07cf94aa2a4f939be12b1a623d7bb710a9a200",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 2,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "4683ceac88809bc477dd8dda76805ed0c0f7470081449502b495e956977eb50a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "29318b1df2d2be8ab2a77048333c9e3e0448091c067b89af9e826be8beb04f85",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "f8ad0ad6a357ca792dfe4beff0044cd679710685f7f4157327c697a290b32b04",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "92bace7747429c03fd97251dc40b5ebe9e11738d243c3b6d05289bc0c32bad71",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 1,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "902d99f03aab5e91d70a9a26b8d6478c8e2198d8cc39eb4164ed9d30cfcc2e91",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "05055185eb044dcbbb9184562d5c00d74e54756cab7214430017580960224093",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 2,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "e8088f1216d5f5b2d3d93a0463b0ef31c80fd92aeeb693d4a9b753762b84b8b5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 3,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "81e5f013cbb6b108ca7400daabd2113272b25198bb0269c8744513c923c3ab10",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "a191cd63f8a2e66a932627ac53258dbf10b38516dd511795e99df77c62426d09",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "6a20a0ce9ed059b96eaf58a8326dfa722b678e5bb620ade1b57fe623a3fe0989",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "a402e17ed31cee763ea76c8a8b5277a5b68c061e20f85aaca91f236c3546cd63",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "4eb1c315c465479ad0d5560881be528e0ee592f77ed35eeab64d33963c969593",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 2,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "99aa85898bfaa1f0a734d2a23f05cbc59649895786271a7abe7cd43a2bad9066",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "0fec59ddd0e129dbffc8e356f96e0a6e76b717e194ab2bd6039f222393d14967",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "fba58308efdeb0172742072c07475758e46a7d450012b98b203c19a55f541a39",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "b253b7bfd94104d5d0a501f849b55262f03d3c4b1dd2970d2ea93cde7fe1cdeb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "677d74eee998cae19a3eb6d7ff1cd2d65abaea32fa09cad30cb1b43e452b773c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "86c2d356231514aa827934fe070c32cbfe8753b3578ed1a73d7e9faa5f8e5330",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "6af01774b018e1c32f62875fc9d03e482356f2a1627a898fc8dfefbfb6cd1edf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "74bb7914e5243f3fd97b33fa2089b5394a57a2a7c35452e6c1a11968aac48808",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "7e1dfa547ae16915703ca08143bd0e2cd743faf81e8c59d2e9f33445c73c75f7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "870d6ae3380bd40d776ba83764182fc304532bdacbdf52d89271658619710b54",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "887b1935cb8638e1c152ccdd6d86d97f1e1bec44cb9bbeb0a263372b980391c1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "d3f0ae4a2745b89f0c95872c6061be62ac2304581caf82320e51f431e19dfd74",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "da5bec210817af9f269a023b9f20702486606ad8d50c5757353f0c5432203ca1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "16f0e43903c3c091a22cbb63f2fdbc7f5dbaca88966b2044c85caa96369c4fab",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "ca06bb5b19bde2a7cca3befc7d48f138454b9413f6e6dfba49183985d914e249",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "e9e28bd8f18bc78b71766ed78c942c8e5dc30eff93d5af98a6409fe1d16bafc5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "697877b876d68ef29fa755b2125a22c0031ab69a075dc468073e61833e29add2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "b72f163ba168c4e0823edc50505a0be2ef0662a4a435889f6cb731a7526d02e8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "6ae65fbbb56a99663765afa96463f3d0d6a42e6b531d0ee896670cead29f4a2d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "7c1897894a386f4df4bff42d82a196b32c61a21dddd6e7d7df7e4d21babc22cc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "afee8da53be9c57797ac4b9d375e6769768d95c0e04fb62351f433dd7fa7ff72",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "d7494efcd5e2675a7e81a2965d4d9f227c7f9b58ded04786319e89bafadcf648",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 0,
+    "trash bin": 2,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "6ad92d4a146e6bd7c8e108c629c29243312adeceac856181b47c5783843667cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 3,
+    "trash bin": 2,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "d27abcd8a6001915c2b54a10acc70a70d78b5fff5237a903d17b1cb5497f54da",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 2,
+    "trash bin": 2,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "7bda6358c533ec03e17be09127b35d33c2599103372f8f340caa5a05482cd9e5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 2,
+    "trash bin": 1,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "49fff3ebb9b0dc50c4497bbebb265ef9998e9fdaa94ad0ea0e8410c48959e299",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "de47074a03f541afd637fd889f6116271a0496b0d4818cedc683f3e49a041bf3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 6,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 2
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "4fe47335517235eb2118f3ac2d0cb8f8b0565897b2122160e88d9680c188345e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 2,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "945bbed7a9647e2c9ec1a768d8a007c7f78c7a00dc929b733e8e47aca43b3994",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 1,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "4d97b5416157b7cab318fa61660fb136d0bfff39ce7a0a44e745def434667574",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 1,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 4
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "4e192e17c3ce372476562b3952c6d097bc9cd103fa27d3f3316eab15fb427177",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 4,
+    "printer": 1,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "ff87f5a893ea668f90cb1f685ba08868cfec19d605a2c4272e1e867e1df0c1ed",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 0,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "8e037e67443a0a58ef692a050f512cef09a9e4ab9ec23e35f9a5b432ef8bd062",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "chair": 0,
+    "trash bin": 2,
+    "closet": 1,
+    "radiator": 0,
+    "pillow": 0,
+    "printer": 0,
+    "refrigerator": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  }
+ ]
+}

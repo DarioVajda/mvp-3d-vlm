@@ -1,0 +1,89 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 2.3,
+  "peak_vram_gib": 0.0,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "8544f46ca6afb0714f8710bc4564fe378a82c10acf3d8221997abafb34be92b2",
+    "frames": 64,
+    "prompts": [
+      "lamp",
+      "door",
+      "towel",
+      "trash bin",
+      "nightstand",
+      "backpack",
+      "mirror",
+      "chair",
+      "tv",
+      "table",
+      "bed"
+    ]
+  },
+  "lamp": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "door": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 7,
+    "mean_track_span_frames": 7.0
+  },
+  "towel": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 21,
+    "mean_track_span_frames": 21.0
+  },
+  "trash bin": {
+    "objects": 1,
+    "max_detections_per_track": 6,
+    "max_track_span_frames": 20,
+    "mean_track_span_frames": 20.0
+  },
+  "nightstand": {
+    "objects": 3,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 5,
+    "mean_track_span_frames": 4.7
+  },
+  "backpack": {
+    "objects": 2,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 7,
+    "mean_track_span_frames": 6.5
+  },
+  "mirror": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "chair": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "tv": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "table": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "bed": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  }
+}

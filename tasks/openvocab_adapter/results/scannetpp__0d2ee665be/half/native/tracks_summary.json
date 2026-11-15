@@ -1,0 +1,96 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 1.3,
+  "peak_vram_gib": 0.03,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "00983895cbfc133fb5c9b93837b3acbb5b69d9b37c126e4080440cc73a0eb8f7",
+    "frames": 64,
+    "prompts": [
+      "bed",
+      "pan",
+      "trash can",
+      "microwave",
+      "computer mouse",
+      "cutting board",
+      "chair",
+      "door",
+      "keyboard",
+      "table",
+      "laptop",
+      "monitor"
+    ]
+  },
+  "bed": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "pan": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "trash can": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "microwave": {
+    "objects": 1,
+    "max_detections_per_track": 8,
+    "max_track_span_frames": 30,
+    "mean_track_span_frames": 30.0
+  },
+  "computer mouse": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 6,
+    "mean_track_span_frames": 6.0
+  },
+  "cutting board": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "chair": {
+    "objects": 2,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 8,
+    "mean_track_span_frames": 7.0
+  },
+  "door": {
+    "objects": 9,
+    "max_detections_per_track": 9,
+    "max_track_span_frames": 30,
+    "mean_track_span_frames": 19.7
+  },
+  "keyboard": {
+    "objects": 1,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 7,
+    "mean_track_span_frames": 7.0
+  },
+  "table": {
+    "objects": 2,
+    "max_detections_per_track": 6,
+    "max_track_span_frames": 37,
+    "mean_track_span_frames": 25.0
+  },
+  "laptop": {
+    "objects": 1,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 10,
+    "mean_track_span_frames": 10.0
+  },
+  "monitor": {
+    "objects": 2,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 10,
+    "mean_track_span_frames": 9.5
+  }
+}

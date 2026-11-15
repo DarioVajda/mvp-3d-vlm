@@ -1,0 +1,1042 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "refrigerator",
+  "stove",
+  "table",
+  "chair",
+  "stool"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 38.9,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "be9e7b94a1a04e825a63278e4d31700bda69338cc122fa518b1c7d84841a73d2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "1a2192e845d2fcd41a30389afedbc96309d2d246256a7299664ca3c8fa4dae62",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 1,
+    "table": 1,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "32b57f33ce849db8dedd200443ca39e17913d5f37ab000a0d5c8e4c9bbe25141",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "68bff63b4c3fa55e90edd53768de2b64fb521088bd0bbb93ac1969215d5285c6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 1,
+    "table": 1,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "07e9f69e5076a9560bdc5fb7291a41559fe4a33f7570ce0352ed590316aa4d52",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 1,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "49db9b8447f157ac70fa2936c20eaafb84ea3ca38e8a19792fe7013cba2cb041",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "2e5d299d8613a40f7a46e34f4d90f661cee2d8aa717d35f186559accf52d8c5c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 1,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "b93f57eb404d1838148712d0fe7717868b94d851701a9ae73867335e9268f1f3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "691194720f9d4633644ebf2a1389d50a34b9011c289e4741f339881fc3549877",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "643e229c166bffc29fbfe51b512bea5d56609581270f521468956c071080b43f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "63e219afc56aa77906c99b7ffc6ea650ada87823d9b378f329cea3b0be2e2523",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "67ef20422288ac1da271e24ddab8be805960b916c4207f0d8c63b8ac39fd734f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "09dd0f792129e616fef756d062da4a33767628050bebd9e14dc72ea90e571721",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "87b53cfe049172df67046503ddbebf31d53f03a414705336e37c6fec4c7c98e5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 1,
+    "stool": 2
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "c534c8e22529a5a98c02d2dc3e882380699307992fd51e0e33a9b078c3264ed0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "0903b3c1491fa97c437b238076d9db1a638c90fe631728ff4294bafc41cd6beb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "9ac4b06c9bcdcb4378bf15ef22ffd57b9110c2d247d02543035ee402ab0dc857",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "a532d7dcf86d5da1cb9739b0c48e194ae525df30b0828ce4d8d0f84dc8c8e3f7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "5191b9924b0e7a19ff1e39e110974fca9f8c106b0cc1f2da4ae7c08b82bc22f8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "51f334f345ac193d23a1348d1fbd1a3f4c351ebfc81b8c1d0cee4b6cf34a87ab",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "cf72cc5c087119eff7277f309dd6641d8ec3fccb51b62089b5db40b8db50217f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "265baed9569a714a58a7d150e152352170a66ec813234ec6b39b04946e2644c5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "bed4b9d0e75c7e971d47d2f5b1766c70f4bf031ae6cafe5f85fd54573cb6aa65",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "21495c7e25238c2158e46b5b39501af836da3a09561f92db2e14063792dcd257",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "ca2c9021be79aeb112ef5272bce5dbde20cadfa3278c8e1bbf056b2acd391622",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "cb275443962662bf980b3356e2b3df97106d1b51457a7a45b72e0df38dec243a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "7c9e1c4aedac8969181e07e9eed237123134cfe95b4704be54d5525ef33e3e4f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "9450792615678357e2257ddf103405bb60e30788f6fd6bbc7127586c881bf065",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "83c36a728fabedb66ccbb4ec5a0af09dd6c67f6f29e4064e884ebe2b2bc90867",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "135ce1c26aeaf1b35e44d0c02e16e3580c05b031e769be88300a6f9e529e2823",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "5ec8320906cab0ac17976e06806e6f902ff0615dda07559e21e8ab33be971edc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "16d1afc3c55941dba88c5d40af9ee42cab39a0a0e89accdaf78ebd77a365fa9d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "37174cac4807729eb7a0ce0b1962494979edbdcb11f588d47607d8594e6e6c20",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "320cb68d3e2250506a1ece5402b9a09e2061c839122405448063f33af522796d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "a1fb0c83727273e02cd4f914d7e7a824402c5d48e2dd72d47c2104be8208757e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "9d06d6bd8d4d7b6db926db2f1f3720d524e173045025e7bed000caa294d42fa3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 5,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "7dd42b17df2d144a65b2acbc8f743cffb8d051b9027c3295634c6b3c4043b37b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 3,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "f03bfed12cbe02edac1e23d4141105e53229c1d701fdfcba5a169c5b5c933230",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 4,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "5331d089de6463eec38c1b5c036b82c52f5bdd32dd1be91cb2b78291026d23ae",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "9b281c4aa7eabce556265dff2d33f416ba3bc98453d73d469cd894e86f4bfdb4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "e35ab52906129e6059ed10d4a9e8cee7dd345d4a69d9b3d21b1efd7db4a8fb46",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 1,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "fc2a49661f480e6e3fd5ea7d62348a7e6d5fb7e2065ef63679d407987f776898",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "4a0f15b7a2fcd23264cb3480f9c6405d234212373ce59938d98539b6e90b7156",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 1,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "c22479cdf763754a11790bf2966cc9417cbb7f3d9438e573969d7f5a1c0ab298",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "86cead27778154b9032467fab4ec404ecd64698741e029fb5402682ef07b7d40",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 1
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "a83d1c790d0c3eea10177578cd22acb017db25c282dc214391bd14db8a09dc2c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 1
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "6900d2655f99383d82830c2f7f3f2fbc8d75b9359da2d17dff636177cfc2bcb4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 2,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "46094abcca176b49a5f527e8e6e2ac9168f9ed37599e88f989bcfaa9c73a1a4d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 0,
+    "chair": 2,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "6cdc1b4f1d7d9ad9410279e34db13aa85b9d36dd277ab0cbb2893d1a0d0be4a2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "6556f81ab177cd4321793881f52059739e4f02346c8f3cb79f46239b87963562",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 0,
+    "chair": 2,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "5a3f221ebb670dc4c56fe916121dc95150a3e29dc46585f3b8cdf8abc7d838ac",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 1,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "5479afa6def21dff451003b384ee622bcb302e717ea448c12f639e8d2cc235d3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "839a92398f626ed96c7a8e862a234e33b1d82eb2cc7d9d006f4133dfe31a0490",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 1,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "3a75e712fd3546037c99d10fc3cdd2c5192429358451e65c714510547a8c696f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "71994a3c98e5829e86146db86f2ba16948163adaa832c4d5f68c53778609e957",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 0,
+    "chair": 1,
+    "stool": 1
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "c83ccb5f80cc5e43e4344f5bf2bc13620ee0521ff7ab416c590216c42b4a1858",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 0,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "61915178a23136d74e5d5d998d94893ccc34bfe34037cdfa29ffd9a43c8538a5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 1,
+    "stool": 4
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "8453aab601d860ec1a6bc0fdf1e24ed221a66e9ef86b0f574f1a23d26735cc87",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 1
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "f83f442b1d89f890562822be7174e095a469fa277fb5ca6018f31c8f5e0be97e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 0
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "96acbcf9e19e90f6c7df6b5dfbf7c0b8600722d2d4228155f16157d95a30fcda",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 3,
+    "stool": 2
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "4e30db533d22d8697435ee8855af932743113195acf64da70041efe7896c0501",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 0,
+    "stool": 3
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "4da7f54a6106c519c57ce630dc1798816c581dc50bc9ab058916647713802ccf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 0,
+    "stool": 3
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "cd4074a446d82e7c0371f2ac806098afac4115a77913044c87f5b8615c9851b7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 4,
+    "stool": 3
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "03f21beafded155fc22c9c6d4f660dfbdadcb2ce1e61031a13bd6640b1a4c562",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 2,
+    "stool": 2
+   }
+  }
+ ]
+}

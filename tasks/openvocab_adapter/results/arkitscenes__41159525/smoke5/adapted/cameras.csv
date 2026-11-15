@@ -1,0 +1,6 @@
+frame,image,x,y,z,qw,qx,qy,qz,forward_x,forward_y,forward_z
+0,/shared/workspace/povejmo/smoke5/adapted/frames/118.jpg,0.0816975,-1.02475,1.23554,0.982586,0.0152694,-0.137211,-0.124356,-0.27344,0.0041187,0.96188
+1,/shared/workspace/povejmo/smoke5/adapted/frames/120.jpg,0.0661658,-1.1066,1.34735,0.874002,-0.0559158,-0.343893,-0.338721,-0.563247,0.330709,0.757222
+2,/shared/workspace/povejmo/smoke5/adapted/frames/122.jpg,0.0697797,-1.15068,1.36046,0.693625,-0.000366565,-0.56473,-0.447174,-0.783094,0.505574,0.362159
+3,/shared/workspace/povejmo/smoke5/adapted/frames/124.jpg,0.0834628,-1.16451,1.36615,0.693035,0.0922568,-0.60644,-0.378711,-0.910445,0.331456,0.247439
+4,/shared/workspace/povejmo/smoke5/adapted/frames/126.jpg,0.0771193,-1.08995,1.36028,0.716787,-0.110381,-0.399601,-0.560671,-0.449082,0.606329,0.656271

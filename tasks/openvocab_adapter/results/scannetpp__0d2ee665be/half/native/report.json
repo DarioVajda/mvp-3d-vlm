@@ -1,0 +1,147 @@
+{
+  "frames": 64,
+  "prompts": [
+    "bed",
+    "pan",
+    "trash can",
+    "microwave",
+    "computer mouse",
+    "cutting board",
+    "chair",
+    "door",
+    "keyboard",
+    "table",
+    "laptop",
+    "monitor"
+  ],
+  "objects_per_concept": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 9,
+    "keyboard": 1,
+    "table": 2,
+    "laptop": 1,
+    "monitor": 2
+  },
+  "objects": [
+    {
+      "concept": "microwave",
+      "track_id": 1,
+      "frames_seen": 8,
+      "points": 17874
+    },
+    {
+      "concept": "computer mouse",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 1467
+    },
+    {
+      "concept": "chair",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 5624
+    },
+    {
+      "concept": "chair",
+      "track_id": 3,
+      "frames_seen": 4,
+      "points": 9366
+    },
+    {
+      "concept": "door",
+      "track_id": 7,
+      "frames_seen": 1,
+      "points": 1315
+    },
+    {
+      "concept": "door",
+      "track_id": 8,
+      "frames_seen": 2,
+      "points": 5000
+    },
+    {
+      "concept": "door",
+      "track_id": 18,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "door",
+      "track_id": 19,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "door",
+      "track_id": 21,
+      "frames_seen": 9,
+      "points": 22500
+    },
+    {
+      "concept": "door",
+      "track_id": 23,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "door",
+      "track_id": 25,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "door",
+      "track_id": 27,
+      "frames_seen": 5,
+      "points": 12500
+    },
+    {
+      "concept": "door",
+      "track_id": 28,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 7246
+    },
+    {
+      "concept": "table",
+      "track_id": 1,
+      "frames_seen": 6,
+      "points": 11958
+    },
+    {
+      "concept": "table",
+      "track_id": 2,
+      "frames_seen": 4,
+      "points": 6133
+    },
+    {
+      "concept": "laptop",
+      "track_id": 2,
+      "frames_seen": 4,
+      "points": 8049
+    },
+    {
+      "concept": "monitor",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 7175
+    },
+    {
+      "concept": "monitor",
+      "track_id": 2,
+      "frames_seen": 4,
+      "points": 8293
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "frames": 64,
+  "prompts": [
+    "kettle",
+    "microwave",
+    "trash can",
+    "pillow",
+    "suitcase",
+    "refrigerator",
+    "cutting board",
+    "blanket",
+    "shoe rack",
+    "sofa",
+    "tv",
+    "plant"
+  ],
+  "objects_per_concept": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 8,
+    "suitcase": 1,
+    "refrigerator": 2,
+    "cutting board": 1,
+    "blanket": 4,
+    "shoe rack": 0,
+    "sofa": 4,
+    "tv": 0,
+    "plant": 0
+  },
+  "objects": [
+    {
+      "concept": "trash can",
+      "track_id": 1,
+      "frames_seen": 5,
+      "points": 9992
+    },
+    {
+      "concept": "pillow",
+      "track_id": 1,
+      "frames_seen": 9,
+      "points": 11827
+    },
+    {
+      "concept": "pillow",
+      "track_id": 2,
+      "frames_seen": 7,
+      "points": 8660
+    },
+    {
+      "concept": "pillow",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 5184
+    },
+    {
+      "concept": "pillow",
+      "track_id": 5,
+      "frames_seen": 9,
+      "points": 8735
+    },
+    {
+      "concept": "pillow",
+      "track_id": 6,
+      "frames_seen": 4,
+      "points": 6322
+    },
+    {
+      "concept": "pillow",
+      "track_id": 7,
+      "frames_seen": 3,
+      "points": 4786
+    },
+    {
+      "concept": "pillow",
+      "track_id": 10,
+      "frames_seen": 3,
+      "points": 1814
+    },
+    {
+      "concept": "pillow",
+      "track_id": 11,
+      "frames_seen": 3,
+      "points": 1361
+    },
+    {
+      "concept": "suitcase",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 5538
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 8110
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 5374
+    },
+    {
+      "concept": "cutting board",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 5324
+    },
+    {
+      "concept": "blanket",
+      "track_id": 1,
+      "frames_seen": 8,
+      "points": 13090
+    },
+    {
+      "concept": "blanket",
+      "track_id": 2,
+      "frames_seen": 5,
+      "points": 10109
+    },
+    {
+      "concept": "blanket",
+      "track_id": 3,
+      "frames_seen": 3,
+      "points": 4627
+    },
+    {
+      "concept": "blanket",
+      "track_id": 5,
+      "frames_seen": 4,
+      "points": 5386
+    },
+    {
+      "concept": "sofa",
+      "track_id": 3,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "sofa",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "sofa",
+      "track_id": 7,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "sofa",
+      "track_id": 12,
+      "frames_seen": 2,
+      "points": 5000
+    }
+  ]
+}

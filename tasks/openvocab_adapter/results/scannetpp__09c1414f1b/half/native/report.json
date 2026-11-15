@@ -1,0 +1,135 @@
+{
+  "frames": 64,
+  "prompts": [
+    "kettle",
+    "microwave",
+    "trash can",
+    "pillow",
+    "suitcase",
+    "refrigerator",
+    "cutting board",
+    "blanket",
+    "shoe rack",
+    "sofa",
+    "tv",
+    "plant"
+  ],
+  "objects_per_concept": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 1,
+    "pillow": 6,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 3,
+    "shoe rack": 0,
+    "sofa": 4,
+    "tv": 1,
+    "plant": 0
+  },
+  "objects": [
+    {
+      "concept": "microwave",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 5625
+    },
+    {
+      "concept": "trash can",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 3422
+    },
+    {
+      "concept": "pillow",
+      "track_id": 1,
+      "frames_seen": 8,
+      "points": 13811
+    },
+    {
+      "concept": "pillow",
+      "track_id": 2,
+      "frames_seen": 6,
+      "points": 9003
+    },
+    {
+      "concept": "pillow",
+      "track_id": 4,
+      "frames_seen": 7,
+      "points": 11710
+    },
+    {
+      "concept": "pillow",
+      "track_id": 5,
+      "frames_seen": 9,
+      "points": 13458
+    },
+    {
+      "concept": "pillow",
+      "track_id": 9,
+      "frames_seen": 4,
+      "points": 7817
+    },
+    {
+      "concept": "pillow",
+      "track_id": 10,
+      "frames_seen": 3,
+      "points": 1910
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 8597
+    },
+    {
+      "concept": "blanket",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 14185
+    },
+    {
+      "concept": "blanket",
+      "track_id": 2,
+      "frames_seen": 8,
+      "points": 17450
+    },
+    {
+      "concept": "blanket",
+      "track_id": 5,
+      "frames_seen": 5,
+      "points": 6778
+    },
+    {
+      "concept": "sofa",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 7057
+    },
+    {
+      "concept": "sofa",
+      "track_id": 3,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "sofa",
+      "track_id": 4,
+      "frames_seen": 5,
+      "points": 12500
+    },
+    {
+      "concept": "sofa",
+      "track_id": 12,
+      "frames_seen": 5,
+      "points": 12500
+    },
+    {
+      "concept": "tv",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 4118
+    }
+  ]
+}

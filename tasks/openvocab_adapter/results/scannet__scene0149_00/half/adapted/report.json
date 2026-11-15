@@ -1,0 +1,89 @@
+{
+  "frames": 64,
+  "prompts": [
+    "trash bin",
+    "chair",
+    "refrigerator",
+    "window",
+    "microwave",
+    "counter",
+    "table"
+  ],
+  "objects_per_concept": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 3,
+    "counter": 6,
+    "table": 0
+  },
+  "objects": [
+    {
+      "concept": "trash bin",
+      "track_id": 1,
+      "frames_seen": 5,
+      "points": 12332
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 4,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "microwave",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 9376
+    },
+    {
+      "concept": "microwave",
+      "track_id": 2,
+      "frames_seen": 5,
+      "points": 11765
+    },
+    {
+      "concept": "microwave",
+      "track_id": 4,
+      "frames_seen": 8,
+      "points": 12999
+    },
+    {
+      "concept": "counter",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 7907
+    },
+    {
+      "concept": "counter",
+      "track_id": 2,
+      "frames_seen": 7,
+      "points": 11555
+    },
+    {
+      "concept": "counter",
+      "track_id": 3,
+      "frames_seen": 5,
+      "points": 7112
+    },
+    {
+      "concept": "counter",
+      "track_id": 7,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "counter",
+      "track_id": 9,
+      "frames_seen": 6,
+      "points": 14021
+    },
+    {
+      "concept": "counter",
+      "track_id": 12,
+      "frames_seen": 3,
+      "points": 7500
+    }
+  ]
+}

@@ -1,0 +1,1367 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "fan",
+  "pillow",
+  "telephone",
+  "door",
+  "keyboard",
+  "chair",
+  "monitor",
+  "table",
+  "sofa",
+  "window"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 51.3,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "1865feb0947fa67c7f03d410265829a7ffb418a77880e0517a2dc7be12a0708f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "6b8342f2a89d45579bf964a52212f6838317f1c30588e394d0edee9a85ff0f31",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 1,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "5fc8c357529a37cc241a589349dfceb0b81ea2d2279055641e4a1fcac53a3dee",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 1,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "12d78fd2e2ea56eeaa998d9fed4c9fe3b91af1f242d96698a931e0f9f6c62894",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 1,
+    "table": 1,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "7d3373e290bf5308b298f2418d89c7521959e0773d981a997f19af80b159f502",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 2,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "78a21f668cfc789583243392ed81bc6a1f0f809c5cc4a0b5b6088a5fa330ec55",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 2,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "bb2beae5b254aaf4ce3a177debe6443c96a4b8f541878eecf4dcf2a369a6e842",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 2,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "5694e391d092abd02e037842af2741471f9ce29e41a9d6ad7e54a172235b4a51",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 1,
+    "monitor": 1,
+    "table": 1,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "342bd469346b5a7be00563cbf2726053340373c212add0aabe3f342725deba4c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 3
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "a37228f1888bb9bf7cfbbee74f0e3707798c1be6ee6146afae5816b15e2acf30",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 2,
+    "door": 1,
+    "keyboard": 1,
+    "chair": 1,
+    "monitor": 5,
+    "table": 2,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "b9e7aecb93c90fe554deee997a9a65641651731f81a2803fcf1a17d4cc2994a1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 2,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 6,
+    "table": 1,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "970b8daca7f1466d053bb3fe0d5a1d47da794f53794cf59c9127173d614178a3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 2,
+    "monitor": 3,
+    "table": 1,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "5574c486b49b6aac5d08d18261563d41c068550af51a8b7de01cc5b2c230da6a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 2,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "602e35d5e4fdeaaebc49bf2426eea074a8639733598e452add3b572610823113",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "6f2891af6379a8ffbde02268aaf72cc45f3f3d90e44f50a51310a708ce69b901",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "8dcad9d87e5876b96bfee0b3c6ea97a240a65c3b65153c4abf832533ee24a312",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "a0aed4ab7c0aea65de96893203a318eb73e72bdf201e7b2f506001374d72ca30",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "d056a46de90f4e14ed6b533b193b5892aec9a33fb83380eeebd1e98d09eeaa8f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "ce1a5bb228578f3c2c5577cabf4dd045538c08b5dec1558cfe205c5e888f046b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 2,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "2030c0cdb6d59790871702c5f1dc5f3dd2355dc3e2d0912ed42dd60ec31e1de4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "838ba2641e304a03900e62f466ec7dd60ef6f2f8f52ee65c87fe9869afd058ea",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 2,
+    "window": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "2a4010e2817b5a56013ffee9ee9f18a5d696b13c8358d63f69afd8836a702892",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "9e5e44f656c92684e6901fb306b36ff1409e5967b2c9e730315049dd78941262",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 1,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "9568136d3a514885c9e7afb6d634214e7ac7b66d6f6a8722e16b3a13e62c596f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 1,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "800d65c39c3088accbf99ac28a5f40b6b7944ce8edfac43cb9ee0e22a4bb6690",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 2,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 2,
+    "window": 1
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "8cbc1d058d9e56f89af071041a4fa6b96ba1b142792acfd28ae70167000e9696",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "6299af2964f7d4dbcaa020b12b9d49eace514e29c4815e34ef2b06187f46efa7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 2,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "5cad7f9c48f4240fa61cc75786317e7f39d8dc86cc1b290c5f310f7587610150",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 2,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "f644071a4d9cd0ada6f306d21491bc142e31a3098dc365d01c07bd5c6a3df4fe",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "13e64fb1f655035eee80a2e604a69fb1a6ae4f4395bba17b4aadb7e1c6d4d7c1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 1,
+    "monitor": 1,
+    "table": 1,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "01e68148a51424d9d9924289e58e5b98fb0e0156ff3c437ef4d6a96cdb3097a9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 2,
+    "table": 3,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "bcc4222588212189e18010a00740d96bf61cd5aed1f719e39a5619be1b10aad8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "4e3d44bd4eb294812163fef8756526520ac735400d2cba7c9fbf1d22e8732cc7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 3,
+    "chair": 1,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 3
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "66464995a96f2a56269072d8d75ac1bb6b59d9297cf0204535536c67df5412c0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 2,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 4,
+    "table": 1,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "1a4e96716bb644804e68fb698e23cfc7180e5e5605d32a38d7b3d0069fee9905",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 0,
+    "monitor": 3,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "5ec8918ee121b3e1499823d0e0427e6c2d77216a902270a755c68738fd5c212b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 0,
+    "monitor": 4,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "43f949a9e03e296ab3df39402deecefe9ca98c229d6a31c1c9f5711d6f51cbe4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 0,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "329eb0cafeb20f6a1f988fe3a70f703736a7f9907126ae6643ce3aaa2be6b519",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 2,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "f5317e81914386743934d437bd8b7180625bdc9b93c285df8b6493baf11a9e2d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "257522385a74a95d4c3cac5a13141e5fe1de4e977211387d93ecbe52522aee0d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 0,
+    "monitor": 4,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "ec08770b51b3b0c8b1470ef4dae0916a1cf3d797af2b0c9fa40fcdfd0d0ac4f0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 1,
+    "keyboard": 1,
+    "chair": 1,
+    "monitor": 3,
+    "table": 2,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "8909feab78ea4884d3f4f4fb147005f1032f94c4e43e3ef8a77dc5a785043e2d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 3,
+    "table": 3,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "f903d8c30e2cc56fda3b44ead76a261f8c57453267f9e39e44ece0ea0290461c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 2,
+    "monitor": 3,
+    "table": 2,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "3dc724ea8faa8f7cbde97de5b69f9e10b91ac71b90ba1890a97264d4d18e42b1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 2,
+    "table": 2,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "2981c62aa5e7750dfc716519f436b3c9342476037641eeb0b9b3c9263c847297",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 2,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "876f76e9bfb76f5395a444faa34499094f3af8be7651a8b6fe57f26ee3760b54",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 2,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "76439c9362eb981445746d03923a8ae39c580a0e3cfc16ebfb1d530fff682463",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 2,
+    "window": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "8f6d0d29cb516ca053332665a2b81ec5680a04f303a31177b364d8a0b948698d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 2,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "1433932d6388e3d610ae949923af1032e41a3f7eea671bea6bc68d3ebe37916f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 1,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 2,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "76da6433e3f4e661e4b21d07b599fcce951fe9c8aa7e1c3c9510af3a0c4cd7e4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 2,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "c61a04f6642fb1b895ac6a7168942893bad2f3246dcf565c13638d845a67cf76",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "ac2cba2a0a31820a74575c27a10cf981842c9c5a28af6c8aa645340a7891a769",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 1,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 1
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "79b68b9b8c101eb732cf31e08dde2534849bd9600bf056f8f5be6d8bb46fb9e4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 2,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "997fdc7584e975d7c92ca988402f269755345e6de094ed63062140793935ac0f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 1,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 0,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "a55716d4bd4d47c1054bf58caf5145a848cd22e4752e65a29cd920e965859c4e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 3,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 0,
+    "table": 1,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "138e1b61d20740bcc36175a4a45794b84f6a30be6350fc9299331ecaaba40809",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 1,
+    "monitor": 0,
+    "table": 3,
+    "sofa": 1,
+    "window": 0
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "50a219795d950e37689f56ab28126253b76e88edc4f950f64a5d273c93dd6bfc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 0,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 4,
+    "monitor": 0,
+    "table": 1,
+    "sofa": 0,
+    "window": 0
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "eca3382a843efd141db343924c428a044a43bad19762c5b9fe6a267fc5f07d19",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 1,
+    "monitor": 2,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "bccf6cf6a1e0c6de158dadab743f47e9be5574a4bca62c4bd6a3875d269d33e1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 3,
+    "chair": 1,
+    "monitor": 2,
+    "table": 1,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "4374440e29d37dbb43d6db3282a776b5c27218dcf072133edd70c97a2e81ec4f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 1,
+    "monitor": 4,
+    "table": 1,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "44cd38c32cacd6bf435b497da0915f839ee0ce88c272d558699cefe1548994a1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 2,
+    "chair": 2,
+    "monitor": 4,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "0937bbc70f5a8bcbbe76cd902718da6f775ad04fa09481d0c0865a0f157ba003",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 0,
+    "monitor": 4,
+    "table": 2,
+    "sofa": 0,
+    "window": 1
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "f1c5742c86f6fcb7da3e054cb4159e9ba8c242f97c7954bc840a83c6fb084683",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 0,
+    "monitor": 3,
+    "table": 2,
+    "sofa": 0,
+    "window": 2
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "9b3af1d7e3e4a2883d527f6c2c13f05bb102d9ca5d7e217a7d711d08d5d44a79",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 0,
+    "chair": 0,
+    "monitor": 3,
+    "table": 4,
+    "sofa": 0,
+    "window": 1
+   }
+  }
+ ]
+}

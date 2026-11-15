@@ -1,0 +1,1497 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "kettle",
+  "microwave",
+  "trash can",
+  "pillow",
+  "suitcase",
+  "refrigerator",
+  "cutting board",
+  "blanket",
+  "shoe rack",
+  "sofa",
+  "tv",
+  "plant"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 55.6,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "b5b7a36437028b46f5a1387e8422663672bc37d0938d5d2dbdd83f3a6b22fe52",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "a07e0e3af75602a3174afe1a9a90ac5ae218bc81b86f54425118f1e241c0578f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "9167fc23e5ad23d03ae9caeaf0fd2d91b6661585f9b2e091d50f0258f193006c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "b25815263accc1b27034fd401ceb0bb9fbaa46d8e4893d4941a6beddde7918ca",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "567fc688dc315dfd04591cad19ad4e119fd77278219f9cfe9bcd5e77e9eba87b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 1,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "2b8e4cb6d6973ec57a3490b98f8d326d5460a565301a8e80c4ec2f81324b869b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "1e57deefa929abbf54eac5e2f473be41067670afb33e82233cd414a8751e8500",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 1,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 1,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "de055da01e1903cb522b0415e2ce112b3611047c3a9188f3fff9dfcd54555495",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 8,
+    "suitcase": 1,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "8a164135d8ebfceabe0888d8dd5a4401d47f764d9d932961b0681bce33eba540",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "481206b1db6b85444cafee2a830611e884d05ce7de34a02af4110cc1e35f37b5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 1,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "1cc53fdecbad4ceb65b3c1f7d64245237a86917d7efc08f5fe3c6825dc3e0293",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "ba1e250ec363b30cfe7e0d383c8103a57d459be9c8e4dad0afbcae286431cd4c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "b81b46b97c8ec60d7c4745d5ad8c2a6383686bebe6fabb26c1ae81de3eaf715c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "8f4ef805bfa7b8dd650ce37b691baf46a04af4fde0613599c9501db7d23a32b2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "98862d555867fe38f9f37006d40d246a48d171301d5bf7229ad82c8f4b943aed",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "455053a9b89646df2cfc01458670b381b80f14e6b3b2c79338ee67b5ca42632f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 3,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "3a36a9c1c66dd222c758bfc137b87e1defac10599bae4b06320946c23bc1a922",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "b67f784a30f3db8f07c0e547c03a871a80c2a4fdb9efca1c95c44b5695e5cfa0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "2bda7ff9ac4a5a14f7a3483ba0c1b4ab5f4bcd8f569b4811d17a987d3276852a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "7688520906b299ae709e0319bcc16be2af02f34576aa9be0639e7b6dcd6ad48b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "0b89dfe9a9f3c13124e87479ce99e88e210bd41b11b746b6f33a3a013642d587",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 2,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "cb29ccfbf742e9605789434d5d2501f7058d41d457ac3033d1060cd9273c47da",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "c2ddbdb8836cc744af704d5f499cef27d3d9f074c7d05db7eaf56f4952a19d72",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "3866a1814f8fa85b62a2a2314f2fcc4219aa7d55a711ee7522db050395b1ca6b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "8fa74477454d7f6a7a9a490410a2593dea927e777d5b140b60eb26ec851d72d5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "f7060e751e60c44b57786c118ed18d78279109b6f4376f001e19bd10cf8fee99",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 4,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "2441b379b55ce9e0de77e32ef29766265fbf4409195e5519661614ff127909e1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "12191728de146eb5404b6f2bd6194b039438210145ef24cea792b4e3e74b24ac",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 1,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 1,
+    "sofa": 2,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "1c2f1a7a828aab652cbe60b32599fe150629188fe31e88c70979da27c63f2ba1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 1,
+    "suitcase": 1,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "5b3b8526735140bdebb22c75bcf4bf5a203552c1646ecc38ce29521463cda766",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 2,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "ea26db224c6f9303c3e5e02282b16ccd0cda66353a61294172c5bb26f82c6715",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "93bc092c07e9a9f15c08eaabe001c003a11b5b42ad64e1ae4814731a83bc77d8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "d27936e637e96f7a4429cd092deff73f53d52e8846acdafba4ce52aebfe67015",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "b8520ed86c2563959233f3c6ab7655b3ba8a028bd8317c15849e1b715e19ee5f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "1aa9ff477021532d04e744ce100f19e66798398237897071f1eefebd36e7d3c2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 2,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 1,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "c17435eb8a40fb80195e8a29f6643f2bef45294017b97c6184ab028112eaf8a7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "70970310df78b2450026102e5da6b6d746f4842b38c13f0a15701420d7d46e04",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 9,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 3,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "56cdf8ba36b91fdb8ee3571218d0467f5007d97d4f44a5f66d16f94a040fcf4e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 8,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 3,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "78f456d18cf4c2296ef9e2368f40a253bd52898e89bca20527cfa98b0a89d7dc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "e6241b2b6576b19f0babe348eff9c350bf62790f1aa23d6142a9746fdf4e869d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "9e7c38837e5f90d0d23ccb5b67aaf7680ddc671125d03184d146404f8f89d9a4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "cca640b87699b293e70fe170d874f9653d4ad347f8abea64307e83329090854b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "3b76e2087fa27236a0bd1a596514a7633ce8bb7ed92fbbc0055406e594da8ffa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "d8083f922ea3235d936dce715652e15a2e5c5ff4f209800594161c4ce211d413",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "6c2a3fb68026d836121bb942ad5e371ca6077fba5b1134d64be7591073328ac1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 1,
+    "microwave": 1,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 1,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "e51e47bddb270c46fbb4750f7afd3432ff80c66e7ca04a87dffcb25401329bf0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 1,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 2,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "22ae46410bf56ce3be7b0c790c838344a3ae1fee30343e049b1d602b4eaca2d1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 1,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "6669570495c9f1a112a6690e7bdbbb4a9c5c8d53b56dac14db2ac891ee00419d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 3,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "44d3ad24cadeddb176d9b0669c19ca683c247a5a3f4e3264cba179bb2ecfe920",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "841bf9589c9ea4913fe10911605b48462df3fc41f7a85343d769187d6b1c1506",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 1,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 1,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "e6418b0c72ddd7c58bf30d5cb481864c164afe4a369993cd2650383bb9ac7675",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "fc38970c3080040b42c4fcba35381d51566fdbffaf12cccc12c3a1b1f8384552",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "53da0556b08ca6a1b796909a8f253bc3d2216b1fd04801090849db4fd5746e41",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "b8fe0a87599bc94da675c4def70a4b1c3c77c4efb13df91ef2e15fee2193f257",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "8032fd0a8c4d6217b1456f34649258cdec1e146ee314c8094bb2b3a269a70278",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "63ad3f5e35fbb0750526303a112469ebaad7dc4bd21b3617d9c8df56b4d746e1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 1,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 1,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 3
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "d92e5d7ef78ccd872a8025c51e6606cd4f44355cdf5fb2adbb68602d4bb5885f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 1,
+    "microwave": 0,
+    "trash can": 1,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 1,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "6912c3f0b9869d8be15fb784954cdeb6a8be6a3b37823e82d1bf4d6c505cb0ad",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "2a26799a48497c2d4b009e7c8df4cd7cf0eed00e562729c986d3d2aafcb4def8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 0,
+    "plant": 0
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "4e8b5d498200e3bd7f8c943dfac47c37da1b98685309ed68d60125ac15c23858",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 1,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 1,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 0,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "b6a83138929f4b6ac7fc84f3f46092a25c012eb0623aad191b0d24a7c6d16fcb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 0,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 0,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "431519269cfcca554696f910896ba7eeea549d3ab530aa6c14d123b97256f844",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 6,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 1,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 2
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "7674d35f78e1a29a5ba0476535d4b463e419f5b755a93e645bb75128454d4977",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 6,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 2,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 1,
+    "plant": 1
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "4928da76580cd5a2cd2582d254510f4e0caef768d04a1b388a82f0b1dba7a100",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "kettle": 0,
+    "microwave": 0,
+    "trash can": 0,
+    "pillow": 7,
+    "suitcase": 0,
+    "refrigerator": 0,
+    "cutting board": 0,
+    "blanket": 3,
+    "shoe rack": 0,
+    "sofa": 1,
+    "tv": 0,
+    "plant": 0
+   }
+  }
+ ]
+}

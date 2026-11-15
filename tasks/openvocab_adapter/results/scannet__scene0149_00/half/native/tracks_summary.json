@@ -1,0 +1,61 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 1.0,
+  "peak_vram_gib": 0.03,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "e15b3e238e6637e9f95b9db2e66d817cd189088a7d150f873e7ed0ebc7c1f6ab",
+    "frames": 64,
+    "prompts": [
+      "trash bin",
+      "chair",
+      "refrigerator",
+      "window",
+      "microwave",
+      "counter",
+      "table"
+    ]
+  },
+  "trash bin": {
+    "objects": 1,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 13,
+    "mean_track_span_frames": 13.0
+  },
+  "chair": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "refrigerator": {
+    "objects": 2,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 36,
+    "mean_track_span_frames": 21.0
+  },
+  "window": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "microwave": {
+    "objects": 2,
+    "max_detections_per_track": 9,
+    "max_track_span_frames": 37,
+    "mean_track_span_frames": 24.5
+  },
+  "counter": {
+    "objects": 8,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 47,
+    "mean_track_span_frames": 19.6
+  },
+  "table": {
+    "objects": 2,
+    "max_detections_per_track": 5,
+    "max_track_span_frames": 11,
+    "mean_track_span_frames": 8.0
+  }
+}

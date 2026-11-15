@@ -1,0 +1,155 @@
+{
+  "frames": 64,
+  "prompts": [
+    "fan",
+    "pillow",
+    "telephone",
+    "door",
+    "keyboard",
+    "chair",
+    "monitor",
+    "table",
+    "sofa",
+    "window"
+  ],
+  "objects_per_concept": {
+    "fan": 0,
+    "pillow": 3,
+    "telephone": 1,
+    "door": 1,
+    "keyboard": 3,
+    "chair": 2,
+    "monitor": 5,
+    "table": 4,
+    "sofa": 2,
+    "window": 0
+  },
+  "objects": [
+    {
+      "concept": "pillow",
+      "track_id": 1,
+      "frames_seen": 9,
+      "points": 15445
+    },
+    {
+      "concept": "pillow",
+      "track_id": 2,
+      "frames_seen": 6,
+      "points": 8014
+    },
+    {
+      "concept": "pillow",
+      "track_id": 3,
+      "frames_seen": 2,
+      "points": 2294
+    },
+    {
+      "concept": "telephone",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 8389
+    },
+    {
+      "concept": "door",
+      "track_id": 5,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 1,
+      "frames_seen": 6,
+      "points": 8952
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 2,
+      "frames_seen": 7,
+      "points": 17500
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 4,
+      "frames_seen": 2,
+      "points": 3543
+    },
+    {
+      "concept": "chair",
+      "track_id": 3,
+      "frames_seen": 4,
+      "points": 8513
+    },
+    {
+      "concept": "chair",
+      "track_id": 6,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "monitor",
+      "track_id": 2,
+      "frames_seen": 8,
+      "points": 18358
+    },
+    {
+      "concept": "monitor",
+      "track_id": 3,
+      "frames_seen": 6,
+      "points": 13183
+    },
+    {
+      "concept": "monitor",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 8777
+    },
+    {
+      "concept": "monitor",
+      "track_id": 5,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "monitor",
+      "track_id": 8,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "table",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "table",
+      "track_id": 7,
+      "frames_seen": 3,
+      "points": 6614
+    },
+    {
+      "concept": "table",
+      "track_id": 8,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "table",
+      "track_id": 18,
+      "frames_seen": 3,
+      "points": 6867
+    },
+    {
+      "concept": "sofa",
+      "track_id": 1,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "sofa",
+      "track_id": 5,
+      "frames_seen": 8,
+      "points": 20000
+    }
+  ]
+}

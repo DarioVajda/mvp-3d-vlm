@@ -1,0 +1,291 @@
+{
+ "scene": "arkitscenes/42444976",
+ "frame_selection": "window:0:64:2",
+ "label": "half",
+ "selected_frames": [
+  0,
+  2,
+  4,
+  6,
+  8,
+  10,
+  12,
+  14,
+  16,
+  18,
+  20,
+  22,
+  24,
+  26,
+  28,
+  30,
+  32,
+  34,
+  36,
+  38,
+  40,
+  42,
+  44,
+  46,
+  48,
+  50,
+  52,
+  54,
+  56,
+  58,
+  60,
+  62,
+  64,
+  66,
+  68,
+  70,
+  72,
+  74,
+  76,
+  78,
+  80,
+  82,
+  84,
+  86,
+  88,
+  90,
+  92,
+  94,
+  96,
+  98,
+  100,
+  102,
+  104,
+  106,
+  108,
+  110,
+  112,
+  114,
+  116,
+  118,
+  120,
+  122,
+  124,
+  126
+ ],
+ "source_video_frames": [
+  0,
+  45,
+  91,
+  136,
+  182,
+  227,
+  273,
+  318,
+  364,
+  409,
+  455,
+  500,
+  546,
+  591,
+  637,
+  682,
+  728,
+  773,
+  819,
+  864,
+  910,
+  955,
+  1001,
+  1046,
+  1092,
+  1137,
+  1183,
+  1228,
+  1274,
+  1319,
+  1365,
+  1410,
+  1456,
+  1501,
+  1547,
+  1592,
+  1638,
+  1683,
+  1729,
+  1774,
+  1820,
+  1865,
+  1911,
+  1957,
+  2002,
+  2048,
+  2093,
+  2139,
+  2184,
+  2230,
+  2275,
+  2321,
+  2366,
+  2412,
+  2457,
+  2503,
+  2548,
+  2594,
+  2639,
+  2685,
+  2730,
+  2776,
+  2821,
+  2867
+ ],
+ "image_hw": [
+  392,
+  518
+ ],
+ "depth_npz": "written",
+ "world_frame": "camera of frame 0 of the full 128-frame reconstruction, which a selection may not include",
+ "scale": "VGGT's arbitrary scale of the full 128-frame reconstruction",
+ "checks": [
+  {
+   "check": "cameras: extrinsic shape",
+   "ok": true,
+   "detail": "(128, 3, 4) float32"
+  },
+  {
+   "check": "cameras: intrinsic shape",
+   "ok": true,
+   "detail": "(128, 3, 3) float32"
+  },
+  {
+   "check": "cameras: finite",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "cameras: rotations are orthonormal",
+   "ok": true,
+   "detail": "max |RR^T-I| = 4.52e-07"
+  },
+  {
+   "check": "cameras: rotations have det +1",
+   "ok": true,
+   "detail": "max |det-1| = 4.43e-07"
+  },
+  {
+   "check": "cameras: world frame is frame 0's camera",
+   "ok": true,
+   "detail": "max deviation 1.10e-04"
+  },
+  {
+   "check": "cameras: camera_center = -R^T t",
+   "ok": true,
+   "detail": "max error 1.20e-07"
+  },
+  {
+   "check": "cameras: camera_forward = R[2]",
+   "ok": true,
+   "detail": "max error 0.00e+00"
+  },
+  {
+   "check": "intrinsics: pinhole in pixels, no skew",
+   "ok": true,
+   "detail": "fx 414.4-472.9, fy 414.8-471.2"
+  },
+  {
+   "check": "intrinsics: principal point near the image centre",
+   "ok": true,
+   "detail": "max offset 0.00% of image size"
+  },
+  {
+   "check": "meta: image size is the patch grid",
+   "ok": true,
+   "detail": "28x37 patches, 392x518 pixels"
+  },
+  {
+   "check": "frames: one file per frame, named by index",
+   "ok": true,
+   "detail": "128 files, expected 128"
+  },
+  {
+   "check": "frames: every image has VGGT's input size",
+   "ok": true,
+   "detail": "518x392"
+  },
+  {
+   "check": "frames: video indices increase, one per frame",
+   "ok": true,
+   "detail": "0..2890"
+  },
+  {
+   "check": "alignment: patch points project into their own patch",
+   "ok": true,
+   "detail": "worst frame 100.0%"
+  },
+  {
+   "check": "alignment: cloud colours match the selected frames",
+   "ok": true,
+   "detail": "64/64 frames have points, worst frame 66: 1.71/255"
+  },
+  {
+   "check": "dense: depth.npy exists",
+   "ok": true,
+   "detail": "/shared/workspace/povejmo/math/projects/mvp/data/vggt/arkitscenes/42444976/depth.npy"
+  },
+  {
+   "check": "dense: depth_conf.npy exists",
+   "ok": true,
+   "detail": "/shared/workspace/povejmo/math/projects/mvp/data/vggt/arkitscenes/42444976/depth_conf.npy"
+  },
+  {
+   "check": "dense: depth shape",
+   "ok": true,
+   "detail": "(128, 392, 518), expected (128, 392, 518)"
+  },
+  {
+   "check": "dense: conf shape",
+   "ok": true,
+   "detail": "(128, 392, 518), expected (128, 392, 518)"
+  },
+  {
+   "check": "dense: stored as float16 (no precision lost)",
+   "ok": true,
+   "detail": "float16, float16"
+  },
+  {
+   "check": "dense: finite",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "dense: depth has positive values in every selected frame",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "dense: confidence is at least 1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "alignment: dense depth reproduces the exported patch points",
+   "ok": true,
+   "detail": "p99 error 0.00e+00 of scene size, limit 1e-03"
+  },
+  {
+   "check": "alignment: dense confidence reproduces the exported patch confidence",
+   "ok": true,
+   "detail": "p99 error 0.00e+00, limit 1.00e-02"
+  },
+  {
+   "check": "dense: extrinsic.npy equals the exported extrinsic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "dense: intrinsic.npy equals the exported intrinsic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "dense: frame_indices.npy equals the exported frame_indices",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

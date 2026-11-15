@@ -1,0 +1,96 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 2.0,
+  "peak_vram_gib": 0.0,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "ea0484ea2da9033b1deb0cafbdf6279d52722e03ff65b855f99b3cafc02f716a",
+    "frames": 64,
+    "prompts": [
+      "kettle",
+      "microwave",
+      "trash can",
+      "pillow",
+      "suitcase",
+      "refrigerator",
+      "cutting board",
+      "blanket",
+      "shoe rack",
+      "sofa",
+      "tv",
+      "plant"
+    ]
+  },
+  "kettle": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "microwave": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "trash can": {
+    "objects": 1,
+    "max_detections_per_track": 5,
+    "max_track_span_frames": 13,
+    "mean_track_span_frames": 13.0
+  },
+  "pillow": {
+    "objects": 8,
+    "max_detections_per_track": 9,
+    "max_track_span_frames": 46,
+    "mean_track_span_frames": 29.5
+  },
+  "suitcase": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 23,
+    "mean_track_span_frames": 23.0
+  },
+  "refrigerator": {
+    "objects": 2,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 11,
+    "mean_track_span_frames": 10.0
+  },
+  "cutting board": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 12,
+    "mean_track_span_frames": 12.0
+  },
+  "blanket": {
+    "objects": 4,
+    "max_detections_per_track": 8,
+    "max_track_span_frames": 58,
+    "mean_track_span_frames": 29.0
+  },
+  "shoe rack": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "sofa": {
+    "objects": 4,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 12,
+    "mean_track_span_frames": 8.8
+  },
+  "tv": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "plant": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  }
+}

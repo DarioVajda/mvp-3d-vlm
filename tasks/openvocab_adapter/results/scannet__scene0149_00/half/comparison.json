@@ -1,0 +1,607 @@
+{
+ "counts": {
+  "PASS": 28,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.2887,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.01009,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 0.7692,
+   "limit": ">= 0.8",
+   "ok": false
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.0095,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/counter.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/trash_bin.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/window.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/counter.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/trash_bin.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/window.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "e15b3e238e66",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 1.03475,
+    "residual_of_scene": 0.0069,
+    "scene_size_native_units": 2.7879,
+    "pixel_pairs": 320000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.01401,
+    "position_error_max_of_scene": 0.02907,
+    "rotation_error_median_deg": 1.278,
+    "rotation_error_max_deg": 5.856
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "trash bin, chair, refrigerator, window, microwave, counter, table",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "trash bin": 1,
+     "chair": 0,
+     "refrigerator": 1,
+     "window": 0,
+     "microwave": 3,
+     "counter": 6,
+     "table": 0
+    },
+    "native": {
+     "trash bin": 1,
+     "chair": 0,
+     "refrigerator": 2,
+     "window": 0,
+     "microwave": 2,
+     "counter": 8,
+     "table": 2
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 10,
+    "adapted_only_tracks": 1,
+    "native_only_tracks": 5,
+    "mean_matched_iou": 0.5928,
+    "pixels_with_matching_identity": 0.2887,
+    "per_prompt": {
+     "trash bin": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.8295
+     },
+     "chair": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "refrigerator": {
+      "adapted_tracks": 1,
+      "native_tracks": 2,
+      "matched": 1,
+      "mean_iou": 0.7532
+     },
+     "window": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "microwave": {
+      "adapted_tracks": 3,
+      "native_tracks": 2,
+      "matched": 2,
+      "mean_iou": 0.8197
+     },
+     "counter": {
+      "adapted_tracks": 6,
+      "native_tracks": 8,
+      "matched": 6,
+      "mean_iou": 0.4509
+     },
+     "table": {
+      "adapted_tracks": 0,
+      "native_tracks": 2,
+      "matched": 0,
+      "mean_iou": null
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 10,
+    "median_error_of_scene": 0.01009,
+    "max_error_of_scene": 0.02934,
+    "mean_frames_seen_difference": 1.5,
+    "per_object": [
+     {
+      "concept": "trash bin",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.8295,
+      "position_error_of_scene": 0.01129,
+      "chamfer_of_scene": 0.00229
+     },
+     {
+      "concept": "refrigerator",
+      "adapted_track": 4,
+      "native_track": 3,
+      "iou": 0.7532,
+      "position_error_of_scene": 0.01542,
+      "chamfer_of_scene": 0.00408
+     },
+     {
+      "concept": "microwave",
+      "adapted_track": 4,
+      "native_track": 2,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00529,
+      "chamfer_of_scene": 0.00221
+     },
+     {
+      "concept": "microwave",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6394,
+      "position_error_of_scene": 0.00889,
+      "chamfer_of_scene": 0.00268
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00306,
+      "chamfer_of_scene": 0.00135
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 9,
+      "native_track": 8,
+      "iou": 0.6873,
+      "position_error_of_scene": 0.0058,
+      "chamfer_of_scene": 0.00217
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.5024,
+      "position_error_of_scene": 0.00296,
+      "chamfer_of_scene": 0.0019
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 3,
+      "native_track": 10,
+      "iou": 0.3001,
+      "position_error_of_scene": 0.02934,
+      "chamfer_of_scene": 0.00458
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 12,
+      "native_track": 5,
+      "iou": 0.1465,
+      "position_error_of_scene": 0.01837,
+      "chamfer_of_scene": 0.01446
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 7,
+      "native_track": 4,
+      "iou": 0.0692,
+      "position_error_of_scene": 0.01195,
+      "chamfer_of_scene": 0.00654
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00248,
+    "all_objects_chamfer_of_scene": 0.01021,
+    "points": {
+     "adapted": 117067,
+     "native": 163667
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 11,
+    "native_rows": 15,
+    "paired_rows": 10,
+    "matched_share": 0.7692,
+    "adapted_only": [
+     "microwave#2"
+    ],
+    "native_only": [
+     "counter#3",
+     "counter#7",
+     "refrigerator#2",
+     "table#1",
+     "table#2"
+    ],
+    "rows_per_concept": {
+     "adapted": {
+      "trash bin": 1,
+      "refrigerator": 1,
+      "microwave": 3,
+      "counter": 6
+     },
+     "native": {
+      "trash bin": 1,
+      "refrigerator": 2,
+      "microwave": 2,
+      "counter": 8,
+      "table": 2
+     }
+    },
+    "median_position_error_of_scene": 0.0095,
+    "max_position_error_of_scene": 0.02752,
+    "same_num_frames_share": 0.2,
+    "per_object": [
+     {
+      "concept": "trash bin",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.8295,
+      "position_error_of_scene": 0.00989,
+      "num_frames": [
+       5,
+       7
+      ]
+     },
+     {
+      "concept": "refrigerator",
+      "adapted_track": 4,
+      "native_track": 3,
+      "iou": 0.7532,
+      "position_error_of_scene": 0.01453,
+      "num_frames": [
+       3,
+       4
+      ]
+     },
+     {
+      "concept": "microwave",
+      "adapted_track": 4,
+      "native_track": 2,
+      "iou": 1.0,
+      "position_error_of_scene": 0.005,
+      "num_frames": [
+       8,
+       8
+      ]
+     },
+     {
+      "concept": "microwave",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6394,
+      "position_error_of_scene": 0.00912,
+      "num_frames": [
+       4,
+       9
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00306,
+      "num_frames": [
+       7,
+       7
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 9,
+      "native_track": 8,
+      "iou": 0.6873,
+      "position_error_of_scene": 0.00519,
+      "num_frames": [
+       6,
+       5
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.5024,
+      "position_error_of_scene": 0.00257,
+      "num_frames": [
+       7,
+       6
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 3,
+      "native_track": 10,
+      "iou": 0.3001,
+      "position_error_of_scene": 0.02752,
+      "num_frames": [
+       5,
+       3
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 12,
+      "native_track": 5,
+      "iou": 0.1465,
+      "position_error_of_scene": 0.01769,
+      "num_frames": [
+       3,
+       4
+      ]
+     },
+     {
+      "concept": "counter",
+      "adapted_track": 7,
+      "native_track": 4,
+      "iou": 0.0692,
+      "position_error_of_scene": 0.01574,
+      "num_frames": [
+       6,
+       4
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

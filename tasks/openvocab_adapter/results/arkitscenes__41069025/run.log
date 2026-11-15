@@ -1,0 +1,570 @@
+
+=== 23:27:08 inputs ===
+scene arkitscenes/41069025 | frames /shared/workspace/povejmo/math/projects/mvp/tasks/vggt_data/out/scenes/arkitscenes/41069025/frames | dense depth /shared/workspace/povejmo/math/projects/mvp/data/vggt/arkitscenes/41069025 | runs: half | prompts: sofa,stove,tv,chair,table | --no-reid
+
+=== 23:27:09 1/5 CPU tests ===
+[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmp6q0q6ct7/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmp6q0q6ct7/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] wrote 8 frames and cameras.npz to /tmp/tmp6q0q6ct7/out
+[adapter] wrote depth.npz
+.[adapter] scannet/synthetic: 3 of 8 frames (list:0,2,5)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 3/3 frames have points, worst frame 0: 0.00/255
+[adapter] wrote 3 frames and cameras.npz to /tmp/tmp7e64rns5/out
+[adapter] depth.npz NOT written: the dense depth files were not given, so track and fuse cannot run on this output yet
+.[adapter] scannet/synthetic: 3 of 8 frames (list:0,2,5)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 3/3 frames have points, worst frame 0: 0.00/255
+[adapter] wrote 3 frames and cameras.npz to /tmp/tmpn9hmr8zg/out
+[adapter] depth.npz NOT written: the dense depth files were not given, so track and fuse cannot run on this output yet
+.[adapter] scannet/synthetic: 3 of 8 frames (list:0,2,5)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 3/3 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmp56jvex2l/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmp56jvex2l/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] wrote 3 frames and cameras.npz to /tmp/tmp56jvex2l/out
+[adapter] wrote depth.npz
+.[adapter] scannet/synthetic: 2 of 8 frames (list:1,3)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 2/2 frames have points, worst frame 1: 0.00/255
+[adapter] wrote 2 frames and cameras.npz to /tmp/tmpdnf6vxht/out
+[adapter] depth.npz NOT written: the dense depth files were not given, so track and fuse cannot run on this output yet
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] wrote 8 frames and cameras.npz to /tmp/tmp0ds4lklz/out
+[adapter] depth.npz NOT written: the dense depth files were not given, so track and fuse cannot run on this output yet
+[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] scannet/synthetic: 1 of 8 frames (list:0)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 1/1 frames have points, worst frame 0: 0.00/255
+[adapter] wrote 1 frames and cameras.npz to /tmp/tmp0ds4lklz/out
+[adapter] depth.npz NOT written: the dense depth files were not given, so track and fuse cannot run on this output yet
+..[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmp38rlvj2u/dense/depth.npy
+[adapter] FAIL dense: depth_conf.npy exists: /tmp/tmp38rlvj2u/dense/depth_conf.npy
+[adapter] 1 check(s) failed, nothing written: ['dense: depth_conf.npy exists']
+.[adapter] scannet/synthetic: 2 of 8 frames (list:0,1)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] FAIL frames: one file per frame, named by index: 7 files, expected 8
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] 1 check(s) failed, nothing written: ['frames: one file per frame, named by index']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmpcuncb2_s/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmpcuncb2_s/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] FAIL dense: stored as float16 (no precision lost): float32, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] 1 check(s) failed, nothing written: ['dense: stored as float16 (no precision lost)']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmpz8ulbtkh/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmpz8ulbtkh/dense/depth_conf.npy
+[adapter] FAIL dense: depth shape: (8, 55, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] 1 check(s) failed, nothing written: ['dense: depth shape']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmpmzeg4b5j/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmpmzeg4b5j/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] FAIL alignment: dense depth reproduces the exported patch points: p99 error 3.34e-02 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] 1 check(s) failed, nothing written: ['alignment: dense depth reproduces the exported patch points']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] FAIL cameras: rotations are orthonormal: max |RR^T-I| = 4.40e-01
+[adapter] FAIL cameras: rotations have det +1: max |det-1| = 7.28e-01
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] FAIL cameras: camera_center = -R^T t: max error 6.00e-03
+[adapter] FAIL cameras: camera_forward = R[2]: max error 2.00e-01
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] 4 check(s) failed, nothing written: ['cameras: rotations are orthonormal', 'cameras: rotations have det +1', 'cameras: camera_center = -R^T t', 'cameras: camera_forward = R[2]']
+.[adapter] scannet/synthetic: 2 of 8 frames (list:1,6)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] FAIL alignment: cloud colours match the selected frames: 2/2 frames have points, worst frame 6: 66.92/255
+[adapter] 1 check(s) failed, nothing written: ['alignment: cloud colours match the selected frames']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] FAIL cameras: camera_center = -R^T t: max error 1.40e-01
+[adapter] FAIL cameras: camera_forward = R[2]: max error 1.40e-01
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] FAIL alignment: patch points project into their own patch: worst frame 50.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 7: 2.91/255
+[adapter] 3 check(s) failed, nothing written: ['cameras: camera_center = -R^T t', 'cameras: camera_forward = R[2]', 'alignment: patch points project into their own patch']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] FAIL cameras: extrinsic shape: (7, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] 1 check(s) failed, nothing written: ['cameras: extrinsic shape']
+.[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmpzwzn9f9n/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmpzwzn9f9n/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] wrote 8 frames and cameras.npz to /tmp/tmpzwzn9f9n/out
+[adapter] wrote depth.npz
+...........[adapter] scannet/synthetic: 8 of 8 frames (all)
+[adapter] ok   cameras: extrinsic shape: (8, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (8, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.72e-08
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.72e-08
+[adapter] ok   cameras: world frame is frame 0's camera: max deviation 0.00e+00
+[adapter] ok   cameras: camera_center = -R^T t: max error 6.24e-09
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 80.0-80.0, fy 80.0-80.0
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 4x6 patches, 56x84 pixels
+[adapter] ok   frames: one file per frame, named by index: 8 files, expected 8
+[adapter] ok   frames: every image has VGGT's input size: 84x56
+[adapter] ok   frames: video indices increase, one per frame: 0..70
+[adapter] ok   alignment: patch points project into their own patch: worst frame 100.0%
+[adapter] ok   alignment: cloud colours match the selected frames: 8/8 frames have points, worst frame 0: 0.00/255
+[adapter] ok   dense: depth.npy exists: /tmp/tmp7dhn6s6q/dense/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /tmp/tmp7dhn6s6q/dense/depth_conf.npy
+[adapter] ok   dense: depth shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: conf shape: (8, 56, 84), expected (8, 56, 84)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] wrote 8 frames and cameras.npz to /tmp/tmp7dhn6s6q/run/adapted
+[adapter] wrote depth.npz
+....[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/cameras.csv
+[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/cmp/native/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/cmp/native/scene_sheet/cameras.csv
+....s.[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/cameras.csv
+[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/extra/native/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/extra/native/scene_sheet/cameras.csv
+.[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/run/adapted/scene_sheet/cameras.csv
+[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/moved/native/scene_sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/moved/native/scene_sheet/cameras.csv
+.[sheet] 2 objects over 8 frames: {'chair': 1, 'table': 1}
+[sheet] wrote /tmp/tmp7dhn6s6q/sheet/objects.csv
+[sheet] wrote /tmp/tmp7dhn6s6q/sheet/cameras.csv
+.........s....s...# OpenVocab-4D: the saved VGGT outputs (adapted) vs its own VGGT (native)
+
+2 scenes, 2 comparisons: 1 INCOMPLETE, 1 no result. Pass marks are provisional (`CRITERIA` in compare.py).
+
+Columns: objects found (adapted / native); share of tracked pixels with the same identity (pass >= 90%); median 3D object position error as a share of the scene size (pass <= 5%); share of scene-sheet rows in both sheets (pass >= 80%); median scene-sheet position error (pass <= 5%).
+
+| Scene | Frames | Verdict | Objects | Same track | Position error | Sheet rows | Sheet error | FAIL checks |
+|---|---|---|---|---|---|---|---|---|
+| scannet/a | eval32 | **INCOMPLETE** | 3 / 4 | 95.0% | - | - | - |  |
+| scannet/b | - | no result | | | | | | `no dense depth in data/vggt/scannet/b` |
+
+[summary] -> /tmp/tmpvk8tfhb_/SUMMARY.md
+commit with: git add /tmp/tmpvk8tfhb_ && git commit -m 'OpenVocab-4D comparison results' && git push
+.
+----------------------------------------------------------------------
+Ran 58 tests in 48.441s
+
+OK (skipped=3)
+
+=== 23:27:58 2/5 SAM 3 masks ===
+[sam3] 64 frames (000.jpg .. 126.jpg) x 5 prompts: ['sofa', 'stove', 'tv', 'chair', 'table']
+[sam3] transformers Sam3Model from /shared/workspace/povejmo/huggingface_cache/hub/models--facebook--sam3/snapshots/3c879f39826c281e95690f02c7821c4de09afae7
+[transformers] `memory_attention_rope_theta` is deprecated and will be removed in v5.0. Use `rope_parameters['rope_theta']` instead.
+Loading weights:   0%|          | 0/1468 [00:00<?, ?it/s]Loading weights: 100%|██████████| 1468/1468 [00:00<00:00, 24591.87it/s]
+[sam3] model loaded in 13.3s
+[sam3] 1/64 000: 1 detections
+[sam3] 2/64 002: 0 detections
+[sam3] 3/64 004: 0 detections
+[sam3] 4/64 006: 0 detections
+[sam3] 5/64 008: 0 detections
+[sam3] 6/64 010: 0 detections
+[sam3] 7/64 012: 1 detections
+[sam3] 8/64 014: 0 detections
+[sam3] 9/64 016: 0 detections
+[sam3] 10/64 018: 0 detections
+[sam3] 11/64 020: 0 detections
+[sam3] 12/64 022: 0 detections
+[sam3] 13/64 024: 0 detections
+[sam3] 14/64 026: 0 detections
+[sam3] 15/64 028: 0 detections
+[sam3] 16/64 030: 0 detections
+[sam3] 17/64 032: 2 detections
+[sam3] 18/64 034: 3 detections
+[sam3] 19/64 036: 0 detections
+[sam3] 20/64 038: 2 detections
+[sam3] 21/64 040: 2 detections
+[sam3] 22/64 042: 0 detections
+[sam3] 23/64 044: 3 detections
+[sam3] 24/64 046: 4 detections
+[sam3] 25/64 048: 0 detections
+[sam3] 26/64 050: 3 detections
+[sam3] 27/64 052: 1 detections
+[sam3] 28/64 054: 1 detections
+[sam3] 29/64 056: 1 detections
+[sam3] 30/64 058: 2 detections
+[sam3] 31/64 060: 1 detections
+[sam3] 32/64 062: 1 detections
+[sam3] 33/64 064: 0 detections
+[sam3] 34/64 066: 0 detections
+[sam3] 35/64 068: 0 detections
+[sam3] 36/64 070: 0 detections
+[sam3] 37/64 072: 0 detections
+[sam3] 38/64 074: 0 detections
+[sam3] 39/64 076: 0 detections
+[sam3] 40/64 078: 0 detections
+[sam3] 41/64 080: 0 detections
+[sam3] 42/64 082: 0 detections
+[sam3] 43/64 084: 1 detections
+[sam3] 44/64 086: 2 detections
+[sam3] 45/64 088: 9 detections
+[sam3] 46/64 090: 1 detections
+[sam3] 47/64 092: 2 detections
+[sam3] 48/64 094: 3 detections
+[sam3] 49/64 096: 2 detections
+[sam3] 50/64 098: 2 detections
+[sam3] 51/64 100: 2 detections
+[sam3] 52/64 102: 0 detections
+[sam3] 53/64 104: 0 detections
+[sam3] 54/64 106: 1 detections
+[sam3] 55/64 108: 1 detections
+[sam3] 56/64 110: 0 detections
+[sam3] 57/64 112: 0 detections
+[sam3] 58/64 114: 0 detections
+[sam3] 59/64 116: 0 detections
+[sam3] 60/64 118: 1 detections
+[sam3] 61/64 120: 1 detections
+[sam3] 62/64 122: 0 detections
+[sam3] 63/64 124: 1 detections
+[sam3] 64/64 126: 1 detections
+[sam3] done: 64 frames -> /shared/workspace/povejmo/masks
+
+=== 23:28:41 3/5 half: adapt the saved VGGT outputs ===
+[adapter] arkitscenes/41069025: 64 of 128 frames (window:0:64:2)
+[adapter] ok   cameras: extrinsic shape: (128, 3, 4) float32
+[adapter] ok   cameras: intrinsic shape: (128, 3, 3) float32
+[adapter] ok   cameras: finite
+[adapter] ok   cameras: rotations are orthonormal: max |RR^T-I| = 4.42e-07
+[adapter] ok   cameras: rotations have det +1: max |det-1| = 4.01e-07
+[adapter] FAIL cameras: world frame is frame 0's camera: max deviation 1.38e-03
+[adapter] ok   cameras: camera_center = -R^T t: max error 1.27e-07
+[adapter] ok   cameras: camera_forward = R[2]: max error 0.00e+00
+[adapter] ok   intrinsics: pinhole in pixels, no skew: fx 395.8-552.7, fy 396.9-554.1
+[adapter] ok   intrinsics: principal point near the image centre: max offset 0.00% of image size
+[adapter] ok   meta: image size is the patch grid: 28x37 patches, 392x518 pixels
+[adapter] ok   frames: one file per frame, named by index: 128 files, expected 128
+[adapter] ok   frames: every image has VGGT's input size: 518x392
+[adapter] ok   frames: video indices increase, one per frame: 0..5044
+[adapter] ok   alignment: patch points project into their own patch: worst frame 99.9%
+[adapter] ok   alignment: cloud colours match the selected frames: 61/64 frames have points, worst frame 94: 1.42/255
+[adapter] ok   dense: depth.npy exists: /shared/workspace/povejmo/math/projects/mvp/data/vggt/arkitscenes/41069025/depth.npy
+[adapter] ok   dense: depth_conf.npy exists: /shared/workspace/povejmo/math/projects/mvp/data/vggt/arkitscenes/41069025/depth_conf.npy
+[adapter] ok   dense: depth shape: (128, 392, 518), expected (128, 392, 518)
+[adapter] ok   dense: conf shape: (128, 392, 518), expected (128, 392, 518)
+[adapter] ok   dense: stored as float16 (no precision lost): float16, float16
+[adapter] ok   dense: finite
+[adapter] ok   dense: depth has positive values in every selected frame
+[adapter] ok   dense: confidence is at least 1
+[adapter] ok   alignment: dense depth reproduces the exported patch points: p99 error 0.00e+00 of scene size, limit 1e-03
+[adapter] ok   alignment: dense confidence reproduces the exported patch confidence: p99 error 0.00e+00, limit 1.00e-02
+[adapter] ok   dense: extrinsic.npy equals the exported extrinsic
+[adapter] ok   dense: intrinsic.npy equals the exported intrinsic
+[adapter] ok   dense: frame_indices.npy equals the exported frame_indices
+[adapter] 1 check(s) failed, nothing written: ["cameras: world frame is frame 0's camera"]

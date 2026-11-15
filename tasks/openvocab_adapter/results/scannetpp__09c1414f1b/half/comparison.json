@@ -1,0 +1,785 @@
+{
+ "counts": {
+  "PASS": 38,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.4527,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.00853,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 0.6842,
+   "limit": ">= 0.8",
+   "ok": false
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.00875,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/blanket.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/cutting_board.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/kettle.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/pillow.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/plant.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/shoe_rack.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/sofa.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/suitcase.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/trash_can.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/tv.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/blanket.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/cutting_board.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/kettle.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/pillow.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/plant.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/shoe_rack.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/sofa.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/suitcase.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/trash_can.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/tv.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "ea0484ea2da9",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 0.96943,
+    "residual_of_scene": 0.01092,
+    "scene_size_native_units": 3.6368,
+    "pixel_pairs": 320000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.01651,
+    "position_error_max_of_scene": 0.03889,
+    "rotation_error_median_deg": 2.697,
+    "rotation_error_max_deg": 6.42
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "kettle, microwave, trash can, pillow, suitcase, refrigerator, cutting board, blanket, shoe rack, sofa, tv, plant",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "kettle": 0,
+     "microwave": 0,
+     "trash can": 1,
+     "pillow": 8,
+     "suitcase": 1,
+     "refrigerator": 2,
+     "cutting board": 1,
+     "blanket": 4,
+     "shoe rack": 0,
+     "sofa": 4,
+     "tv": 0,
+     "plant": 0
+    },
+    "native": {
+     "kettle": 0,
+     "microwave": 1,
+     "trash can": 1,
+     "pillow": 6,
+     "suitcase": 0,
+     "refrigerator": 1,
+     "cutting board": 0,
+     "blanket": 3,
+     "shoe rack": 0,
+     "sofa": 4,
+     "tv": 1,
+     "plant": 0
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 13,
+    "adapted_only_tracks": 8,
+    "native_only_tracks": 4,
+    "mean_matched_iou": 0.641,
+    "pixels_with_matching_identity": 0.4527,
+    "per_prompt": {
+     "kettle": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "microwave": {
+      "adapted_tracks": 0,
+      "native_tracks": 1,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "trash can": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.6668
+     },
+     "pillow": {
+      "adapted_tracks": 8,
+      "native_tracks": 6,
+      "matched": 5,
+      "mean_iou": 0.7087
+     },
+     "suitcase": {
+      "adapted_tracks": 1,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "refrigerator": {
+      "adapted_tracks": 2,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.4113
+     },
+     "cutting board": {
+      "adapted_tracks": 1,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "blanket": {
+      "adapted_tracks": 4,
+      "native_tracks": 3,
+      "matched": 3,
+      "mean_iou": 0.6973
+     },
+     "shoe rack": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "sofa": {
+      "adapted_tracks": 4,
+      "native_tracks": 4,
+      "matched": 3,
+      "mean_iou": 0.5398
+     },
+     "tv": {
+      "adapted_tracks": 0,
+      "native_tracks": 1,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "plant": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 13,
+    "median_error_of_scene": 0.00853,
+    "max_error_of_scene": 0.04425,
+    "mean_frames_seen_difference": 1.462,
+    "per_object": [
+     {
+      "concept": "trash can",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6668,
+      "position_error_of_scene": 0.01864,
+      "chamfer_of_scene": 0.00922
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9636,
+      "position_error_of_scene": 0.00853,
+      "chamfer_of_scene": 0.00234
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.9528,
+      "position_error_of_scene": 0.00645,
+      "chamfer_of_scene": 0.00219
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 5,
+      "native_track": 5,
+      "iou": 0.7833,
+      "position_error_of_scene": 0.00797,
+      "chamfer_of_scene": 0.00313
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 4,
+      "native_track": 4,
+      "iou": 0.5589,
+      "position_error_of_scene": 0.00629,
+      "chamfer_of_scene": 0.00247
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 11,
+      "native_track": 10,
+      "iou": 0.2847,
+      "position_error_of_scene": 0.01034,
+      "chamfer_of_scene": 0.00414
+     },
+     {
+      "concept": "refrigerator",
+      "adapted_track": 2,
+      "native_track": 1,
+      "iou": 0.4113,
+      "position_error_of_scene": 0.04425,
+      "chamfer_of_scene": 0.00944
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9188,
+      "position_error_of_scene": 0.01113,
+      "chamfer_of_scene": 0.0028
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.5992,
+      "position_error_of_scene": 0.01427,
+      "chamfer_of_scene": 0.00215
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 5,
+      "native_track": 5,
+      "iou": 0.5738,
+      "position_error_of_scene": 0.00681,
+      "chamfer_of_scene": 0.00338
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 7,
+      "native_track": 3,
+      "iou": 0.7614,
+      "position_error_of_scene": 0.00148,
+      "chamfer_of_scene": 0.0042
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 4,
+      "native_track": 4,
+      "iou": 0.6271,
+      "position_error_of_scene": 0.01797,
+      "chamfer_of_scene": 0.0042
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 12,
+      "native_track": 12,
+      "iou": 0.2308,
+      "position_error_of_scene": 0.00734,
+      "chamfer_of_scene": 0.00439
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00338,
+    "all_objects_chamfer_of_scene": 0.01029,
+    "points": {
+     "adapted": 151239,
+     "native": 164941
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 21,
+    "native_rows": 17,
+    "paired_rows": 13,
+    "matched_share": 0.6842,
+    "adapted_only": [
+     "blanket#3",
+     "cutting board#1",
+     "pillow#10",
+     "pillow#6",
+     "pillow#7",
+     "refrigerator#1",
+     "sofa#3",
+     "suitcase#1"
+    ],
+    "native_only": [
+     "microwave#1",
+     "pillow#9",
+     "sofa#1",
+     "tv#1"
+    ],
+    "rows_per_concept": {
+     "adapted": {
+      "trash can": 1,
+      "pillow": 8,
+      "suitcase": 1,
+      "refrigerator": 2,
+      "cutting board": 1,
+      "blanket": 4,
+      "sofa": 4
+     },
+     "native": {
+      "microwave": 1,
+      "trash can": 1,
+      "pillow": 6,
+      "refrigerator": 1,
+      "blanket": 3,
+      "sofa": 4,
+      "tv": 1
+     }
+    },
+    "median_position_error_of_scene": 0.00875,
+    "max_position_error_of_scene": 0.04492,
+    "same_num_frames_share": 0.1538,
+    "per_object": [
+     {
+      "concept": "trash can",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6668,
+      "position_error_of_scene": 0.01838,
+      "num_frames": [
+       5,
+       3
+      ]
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9636,
+      "position_error_of_scene": 0.00875,
+      "num_frames": [
+       9,
+       8
+      ]
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.9528,
+      "position_error_of_scene": 0.00666,
+      "num_frames": [
+       7,
+       6
+      ]
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 5,
+      "native_track": 5,
+      "iou": 0.7833,
+      "position_error_of_scene": 0.00793,
+      "num_frames": [
+       9,
+       9
+      ]
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 4,
+      "native_track": 4,
+      "iou": 0.5589,
+      "position_error_of_scene": 0.0068,
+      "num_frames": [
+       4,
+       7
+      ]
+     },
+     {
+      "concept": "pillow",
+      "adapted_track": 11,
+      "native_track": 10,
+      "iou": 0.2847,
+      "position_error_of_scene": 0.01033,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "refrigerator",
+      "adapted_track": 2,
+      "native_track": 1,
+      "iou": 0.4113,
+      "position_error_of_scene": 0.04492,
+      "num_frames": [
+       3,
+       4
+      ]
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9188,
+      "position_error_of_scene": 0.01162,
+      "num_frames": [
+       8,
+       7
+      ]
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.5992,
+      "position_error_of_scene": 0.01238,
+      "num_frames": [
+       5,
+       8
+      ]
+     },
+     {
+      "concept": "blanket",
+      "adapted_track": 5,
+      "native_track": 5,
+      "iou": 0.5738,
+      "position_error_of_scene": 0.00842,
+      "num_frames": [
+       4,
+       5
+      ]
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 7,
+      "native_track": 3,
+      "iou": 0.7614,
+      "position_error_of_scene": 0.00138,
+      "num_frames": [
+       4,
+       6
+      ]
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 4,
+      "native_track": 4,
+      "iou": 0.6271,
+      "position_error_of_scene": 0.01879,
+      "num_frames": [
+       4,
+       5
+      ]
+     },
+     {
+      "concept": "sofa",
+      "adapted_track": 12,
+      "native_track": 12,
+      "iou": 0.2308,
+      "position_error_of_scene": 0.00741,
+      "num_frames": [
+       2,
+       5
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

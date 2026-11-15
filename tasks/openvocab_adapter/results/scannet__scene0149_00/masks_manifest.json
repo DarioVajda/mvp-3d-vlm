@@ -1,0 +1,1172 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "trash bin",
+  "chair",
+  "refrigerator",
+  "window",
+  "microwave",
+  "counter",
+  "table"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 42.4,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "0dfa03c7d78770172a757796f73e32046c9b58b7491c068662f40bf5e8530fa4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "78de2c1ad418aaeb247195f6a5a473e763b562633c0b60f47042b90c35772787",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 3,
+    "table": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "8933b52ba2433233266726f17a02ab1980d2d3082e2856d1307730d160acbb9b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "e65d93e82cbc233baa19b7775a48657ff9d61b2c312705f5d4ceebb88edc57c6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "f47dda4f0d5844f91acdaac8bc2afa95adbb08b3d275cade68d6dd89c44a26a8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "4db59c597c299ff580e257df420f6b6d4ebe89aede0d109ac4b1377d8da02ba5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "993cab45df4c610279d65533876006f9b1b33e14e97d9e684f3fa635b7a7e719",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "c5d28f0273d558cb8c9f413eb5293576fb5449856a8489c1f4edf48816168120",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "bdfb8e2edaa6cff98492060d0b0b6d45c2cfd1ff8772bedbf539f96cb80618e8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 2,
+    "window": 0,
+    "microwave": 2,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "2ee9e709339db31ec75aaf87bca1ec5a1dbc60d0a77260b5b5875f7c7f76d1fa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 3,
+    "table": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "93ce997390add95f5d42415758f61accf31601601f538acba3261cd914f336c3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "3268aa10a4d6197b36ad7898b7e613fa7f39c1350f089d83a6dc82f5a82b587e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "55e8ed66e9337c915551579e4c7959e0163ecec097a378691fb604dc04e4a0cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "0aaf350fa0ccbbbb7529bfa45189fb57c81967f5013ebce4064fb60299936100",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "7f7c4223b938b93094afce6017d09182e1d3db35221b55605eb25bac7a313ea1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "e5f6c24660a5116abc9a9251f57ebf8c8f9c95397cb4eb44c2476fcec4292105",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "126986ca4f6c40e8a4ab38310be0e7b7184386e01918c2d0333a91db2d8ef761",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "f5ee12fa00463d74a749ddc566761547fc9a162df4db6cd072177201e3b36e99",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "2b4f5e5506fb32db0362996743562eb4d748432f885d70d36cc8c0bb0ab4edb3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 1,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "0a78590e27f9705134c0b1e3b785d5568cc331ec4f12e3e6bd778049507767a4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 2,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "139fa4745fcfa11d21dc6f38c193d41acfd6b80db796a86282e6c9cd9507344b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 2,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "5dd91e0a486013b8474fb77eae8306107a21e97affb95b4d988c85ebc6f59da1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 0,
+    "table": 2
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "2a8203fb1e9b6e2477f066999d736db4db3e7b0632097fb240f210e1bad3cdc8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "7e8971d13cb4abb4d0f22a0278f06daebf243eea14b877475133a733ed86de4c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 2,
+    "chair": 2,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "a35f276ea089b96a21d57792208f95e4732e774c436b241e57442cd3ef013f4e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 2,
+    "table": 1
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "9edbaa096c3f9b6217d90a86bb2b2e42eac98af042870e4a2fa97cec0736edab",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 1,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "828699bfcd096125d915bbec79fa347c8c9e52ef43ee5deb93f0259da35ed51e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "c3d7790f9fb2c414660da7b90d6b57d9a94a61410757f0077fbc516097ce25a6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "29832f8255d4acde472e4aa29d8dbd309f794e0323e2ac99e85f6fe86b97495b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "b86a648bc9e8f1a47a7f19a3e7b0d36408b9a034fcc19100f3b4c989934310fd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "810f57afe8903fa49ff84ae39259caeaf0457c10526bec6da75d793919ab1643",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "62e7ee89c2035c5237e593efc82e765bd6fc5a14a29da6e0a759f06ad360ed3e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "5ad3ab79bd2b6cc61b4838ea74766f5fc2dfcbd34454c24cdeb535d64f9b5a64",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "bab7855344c522de7de63e59edf3ce048a9889a5fae24b67a2acb8615287fc1f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "497238ee12ff6185c0bf47f50d409384a3c0554226f3fc3ac470addd0fa2172d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "f6e510f148a6ccce5151ee40b3138dbf8a486753b1b39ab86cc6e4dfe59a3831",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "a343aa27bdea2cdf2ef8625a12c9e66888aacc561d9c5a17d819299614d9fe89",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "58db368ea471485dc61f46299eac6ab2f53b5a313624bd60a9a78024b29b9e0c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "03e9a03ec5856a5972e94eed4515357725c558adc9794aabc253f9f93e55e21c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "90e156b71fd3efac5a6bac077c43903c6e44c20d7f13a11f1ba3c61871992d4b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 1,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "cd1c1c270ed38b4c81496255c00312e89973ea0fa7e749685e6455f589070e1d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "ede321367aad9b1ef0589d4972bd4d8115408a10a6b540d0245a6fd4e9fcb164",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "5a0c050c471bf93568586255baaea2dbd7dfbf9de03c296ef8a92aeb4c57cb96",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "1cb2bde902b17544fb1a9240dfe08e0e810cfbd925122fcc1eae803ef6807f99",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "ff4060272acac14d136f0f32418e1f772dcf4be9e71f5f4aaa4cdefb692a1126",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "77ecfe28acd9508f75fba92990e0ea5f4343c99932619c887dd3ddb35850a510",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "4fbd8868f542d0a65fea62556e53aee8ac9fa0e479fc395c33b944e5213f871e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "10e77ce87a87e9529c6ea3c0d8b3c4ee8e8fe80506d51e01f7590a6dd7b13254",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "a6cb51d62eca92900188837a2e30e29987d983c30a35f8fb565ab7e930407861",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "23f55f2675aff4fceb7c303e2fb0bd3c54d0a11cb576b0c0361504bb66e34a62",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 1,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "157e540e1b306c1ab6858964213487d55d666f00d2a8676c983f3a34c1dc95f2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "b2daf135e6dc93896df7176d34313ce7c9927a0a86d713de7a55c4cd9c5fa21f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "ad03d7f09f8d47e664ff713edf382a352d57b2627bd296a19c8e8358fa2ccc37",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "177aba2de0832a8dbfeda5770525b73b4529512bbb85a796b706397d3b50c206",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 2,
+    "table": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "8f867e742f003c93c45884cc166906a1606c3f033d9abb9cff1b6bc3f8a7d1f3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "23d77d82adc54b824cb413a9ae345f1fd85a39de851c7c8e1aff88c415d19c9b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "50904fe99ef3abcab961ff2913cfc54dde2d74c518d56f602884fc1b93553059",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "e06dbdb843f9dc535894fe019a55a58ab7586d980d575167523626121f46cee9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "f03af80db3cd47cc2fcf4a9b8cce8b21d72b411fc02a41ae40f5aba603f272af",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "795fc43efa637384df8beed336358372036bebb85d4b3d25f831c35b33b67f88",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 1,
+    "microwave": 1,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "30ea8edc3c23c413c4f868ba278f8e6a983d8b0b2fc57e95bea078e0da1f6f76",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 1,
+    "refrigerator": 0,
+    "window": 2,
+    "microwave": 1,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "6dd8a3f9720941667efbe5a65c39b517110ce152567c9303f1dd679182f4b41a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 1,
+    "chair": 2,
+    "refrigerator": 0,
+    "window": 2,
+    "microwave": 0,
+    "counter": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "fe940f438cfeea6747da1613b7ba017f3efd7838731cb6f7b608b350802ffede",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "068e95c38297d676a072eb38e17058be7fb090e3756dc6e3f38f9b0dde2deb6b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "trash bin": 0,
+    "chair": 0,
+    "refrigerator": 0,
+    "window": 0,
+    "microwave": 0,
+    "counter": 1,
+    "table": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,97 @@
+{
+  "frames": 64,
+  "prompts": [
+    "lamp",
+    "door",
+    "towel",
+    "trash bin",
+    "nightstand",
+    "backpack",
+    "mirror",
+    "chair",
+    "tv",
+    "table",
+    "bed"
+  ],
+  "objects_per_concept": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 1,
+    "trash bin": 1,
+    "nightstand": 3,
+    "backpack": 2,
+    "mirror": 0,
+    "chair": 3,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+  },
+  "objects": [
+    {
+      "concept": "door",
+      "track_id": 4,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "towel",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 8762
+    },
+    {
+      "concept": "trash bin",
+      "track_id": 2,
+      "frames_seen": 7,
+      "points": 15513
+    },
+    {
+      "concept": "nightstand",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "nightstand",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 3179
+    },
+    {
+      "concept": "nightstand",
+      "track_id": 5,
+      "frames_seen": 3,
+      "points": 6343
+    },
+    {
+      "concept": "backpack",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 14740
+    },
+    {
+      "concept": "backpack",
+      "track_id": 7,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "chair",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 4288
+    },
+    {
+      "concept": "chair",
+      "track_id": 3,
+      "frames_seen": 3,
+      "points": 3906
+    },
+    {
+      "concept": "chair",
+      "track_id": 4,
+      "frames_seen": 3,
+      "points": 3151
+    }
+  ]
+}

@@ -1,0 +1,380 @@
+{
+ "counts": {
+  "PASS": 24,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.466,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.01799,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 0.6667,
+   "limit": ">= 0.8",
+   "ok": false
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.01146,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/stool.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/stove.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/refrigerator.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/stool.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/stove.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "5 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "5 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "e80bcb1996af",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 2.32128,
+    "residual_of_scene": 0.01888,
+    "scene_size_native_units": 1.7041,
+    "pixel_pairs": 25000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.03014,
+    "position_error_max_of_scene": 0.04698,
+    "rotation_error_median_deg": 2.133,
+    "rotation_error_max_deg": 4.463
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "refrigerator, stove, table, chair, stool",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "refrigerator": 0,
+     "stove": 0,
+     "table": 1,
+     "chair": 0,
+     "stool": 0
+    },
+    "native": {
+     "refrigerator": 0,
+     "stove": 0,
+     "table": 1,
+     "chair": 0,
+     "stool": 1
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 1,
+    "adapted_only_tracks": 0,
+    "native_only_tracks": 1,
+    "mean_matched_iou": 0.6553,
+    "pixels_with_matching_identity": 0.466,
+    "per_prompt": {
+     "refrigerator": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "stove": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "table": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.6553
+     },
+     "chair": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "stool": {
+      "adapted_tracks": 0,
+      "native_tracks": 1,
+      "matched": 0,
+      "mean_iou": null
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 1,
+    "median_error_of_scene": 0.01799,
+    "max_error_of_scene": 0.01799,
+    "mean_frames_seen_difference": 1.0,
+    "per_object": [
+     {
+      "concept": "table",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6553,
+      "position_error_of_scene": 0.01799,
+      "chamfer_of_scene": 0.00874
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00874,
+    "all_objects_chamfer_of_scene": 0.04238,
+    "points": {
+     "adapted": 10000,
+     "native": 16104
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 1,
+    "native_rows": 2,
+    "paired_rows": 1,
+    "matched_share": 0.6667,
+    "adapted_only": [],
+    "native_only": [
+     "stool#1"
+    ],
+    "rows_per_concept": {
+     "adapted": {
+      "table": 1
+     },
+     "native": {
+      "table": 1,
+      "stool": 1
+     }
+    },
+    "median_position_error_of_scene": 0.01146,
+    "max_position_error_of_scene": 0.01146,
+    "same_num_frames_share": 0.0,
+    "per_object": [
+     {
+      "concept": "table",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6553,
+      "position_error_of_scene": 0.01146,
+      "num_frames": [
+       4,
+       3
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

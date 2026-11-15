@@ -1,0 +1,639 @@
+{
+ "counts": {
+  "PASS": 36,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.5444,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.01085,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 0.7368,
+   "limit": ">= 0.8",
+   "ok": false
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.00969,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/backpack.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/bed.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/lamp.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/mirror.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/nightstand.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/towel.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/trash_bin.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/tv.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/backpack.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/bed.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/lamp.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/mirror.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/nightstand.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/towel.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/trash_bin.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/tv.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "8544f46ca6af",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 0.99232,
+    "residual_of_scene": 0.01054,
+    "scene_size_native_units": 3.4544,
+    "pixel_pairs": 320000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.01376,
+    "position_error_max_of_scene": 0.0429,
+    "rotation_error_median_deg": 1.643,
+    "rotation_error_max_deg": 8.197
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "lamp, door, towel, trash bin, nightstand, backpack, mirror, chair, tv, table, bed",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "lamp": 0,
+     "door": 1,
+     "towel": 1,
+     "trash bin": 1,
+     "nightstand": 3,
+     "backpack": 2,
+     "mirror": 0,
+     "chair": 0,
+     "tv": 0,
+     "table": 0,
+     "bed": 0
+    },
+    "native": {
+     "lamp": 0,
+     "door": 1,
+     "towel": 1,
+     "trash bin": 1,
+     "nightstand": 3,
+     "backpack": 2,
+     "mirror": 0,
+     "chair": 3,
+     "tv": 0,
+     "table": 0,
+     "bed": 0
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 7,
+    "adapted_only_tracks": 1,
+    "native_only_tracks": 4,
+    "mean_matched_iou": 0.874,
+    "pixels_with_matching_identity": 0.5444,
+    "per_prompt": {
+     "lamp": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "door": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 1.0
+     },
+     "towel": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "trash bin": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.8322
+     },
+     "nightstand": {
+      "adapted_tracks": 3,
+      "native_tracks": 3,
+      "matched": 3,
+      "mean_iou": 0.762
+     },
+     "backpack": {
+      "adapted_tracks": 2,
+      "native_tracks": 2,
+      "matched": 2,
+      "mean_iou": 1.0
+     },
+     "mirror": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "chair": {
+      "adapted_tracks": 0,
+      "native_tracks": 3,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "tv": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "table": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "bed": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 7,
+    "median_error_of_scene": 0.01085,
+    "max_error_of_scene": 0.01169,
+    "mean_frames_seen_difference": 0.143,
+    "per_object": [
+     {
+      "concept": "door",
+      "adapted_track": 6,
+      "native_track": 4,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01169,
+      "chamfer_of_scene": 0.00253
+     },
+     {
+      "concept": "trash bin",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.8322,
+      "position_error_of_scene": 0.00394,
+      "chamfer_of_scene": 0.00128
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 4,
+      "native_track": 5,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00735,
+      "chamfer_of_scene": 0.00419
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01085,
+      "chamfer_of_scene": 0.00697
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.2861,
+      "position_error_of_scene": 0.00468,
+      "chamfer_of_scene": 0.00384
+     },
+     {
+      "concept": "backpack",
+      "adapted_track": 7,
+      "native_track": 7,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01098,
+      "chamfer_of_scene": 0.00425
+     },
+     {
+      "concept": "backpack",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01146,
+      "chamfer_of_scene": 0.00441
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00419,
+    "all_objects_chamfer_of_scene": 0.02037,
+    "points": {
+     "adapted": 65894,
+     "native": 84882
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 8,
+    "native_rows": 11,
+    "paired_rows": 7,
+    "matched_share": 0.7368,
+    "adapted_only": [
+     "towel#2"
+    ],
+    "native_only": [
+     "chair#1",
+     "chair#3",
+     "chair#4",
+     "towel#4"
+    ],
+    "rows_per_concept": {
+     "adapted": {
+      "door": 1,
+      "towel": 1,
+      "trash bin": 1,
+      "nightstand": 3,
+      "backpack": 2
+     },
+     "native": {
+      "door": 1,
+      "towel": 1,
+      "trash bin": 1,
+      "nightstand": 3,
+      "backpack": 2,
+      "chair": 3
+     }
+    },
+    "median_position_error_of_scene": 0.00969,
+    "max_position_error_of_scene": 0.01198,
+    "same_num_frames_share": 0.8571,
+    "per_object": [
+     {
+      "concept": "door",
+      "adapted_track": 6,
+      "native_track": 4,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00969,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "trash bin",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.8322,
+      "position_error_of_scene": 0.00389,
+      "num_frames": [
+       6,
+       7
+      ]
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 4,
+      "native_track": 5,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00797,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01198,
+      "num_frames": [
+       4,
+       4
+      ]
+     },
+     {
+      "concept": "nightstand",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.2861,
+      "position_error_of_scene": 0.00472,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "backpack",
+      "adapted_track": 7,
+      "native_track": 7,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01177,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "backpack",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01159,
+      "num_frames": [
+       7,
+       7
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

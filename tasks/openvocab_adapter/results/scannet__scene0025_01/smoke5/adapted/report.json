@@ -1,0 +1,53 @@
+{
+  "frames": 5,
+  "prompts": [
+    "fan",
+    "pillow",
+    "telephone",
+    "door",
+    "keyboard",
+    "chair",
+    "monitor",
+    "table",
+    "sofa",
+    "window"
+  ],
+  "objects_per_concept": {
+    "fan": 0,
+    "pillow": 0,
+    "telephone": 1,
+    "door": 0,
+    "keyboard": 1,
+    "chair": 0,
+    "monitor": 1,
+    "table": 1,
+    "sofa": 0,
+    "window": 0
+  },
+  "objects": [
+    {
+      "concept": "telephone",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 7824
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 5693
+    },
+    {
+      "concept": "monitor",
+      "track_id": 1,
+      "frames_seen": 5,
+      "points": 11460
+    },
+    {
+      "concept": "table",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 6808
+    }
+  ]
+}

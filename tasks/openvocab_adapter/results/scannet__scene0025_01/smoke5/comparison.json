@@ -1,0 +1,550 @@
+{
+ "counts": {
+  "PASS": 34,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.7276,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.00609,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 1.0,
+   "limit": ">= 0.8",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.00941,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/fan.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/keyboard.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/monitor.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/pillow.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/sofa.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/telephone.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/window.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/fan.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/keyboard.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/monitor.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/pillow.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/sofa.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/telephone.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/window.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "5 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "5 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "66051fcc41fa",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 0.89028,
+    "residual_of_scene": 0.01195,
+    "scene_size_native_units": 1.8928,
+    "pixel_pairs": 25000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.02747,
+    "position_error_max_of_scene": 0.04175,
+    "rotation_error_median_deg": 1.466,
+    "rotation_error_max_deg": 3.341
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "fan, pillow, telephone, door, keyboard, chair, monitor, table, sofa, window",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "fan": 0,
+     "pillow": 0,
+     "telephone": 1,
+     "door": 0,
+     "keyboard": 1,
+     "chair": 0,
+     "monitor": 1,
+     "table": 1,
+     "sofa": 0,
+     "window": 0
+    },
+    "native": {
+     "fan": 0,
+     "pillow": 0,
+     "telephone": 1,
+     "door": 0,
+     "keyboard": 1,
+     "chair": 0,
+     "monitor": 1,
+     "table": 1,
+     "sofa": 0,
+     "window": 0
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 4,
+    "adapted_only_tracks": 0,
+    "native_only_tracks": 0,
+    "mean_matched_iou": 0.785,
+    "pixels_with_matching_identity": 0.7276,
+    "per_prompt": {
+     "fan": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "pillow": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "telephone": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.9207
+     },
+     "door": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "keyboard": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.5399
+     },
+     "chair": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "monitor": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.6792
+     },
+     "table": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 1.0
+     },
+     "sofa": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "window": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 4,
+    "median_error_of_scene": 0.00609,
+    "max_error_of_scene": 0.02126,
+    "mean_frames_seen_difference": 0.75,
+    "per_object": [
+     {
+      "concept": "telephone",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9207,
+      "position_error_of_scene": 0.00416,
+      "chamfer_of_scene": 0.00221
+     },
+     {
+      "concept": "keyboard",
+      "adapted_track": 2,
+      "native_track": 1,
+      "iou": 0.5399,
+      "position_error_of_scene": 0.00311,
+      "chamfer_of_scene": 0.00329
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 1,
+      "native_track": 2,
+      "iou": 0.6792,
+      "position_error_of_scene": 0.02126,
+      "chamfer_of_scene": 0.00241
+     },
+     {
+      "concept": "table",
+      "adapted_track": 2,
+      "native_track": 3,
+      "iou": 1.0,
+      "position_error_of_scene": 0.00802,
+      "chamfer_of_scene": 0.0059
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00285,
+    "all_objects_chamfer_of_scene": 0.00371,
+    "points": {
+     "adapted": 31785,
+     "native": 28660
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 4,
+    "native_rows": 4,
+    "paired_rows": 4,
+    "matched_share": 1.0,
+    "adapted_only": [],
+    "native_only": [],
+    "rows_per_concept": {
+     "adapted": {
+      "telephone": 1,
+      "keyboard": 1,
+      "monitor": 1,
+      "table": 1
+     },
+     "native": {
+      "telephone": 1,
+      "keyboard": 1,
+      "monitor": 1,
+      "table": 1
+     }
+    },
+    "median_position_error_of_scene": 0.00941,
+    "max_position_error_of_scene": 0.02221,
+    "same_num_frames_share": 0.5,
+    "per_object": [
+     {
+      "concept": "telephone",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.9207,
+      "position_error_of_scene": 0.00304,
+      "num_frames": [
+       4,
+       5
+      ]
+     },
+     {
+      "concept": "keyboard",
+      "adapted_track": 2,
+      "native_track": 1,
+      "iou": 0.5399,
+      "position_error_of_scene": 0.0036,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 1,
+      "native_track": 2,
+      "iou": 0.6792,
+      "position_error_of_scene": 0.02221,
+      "num_frames": [
+       5,
+       3
+      ]
+     },
+     {
+      "concept": "table",
+      "adapted_track": 2,
+      "native_track": 3,
+      "iou": 1.0,
+      "position_error_of_scene": 0.01523,
+      "num_frames": [
+       3,
+       3
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

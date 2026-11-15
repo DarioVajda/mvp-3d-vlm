@@ -1,0 +1,6 @@
+half: DIFFERS (provisional pass marks)  {'PASS': 28, 'FAIL': 0, 'MEASURED': 7, 'BLOCKED': 0}
+   FAIL tracks: share of pixels with the same identity: 0.2887 (needs >= 0.9)
+   ok   objects: median 3D position error, share of scene size: 0.01009 (needs <= 0.05)
+   FAIL scene sheet: share of rows found in both sheets: 0.7692 (needs >= 0.8)
+   ok   scene sheet: median position error, share of scene size: 0.0095 (needs <= 0.05)
+   ok   no FAIL in the comparison: [] (needs [])

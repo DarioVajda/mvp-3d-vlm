@@ -1,0 +1,1042 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "dishwasher",
+  "washer",
+  "refrigerator",
+  "table",
+  "chair"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 41.3,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "54cdd280f96e821985f022e185f14c742b3fe4ea951fc8aaba1369925ccc09f3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "e83fe4d4abf033c10cefa2b09329603ad342d413d39c569405b75eefb22b7a75",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "cd543214b18120f69c7b5d4c2e742c08c1c3ad53f730bdede48277659092c842",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "cb424c42a22e2b2f2224df4b27106896bb8a30c0ddc80a65ce735997357d808e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "71e81ab07d549546ea515e52ef8337041d3686481664773419ce92c4429ef876",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 2,
+    "washer": 1,
+    "refrigerator": 2,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "aa8cb0564c4ecc978881b5de5247d3bc03f2c0a31e70f78b003df4175e2bb445",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "a9e0a08f3a89be69a28d35cd0e315964324c5a3f3a0ecc2fcd8476ab9ec31b93",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "04d896a081c415089ce8ec902c5cdba7598cb67f96a3be9aaa416b5eddf6c0a7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "474e25be0cbf8a066296cb7aa4d2dcf6875e5db15fd93567b35b802af2b82042",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "ab09c5f47b1c8480862b59eb410fac888daa7705eb894007a04b17104184a722",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "5da0ffa82fb0602c3a7535dfd2f42f627f847d0c7f8da5dfa21946a26b7daa7c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "30a1ab45ad082a1727b733bb50579bd2ce1ce0825014230c284f62583feecf92",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "24bcc655c6fa19e43c3a1d6b4dafcfc02fb26af90f6f5f99c42103eb246b1c2a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "cfe17183b3e49ea7f0488f54f8d9ff18e922d69c27743baa60c88ec507f19aa2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "9d638492ba2d7017620db52a544a22518cfa84f79bb3731368663400e4887d49",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 2,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "d91b8dde1b0e4f1a03468b27a0415126ae8a332cb494d5f5d905b6b004ce8414",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "857b0b26d8ed7555372a4c83fb2741aa651fd3120fb1ae688baa85c6afb5e665",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "d7b3364cffdc27354697dd4451da2069ef81dc73eb08fd020ed9988ac56101a6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 2,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "ada9c26d12aceb8a7dff3e33feb21e52e968a31b0c27049a7864c908f37b0300",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "03c473fcb9a9efec2a28f06e4ab4720e362a76ce85db5b6c8f1d7b797d1bd1f2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "a08caa2a8ad856ffbdb101ed1ed086caf89927f2e01eaac70bcb14eacf9b71f1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "047500e67be360bdb7971cf39baad1558116c7fab537af46a3a03e48530e17b1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "035375ddb055de50d6d0932a155a74362d105c1cda7b5c7f01e15dc7db4d43b5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "79fb77e7cebab234725cfa75313cb11a3e5023e9d916b3f82b6974bd86148ef5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "ee6f657c0b5acfdc4c3715841437e7d463ee6cbd1ab0de11e9a9abaecf9063fa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "38fc6cedd9c16a07d37483da8b5c841a6972d1879126c6095aa5c090d8965f39",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 2,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "dada3bef3a9b10e4272e0d245f512203ea58968b8b097976c4ec1b9a5736f612",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "601d4591368ffe55b3a4d031938e4aae8b1aa874a4ceed2d2a91749b5618e007",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "bc825e062c1ff04a1c7da31abb21b7a35d9497c27b9d5b1ce94fa534be7e8e0a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "b5f530354f0244ad4fd348e3a92b6271859ecc7e5902978648f600f31712b64c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "ce2e4573e07002593fba998d4f81d1712a5b52ffbdfca5aff996127a2a310156",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "3217ae9048e0e1438ef9daa796887a8b989eec358d1e53840f5dc189d184f4dc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "a6a5dbd0c47c3d5ef50f563962861d17d691405e9c3523cdadd0b23a43fafac8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "3ce5d1d4260da8f926addac2f5f9563330a3c4e81c21b62818bbc1dfee509f0a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "c18fa4b9f018ce5ae98ea4b687f98ad003473913ece91b765aa0bc5865c57a24",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "2ddc97aa5649221dc55c4b93aaa7e3911be3c4db2f69a755c94f6ece9b113e16",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "26e18e510bbd114991354766334a1532ae0765f7043c70bd27d4de6bbf3e63a2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "a8070aa1c042e4af9703ad3d8a191aff3e5c00e16786d4c8adf165027ae89327",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 2,
+    "chair": 3
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "4d98b94c669cfd774beea69284b3069ee78e01b3272ff7fc3ff640a2efaae9a4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 5
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "107d6b8a1fb103409bc09bed703744bab33e6610a1f7bce881d34358595d0e11",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 1,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 4
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "4adfd18a2124060746c7940b79c2083ad582ed18f5e47ff5cc19c6d30e6b1394",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 4
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "d5d8b73c5262cfa9deb8fa6757718d2addadfd2daa9962e317f3ce843fc0e2cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "b59cef1c6d5e309e84b01773accaeef7fe6f2cf0cb197ae387eb09282d7d46e3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "6b4bd55d51dfa588e008c794514f52f723213cf326cf35a86db461a32e6b0b0e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "82be9c8ba92466b8b9105861bcccd847bbb1e946071a4ffa0f3b24c054caf732",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "7473bde8745b579ba6ba91bbce61990b1ffea2951993cb903673c42e9d4e16af",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "92864caddd03e64f0d363d3b47cbf3b1cc22b039c650a96ce8ce9752d99efe95",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "0a5c778e4d30e7ca1e178aa836694fb191f67bf013c791a2a94e31ae6f2d4123",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "1d97fab2bafc44618d5d0a36bc11418363cdf07725a735eab7fb48edcb9f9aab",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "122a9a0eebf2e623fd6914a479948a37b5af51091f7b7c3a6663dd06cf1e81f0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "410c74f09fb2e65d5bceb149acfeebc4708b3975eb4bfbdfac70794e89e1f2bd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 3
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "838269fe22b7a521b1bf197717b16c07d0fb1936601a3f804e7bf68a231fed02",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "f2e05ee9212404bc064e7dd6b145f4c26ad06844e1db8057f9c3a9e158b5888a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "fec5beb434243366fba53dfd304a7d4fb80418e153b48129b6b2bf99e3802eaf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "9d0732c1d2ca118bfa031c2968aa9e060dc75ee44c197ee09dd8809ee3c6b707",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "f80271197e3a62d54f8be18596c16c4cfd8452ce3958561533dadd4a15fc7827",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "a15bfb0d68828d67be353b851669afc2800d5d329f823b1e8862a3002edcd4d8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "ccd4cc6f5e9e03b9e9e39a759f6a4a5e2b1ccf7adc8191287793731dfcc803e4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "5099329f0c1c835eb784d69e7425b86aa6a233106a333e94d422878843a94ef6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 0,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "12553687f9040ba31a61ff72e38bff66bd0e66d64062c875d9c2fc8e430cdda5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "bb54248865a2e74586f867293cab762e3e03d7923bb53aca262f329a79cfb86d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 1,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "cdd8fb27622c74a981b8d487b0f61bffaf2562a1170764aa2325eab7515a9306",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 1,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 1
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "2ddcb5cfc37fbd37a71fbe4e1287f076109f7cd6c9e07d05d1058dc294c7d29c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "503544f87d4953b92abd949ed9479eb3a0b0f46ea27b2135e6443b4fde7e6347",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "dishwasher": 0,
+    "washer": 0,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 0
+   }
+  }
+ ]
+}

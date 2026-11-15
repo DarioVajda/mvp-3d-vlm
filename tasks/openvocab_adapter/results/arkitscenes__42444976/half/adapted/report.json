@@ -1,0 +1,55 @@
+{
+  "frames": 64,
+  "prompts": [
+    "dishwasher",
+    "washer",
+    "refrigerator",
+    "table",
+    "chair"
+  ],
+  "objects_per_concept": {
+    "dishwasher": 1,
+    "washer": 1,
+    "refrigerator": 1,
+    "table": 0,
+    "chair": 3
+  },
+  "objects": [
+    {
+      "concept": "dishwasher",
+      "track_id": 1,
+      "frames_seen": 10,
+      "points": 21026
+    },
+    {
+      "concept": "washer",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 15192
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 5,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "chair",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 4105
+    },
+    {
+      "concept": "chair",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 2742
+    },
+    {
+      "concept": "chair",
+      "track_id": 3,
+      "frames_seen": 5,
+      "points": 2146
+    }
+  ]
+}

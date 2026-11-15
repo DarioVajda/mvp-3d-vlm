@@ -1,0 +1,87 @@
+{
+  "frames": 64,
+  "prompts": [
+    "mirror",
+    "nightstand",
+    "backpack",
+    "chair",
+    "trash bin",
+    "closet",
+    "radiator",
+    "pillow",
+    "printer",
+    "refrigerator",
+    "sofa",
+    "window"
+  ],
+  "objects_per_concept": {
+    "mirror": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "chair": 1,
+    "trash bin": 2,
+    "closet": 0,
+    "radiator": 0,
+    "pillow": 1,
+    "printer": 1,
+    "refrigerator": 1,
+    "sofa": 1,
+    "window": 0
+  },
+  "objects": [
+    {
+      "concept": "backpack",
+      "track_id": 2,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "backpack",
+      "track_id": 3,
+      "frames_seen": 5,
+      "points": 10093
+    },
+    {
+      "concept": "chair",
+      "track_id": 8,
+      "frames_seen": 5,
+      "points": 12500
+    },
+    {
+      "concept": "trash bin",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "trash bin",
+      "track_id": 6,
+      "frames_seen": 3,
+      "points": 3252
+    },
+    {
+      "concept": "pillow",
+      "track_id": 1,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "printer",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 17211
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 6789
+    },
+    {
+      "concept": "sofa",
+      "track_id": 2,
+      "frames_seen": 6,
+      "points": 15000
+    }
+  ]
+}

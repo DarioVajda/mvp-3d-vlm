@@ -1,0 +1,801 @@
+{
+ "counts": {
+  "PASS": 38,
+  "FAIL": 0,
+  "MEASURED": 7,
+  "BLOCKED": 0
+ },
+ "verdict": "DIFFERS",
+ "provisional": true,
+ "criteria": [
+  {
+   "criterion": "tracks: share of pixels with the same identity",
+   "value": 0.4215,
+   "limit": ">= 0.9",
+   "ok": false
+  },
+  {
+   "criterion": "objects: median 3D position error, share of scene size",
+   "value": 0.01258,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: share of rows found in both sheets",
+   "value": 0.8,
+   "limit": ">= 0.8",
+   "ok": true
+  },
+  {
+   "criterion": "scene sheet: median position error, share of scene size",
+   "value": 0.01336,
+   "limit": "<= 0.05",
+   "ok": true
+  },
+  {
+   "criterion": "no FAIL in the comparison",
+   "value": [],
+   "limit": "[]",
+   "ok": true
+  }
+ ],
+ "comparisons": [
+  {
+   "comparison": "format: adapted/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/bed.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/computer_mouse.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/cutting_board.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/keyboard.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/laptop.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/monitor.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/pan.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/tracks/trash_can.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: adapted has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/cameras.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/depth.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/labels.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/bed.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/chair.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/computer_mouse.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/cutting_board.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/door.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/keyboard.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/laptop.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/microwave.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/monitor.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/pan.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/table.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/tracks/trash_can.npz",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native/objects.ply",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "format: native has all output files",
+   "status": "PASS",
+   "detail": "",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: cover the selected frames",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "frames: same frames in the same order",
+   "status": "PASS",
+   "detail": "64 frames",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "masks: both runs used identical masks",
+   "status": "PASS",
+   "detail": "00983895cbfc",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "Sim(3) alignment of the reconstructions",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "scale_adapted_to_native": 0.96917,
+    "residual_of_scene": 0.01536,
+    "scene_size_native_units": 2.4879,
+    "pixel_pairs": 320000
+   },
+   "needs": []
+  },
+  {
+   "comparison": "cameras after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "position_error_median_of_scene": 0.01425,
+    "position_error_max_of_scene": 0.04078,
+    "rotation_error_median_deg": 2.962,
+    "rotation_error_max_deg": 5.879
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object labels: same concept list",
+   "status": "PASS",
+   "detail": "bed, pan, trash can, microwave, computer mouse, cutting board, chair, door, keyboard, table, laptop, monitor",
+   "values": {},
+   "needs": []
+  },
+  {
+   "comparison": "object labels: objects per concept",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted": {
+     "bed": 0,
+     "pan": 0,
+     "trash can": 1,
+     "microwave": 0,
+     "computer mouse": 1,
+     "cutting board": 0,
+     "chair": 1,
+     "door": 7,
+     "keyboard": 1,
+     "table": 2,
+     "laptop": 1,
+     "monitor": 2
+    },
+    "native": {
+     "bed": 0,
+     "pan": 0,
+     "trash can": 0,
+     "microwave": 1,
+     "computer mouse": 1,
+     "cutting board": 0,
+     "chair": 2,
+     "door": 9,
+     "keyboard": 1,
+     "table": 2,
+     "laptop": 1,
+     "monitor": 2
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "tracking consistency",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "matched_tracks": 14,
+    "adapted_only_tracks": 2,
+    "native_only_tracks": 5,
+    "mean_matched_iou": 0.6635,
+    "pixels_with_matching_identity": 0.4215,
+    "per_prompt": {
+     "bed": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "pan": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "trash can": {
+      "adapted_tracks": 1,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "microwave": {
+      "adapted_tracks": 0,
+      "native_tracks": 1,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "computer mouse": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.7409
+     },
+     "cutting board": {
+      "adapted_tracks": 0,
+      "native_tracks": 0,
+      "matched": 0,
+      "mean_iou": null
+     },
+     "chair": {
+      "adapted_tracks": 1,
+      "native_tracks": 2,
+      "matched": 1,
+      "mean_iou": 0.7275
+     },
+     "door": {
+      "adapted_tracks": 7,
+      "native_tracks": 9,
+      "matched": 6,
+      "mean_iou": 0.5573
+     },
+     "keyboard": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.6979
+     },
+     "table": {
+      "adapted_tracks": 2,
+      "native_tracks": 2,
+      "matched": 2,
+      "mean_iou": 0.745
+     },
+     "laptop": {
+      "adapted_tracks": 1,
+      "native_tracks": 1,
+      "matched": 1,
+      "mean_iou": 0.7674
+     },
+     "monitor": {
+      "adapted_tracks": 2,
+      "native_tracks": 2,
+      "matched": 2,
+      "mean_iou": 0.7605
+     }
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "3D object positions after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "objects": 14,
+    "median_error_of_scene": 0.01258,
+    "max_error_of_scene": 0.0236,
+    "mean_frames_seen_difference": 1.714,
+    "per_object": [
+     {
+      "concept": "computer mouse",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.7409,
+      "position_error_of_scene": 0.0156,
+      "chamfer_of_scene": 0.01077
+     },
+     {
+      "concept": "chair",
+      "adapted_track": 1,
+      "native_track": 3,
+      "iou": 0.7275,
+      "position_error_of_scene": 0.00942,
+      "chamfer_of_scene": 0.00687
+     },
+     {
+      "concept": "door",
+      "adapted_track": 23,
+      "native_track": 23,
+      "iou": 0.9171,
+      "position_error_of_scene": 0.00514,
+      "chamfer_of_scene": 0.00264
+     },
+     {
+      "concept": "door",
+      "adapted_track": 27,
+      "native_track": 27,
+      "iou": 0.8442,
+      "position_error_of_scene": 0.0038,
+      "chamfer_of_scene": 0.00239
+     },
+     {
+      "concept": "door",
+      "adapted_track": 28,
+      "native_track": 28,
+      "iou": 0.6211,
+      "position_error_of_scene": 0.01542,
+      "chamfer_of_scene": 0.00279
+     },
+     {
+      "concept": "door",
+      "adapted_track": 18,
+      "native_track": 19,
+      "iou": 0.4586,
+      "position_error_of_scene": 0.01244,
+      "chamfer_of_scene": 0.00344
+     },
+     {
+      "concept": "door",
+      "adapted_track": 21,
+      "native_track": 21,
+      "iou": 0.2523,
+      "position_error_of_scene": 0.00451,
+      "chamfer_of_scene": 0.00261
+     },
+     {
+      "concept": "door",
+      "adapted_track": 2,
+      "native_track": 8,
+      "iou": 0.2505,
+      "position_error_of_scene": 0.0236,
+      "chamfer_of_scene": 0.0089
+     },
+     {
+      "concept": "keyboard",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6979,
+      "position_error_of_scene": 0.01674,
+      "chamfer_of_scene": 0.00776
+     },
+     {
+      "concept": "table",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.8005,
+      "position_error_of_scene": 0.01197,
+      "chamfer_of_scene": 0.00603
+     },
+     {
+      "concept": "table",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6895,
+      "position_error_of_scene": 0.01221,
+      "chamfer_of_scene": 0.00645
+     },
+     {
+      "concept": "laptop",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.7674,
+      "position_error_of_scene": 0.01558,
+      "chamfer_of_scene": 0.00685
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.7654,
+      "position_error_of_scene": 0.0159,
+      "chamfer_of_scene": 0.00637
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.7556,
+      "position_error_of_scene": 0.01271,
+      "chamfer_of_scene": 0.00774
+     }
+    ]
+   },
+   "needs": []
+  },
+  {
+   "comparison": "object point clouds after alignment",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "median_object_chamfer_of_scene": 0.00641,
+    "all_objects_chamfer_of_scene": 0.00912,
+    "points": {
+     "adapted": 151454,
+     "native": 167000
+    }
+   },
+   "needs": []
+  },
+  {
+   "comparison": "scene sheet: objects",
+   "status": "MEASURED",
+   "detail": "",
+   "values": {
+    "adapted_rows": 16,
+    "native_rows": 19,
+    "paired_rows": 14,
+    "matched_share": 0.8,
+    "adapted_only": [
+     "door#16",
+     "trash can#3"
+    ],
+    "native_only": [
+     "chair#1",
+     "door#18",
+     "door#25",
+     "door#7",
+     "microwave#1"
+    ],
+    "rows_per_concept": {
+     "adapted": {
+      "trash can": 1,
+      "computer mouse": 1,
+      "chair": 1,
+      "door": 7,
+      "keyboard": 1,
+      "table": 2,
+      "laptop": 1,
+      "monitor": 2
+     },
+     "native": {
+      "microwave": 1,
+      "computer mouse": 1,
+      "chair": 2,
+      "door": 9,
+      "keyboard": 1,
+      "table": 2,
+      "laptop": 1,
+      "monitor": 2
+     }
+    },
+    "median_position_error_of_scene": 0.01336,
+    "max_position_error_of_scene": 0.01903,
+    "same_num_frames_share": 0.0714,
+    "per_object": [
+     {
+      "concept": "computer mouse",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.7409,
+      "position_error_of_scene": 0.01561,
+      "num_frames": [
+       4,
+       3
+      ]
+     },
+     {
+      "concept": "chair",
+      "adapted_track": 1,
+      "native_track": 3,
+      "iou": 0.7275,
+      "position_error_of_scene": 0.00838,
+      "num_frames": [
+       6,
+       4
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 23,
+      "native_track": 23,
+      "iou": 0.9171,
+      "position_error_of_scene": 0.00429,
+      "num_frames": [
+       3,
+       4
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 27,
+      "native_track": 27,
+      "iou": 0.8442,
+      "position_error_of_scene": 0.00385,
+      "num_frames": [
+       4,
+       5
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 28,
+      "native_track": 28,
+      "iou": 0.6211,
+      "position_error_of_scene": 0.01381,
+      "num_frames": [
+       2,
+       3
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 18,
+      "native_track": 19,
+      "iou": 0.4586,
+      "position_error_of_scene": 0.01088,
+      "num_frames": [
+       3,
+       3
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 21,
+      "native_track": 21,
+      "iou": 0.2523,
+      "position_error_of_scene": 0.00347,
+      "num_frames": [
+       5,
+       9
+      ]
+     },
+     {
+      "concept": "door",
+      "adapted_track": 2,
+      "native_track": 8,
+      "iou": 0.2505,
+      "position_error_of_scene": 0.01903,
+      "num_frames": [
+       4,
+       2
+      ]
+     },
+     {
+      "concept": "keyboard",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6979,
+      "position_error_of_scene": 0.01688,
+      "num_frames": [
+       6,
+       4
+      ]
+     },
+     {
+      "concept": "table",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.8005,
+      "position_error_of_scene": 0.01304,
+      "num_frames": [
+       5,
+       4
+      ]
+     },
+     {
+      "concept": "table",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.6895,
+      "position_error_of_scene": 0.01368,
+      "num_frames": [
+       8,
+       6
+      ]
+     },
+     {
+      "concept": "laptop",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.7674,
+      "position_error_of_scene": 0.01524,
+      "num_frames": [
+       6,
+       4
+      ]
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 2,
+      "native_track": 2,
+      "iou": 0.7654,
+      "position_error_of_scene": 0.0157,
+      "num_frames": [
+       6,
+       4
+      ]
+     },
+     {
+      "concept": "monitor",
+      "adapted_track": 1,
+      "native_track": 1,
+      "iou": 0.7556,
+      "position_error_of_scene": 0.01298,
+      "num_frames": [
+       7,
+       4
+      ]
+     }
+    ]
+   },
+   "needs": []
+  }
+ ]
+}

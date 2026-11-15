@@ -1,0 +1,96 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 1.0,
+  "peak_vram_gib": 0.03,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "477323a1a3dd9dedc0c7aa4c2145c1ea5c15762222309e034b76c35a559703b8",
+    "frames": 64,
+    "prompts": [
+      "mirror",
+      "nightstand",
+      "backpack",
+      "chair",
+      "trash bin",
+      "closet",
+      "radiator",
+      "pillow",
+      "printer",
+      "refrigerator",
+      "sofa",
+      "window"
+    ]
+  },
+  "mirror": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "nightstand": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "backpack": {
+    "objects": 2,
+    "max_detections_per_track": 5,
+    "max_track_span_frames": 51,
+    "mean_track_span_frames": 43.0
+  },
+  "chair": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 3,
+    "mean_track_span_frames": 3.0
+  },
+  "trash bin": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 14,
+    "mean_track_span_frames": 14.0
+  },
+  "closet": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "radiator": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "pillow": {
+    "objects": 1,
+    "max_detections_per_track": 6,
+    "max_track_span_frames": 17,
+    "mean_track_span_frames": 17.0
+  },
+  "printer": {
+    "objects": 1,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 15,
+    "mean_track_span_frames": 15.0
+  },
+  "refrigerator": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "sofa": {
+    "objects": 1,
+    "max_detections_per_track": 3,
+    "max_track_span_frames": 17,
+    "mean_track_span_frames": 17.0
+  },
+  "window": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  }
+}

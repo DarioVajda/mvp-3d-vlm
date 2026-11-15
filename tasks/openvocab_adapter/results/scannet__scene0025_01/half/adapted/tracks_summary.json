@@ -1,0 +1,82 @@
+{
+  "method": "3D tracking-by-detection (SAM3 image + world-centroid association)",
+  "seconds": 2.5,
+  "peak_vram_gib": 0.0,
+  "saved_masks": {
+    "dir": "/shared/workspace/povejmo/masks",
+    "fingerprint": "d15016d4e0116a12c1170566e2d81ccabd702a4e10ed1cc399599d71287c2246",
+    "frames": 64,
+    "prompts": [
+      "fan",
+      "pillow",
+      "telephone",
+      "door",
+      "keyboard",
+      "chair",
+      "monitor",
+      "table",
+      "sofa",
+      "window"
+    ]
+  },
+  "fan": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  },
+  "pillow": {
+    "objects": 3,
+    "max_detections_per_track": 8,
+    "max_track_span_frames": 55,
+    "mean_track_span_frames": 39.3
+  },
+  "telephone": {
+    "objects": 1,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 4,
+    "mean_track_span_frames": 4.0
+  },
+  "door": {
+    "objects": 2,
+    "max_detections_per_track": 5,
+    "max_track_span_frames": 34,
+    "mean_track_span_frames": 18.5
+  },
+  "keyboard": {
+    "objects": 3,
+    "max_detections_per_track": 7,
+    "max_track_span_frames": 7,
+    "mean_track_span_frames": 5.7
+  },
+  "chair": {
+    "objects": 2,
+    "max_detections_per_track": 6,
+    "max_track_span_frames": 23,
+    "mean_track_span_frames": 19.0
+  },
+  "monitor": {
+    "objects": 4,
+    "max_detections_per_track": 8,
+    "max_track_span_frames": 9,
+    "mean_track_span_frames": 7.0
+  },
+  "table": {
+    "objects": 4,
+    "max_detections_per_track": 4,
+    "max_track_span_frames": 5,
+    "mean_track_span_frames": 3.8
+  },
+  "sofa": {
+    "objects": 2,
+    "max_detections_per_track": 9,
+    "max_track_span_frames": 15,
+    "mean_track_span_frames": 12.5
+  },
+  "window": {
+    "objects": 0,
+    "max_detections_per_track": 0,
+    "max_track_span_frames": 0,
+    "mean_track_span_frames": 0
+  }
+}

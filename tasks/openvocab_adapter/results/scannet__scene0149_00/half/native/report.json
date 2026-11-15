@@ -1,0 +1,113 @@
+{
+  "frames": 64,
+  "prompts": [
+    "trash bin",
+    "chair",
+    "refrigerator",
+    "window",
+    "microwave",
+    "counter",
+    "table"
+  ],
+  "objects_per_concept": {
+    "trash bin": 1,
+    "chair": 0,
+    "refrigerator": 2,
+    "window": 0,
+    "microwave": 2,
+    "counter": 8,
+    "table": 2
+  },
+  "objects": [
+    {
+      "concept": "trash bin",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 15592
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "refrigerator",
+      "track_id": 3,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "microwave",
+      "track_id": 1,
+      "frames_seen": 9,
+      "points": 22500
+    },
+    {
+      "concept": "microwave",
+      "track_id": 2,
+      "frames_seen": 8,
+      "points": 17957
+    },
+    {
+      "concept": "counter",
+      "track_id": 1,
+      "frames_seen": 7,
+      "points": 9576
+    },
+    {
+      "concept": "counter",
+      "track_id": 2,
+      "frames_seen": 6,
+      "points": 6063
+    },
+    {
+      "concept": "counter",
+      "track_id": 3,
+      "frames_seen": 4,
+      "points": 6629
+    },
+    {
+      "concept": "counter",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "counter",
+      "track_id": 5,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "counter",
+      "track_id": 7,
+      "frames_seen": 4,
+      "points": 9580
+    },
+    {
+      "concept": "counter",
+      "track_id": 8,
+      "frames_seen": 5,
+      "points": 12500
+    },
+    {
+      "concept": "counter",
+      "track_id": 10,
+      "frames_seen": 3,
+      "points": 5770
+    },
+    {
+      "concept": "table",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "table",
+      "track_id": 2,
+      "frames_seen": 5,
+      "points": 12500
+    }
+  ]
+}

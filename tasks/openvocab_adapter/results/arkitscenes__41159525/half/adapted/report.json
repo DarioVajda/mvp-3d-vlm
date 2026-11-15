@@ -1,0 +1,79 @@
+{
+  "frames": 64,
+  "prompts": [
+    "refrigerator",
+    "stove",
+    "table",
+    "chair",
+    "stool"
+  ],
+  "objects_per_concept": {
+    "refrigerator": 1,
+    "stove": 2,
+    "table": 3,
+    "chair": 2,
+    "stool": 2
+  },
+  "objects": [
+    {
+      "concept": "refrigerator",
+      "track_id": 3,
+      "frames_seen": 3,
+      "points": 6426
+    },
+    {
+      "concept": "stove",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "stove",
+      "track_id": 5,
+      "frames_seen": 3,
+      "points": 7500
+    },
+    {
+      "concept": "table",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 6738
+    },
+    {
+      "concept": "table",
+      "track_id": 2,
+      "frames_seen": 4,
+      "points": 9852
+    },
+    {
+      "concept": "table",
+      "track_id": 4,
+      "frames_seen": 4,
+      "points": 10000
+    },
+    {
+      "concept": "chair",
+      "track_id": 1,
+      "frames_seen": 6,
+      "points": 13409
+    },
+    {
+      "concept": "chair",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 6944
+    },
+    {
+      "concept": "stool",
+      "track_id": 5,
+      "frames_seen": 4,
+      "points": 2477
+    },
+    {
+      "concept": "stool",
+      "track_id": 6,
+      "frames_seen": 3,
+      "points": 7500
+    }
+  ]
+}

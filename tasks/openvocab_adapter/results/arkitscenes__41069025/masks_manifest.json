@@ -1,0 +1,1042 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "sofa",
+  "stove",
+  "tv",
+  "chair",
+  "table"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 37.8,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "c878d771fe9e8ab92e6bb91b6b2f645456059d2d5158e33d5a588ee944abf7cf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "233e79895c260cb51dcb1c8b2b55e033ef8884cf773230dc4f1dab789add45d5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "e017ca3fa6b43bdcdf3c85821f843e80f7b706938d49c46c5fa560319a8899c5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "1b2c1e63eab2ef3d17398f0278748068f386d1bc1209dbee8b499247a4aae63d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "b6583c00a11ebee21b7f39c59de5c1b80ff6c90a4ebf3e17713017173bec8975",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "dcebb93d6922f286b3dc81e10c457defca6e2fef6e2a5f0378f33831e6acb773",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "252463056637934074089a0f1f7c657e9f8d41a1afd3f539981279ee9b41e931",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 1,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "119b6d92872cca1c78cfad438b96c56e8276a112b0b69c4bafe85d7ae1b7fe5c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "fbec5883ab2e6a696dc10d8024e2d413ae5089264744bf22d50ae940b57cc1e9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "409c65514c26b774d50b9b97998d9ee8b18f7e912ef120e0efb8accf9a43d4dd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "baa3f00a858714276d6e0a2ce9c00ac028dff3c02f8456279c0ebd750a810511",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "75d988cf922a3013ba312ee9c96df15854c7b58d19e4a898a0609ca017bc7c04",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "8f4b4962f73a7385d3f6c0bc5efcd277de3305472718707c1d84493dfa3d85f2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "d3961108403e65c1308860e8e9fad95671be91b6b2df8ba504a3f3d2be9f4ebc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "bc2877558ce649439edd02288591e4bc3f4ee9bddb1991d6bfa0faa4f5559ee2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "5f21265013a213bf0906513e574a410d670198c19d7b3b9c28f27a3e8d2011d1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "2b7dda43910de54b101751bfe7cf927a50714a81d1f5616641b46cd8cdbc4e87",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 2,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "67f876b9f97ed7b58d7397c85e87cd7935a3faeff45820bf37292b15218d1a06",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 1,
+    "tv": 0,
+    "chair": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "a813e9d4f580b1e27f0b5727d96fb224e86cf5b650bec72c44e8fb74d547b5bf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "1ff2b03ba4e4017deb5343543de938ef948f3da3a799477c181b9ae40ae78d3e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "cab66036d8b3565a417f4059df5c0c7003cc17018546b98694d9914ce9ed7206",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "983c0a06702aec39a8b51e66af1515898cb0262ac0d8a0443aeea84b4e6a261a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "0de223e21ac11de117e3552ef0589483dffeeec9089285bf5dc36c656b4fd277",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 2,
+    "table": 1
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "7da249ba698047790143545578b0593a3f5eadd81c0189585b83a7d893c48d56",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 1,
+    "chair": 1,
+    "table": 2
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "8f013fe8618d05798774d993b42641cb37e346600cdb6a80c6f6dd4cb7f43e29",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "24cd75d2f67a8eb0ffa7fb597a8d1f43a0ea35c433f5bf63c8c12a2647e2f1cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 1,
+    "chair": 1,
+    "table": 1
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "91205ca8c94f5931df1b07056ec02d7bf18e9a895730712d39d1ba40660436d1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "3f348ea18e3c328ceeb7b8ada54751a1251de45d6258678636ad26527bbd8971",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "7628abc4b0664d570972c61c205b3d9278ea79254291b0fd133b8803afc8a243",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 1,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "9ed96bff143fffd978bd5c56c43477b35c5e53641834be6212fe7423fe47ba61",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 1,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "6d3610bd47d74bcf851e32cba479be91f54e72b14e7a001b81266bee6d0a62c2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "b58d112956557fc4565cc53759ea4df6132b7e525c10b7755e7eeada99218c5a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "fc13550a7310130bcf8a43063bb552b6a36ff1c509f89a61f60b6da3b2dc636f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "af830d308f839e44c879b78921aa8514ddb4e5e3a9bdde2953601586f59cf6b7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "d31ece674ed3bf594ad80b2e2fd82248817985cefaf82c5e9cffb0567978b20c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "5d779d69223e72243da6e39d13c1ba184ff95a3b1a996b6b95920489d0f7e6be",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "4f09e728e588b39a1628253b910f8a2545959605a2b730f2d28bc53be7341aa2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "ee739bdd35af688c168c9ac3ce425280c199c0f67c9f0030160ecc35fe6fa5a6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "22f021ee3e4c37602cb6afff134dea78eb0a2e454b1b89eaa5afd092d2319f7d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "549ff0542c92142de7f7e17127740f71ee76ea13e71a10015fd4d4158a9e129e",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "ae47fe548b58c8b6203a79d85db5e40d1770ede788d8a5a98ca44040fd7c43b0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "a049ba920f931c7dbf72dfaec7cacb2922364c3088114855d894c6118f43221d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "7017f811a3169c2d5f63aea17eb7bc5df8f8df735716cd69ef709f6c856ab9ee",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "f206f7fed057040edca794fdf27304ced69f5c058b7d2a4a6f8169610c3b131b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "a3fbb6e560c41716ba4a8fc26344edf3c031ecaa8651d39d01b888fe5e9461c3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 1,
+    "chair": 4,
+    "table": 3
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "077b8c9e618b0247a35052ec9862734ba05e9bfe1e895c03c4a94ac752a36f82",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "9a2e31d9fc93326aaffec5ca404aa7709cf9d714832e1bf58cd1ff7a84010838",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "c0c7ed742d035acc6647df31bbaeb9f8b3dd2f3873f5216bffef743029c43f46",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 2
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "7dc1d485a7c6f0a64d386b2e1639235d0ac97f1b03941b172121306c0bd7ac47",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 1,
+    "table": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "0198ab4b5fc4a8ad6a013fe3e61ae60fc49235f5df3b80fa19e36227e37f9645",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "6a1327bf9d42f02b8ffc2f8cfee9b9cdfe6911a76c22f7dac26ccc61b14b1b48",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "ce1bd7c8018bf96751bc9ca7ab47a46d1c6008a4bbf706245bbd49dbca7db907",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "40123ad593d46924fdc60ba2a0dbcc7216d9c29668a8af5e66c87955efe15b63",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "336d496ff039d7b6302cbdd770a31bf14fea22739f52490b8986307b22f0b0aa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "6cb22888f12cbf0248d2c2cbde61a34ecb47f8c6c67e52bced846af83fd57c0d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 1
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "7acc11f11b9ed65449f29bd5b36c45f2227b1a86cec5e58ba7d317d57a992fd7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "0213891b2eeb3e4b5e24876a59b46298471f83c2205bf91c31ce6f2bea729934",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "bc79c512a4c2770dc18833cf722455b83ee97d32c71045ace3b353f09f138870",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "c98437e15881c4dd551249c018bfef9a986ffa0668ab090e50d80ea4265f731f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "dfb3b07499f11860e69fcc30859241d4fbf7184f3dff25bb83134e0c85ffe081",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 1,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "0bbfa861d5824de66bd6e2aa0fca2713072c5681f20bc02f634dbedbff2de737",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 1,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "c00bdd851c0ac53214bc89f92f8e2364d194cc82ac2eaae43be9fdaf57233986",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 0,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "9b27adbe2cdcf8b152bf9da69045be2f8166ca17cd104174e4450da0d9f084c3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 1,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "3dc4293d8438adbcdc6586730773384f4b386e3e8f483d4d2b2e024a462375d5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "sofa": 0,
+    "stove": 1,
+    "tv": 0,
+    "chair": 0,
+    "table": 0
+   }
+  }
+ ]
+}

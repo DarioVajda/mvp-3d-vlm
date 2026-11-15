@@ -1,0 +1,1497 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "bed",
+  "pan",
+  "trash can",
+  "microwave",
+  "computer mouse",
+  "cutting board",
+  "chair",
+  "door",
+  "keyboard",
+  "table",
+  "laptop",
+  "monitor"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 53.4,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "223fbcaeb661557a7d239323ab60cd24d7628571da05859c64af74e9d5703f0a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "31d7b7465c1bea1ab57f77dd40b7dbc162ad75aaae94c38b7662c3755fb70334",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "8cd62ffe01b9c7dd60f0e81ad427dbcdf1512ea4a9a9c3bad121f3e42747d7a7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "d59b41de17e2eedd8f1c5eb289538f0fe23dfebfe31f389e3338acea5006c632",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "21335e07bff9071ce29365008a2bc9af5867c8b92cfdbed1fcec42f973bad93b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "33bd6bc4032f3c2c51cbf3ef63472fe95c4b0a3f5b4af877d97d62fb291fe584",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "22223d90cf7bbe9641472b1903ec4aa37a63fe923af4df3a5fbb7dcfac4474fa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "b25e585b19c0fdb67c1901b9bb386343a66191d3702dace624e81a48a34994a3",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "26e8efbb497a91f167bf5f1299330b04849aa011bbb5b1f917b9a70e4e5596cb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 3,
+    "keyboard": 0,
+    "table": 1,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "0bda9f2cff6515c0cb50ef71a141af2b4b1567f2801a37d4dafd839e711dfb84",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "a5acce1564e831df282b50b2ff847c506f31fe87bc5f5f0aabd6ad11eb5fb0e2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "6df2385e8333db49ed8a5200df869010a57b2abfbfe548cca1b0035d6cd85562",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 3,
+    "keyboard": 0,
+    "table": 3,
+    "laptop": 1,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "4a1a015ee4da6cc2609c2eb644bfc59d59c5252a0fee0136391c33ce13a0e1f7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 3,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 0,
+    "monitor": 1
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "b7455e9bda993a566664d4c80a2708fd3bfb41edf813f4b7e0797d8c202e1cb0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 1,
+    "keyboard": 0,
+    "table": 1,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "10412ef5746ebf131c65992df61a5d14f5840eb11477d501e4c501432305b495",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 1,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 3,
+    "monitor": 2
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "51943c9b6db6648806b72ddf5079c084853492b26020df785a8e923bb15d809c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 5,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "dd5826622313f65e725eb93662c136b538a17ea90a6072e1811d93f49785d767",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 2,
+    "keyboard": 1,
+    "table": 2,
+    "laptop": 0,
+    "monitor": 1
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "0ab3abc389c9615632e87e40ccdfdeb178289c89613594b4a47ac7505e1f6251",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 1
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "447470671383345f6fd1efcdad5b797f840c294273706d1ff1f90aea879b2368",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 1,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 1,
+    "monitor": 2
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "040ee6f4a2e1e91b4b2cd38c7ea7a76074d9ac2ad43f4e6282bcbc552188ef4d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 1,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "8b3cf64cd51927cc0b0aebfc584342ed22810bac3f0c235af4be8b63b0622506",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 0,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 1,
+    "monitor": 2
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "604a406ebbabec2c9eb297c033cbf7eed3d53429924ce5b1501cadb80bc452a1",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "a061428d64608300053b260e51f42fd0cd631ace7adff38d034bb8694a249a97",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "a70af628d791696bfc2d141fc1257f3bafe6d7a4d713bb9a51cee90de2b2f5d7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 2,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 1,
+    "laptop": 1,
+    "monitor": 1
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "b0e5dbd167b25f44b8445233716b98035116e842a972b9584deb3f25aa85f9e5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 4,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "11279688f18cca4a40b76a39ef544f077809f9ecc832ebc39be24ad8e19030b2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 1,
+    "trash can": 2,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "8e8fc301c88917b5b567a5bf3e66163c05ed063f03d9ec1d28c61dbbf1572911",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 5,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "f5ae4c9edc510303e2b86a2df5b41b73a9d3ceed58690e32fa50df9a75a6d24b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 6,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "fc009cc350000852b097c2377be9f141b2f8ab42e44371ff67fa58543dfdf37f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "1a1c51c67cbbadf5bfb6bbbc680ef3dccf7435ad294628bad5a95c918d6b953a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 1,
+    "chair": 0,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "4e1a96af96a28433acb9b60c3171472ef25b1ec0436cabc9a4aeeb40aa0752a2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "3714384e3917483795f7ec87fd1f0202b60415e5cebd6a7cb926c954e620cc43",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 1,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "7b296c3b408079ab3bf6b783680cbc28c7521f4f479aab5eea82c90724ab43cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 1,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "ced787c10947c0f0b1f0f34063fc4938cc8445cf756dd994e9f1ec255652ca94",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "831dddb9d84d3e82aec1442bfec167df94c10c9e9b7f5a8219c431756bcc1d3b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 1,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "bb5ae6cec30a58f28f846dc837c1f0cb3e4ccfe22ee388a9501f60a0e1c6af6a",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 1,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "5ad27d5c046bbba82e86b3e5a322fa96a2506c5c2bcd646e5792cd094be0312f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "74e7374f6c5a42a9ad0b578c95b4da01699b35e0be377cf65daa8f25be6020e4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "5576f2c45b8a879ca29cee06ffcc3552e2502b00acf56afb7f7282e9d0043918",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "db95b758afbc9054f00452893d1df7e4f90892d19392b1252697c602a262a127",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 1,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "3b767fa556f6bee714c6454f5a50b34997c821468d73b931232759852bbdc2bf",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 4,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "a273309d0b3150632a4a033be460d534d611531ceb8f346790701c979d93b72b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 1,
+    "chair": 0,
+    "door": 4,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "dc81a9306eba68b99677d9bc08bb7c5cd15371c58cdcdbedadf15d536d6e4e43",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "5becbac55f7852de84f71fdecc78bd5a097d39a4618ec9cdc0fa5b5e87bb33a9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 2,
+    "cutting board": 0,
+    "chair": 2,
+    "door": 3,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 2,
+    "monitor": 2
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "a9722de0b79c76e85fd594135c83e5d826bdc7630648a547a599b336586d6485",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 1
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "91036a7948dbacac3dec7f15d78b375835a8e51d883aa10280ed3b0ba1bab5f5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 3,
+    "door": 1,
+    "keyboard": 1,
+    "table": 2,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "a9e0b586bfad1ffc374a0b0483321fb74406f6aa45deff885c2153d075ef42fc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "c4ef3410f72029966334e1f07932e971a2bc846937c4d319ab8aa84bfe54a494",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 4,
+    "keyboard": 0,
+    "table": 1,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "ad17c900f41e57d10ca9a2d879dc7b1ba78e24e9748b5cf97ec79a2e634b8ef9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "2829be23666e84b37525d94a0a262e37954f9096897d996586890040bd4d1292",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "9351c9ddb83fc2d7f4713c60068f7cabb6fada350ce6bb46358c0ff0c3b2a3dd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 5,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "2e5ef2d3147527add81908d9cdfed5f231ee2e915e3145e2810739ec35c67e02",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "6cfc40105349f85eb507ff343861f7ac58d29ae6714283b5c9cfc1f8268ef37b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 6,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "11514f571ccba36d7decacd396931548e8e35c11c61136622e749342f6e403bb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 1,
+    "computer mouse": 0,
+    "cutting board": 2,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "ac28781e95fb09db93cb39e7db13d6b62d25d578ee8d099e25342e4ccfaf37d8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "62baefb7b6832544c1f3dbab07ebd43b74606765ba9552782464481d373c7cf9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 0,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "c4458efa8d6a356d680c53fcbea3f54336d465be2cbbdf80ad5c61bdba1979d8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 1,
+    "microwave": 0,
+    "computer mouse": 1,
+    "cutting board": 0,
+    "chair": 1,
+    "door": 0,
+    "keyboard": 1,
+    "table": 1,
+    "laptop": 2,
+    "monitor": 2
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "e207000e49b20c9ba1b5398a8d8f702976f14687ec2b0bb48da8a5dfce2a6f18",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "10acafdce2e84af43ff94fa0460e2144921e8828ceb4fe6d69d749ba07e8c303",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 1,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "7bb7dd45413a98223aeb80e075752a8fe781d465c51802ce56e4a73fc00d2316",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "9b42ede3281fdb8358da9a7f6215da48a14dcd42171919b74fd7de9b79e41a24",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 3,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "17ad0a46f176fa040e30549f64ff3f9bc48c5373b180bb3075d0c58f5fc55f7b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 1,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "a0cc434cb61f79eb6f2749a777408d8c813a0f00a2b8526c8394cf5f27b817aa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "0dedd691dedbb37d2b3f7da02ad640fa7d789b9598e9a941316775b043b8d9a5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "bed": 0,
+    "pan": 0,
+    "trash can": 0,
+    "microwave": 0,
+    "computer mouse": 0,
+    "cutting board": 0,
+    "chair": 0,
+    "door": 2,
+    "keyboard": 0,
+    "table": 0,
+    "laptop": 0,
+    "monitor": 0
+   }
+  }
+ ]
+}

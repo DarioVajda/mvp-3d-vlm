@@ -1,0 +1,25 @@
+{
+  "frames": 5,
+  "prompts": [
+    "refrigerator",
+    "stove",
+    "table",
+    "chair",
+    "stool"
+  ],
+  "objects_per_concept": {
+    "refrigerator": 0,
+    "stove": 0,
+    "table": 1,
+    "chair": 0,
+    "stool": 0
+  },
+  "objects": [
+    {
+      "concept": "table",
+      "track_id": 1,
+      "frames_seen": 4,
+      "points": 10000
+    }
+  ]
+}

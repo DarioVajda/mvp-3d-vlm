@@ -1,0 +1,1432 @@
+{
+ "format": "openvocab4d-sam3-masks/v1",
+ "model": "facebook/sam3@3c879f3 (transformers Sam3Model)",
+ "backend": "transformers",
+ "prompts": [
+  "lamp",
+  "door",
+  "towel",
+  "trash bin",
+  "nightstand",
+  "backpack",
+  "mirror",
+  "chair",
+  "tv",
+  "table",
+  "bed"
+ ],
+ "min_score": 0.5,
+ "frame_selection": "list:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126",
+ "gpu": "NVIDIA B200",
+ "seconds": 53.3,
+ "frames": [
+  {
+   "stem": "000",
+   "file": "000__masks.npz",
+   "image_sha256": "aea2ba97af76341f358ea3a03d9ddf51a085ac20f6003cda94410ddb170f539b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 1,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "002",
+   "file": "002__masks.npz",
+   "image_sha256": "2a699dfdd2c189589d3de69889acee762fa37196bd1d59c793adbc76944fbcc7",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "004",
+   "file": "004__masks.npz",
+   "image_sha256": "2940087e793a0fb0d236da36ee6781cfc83dfbf6fef7add6f5433ea96f569578",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 1,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "006",
+   "file": "006__masks.npz",
+   "image_sha256": "95fc5611670956bd43391627f716da3ffc1f4d5cf344b7a67a2c31f4fca46077",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 2,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 1,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "008",
+   "file": "008__masks.npz",
+   "image_sha256": "a30eeb2fd1564c4d74c9c9a8b750e85cb36f2cec2a190cdcdad5cd3a271ed007",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 2,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "010",
+   "file": "010__masks.npz",
+   "image_sha256": "b7b349cf14e64777b375b52b7997bee2675e9dee5f7ab410b614aea5e01970f2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 3,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "012",
+   "file": "012__masks.npz",
+   "image_sha256": "720033e8fd5adb72b892d16160c561afb282d1b073ca99e97d9f2e49e693d5b5",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "014",
+   "file": "014__masks.npz",
+   "image_sha256": "b4d301908e5ed80b4fd3b556a756ae9706d12ff5c0188ef4330dd8186d464fae",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 2,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "016",
+   "file": "016__masks.npz",
+   "image_sha256": "b6048fe95a15983cf72f200d39f31cd81349895e719f059d9c3f49d0b7a88a2d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "018",
+   "file": "018__masks.npz",
+   "image_sha256": "37bae87ee2e4175a81d0b59f14b95db4d7f9eaebe7219e8a5efc6a1d4de6701d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "020",
+   "file": "020__masks.npz",
+   "image_sha256": "c133ae5235aaab22d027bfbee707030960a9b608634c673c8209b09af2b44683",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "022",
+   "file": "022__masks.npz",
+   "image_sha256": "2ce4fe647a96fe53e1c4b45a4cc8b83877a6e8edb2a764f8aa2f3d1496a85795",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 4,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 1,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "024",
+   "file": "024__masks.npz",
+   "image_sha256": "8df2187775a09e41b38977d90b16f27940359c30764f8d96ae9eeb5e7d763367",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 2,
+    "tv": 0,
+    "table": 0,
+    "bed": 2
+   }
+  },
+  {
+   "stem": "026",
+   "file": "026__masks.npz",
+   "image_sha256": "adba869f50822b1d188b34bf9b00212af8307fb17d88f6f09d9a618851bc8b28",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "028",
+   "file": "028__masks.npz",
+   "image_sha256": "7cfa94aaf298777fd01e4426a1e9d9ddcc7cbc8c6f19a707834665230062dc66",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 2
+   }
+  },
+  {
+   "stem": "030",
+   "file": "030__masks.npz",
+   "image_sha256": "16b2cfc354b9adffc631ba9a1fb3ec120628f803b2a43bdf03da2f75a6b8162f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 1,
+    "table": 0,
+    "bed": 2
+   }
+  },
+  {
+   "stem": "032",
+   "file": "032__masks.npz",
+   "image_sha256": "dd96ac06d98d087b3f64cb8dd54b0da13b12a10f61eaef598d83ae9558626557",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 2,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "034",
+   "file": "034__masks.npz",
+   "image_sha256": "57cd69f820b49bee615be8cc769f5e8eb0179725910dd4c0921032baf2aae03f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "036",
+   "file": "036__masks.npz",
+   "image_sha256": "fcb4dd55cd6724fd3898c377fe46821cac2285e9d41adba5d1fdd296710503cb",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 4,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "038",
+   "file": "038__masks.npz",
+   "image_sha256": "d48ccead91b881f3ef1e55e48f34885cb3a5c3aff903577f29535511b699cc88",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "040",
+   "file": "040__masks.npz",
+   "image_sha256": "10e81f99add0be8cef86f6b5cbaed9b7706b38feacea7ad0c0ad6ab0e76e06cc",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "042",
+   "file": "042__masks.npz",
+   "image_sha256": "a9624d908e0cf2f3039c68c30e08b407d5aeac34a2ffa39dd9e828bbeab03f94",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "044",
+   "file": "044__masks.npz",
+   "image_sha256": "668024f6fc687172d04bc118fe1c88371ef7a5dced5f326cab7ab1df3c791f1d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 4,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "046",
+   "file": "046__masks.npz",
+   "image_sha256": "7205bb591e12add0211f350e55c4b3bb3ef1392e0f5af5e7966a89678021b1cd",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 4,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "048",
+   "file": "048__masks.npz",
+   "image_sha256": "ab750058f0e12f341f50558cdb599deedeb4c3962786a41be75b2de6a67f620d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "050",
+   "file": "050__masks.npz",
+   "image_sha256": "8cab126057e7623df7645954976bcf1f4c456af43f759f869bca6756e367b98f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "052",
+   "file": "052__masks.npz",
+   "image_sha256": "c9478785649a4f0713d26c7a245ae228e55bac406d440572ba52411ce4eb7dc0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "054",
+   "file": "054__masks.npz",
+   "image_sha256": "cd90e281e00513499385a5d70653c4999da09926ef1a50e476f5a07bd3621618",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 3,
+    "towel": 2,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "056",
+   "file": "056__masks.npz",
+   "image_sha256": "286b82f6f41321c120cd105f9fae6d214c63ed778912cbfbe7aec2872dc30c60",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 2,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 3,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "058",
+   "file": "058__masks.npz",
+   "image_sha256": "d31f72c784658fc245008b9aaba78968536deeb46a3e0f66fa35627426713f39",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 2,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "060",
+   "file": "060__masks.npz",
+   "image_sha256": "ee27ce7effb2423aca0ab3496cbee7d5e1361f7e5b22583ad8fe174cd681943c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 2,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "062",
+   "file": "062__masks.npz",
+   "image_sha256": "22351d8a44babaab2816ac66d9efe2b688e861e263b376c6902119423bda5b21",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 2,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "064",
+   "file": "064__masks.npz",
+   "image_sha256": "3aafaf6cb535f3800cc6b1aebe58d01b54b9d4473c86c0032923ff472a670cde",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 3,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "066",
+   "file": "066__masks.npz",
+   "image_sha256": "9888f6028a2a18e23bdf861151064671df7b1afb6dad75ffbda52f03ec416a42",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "068",
+   "file": "068__masks.npz",
+   "image_sha256": "c262c1cef69b2d8429cd86feac0488f65e0f15701ef090b9ad529a1caf97d679",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "070",
+   "file": "070__masks.npz",
+   "image_sha256": "2bce1b39efd2c151d2ad3af3f93eb5468ad8bc511dd5740775b2ec85312a9fb9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "072",
+   "file": "072__masks.npz",
+   "image_sha256": "9c25a71ae384bee79a09d917eeaeb2ea155293cbcb1d6c8ada5e32ff43ef98f4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "074",
+   "file": "074__masks.npz",
+   "image_sha256": "5a789834c19d6e8b2d46fb469fe6bd12db1e0dacce16b4324b53ef36e077614f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "076",
+   "file": "076__masks.npz",
+   "image_sha256": "95e0ed8d0c3efcb008c727091e4c6f9f0994a3eaa6a8ceaaaa6ad5ed8eae4b44",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "078",
+   "file": "078__masks.npz",
+   "image_sha256": "50a585a0327aa234e7aca415625db7ac313fea1c560d3b6703c5f061fbe4a205",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 2,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "080",
+   "file": "080__masks.npz",
+   "image_sha256": "8c889b5bd1b064bf8e6eb6f8699121d9ceac2d15b62ede507a1a67ef48ea0f8f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 1,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "082",
+   "file": "082__masks.npz",
+   "image_sha256": "bbd377b26abf1fc21c847f790d24e63929f0a3e151f22d123544e98a2b00a6aa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 3,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "084",
+   "file": "084__masks.npz",
+   "image_sha256": "6204a4e1cb45880f95a36b25d95a856755f6ba3277ac7f8446b7f711d9c76784",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 1,
+    "towel": 2,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "086",
+   "file": "086__masks.npz",
+   "image_sha256": "7d91c3e07516d79cbd92d63d571a6ace4c6d2139982bce688655f971d5a604d9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "088",
+   "file": "088__masks.npz",
+   "image_sha256": "d6d0e0b585ed51114fe7ed87e436bc5e6d186f7867095dabd923a1d8324e2c64",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 1,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 3,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "090",
+   "file": "090__masks.npz",
+   "image_sha256": "70e48ff20854b4891ce9a4c1f8c796f985991e1e453d7f78184d1ac8530347f9",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 2,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "092",
+   "file": "092__masks.npz",
+   "image_sha256": "0d0af6204eec9bdcf96594b39199f779ce108ff924708d22fa62f8c7b16dfbf4",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 2,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "094",
+   "file": "094__masks.npz",
+   "image_sha256": "d5f25479bd2e70e2b60b509dd86ccaee97b98a4f57b56e8402d16a25f3abb830",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 2,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "096",
+   "file": "096__masks.npz",
+   "image_sha256": "1599e8e6da4e87ac4c530713ec5117e4c73c0e95c720a84936a09f58b614c1b6",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 1,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 2,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "098",
+   "file": "098__masks.npz",
+   "image_sha256": "e52173151d3d05b69f130a87739a22c567d0fb6d6d7650529b98f097daa2a348",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 3,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "100",
+   "file": "100__masks.npz",
+   "image_sha256": "359b6c445a26bf649dfb8366baeb09c127f5ad15022fc8777294c61b5ef57a6c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 1,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "102",
+   "file": "102__masks.npz",
+   "image_sha256": "9cd2e660a5e408e8e984bff7d3a6555c83521bc28e6f469b05ffafddc82f3c1c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 2,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "104",
+   "file": "104__masks.npz",
+   "image_sha256": "23d693b4fd6f0f517af750435b7fbfe2f2e67ee408482358ad3d078688d77c1c",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "106",
+   "file": "106__masks.npz",
+   "image_sha256": "7451004034f045722c9a94fc4425c660fe37779ef75acb7d92a275d3afc21b7b",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 1,
+    "table": 0,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "108",
+   "file": "108__masks.npz",
+   "image_sha256": "55a8cc10383f952daebfffa2598d73f2ff428ab208f10e66ab22cc724147cfc0",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 1,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "110",
+   "file": "110__masks.npz",
+   "image_sha256": "c8c952997e527121e01a2728ee693a97251df5f3f5fb861df0a1d4ad8fa61e43",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "112",
+   "file": "112__masks.npz",
+   "image_sha256": "8c58be1558c3687d19867c98f09215ae7b5f503206c934597e7ef1cb30d56fd2",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 2
+   }
+  },
+  {
+   "stem": "114",
+   "file": "114__masks.npz",
+   "image_sha256": "0525113f7d33838b587da57b6bc411f9e03cce30813141f05d2816476bacd0aa",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 1,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "116",
+   "file": "116__masks.npz",
+   "image_sha256": "57bd13a4a99ecc36837ffe96ca3ba84d089e4ea2ffa49150ac661b864e532997",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 1,
+    "backpack": 3,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 0,
+    "bed": 1
+   }
+  },
+  {
+   "stem": "118",
+   "file": "118__masks.npz",
+   "image_sha256": "fbfa99532ba10d2327d58098409a3de6378c6b36fe37e9de0f61ebf875430c20",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 3,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "120",
+   "file": "120__masks.npz",
+   "image_sha256": "d9c80e7457e899eefe1e819519192592cca033c368be94976cb925b0372ceb0f",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 1,
+    "mirror": 0,
+    "chair": 1,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "122",
+   "file": "122__masks.npz",
+   "image_sha256": "ba25744931149ff6d869ea90e80ad602919b77c7d12d18bd1da48dcb5677a632",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 1,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "124",
+   "file": "124__masks.npz",
+   "image_sha256": "ce3eb6957584a091e9586a1d7d5088159fb347020680f37d8a05bca9a839ce3d",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 0,
+    "towel": 0,
+    "trash bin": 0,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 0,
+    "chair": 0,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  },
+  {
+   "stem": "126",
+   "file": "126__masks.npz",
+   "image_sha256": "2871c755482eaa576b67b5f8f5d277ddcae015e6d97ea555292e4abc0189d6c8",
+   "image_hw": [
+    392,
+    518
+   ],
+   "detections": {
+    "lamp": 0,
+    "door": 2,
+    "towel": 0,
+    "trash bin": 1,
+    "nightstand": 0,
+    "backpack": 0,
+    "mirror": 1,
+    "chair": 0,
+    "tv": 0,
+    "table": 1,
+    "bed": 0
+   }
+  }
+ ]
+}

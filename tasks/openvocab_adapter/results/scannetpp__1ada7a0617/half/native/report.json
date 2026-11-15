@@ -1,0 +1,89 @@
+{
+  "frames": 64,
+  "prompts": [
+    "door",
+    "computer tower",
+    "heater",
+    "telephone",
+    "keyboard",
+    "chair",
+    "whiteboard",
+    "computer mouse",
+    "bucket",
+    "monitor"
+  ],
+  "objects_per_concept": {
+    "door": 0,
+    "computer tower": 0,
+    "heater": 0,
+    "telephone": 2,
+    "keyboard": 4,
+    "chair": 0,
+    "whiteboard": 0,
+    "computer mouse": 1,
+    "bucket": 0,
+    "monitor": 3
+  },
+  "objects": [
+    {
+      "concept": "telephone",
+      "track_id": 1,
+      "frames_seen": 3,
+      "points": 3625
+    },
+    {
+      "concept": "telephone",
+      "track_id": 4,
+      "frames_seen": 3,
+      "points": 4962
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 4,
+      "frames_seen": 6,
+      "points": 15000
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 5,
+      "frames_seen": 3,
+      "points": 2260
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 6,
+      "frames_seen": 3,
+      "points": 6003
+    },
+    {
+      "concept": "keyboard",
+      "track_id": 7,
+      "frames_seen": 3,
+      "points": 6721
+    },
+    {
+      "concept": "computer mouse",
+      "track_id": 2,
+      "frames_seen": 3,
+      "points": 1982
+    },
+    {
+      "concept": "monitor",
+      "track_id": 5,
+      "frames_seen": 4,
+      "points": 8300
+    },
+    {
+      "concept": "monitor",
+      "track_id": 6,
+      "frames_seen": 5,
+      "points": 10460
+    },
+    {
+      "concept": "monitor",
+      "track_id": 15,
+      "frames_seen": 3,
+      "points": 7500
+    }
+  ]
+}
