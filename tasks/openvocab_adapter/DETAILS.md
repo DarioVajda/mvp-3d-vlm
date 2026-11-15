@@ -66,7 +66,7 @@ the group's shared Hugging Face cache, which `slurm/submit.sh` sets up.
 | `inputs` | Finds the scene's frames and depth maps. Records the GPU, the commit and `pip freeze` in `environment.txt` |
 | `1/5 CPU tests` | The unit tests. They must end with `OK`, or the job stops |
 | `2/5 SAM 3 masks` | SAM 3 on the frames the selections need × the scene's prompts. Skipped if saved masks already cover them |
-| `3/5 <selection>: adapt Dario's VGGT` | Validates Dario's cameras and depth, then writes them in OpenVocab-4D's format. If any check says `FAIL`, nothing is written and the job stops |
+| `3/5 <selection>: adapt the saved VGGT outputs` | Validates the saved cameras and depth, then writes them in OpenVocab-4D's format. If any check says `FAIL`, nothing is written and the job stops |
 | `4/5 <selection>: OpenVocab-4D ...` | Tracking and fusion on the adapted geometry, then VGGT, tracking and fusion for the native run |
 | `5/5 <selection>: scene sheets and comparison` | A scene sheet for each run (`scene_sheet_creator.py --size`), then `compare.py` |
 | `summary` | The verdict for each selection |
@@ -83,12 +83,12 @@ is gitignored.
 | `half` (default) | 64 frames: 0, 2, 4, …, 126 | Half the cost of all 128 |
 | `smoke5` | 5 nearby frames (118, 120, …, 126) | A quick check that everything runs |
 | `eval32` | The `uniform32` subset from `meta.json` | The frames the group's experiments use |
-| `all` | All 128 frames | The same frames Dario's reconstruction saw |
+| `all` | All 128 frames | The same frames the saved VGGT outputs were made from |
 
 **Using every other frame doesn't weaken the test.** Both runs always see exactly the same frames, and the adapter
-converts Dario's data the same way whichever frames are picked. Two things do change slightly:
+converts the saved VGGT outputs the same way whichever frames are picked. Two things do change slightly:
 
-- OpenVocab-4D's own VGGT sees 64 frames instead of 128, so it may disagree a little more with Dario's 128-frame
+- OpenVocab-4D's own VGGT sees 64 frames instead of 128, so it may disagree a little more with the saved 128-frame
   reconstruction. That makes the test slightly stricter.
 - Tracking jumps about a second between frames instead of half a second, which it handles well.
 
@@ -105,7 +105,7 @@ need frames or prompts that the saved masks lack.
 - The scenes are scannet/scene0025_01, then the first landscape scenes of each dataset in name order: 4 ScanNet,
   3 ScanNet++ and 3 ARKitScenes.
 - Portrait ARKitScenes videos are left out. OpenVocab-4D's own VGGT loader resizes portrait frames to a different
-  shape than Dario's export, so the two runs' depth maps couldn't be compared pixel by pixel.
+  shape than the saved VGGT outputs, so the two runs' depth maps couldn't be compared pixel by pixel.
 - The prompts are the objects named in the scene's VSI-Bench questions, read from the question templates. The most
   asked-about objects come first, and there are at most 12. Route-planning questions are skipped.
 
@@ -164,12 +164,12 @@ environment.txt              date, machine, GPU, commit, settings, pip freeze
 masks_manifest.json          how many objects SAM 3 found per frame and prompt
 <selection>/                 half (and any other selection that was run)
 ├── comparison.json          every comparison with its status and values, plus the verdict
-├── adapted/                 OpenVocab-4D on Dario's geometry
+├── adapted/                 OpenVocab-4D on the saved VGGT outputs
 │   ├── objects.csv          the scene sheet: one row per object, with position, size and frames seen
 │   ├── cameras.csv          the scene sheet: one row per frame, with camera position and orientation
 │   ├── report.json          objects found per prompt
 │   ├── tracks_summary.json  tracking statistics, and which masks were used
-│   └── adapter_report.json  every validation check of Dario's data
+│   └── adapter_report.json  every validation check of the saved VGGT outputs
 └── native/                  OpenVocab-4D on its own VGGT (same files, plus align_report.json from VGGT)
 ```
 
@@ -193,7 +193,7 @@ When a scene says `DIFFERS`, look here:
 
 ## How the comparison works
 
-- **Why the runs differ at all.** Dario's poses and depth come from one VGGT pass over all 128 frames. The native
+- **Why the runs differ at all.** The saved poses and depth come from one VGGT pass over all 128 frames. The native
   run's come from VGGT on only the selected frames, in chunks of 40. Each has its own world frame and scale, and VGGT's
   output really does change with the frames it sees.
 - **Alignment.** Before any positions are compared, a similarity transform (rotation, translation and scale) is fitted
@@ -203,7 +203,7 @@ When a scene says `DIFFERS`, look here:
 - **Scene-sheet rows** are paired through the same track matching, because a row's `track_id` is the track's id.
   Sizes are not compared: they are extents along the world axes, and the two world frames are rotated relative to each
   other.
-- **The adapter checks Dario's data before writing anything:**
+- **The adapter checks the saved VGGT outputs before writing anything:**
   - the camera convention (rotations are proper rotations, and the world is frame 0's camera);
   - that every patch point projects into its own 14×14 patch;
   - that the point-cloud colours match the JPEGs (the right frames, in the right order);
@@ -221,7 +221,7 @@ When a scene says `DIFFERS`, look here:
 | numpy fails to install (building from source) | The container's Python is too new for numpy<2. Run `NUMPY_SPEC=numpy SETUP=1 bash tasks/openvocab_adapter/hpc/start.sh` |
 | `no access to facebook/sam3`, `401`, `gated repo` | Accept the license on Hugging Face and check `.venv/bin/hf auth whoami` |
 | The tests in step 1/5 fail | The environment differs from the one the tests expect. Send `run.log` |
-| `[adapter] FAIL ...` and `nothing written` | Dario's export and `data/vggt/` disagree, for example frames from another run. The line names the check. Send `run.log` |
+| `[adapter] FAIL ...` and `nothing written` | The exported frames and `data/vggt/` disagree, for example frames from another run. The line names the check. Send `run.log` |
 | `masks are (...) the image is (...)` | SAM 3 returned masks at another size. Send `run.log` |
 | A job hits its time limit | Rerun with a longer limit, e.g. `TIME=02:00:00 bash tasks/openvocab_adapter/hpc/start.sh`. Saved masks are reused |
 | A scene says `no result` in `SUMMARY.md` | Its job stopped before comparing. The row shows the last line of its log, and `results/<scene>/run.log` has the rest |
@@ -255,7 +255,7 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
    ```powershell
    py tasks/openvocab_adapter/sam3_infer.py --images $frames --frames all --prompts $prompts --out "$scene/masks" --overlays
    ```
-2. **Adapt Dario's geometry (CPU).** `--dense-dir` is the folder with `depth.npy` and `depth_conf.npy`. Without it,
+2. **Adapt the saved VGGT outputs (CPU).** `--dense-dir` is the folder with `depth.npy` and `depth_conf.npy`. Without it,
    only the cameras are written, and tracking can't run.
    ```powershell
    py tasks/openvocab_adapter/adapt_vggt.py --preset half --dense-dir <dense folder> --out "$scene/half/adapted" --overwrite
@@ -298,7 +298,7 @@ Use a separate environment, not your system Python. Use the same `--no-reid` set
 | `hpc/make_scene_list.py` | Writes `scenes.tsv`: picks the scenes and reads each one's objects from its questions |
 | `hpc/run_all.sh` | The whole comparison for one scene, as one job |
 | `summarize.py` | Writes `results/SUMMARY.md` from every scene's `comparison.json` |
-| `adapt_vggt.py` | Converts Dario's cameras and dense depth to OpenVocab-4D's `frames/`, `cameras.npz` and `depth.npz`, after validating them |
+| `adapt_vggt.py` | Converts the saved VGGT cameras and dense depth to OpenVocab-4D's `frames/`, `cameras.npz` and `depth.npz`, after validating them |
 | `sam3_infer.py` | Runs SAM 3 on a list of frames and saves the masks |
 | `compare.py` | Compares an adapted run with a native run, including their scene sheets, and gives the verdict |
 | `common.py` | Paths, frame-selection presets and small helpers |

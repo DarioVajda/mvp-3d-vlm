@@ -6,7 +6,7 @@
 #   1. CPU tests of the adapter, loader and comparison
 #   2. SAM 3 masks for the frames the selections need, saved once and reused by every run below
 #   for each frame selection in RUNS:
-#   3. adapted: Dario's 128-frame VGGT (cameras + dense depth from data/vggt/) in OpenVocab-4D's format
+#   3. adapted: the saved 128-frame VGGT outputs (cameras + dense depth from data/vggt/) in OpenVocab-4D's format
 #   4. OpenVocab-4D tracking and fusion on the adapted geometry, and on its own VGGT (native), with the same masks
 #   5. a scene sheet of each, then compare.py
 #
@@ -105,7 +105,7 @@ for RUN in $RUNS; do
     R=$WORK/$RUN
     rm -rf "$R"
 
-    step "3/5 $RUN: adapt Dario's VGGT"
+    step "3/5 $RUN: adapt the saved VGGT outputs"
     $PY $A/adapt_vggt.py --scene "$SCENE" --data-root "$DATA" --preset "$RUN" --dense-dir "$DENSE" --out "$R/adapted"
 
     step "4/5 $RUN: OpenVocab-4D on the adapted geometry, then on its own VGGT"

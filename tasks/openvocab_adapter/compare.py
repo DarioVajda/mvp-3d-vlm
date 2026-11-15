@@ -1,4 +1,4 @@
-"""Compare OpenVocab-4D run on Dario's adapted VGGT data with OpenVocab-4D's own VGGT, on the same frames and masks.
+"""Compare OpenVocab-4D run on the saved VGGT outputs (adapted) with OpenVocab-4D's own VGGT, on the same frames and masks.
 
   py tasks/openvocab_adapter/compare.py --run-dir tasks/openvocab_adapter/out/scannet__scene0025_01/smoke5 \
       --masks tasks/openvocab_adapter/out/scannet__scene0025_01/masks
@@ -9,7 +9,7 @@
   MEASURED      a number with no pass mark: how far apart the two reconstructions are
   BLOCKED       could not run, with the missing input named
 
-Dario's poses come from one 128-frame reconstruction and the native ones from a reconstruction of only the selected
+The saved poses come from one 128-frame reconstruction and the native ones from a reconstruction of only the selected
 frames, so the two have different world frames and scales. Before positions are compared, a Sim(3) is fitted on
 pixels that are confident in both depth maps. It uses no object information, so the object errors are not circular.
 
@@ -37,7 +37,7 @@ from eval_colmap import umeyama_sim3  # noqa: E402  (import-safe: its arguments 
 
 SEED = 0
 NEEDS = {
-    "adapted_depth": "dense depth: get depth.npy and depth_conf.npy from Dario and rerun adapt_vggt.py --dense-dir",
+    "adapted_depth": "dense depth: get depth.npy and depth_conf.npy from data/vggt/<scene>/ and rerun adapt_vggt.py --dense-dir",
     "masks": "SAM 3 masks: run sam3_infer.py on a GPU machine (README.md)",
     "adapted_outputs": "adapted tracking and fusion: run milestone 4 --stages track,fuse --masks-dir on adapted/",
     "native_geometry": "native VGGT reference: run milestone 4 --stages vggt on a GPU machine",
@@ -46,7 +46,7 @@ NEEDS = {
 }
 SHEET = Path("scene_sheet") / "objects.csv"
 
-# Provisional pass marks for "OpenVocab-4D on Dario's VGGT gives the same result as on its own VGGT". The two
+# Provisional pass marks for "OpenVocab-4D on the saved VGGT outputs gives the same result as on its own VGGT". The two
 # reconstructions come from different VGGT passes, so they can never agree exactly. Nobody has agreed on these
 # numbers yet: they are here so that a run ends in a clear answer, and should be revisited once real results are in.
 # (comparison, value, direction, limit)

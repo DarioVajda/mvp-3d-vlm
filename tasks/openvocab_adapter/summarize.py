@@ -72,7 +72,7 @@ def main(argv=None):
         verdicts += found
     tally = {v: verdicts.count(v) for v in ("MATCHES", "DIFFERS", "INCOMPLETE", "no result") if verdicts.count(v)}
     text = "\n".join([
-        "# OpenVocab-4D: Dario's VGGT (adapted) vs its own VGGT (native)",
+        "# OpenVocab-4D: the saved VGGT outputs (adapted) vs its own VGGT (native)",
         "",
         f"{len(scenes)} scenes, {len(verdicts)} comparisons: "
         + ", ".join(f"{n} {v}" for v, n in tally.items()) + ". Pass marks are provisional (`CRITERIA` in compare.py).",

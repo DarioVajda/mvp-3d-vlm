@@ -128,7 +128,7 @@ def rotation_y(angle):
 
 
 def make_scene(root, dataset="scannet", name="synthetic"):
-    """A scene in the exact layout of Dario's export. Returns (scene_dir, data_root, dense_dir)."""
+    """A scene in the exact layout of the VGGT export. Returns (scene_dir, data_root, dense_dir)."""
     data_root = root / "data"
     scene = data_root / "scenes" / dataset / name
     (scene / "frames").mkdir(parents=True)
@@ -337,7 +337,7 @@ class Adapter(unittest.TestCase):
         self.assert_rejected("--frames", "all", "--dense-dir", str(self.dense))
 
 
-@unittest.skipUnless((common.DATA_ROOT / "scenes" / common.DEFAULT_SCENE / "meta.json").is_file(), "Dario's data is absent")
+@unittest.skipUnless((common.DATA_ROOT / "scenes" / common.DEFAULT_SCENE / "meta.json").is_file(), "the VGGT export is absent")
 class RealScene(unittest.TestCase):
     """Validates the real export of scannet/scene0025_01, written only to a temporary folder."""
 

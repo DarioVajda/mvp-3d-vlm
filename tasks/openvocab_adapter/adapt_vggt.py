@@ -1,4 +1,4 @@
-"""Convert Dario's saved VGGT reconstruction of one scene into OpenVocab-4D's geometry files.
+"""Convert the saved VGGT reconstruction of one scene into OpenVocab-4D's geometry files.
 
 No model is run and the source data is only read. Output, in --out:
 
@@ -214,7 +214,7 @@ def check_dense(checks, dense_dir, cams, patches, meta, selected):
     checks.add("alignment: dense confidence reproduces the exported patch confidence", conf_error <= limit,
                f"p99 error {conf_error:.2e}, limit {limit:.2e}")
 
-    # Dario's full data/vggt/<dataset>/<scene>/ folder also has these; compare them when they came along.
+    # The full data/vggt/<dataset>/<scene>/ folder also has these; compare them when they came along.
     for name, source in (("extrinsic.npy", "extrinsic"), ("intrinsic.npy", "intrinsic"),
                          ("frame_indices.npy", "frame_indices")):
         if (dense_dir / name).is_file() and source in cams:
@@ -263,12 +263,12 @@ def write_outputs(out, frames, cams, selected, dense):
 def parse_args(argv):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--scene", default=common.DEFAULT_SCENE, help="<dataset>/<scene>")
-    p.add_argument("--data-root", default=str(common.DATA_ROOT), help="folder holding Dario's scenes/")
+    p.add_argument("--data-root", default=str(common.DATA_ROOT), help="folder holding the exported scenes/")
     group = p.add_mutually_exclusive_group(required=True)
     group.add_argument("--preset", choices=sorted(common.PRESETS))
     group.add_argument("--frames", help="selection: all | uniform:K | subset:NAME | window:START:COUNT[:STRIDE] | list:a,b")
     p.add_argument("--label", help="name of this selection in the output path (default: the preset or the spec)")
-    p.add_argument("--dense-dir", help="folder with Dario's depth.npy and depth_conf.npy for this scene")
+    p.add_argument("--dense-dir", help="folder with the saved depth.npy and depth_conf.npy for this scene")
     p.add_argument("--out", help="output folder (default out/<dataset>__<scene>/<label>/adapted)")
     p.add_argument("--overwrite", action="store_true", help="replace an earlier run's adapter files")
     return p.parse_args(argv)
