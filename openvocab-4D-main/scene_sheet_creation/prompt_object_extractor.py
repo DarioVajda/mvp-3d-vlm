@@ -42,17 +42,26 @@ apply to any question: spatial-relation words (SPATIAL_WORDS: "back", "corner"),
 camera" are kept. The nominal the questioner says they are is dropped too ("You are a robot ...").
 Words WordNet does not know are kept.
 
+Syntactic mode (--syntactic, main(question, syntactic=True)) stops after the parse: every noun
+phrase becomes a prompt, reduced to its head noun (spaCy's lemma) and all its compound and
+adjectival modifiers. Nothing that depends on meaning is applied: no WordNet, no word lists, no
+superlative filtering, no "You are a robot" rule. Only the grammar steps stay: the clean-up of the
+question text, and keeping a modifier only when no comma, conjunction or article separates it
+from its noun. "the length of the longest dimension of the stove" -> "length", "longest
+dimension", "stove". Useful as a baseline, and it does not need the WordNet data.
+
 Usage (with spacy and nltk installed, see below):
   python scene_sheet_creation/prompt_object_extractor.py "How far is the red car from the stove?"
   python scene_sheet_creation/prompt_object_extractor.py --explain "What is the size of this room?"
   python scene_sheet_creation/prompt_object_extractor.py --file questions.txt
+  python scene_sheet_creation/prompt_object_extractor.py --syntactic --explain "..."
 
   Prints one line per question with its prompts joined by commas, the form scene_sheet_creator.py
   takes with --prompts. --explain also lists every candidate with the reason it was kept or
   dropped.
 
   From Python: main(question) -> list of prompts; analyse(question) -> every candidate with its
-  verdict.
+  verdict. Both take syntactic=True for syntactic mode.
 
 Requirements:
   uv pip install spacy nltk          (or pip install)
@@ -509,8 +518,10 @@ def judge_compound(forms):
 # ---------------------------------------------------------------------------
 # noun phrases
 # ---------------------------------------------------------------------------
-def head_lemma(tok):
+def head_lemma(tok, syntactic=False):
     word = tok.text.lower()
+    if syntactic:
+        return tok.lemma_.lower()
     if word in PLURALIA_TANTUM:
         return word
     lemma = tok.lemma_.lower()
@@ -556,8 +567,11 @@ def describes_appearance(adj):
     return not any(c.lower_ in ("most", "more", "least", "less") for c in adj.children)
 
 
-def modifiers(head):
-    """Compound nouns and descriptive adjectives in front of `head`, recursively, in text order."""
+def modifiers(head, syntactic=False):
+    """Compound nouns and descriptive adjectives in front of `head`, recursively, in text order.
+
+    With `syntactic`, every compound and adjectival modifier that is a word, whatever it means.
+    """
     out = []
 
     def visit(tok):
@@ -566,13 +580,13 @@ def modifiers(head):
             if not attached(c, tok):
                 keep = False
             elif c.dep_ == "compound" and c.pos_ in NOUNS | {"ADJ", "VERB", "NUM", "X"}:
-                keep = word not in SPATIAL_WORDS and re.fullmatch(
+                keep = (syntactic or word not in SPATIAL_WORDS) and re.fullmatch(
                     r"[a-z0-9][a-z0-9'-]*", word
                 )
             elif c.dep_ in ("amod", "nmod") or (
                 c.dep_ in ("advmod", "npadvmod") and c.pos_ == "ADJ"
             ):
-                keep = describes_appearance(c)
+                keep = WORD_RE.fullmatch(word) if syntactic else describes_appearance(c)
             else:
                 keep = False
             if keep:
@@ -675,9 +689,13 @@ def join_wordnet_compounds(doc):
         a.head, a.dep_ = b, "compound"
 
 
-def analyse(question, model=SPACY_MODEL):
-    """Every noun phrase of the question, with whether it becomes a SAM 3 prompt and why."""
-    ensure_wordnet()
+def analyse(question, model=SPACY_MODEL, syntactic=False):
+    """Every noun phrase of the question, with whether it becomes a SAM 3 prompt and why.
+
+    With `syntactic`, only the parse: every noun phrase is kept (see the module docstring).
+    """
+    if not syntactic:
+        ensure_wordnet()
     text = question.replace("\\n", " ")  # a literal "\n" copied from a dataset dump
     text = re.sub(
         r"(?<=\w)\(e?s\)", "", text
@@ -686,15 +704,27 @@ def analyse(question, model=SPACY_MODEL):
     # each marker, or the parser reads the options as one long compound
     text = re.sub(r"(?:^|(?<=\s))\(?(?:[A-H]|\d{1,2})[.)](?=\s)", ";", text)
     doc = load_nlp(model)(text)
-    join_wordnet_compounds(doc)
+    if not syntactic:
+        join_wordnet_compounds(doc)
 
     heads = [t for t in doc if is_nominal(t)]
-    mods = {t.i: modifiers(t) for t in heads}
+    mods = {t.i: modifiers(t, syntactic) for t in heads}
     in_phrase = {m.i for ms in mods.values() for m in ms}  # modifiers of another noun
 
     candidates = []
     for tok in heads:
         if tok.i in in_phrase:
+            continue
+        if syntactic:
+            lemma = head_lemma(tok, syntactic=True)
+            word_like = WORD_RE.fullmatch(tok.text.lower()) or WORD_RE.fullmatch(lemma)
+            candidates.append(
+                Candidate(
+                    render(mods[tok.i] + [tok], lemma),
+                    bool(word_like),
+                    "noun phrase (syntactic mode)" if word_like else "not a word",
+                )
+            )
             continue
         if is_self_reference(tok):
             candidates.append(
@@ -723,9 +753,12 @@ def kept_prompts(candidates):
     )  # in order, no duplicates
 
 
-def main(question, model=SPACY_MODEL):
-    """SAM 3 prompts for a question: the physical things it names, in order of appearance."""
-    return kept_prompts(analyse(question, model))
+def main(question, model=SPACY_MODEL, syntactic=False):
+    """SAM 3 prompts for a question: the physical things it names, in order of appearance.
+
+    With `syntactic`, every noun phrase it contains instead (see the module docstring).
+    """
+    return kept_prompts(analyse(question, model, syntactic))
 
 
 def cli():
@@ -736,12 +769,18 @@ def cli():
     p.add_argument(
         "--file",
         help="text file with one question per line (a line break inside a "
-        "question can be written as \n)",
+        "question can be written as \\n)",
     )
     p.add_argument(
         "--explain",
         action="store_true",
         help="list every candidate noun phrase with the reason it was kept or dropped",
+    )
+    p.add_argument(
+        "--syntactic",
+        action="store_true",
+        help="skip everything based on meaning (WordNet, word lists): every noun phrase, "
+        "reduced to its head noun and its compound and adjectival modifiers, is a prompt",
     )
     p.add_argument(
         "--model", default=SPACY_MODEL, help=f"spaCy pipeline (default {SPACY_MODEL})"
@@ -756,7 +795,7 @@ def cli():
         p.error("give at least one question, or --file")
 
     for q in questions:
-        candidates = analyse(q, args.model)
+        candidates = analyse(q, args.model, args.syntactic)
         if args.explain:
             print(f"\n{q}")
             for c in candidates:
