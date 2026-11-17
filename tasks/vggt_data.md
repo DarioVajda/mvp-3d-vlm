@@ -3,6 +3,7 @@ compute and send the following data to Nicolas and Tamara:
 2. reconstructed point clouds for the video scenes
 3. the videos (only the sampled frames)
 4. corresponding examples from the datasets
+5. (added 2026-11-17) the per-pixel depth maps
 
 This should be done for say 50-100ish videos.
 
@@ -12,7 +13,7 @@ Upload all of this to Google Drive.
 
 # VGGT reconstructions of 75 VSI-Bench scenes
 
-**Status:** data exported, checked and shared on Google Drive (2026-10-26).
+**Status:** data exported, checked and shared on Google Drive (2026-10-26). Per-pixel depth maps added as a second zip (2026-11-17).
 
 This covers 75 indoor videos from [VSI-Bench](https://arxiv.org/abs/2412.14171), a video spatial-reasoning
 benchmark. For each video it gives:
@@ -52,6 +53,32 @@ cd vggt_vsibench_75
 pip install numpy pillow matplotlib    # all that load_example.py needs
 python load_example.py scenes/scannet/scene0025_01 --frame 40 --out example.png
 ```
+
+### Add-on: per-pixel depth maps (2026-11-17)
+
+VGGT's full-resolution depth map and depth confidence for every frame of the same 75 scenes. These are in a separate
+zip because they are larger than everything else together.
+
+**Link:** <https://drive.google.com/open?id=15z89GBHE2_mTuWSjZrGfV3dEfv_jgBF3> (anyone with the link can view)
+
+The download is one zip: `depth_vsibench_75.zip`, 3.5 GB (the same unzipped; the depth files are already
+compressed). Download it like the main zip, in a browser or from a terminal:
+
+```bash
+curl -L -o depth_vsibench_75.zip \
+    "https://drive.usercontent.google.com/download?id=15z89GBHE2_mTuWSjZrGfV3dEfv_jgBF3&export=download&confirm=t"
+# or: gdown 15z89GBHE2_mTuWSjZrGfV3dEfv_jgBF3
+```
+
+Check it and unzip it next to `vggt_vsibench_75/`:
+
+```bash
+sha256sum depth_vsibench_75.zip
+# expected: 48eecfdd3ffc2f58e534dfc42c65dcfd19647e2886bd96bab015343bc134b464
+unzip -q depth_vsibench_75.zip         # creates depth_vsibench_75/, with its own README.md
+```
+
+See [`depth.npz`](#depthnpz-add-on) below for what it contains and how to use it.
 
 The tree below starts at `vggt_vsibench_75/`, which is `out/` in this repo. The zip also has a `README.md`: a copy of
 this file from before the download section was added.
@@ -134,6 +161,47 @@ patch grid VGGT's transformer uses, so `xyz[t, r, c]` is the 3D position of VGGT
 Every patch has a point, including sky through windows, mirrors and depth edges, so use `conf` to filter. Confidence
 is relative within a scene, not comparable across scenes. Keeping patches above the scene's median is a reasonable
 default.
+
+### `depth.npz` (add-on)
+
+This file is in `depth_vsibench_75.zip`, at `depth_vsibench_75/scenes/<dataset>/<scene>/depth.npz`, with the same
+folder layout as the main export.
+
+| Key | Shape | Meaning |
+|---|---|---|
+| `depth` | [128, H, W] float16 | depth of each pixel along the camera's optical axis (camera z) |
+| `conf` | [128, H, W] float16 | VGGT depth confidence (≥ 1; higher is better) |
+
+- **Same pixels as the frames.** `depth[t, v, u]` belongs to pixel (u, v) of `frames/<t>.jpg`. H × W is 392 × 518,
+  or 518 × 392 for the 5 portrait scenes.
+- **Same scale and world frame as `cameras.npz`.** The scale is arbitrary per scene, not metres.
+- **The patch points come from this depth.** Unproject every pixel (below) and take the median over each 14 × 14
+  patch, and you get `patch_points.npz["xyz"]`. The export checked this for every scene: they match exactly.
+- **Filter by confidence.** Windows, mirrors, glass and object edges get a depth too, but with low confidence.
+  Keeping pixels above the scene's median `conf` is a reasonable default. Confidence is not comparable across scenes.
+
+To get the 3D point of a pixel in the shared world frame:
+
+```python
+import numpy as np
+
+d = np.load("depth_vsibench_75/scenes/scannet/scene0025_01/depth.npz")
+cams = np.load("vggt_vsibench_75/scenes/scannet/scene0025_01/cameras.npz")
+depth = d["depth"].astype(np.float32)                    # [128, 392, 518]
+
+t, v, u = 40, 200, 300                                   # frame, row, column
+z = depth[t, v, u]
+K, R, tr = cams["intrinsic"][t], cams["extrinsic"][t, :, :3], cams["extrinsic"][t, :, 3]
+x_cam = np.array([(u - K[0, 2]) * z / K[0, 0], (v - K[1, 2]) * z / K[1, 1], z])
+x_world = R.T @ (x_cam - tr)                             # same frame as patch_points and the point cloud
+
+# a whole frame at once: [H, W, 3] world points
+vv, uu = np.mgrid[:depth.shape[1], :depth.shape[2]]
+cam = np.stack([(uu - K[0, 2]) * depth[t] / K[0, 0], (vv - K[1, 2]) * depth[t] / K[1, 1], depth[t]], -1)
+world = (cam - tr) @ R                                   # R.T @ (x - t) for every pixel
+```
+
+Each `depth.npz` is about 45 MB compressed and about 100 MB once loaded as float16. Load one scene at a time.
 
 ### `point_cloud.ply` / `point_cloud.npz`
 
@@ -236,3 +304,13 @@ LOGDIR=vggt_data slurm/submit.sh -J vggt_export -t 01:00:00 --gres gpu:0 -c 8 --
 
 The script is `tasks/vggt_data/export.py`, which reads `data/vggt/` and `data/raw/VSI-Bench/`. `--scenes
 <dataset>/<scene> ...` re-exports only those scenes. The output is in `tasks/vggt_data/out/` (gitignored).
+
+The depth add-on is `tasks/vggt_data/export_depth.py`. It needs `out/` from the main export, because it takes the
+scene list from there and checks every scene against `cameras.npz` and `patch_points.npz`. It writes
+`tasks/vggt_data/out_depth/` (gitignored), and `README_depth.md` goes into the zip as its `README.md`:
+
+```bash
+.venv/bin/python tasks/vggt_data/export_depth.py     # numpy only; about 35 min for the 75 scenes on one CPU
+cp tasks/vggt_data/README_depth.md tasks/vggt_data/out_depth/README.md
+cd tasks/vggt_data && ln -s out_depth depth_vsibench_75 && zip -qr0 depth_vsibench_75.zip depth_vsibench_75/ && rm depth_vsibench_75
+```
