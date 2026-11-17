@@ -1,11 +1,11 @@
 ---
-id: 2026-17-11-scene-sheet-vs-video    # also the folder name: experiments/<id>/
+id: 2026-11-17-scene-sheet-vs-video    # also the folder name: experiments/<id>/
 title: Scene sheet vs video comparison
 owner: Nicolas
-created: 2026-17-11
+created: 2026-11-17
 status: draft                # draft | planned | running | analysing | done | abandoned
 tags: []                     # free labels for grouping, e.g. [scene-sheet, prompting]
-varies: []                   # keys that differ between conditions, e.g. [visual.video, scene_sheet.source]
+varies: [visual.video, scene_sheet.source]  # keys that differ between conditions
 depends_on: []               # experiments or tasks that must be done first
 ---
 
@@ -48,7 +48,12 @@ Does adding a scene sheet to the VLM prompt improve its performance when perform
 docs/, earlier experiments, and papers in papers/ (file, page and verbatim quote). Mark anything that no result or
 paper backs as an assumption. -->
 
-n/a
+- **Design notes:** the conditions come from `docs/scene_sheet_plan.md` ("Experiments"). Its baseline A (Qwen3-VL-4B,
+  16 frames uniform over the 128 VGGT frames) scored 51.9 on VSI-Bench.
+- **Perfect sheet:** `scene_sheet_creator.py --source gold` builds it from VSI-Bench's ground-truth boxes
+  (thinking-in-space@`ba7a6b2`, all 288 videos, metres). Fixed rules reading only those boxes score 97–100 on every
+  task except route planning (most waypoints aren't in the labels) and appearance order (nothing per frame), so the
+  perfect sheet is close to an answer key.
 
 ## Design
 
@@ -74,16 +79,16 @@ Example, from docs/scene_sheet_plan.md (varies: [visual.video, scene_sheet.sourc
 | B | Sheet only | false | pipeline | treatment | |
 | C | Perfect sheet | false | oracle | treatment | |
 | D | Video + sheet | true | pipeline | treatment | |
-| e | Video + perfect sheet | true | oracle | upper bound | |
+| E | Video + perfect sheet | true | oracle | upper bound | |
 
 ### Comparisons
 
 <!-- The differences between conditions that answer the question, fixed before the first run, e.g. "C − A: does the
 sheet add anything to the video?", "D − C: how much do segmentation and VGGT errors cost?" -->
 
-A - D: does the sheet add anything to the video?
-A - B: is the sheet by itself enough for good performance
-C - D and B - C: how much do segmentation and VGGT errors cost?
+- D − A: does the sheet add anything to the video?
+- B − A: is the sheet by itself enough for good performance?
+- C − B (sheet only) and E − D (with video): how much do segmentation and VGGT errors cost?
 
 ### Decisions
 
@@ -94,6 +99,8 @@ in docs/idea.md. -->
 |---|---|---|
 | sampling | uniform128 [TODO] | No good reason. I need to ask Dario and Vera what would work best |
 | system | You are a helpful assistant [TODO] | No good reason. I need to ask Dario and Vera what would work best |
+| Perfect sheet | `--source gold`, classes = the question's SAM 3 prompts | The same filter as the pipeline sheet, so only the objects' source differs |
+| Sheet content | Position and size only, in every condition | Simplest scene sheet. This may be changed depending on the results. However, we must keep in mind that gold sheets have no per-frame columns or cameras|
 
 ## Configuration
 
@@ -113,7 +120,7 @@ data:
   n_questions:                 # after every filter; the same questions in every condition
 
 visual:                        # what the VLM sees of the video
-  video: true or false                 # false: no frames, and the prompt must not say "These are frames of a video."
+  video: varies                # false: no frames, and the prompt must not say "These are frames of a video."
   model: Qwen/Qwen3-VL-4B-Instruct  # Hugging Face id and revision, or a trained run's checkpoint
   protocol: video              # video: one Qwen video, frames merged in pairs | images: one image per frame (--images)
   nframes: 16
@@ -122,14 +129,14 @@ visual:                        # what the VLM sees of the video
   resolution: default          # default: as in the README's "Evaluation protocol"
 
 scene_sheet:                   # "scene_sheet: none" instead of this block if no condition has a sheet
-  source: pipeline or oracle                 # none | pipeline | oracle
-  geometry: saved VGGT         # saved VGGT (data/vggt, 128 frames) | OpenVocab-4D's own VGGT | ground truth (source)
-  frames: subset:uniform16     # the VLM's frames (subset:uniform16 = 16 uniform128 frames) | all | half | uniform:K
-  sam3_prompts: full           # full | syntactic (prompt_object_extractor.py) | scene (hpc/scenes.tsv) | ground truth
-  sam3: {backend: transformers, model: facebook/sam3@3c879f3, min_score: 0.5}
-  tracking: {reid: true, conf_percentile: 55, min_points: 300}  # question_scene_sheet.py defaults
-  content: [position, size, num_frames, frame_flags]  # frame_flags or frame_positions; + cameras, pairwise distances
-  units: relative              # relative: VGGT's scale, said in the sheet | metres: rescaled (how) | ground truth
+  source: varies               # none | pipeline | oracle (scene_sheet_creator.py --source gold)
+  geometry: saved VGGT (pipeline) | VSI-Bench ground truth @ba7a6b2 (oracle)
+  frames: subset:uniform16     # pipeline only: the VLM's frames (subset:uniform16 = 16 uniform128 frames)
+  sam3_prompts: full           # pipeline: prompt_object_extractor.py; oracle: the same prompts, matched to gold classes
+  sam3: {backend: transformers, model: facebook/sam3@3c879f3, min_score: 0.5}  # pipeline only
+  tracking: {reid: true, conf_percentile: 55, min_points: 300}  # pipeline only; question_scene_sheet.py defaults
+  content: [position, size]    # global only in every condition: oracle sheets can't have frames or cameras
+  units: relative (pipeline, VGGT's scale) | metres (oracle)  # no conversion between them
   format: csv                  # csv | json | text
   renderer:                    # the code that turns the sheet into prompt text (file:function)
   placement: between video and question  # before the video | between video and question | after the question
@@ -168,7 +175,8 @@ accuracy per task [TODO Is this the correct metric to use?]
   recall); how often the full extractor fell back to syntactic mode (`prompt_mode` in the sheet's `question.json`);
   questions with an empty sheet; named objects with at least one row; objects and tokens per sheet; and the answer a
   fixed rule reads off the sheet alone (rows of the class for counting, the closest object for relative distance),
-  which tells a wrong sheet apart from a model that can't use a right one.
+  which tells a wrong sheet apart from a model that can't use a right one. On the perfect sheet, the gap between the rules
+  and C or E is what the model loses in reading a correct sheet.
 - **Breakdowns:** question type, always. As needed: dataset (ScanNet, ScanNet++, ARKitScenes); multiple choice vs
   numeric; the metric tasks (absolute distance, object size, room size) vs the rest when the sheet's units are
   relative; relative direction easy, medium and hard; complete vs incomplete sheets.
@@ -182,7 +190,8 @@ task files. -->
 
 | Risk | How we'd notice | What to do |
 |---|---|---|
-| | | |
+| C − B and E − D mix perception errors with units (metres vs VGGT's) and frame (z up vs first camera) | Large gaps on the metric tasks and relative direction | Read those tasks separately |
+| Route planning and appearance order lack labels in the perfect sheet | Little change between conditions | Report them, but they say little about the sheet |
 
 ## Runs and cost
 
@@ -218,4 +227,4 @@ estimate is based on (README, earlier task-results/) -->
 
 <!-- Dated changes to the plan, reruns and bugs found, each with its reason. -->
 
-- YYYY-MM-DD:
+- 2026-11-17: perfect sheet from VSI-Bench's ground truth.

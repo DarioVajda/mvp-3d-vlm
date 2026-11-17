@@ -31,6 +31,7 @@ import common  # noqa: E402
 import compare  # noqa: E402
 import question_scene_sheet  # noqa: E402
 import scene_sheet_creator  # noqa: E402
+import scene_sheet_report  # noqa: E402
 
 sys.path.insert(0, str(common.TRACK_A))
 from saved_masks import SavedMasks  # noqa: E402
@@ -674,6 +675,17 @@ class Integration(unittest.TestCase):
         with open(cameras_csv, newline="") as f:
             self.assertEqual(len(list(csv.DictReader(f))), T)
 
+    def test_scene_sheet_without_frames_or_cameras(self):
+        out = self.root / "sheet_global"
+        objects_csv, cameras_csv = scene_sheet_creator.build_scene_sheet(
+            self.adapted, ["chair", "table"], include_size=True, out_dir=out, conf_percentile=10, min_points=20,
+            frame_columns=False, cameras=False)
+        self.assertIsNone(cameras_csv)
+        self.assertFalse((out / "cameras.csv").exists())
+        with open(objects_csv, newline="") as f:
+            self.assertEqual(next(csv.reader(f)), ["object_id", "concept", "track_id", "x", "y", "z",
+                                                   "size_x", "size_y", "size_z", "size"])
+
     def run_native(self, name, scale, rotation, translation):
         native = self.root / name / "native"
         sim3_copy(self.adapted, native, scale, rotation, translation)
@@ -930,6 +942,28 @@ class QuestionSceneSheet(unittest.TestCase):
                          ("scannet/synthetic", "Is the chair near the table?", ["chair", "table"]))
         self.assertFalse((self.work / "scene/labels.npz").exists())  # the fuse stage is not run
 
+    @unittest.skipIf(importlib.util.find_spec("torch") is None, "the track stage needs torch")
+    def test_report_makes_a_correct_sheet_for_every_question(self):
+        """scene_sheet_report.py through the real steps: every question gets a sheet that passes its checks, and the
+        second question, which names a tracked prompt, runs SAM 3 and tracking only for the new one."""
+        questions = {"Is the chair near the table?": ["chair", "table"], "Where is the chair?": ["chair"],
+                     "How many lamps are there?": ["chair", "lamp"]}
+        with open(self.data / "scenes/scannet/synthetic/questions.jsonl", "w") as f:
+            for i, question in enumerate(questions):
+                f.write(json.dumps({"id": i, "question_type": "test", "question": question}) + "\n")
+        out = io.StringIO()
+        with mock.patch.object(question_scene_sheet, "extract_prompts", lambda q, syntactic=False: (questions[q], "full")), \
+                contextlib.redirect_stderr(io.StringIO()):
+            results = scene_sheet_report.report(
+                "synthetic", data_root=self.data, work_dir=self.work, out=out, dense_dir=self.dense, reid=False,
+                backend="sam3", conf_percentile=10, min_points=20)
+        self.assertEqual([r["problems"] for r in results], [[], [], []], out.getvalue())
+        self.assertEqual([r["counts"] for r in results],
+                         [{"chair": 1, "table": 1}, {"chair": 1}, {"chair": 1, "lamp": 0}])
+        self.assertIn("no rows:  lamp (SAM 3 found nothing)", out.getvalue())
+        self.assertEqual([c for c in self.calls if c[0] == "sam3_infer.py"],
+                         [("sam3_infer.py", "chair,table"), ("sam3_infer.py", "lamp")])
+
     def test_a_later_question_only_processes_new_prompts(self):
         self.sheet(["chair"])
         chair = common.sha256_file(self.work / "scene/tracks/chair.npz")
@@ -1058,6 +1092,260 @@ class QuestionPrompts(unittest.TestCase):
             self.assertEqual([Path(line).name for line in lines], ["objects.csv", "cameras.csv"])
             self.assertTrue(all(Path(line).is_file() for line in lines))
             self.assertIn("[adapter]", done.stderr)
+
+
+def gold_box(centre, axes_lengths):
+    """A gold-label box in the metadata's format, axis-aligned, so min/max are centre -+ half the lengths."""
+    centre, half = np.array(centre, float), np.array(axes_lengths, float) / 2
+    return {"centroid": centre.tolist(), "axesLengths": list(axes_lengths),
+            "normalizedAxes": np.eye(3).ravel().tolist(), "min": (centre - half).tolist(),
+            "max": (centre + half).tolist()}
+
+
+class GoldSheet(unittest.TestCase):
+    """scene_sheet_creator.py --source gold, on a small metadata folder (nothing is downloaded)."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.gold = self.root / "meta_info"
+        self.gold.mkdir()
+        scenes = {"scannet": {"s1": {"object_bbox": {
+            "chair": [gold_box([1, 2, 0.5], [0.5, 0.6, 1.0]), gold_box([3, 1, 0.5], [0.5, 0.5, 1.0])],
+            "table": [gold_box([2, 2, 0.4], [2.0, 1.0, 0.8])],
+            "coat hanger": [gold_box([0, 0, 1], [0.4, 0.4, 1.8])],
+        }}}, "scannetpp": {}, "arkitscenes": {}}
+        for dataset, (name, _) in scene_sheet_creator.GOLD_FILES.items():
+            (self.gold / name).write_text(json.dumps(scenes[dataset]))
+
+    def sheet(self, prompts=None, **options):
+        out = self.root / "sheet"
+        with contextlib.redirect_stdout(io.StringIO()):
+            objects_csv, cameras_csv = scene_sheet_creator.build_gold_scene_sheet(
+                "scannet/s1", prompts, out_dir=out, gold_dir=self.gold, **options)
+        self.assertIsNone(cameras_csv)
+        return read_csv(objects_csv), json.loads((out / "sheet.json").read_text())
+
+    def test_metres_sheet_has_the_boxes_and_no_per_frame_columns(self):
+        rows, info = self.sheet(["chair", "table"], include_size=True)
+        self.assertEqual(list(rows[0]), ["object_id", "concept", "track_id", "x", "y", "z",
+                                         "size_x", "size_y", "size_z", "size"])
+        self.assertEqual([(r["concept"], r["track_id"]) for r in rows], [("chair", "1"), ("chair", "2"), ("table", "1")])
+        table = rows[2]
+        self.assertEqual([float(table[a]) for a in ("x", "y", "z")], [2, 2, 0.4])
+        self.assertEqual([float(table[a]) for a in ("size_x", "size_y", "size_z")], [2, 1, 0.8])
+        self.assertAlmostEqual(float(table["size"]), 1.6)
+        self.assertFalse((self.root / "sheet" / "cameras.csv").exists())
+        self.assertEqual(info["source"], "gold")
+        self.assertIn(scene_sheet_creator.GOLD_COMMIT, info["labels"])
+
+    def test_prompts_match_classes_by_case_plural_and_alias(self):
+        rows, info = self.sheet(["Chairs", "coat rack", "chair", "lamp"])
+        self.assertEqual([r["concept"] for r in rows], ["Chairs", "Chairs", "coat rack"])  # chair only once
+        self.assertEqual(info["matched_classes"], {"Chairs": "chair", "coat rack": "coat hanger", "chair": "chair",
+                                                   "lamp": None})
+
+    def test_without_prompts_every_class_is_listed(self):
+        rows, _ = self.sheet()
+        self.assertEqual(len(rows), 4)
+
+    def test_per_frame_columns_and_cameras_are_refused(self):
+        for options in ({"relative_positions": True}, {"frame_columns": True}, {"cameras": True}):
+            with self.assertRaises(ValueError, msg=options):
+                self.sheet(["chair"], **options)
+        with self.assertRaises(ValueError):
+            scene_sheet_creator.load_gold_scene("scannet/absent", self.gold)
+
+    def test_a_stale_cameras_csv_is_removed(self):
+        out = self.root / "sheet"
+        out.mkdir()
+        (out / "cameras.csv").write_text("frame\n0\n")
+        self.sheet(["chair"])
+        self.assertFalse((out / "cameras.csv").exists())
+
+    def test_command_line(self):
+        out = self.root / "cli"
+        base = ["--source", "gold", "--scene", "s1", "--gold-dir", str(self.gold), "--out-dir", str(out)]
+        with contextlib.redirect_stdout(io.StringIO()):
+            scene_sheet_creator.main(base + ["--prompts", "chair,table", "--size"])
+        self.assertEqual(len(read_csv(out / "objects.csv")), 3)
+        for bad in (base + ["--relative-positions"], base + ["--images", "frames"],
+                    ["--scene", "x", "--prompts", "chair", "--relative-positions", "--no-frames"],
+                    ["--scene", "x"]):
+            with self.assertRaises(SystemExit) as caught, contextlib.redirect_stderr(io.StringIO()):
+                scene_sheet_creator.main(bad)
+            self.assertEqual(caught.exception.code, 2, bad)
+
+    def test_pipeline_sheet_refuses_relative_positions_without_frames(self):
+        with self.assertRaises(ValueError):
+            scene_sheet_creator.build_scene_sheet(self.root, ["chair"], relative_positions=True, frame_columns=False)
+
+
+def fake_pipeline_sheet(out, prompts, frames=3, rows=None):
+    """A pipeline sheet in the default layout: one object per prompt, seen in every frame (or the given rows)."""
+    out.mkdir(parents=True, exist_ok=True)
+    names = [f"frame_{t:03d}" for t in range(frames)]
+    if rows is None:
+        rows = [[i, p, 1, 0.1, 0.2, 0.3, 1, 1, 1, 1, frames] + [1] * frames for i, p in enumerate(prompts)]
+    scene_sheet_creator.write_csv(out / "objects.csv", scene_sheet_report.GLOBAL_COLUMNS + ["num_frames"] + names, rows)
+    scene_sheet_creator.write_csv(out / "cameras.csv", scene_sheet_report.CAMERA_COLUMNS,
+                                  [[t, f"{t}.jpg", 0, 0, 0, 1, 0, 0, 0, 0, 0, 1] for t in range(frames)])
+    (out / "question.json").write_text(json.dumps({"prompts": prompts}))
+    return out / "objects.csv", out / "cameras.csv"
+
+
+class SceneSheetReport(unittest.TestCase):
+    """scene_sheet_report.py: which questions it runs, with which settings, and what its checks catch. The prompt
+    extractor is replaced, and so is the pipeline (its real run is QuestionSceneSheet.test_report_...)."""
+
+    QUESTIONS = {"Is the chair near the table?": ["chair", "table"], "Where is the coat rack?": ["coat rack"],
+                 "How far is the lamp from the chair?": ["lamp", "chair"]}
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.data = self.root / "data"
+        scene = self.data / "scenes" / "scannet" / "s1"
+        scene.mkdir(parents=True)
+        (scene / "meta.json").write_text(json.dumps({"dataset": "scannet", "scene": "s1", "num_frames": 3}))
+        self.write_questions(scene / "questions.jsonl", "s1")
+        self.gold = self.root / "meta_info"
+        self.gold.mkdir()
+        labels = {"s1": {"object_bbox": {"chair": [gold_box([1, 2, 0.5], [0.5, 0.6, 1]), gold_box([3, 1, 0.5], [0.5, 0.5, 1])],
+                                          "table": [gold_box([2, 2, 0.4], [2, 1, 0.8])],
+                                          "coat hanger": [gold_box([0, 0, 1], [0.4, 0.4, 1.8])]}},
+                  "s2": {"object_bbox": {"chair": [gold_box([0, 0, 0.5], [0.5, 0.5, 1])]}}}
+        for dataset, (name, _) in scene_sheet_creator.GOLD_FILES.items():
+            (self.gold / name).write_text(json.dumps(labels if dataset == "scannet" else {}))
+        patcher = mock.patch.object(question_scene_sheet, "extract_prompts",
+                                    lambda question, syntactic=False: (self.QUESTIONS[question], "full"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write_questions(self, path, scene, extra=()):
+        with open(path, "w") as f:
+            for i, question in enumerate(self.QUESTIONS):
+                f.write(json.dumps({"id": i, "dataset": "scannet", "scene_name": scene,
+                                    "question_type": "object_counting" if i == 1 else "object_rel_distance",
+                                    "question": question}) + "\n")
+            for row in extra:
+                f.write(json.dumps(row) + "\n")
+
+    def report(self, **options):
+        out = io.StringIO()
+        with contextlib.redirect_stderr(io.StringIO()):
+            results = scene_sheet_report.report(options.pop("scene", "s1"), data_root=self.data,
+                                                work_dir=self.root / "work", gold_dir=self.gold, out=out, **options)
+        return results, out.getvalue()
+
+    def test_gold_report_makes_a_correct_sheet_for_every_question(self):
+        results, text = self.report(source="gold")
+        self.assertEqual([r["question"] for r in results], list(self.QUESTIONS))
+        self.assertTrue(all(r["ok"] for r in results), text)
+        self.assertEqual([r["counts"] for r in results],
+                         [{"chair": 2, "table": 1}, {"coat rack": 1}, {"lamp": 0, "chair": 2}])
+        for question, prompts in self.QUESTIONS.items():
+            self.assertIn(f"question: {question}", text)
+            self.assertIn(f"prompts:  {', '.join(prompts)}  (full)", text)
+        self.assertIn("no rows:  lamp (no gold class)", text)
+        for result in results:
+            objects_csv, sheet_json = map(Path, result["files"])
+            self.assertTrue(objects_csv.is_file() and sheet_json.is_file())
+            self.assertIn(str(objects_csv), text)
+            self.assertFalse((objects_csv.parent / "cameras.csv").exists())
+            self.assertEqual(json.loads((objects_csv.parent / "question.json").read_text())["prompts"],
+                             result["prompts"])
+        self.assertEqual(read_csv(results[0]["files"][0])[0].keys(), set(scene_sheet_report.GLOBAL_COLUMNS))
+        self.assertIn("3 questions: 3 sheets OK (1 with a prompt that has no rows), 0 failed", text)
+
+    def test_types_and_limit_choose_the_questions(self):
+        results, _ = self.report(source="gold", types=["object_rel_distance"])
+        self.assertEqual([r["id"] for r in results], [0, 2])
+        results, _ = self.report(source="gold", limit=1)
+        self.assertEqual([r["id"] for r in results], [0])
+
+    def test_gold_check_catches_a_wrong_sheet(self):
+        info = scene_sheet_creator.load_gold_scene("scannet/s1", self.gold)[1]
+        (result,), _ = self.report(source="gold", limit=1)
+        objects_csv = Path(result["files"][0])
+        with open(objects_csv, newline="") as f:
+            header, *rows = list(csv.reader(f))
+
+        def problems(new_rows, new_header=header, prompts=("chair", "table")):
+            scene_sheet_creator.write_csv(objects_csv, new_header, new_rows)
+            return scene_sheet_report.check_gold_sheet(objects_csv, list(prompts), info)[0]
+
+        self.assertEqual(problems(rows), [])
+        self.assertIn("1 rows for 'chair', the gold labels have 2", problems(rows[1:]))
+        self.assertTrue(any("not one of the prompts" in p for p in problems(rows + [[3, "sofa", 1, 0, 0, 0, 1, 1, 1, 1]])))
+        self.assertTrue(any("size is not" in p for p in problems([r[:-1] + ["9"] for r in rows])))
+        self.assertTrue(any("columns" in p for p in problems([r + ["1"] for r in rows], header + ["num_frames"])))
+        self.assertTrue(any("other prompts" in p for p in problems(rows, prompts=("chair", "table", "lamp"))))
+        (objects_csv.parent / "cameras.csv").write_text("frame\n")
+        self.assertIn("a cameras.csv next to a gold sheet", problems(rows))
+
+    def test_pipeline_report_uses_the_default_settings_and_goes_on_after_a_failure(self):
+        calls = []
+
+        def create(scene, question, **options):
+            calls.append((scene, question, options))
+            if question == "Where is the coat rack?":
+                sys.exit("[question] no dense depth for scannet/s1")
+            return fake_pipeline_sheet(self.root / "sheets" / str(len(calls)), self.QUESTIONS[question])
+
+        with mock.patch.object(question_scene_sheet, "create_scene_sheet", create):
+            results, text = self.report()
+        self.assertEqual([(s, q) for s, q, _ in calls], [("scannet/s1", q) for q in self.QUESTIONS])
+        self.assertEqual(calls[0][2], {"data_root": self.data, "work_dir": self.root / "work"})  # nothing else set
+        self.assertEqual([r["ok"] for r in results], [True, False, True])
+        self.assertIn("FAILED: not made: [question] no dense depth for scannet/s1", text)
+        self.assertEqual(results[2]["counts"], {"lamp": 1, "chair": 1})
+        self.assertIn(str(self.root / "sheets" / "1" / "cameras.csv"), text)
+        self.assertIn("3 questions: 2 sheets OK (0 with a prompt that has no rows), 1 failed", text)
+
+    def test_pipeline_check_catches_an_inconsistent_sheet(self):
+        prompts = ["chair", "table"]
+        check = scene_sheet_report.check_pipeline_sheet
+        objects_csv, cameras_csv = fake_pipeline_sheet(self.root / "ok", prompts)
+        self.assertEqual(check(objects_csv, cameras_csv, prompts), ([], {"chair": 1, "table": 1}))
+        cases = {
+            "num_frames 3, 2 frame flags set": [[0, "chair", 1, 0, 0, 0, 1, 1, 1, 1, 3, 1, 0, 1]],
+            "not one of the prompts": [[0, "sofa", 1, 0, 0, 0, 1, 1, 1, 1, 3, 1, 1, 1]],
+            "not a finite number": [[0, "chair", 1, "nan", 0, 0, 1, 1, 1, 1, 3, 1, 1, 1]],
+            "num_frames 0, 0 frame flags set": [[0, "chair", 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]],
+            "object_id 5": [[5, "chair", 1, 0, 0, 0, 1, 1, 1, 1, 3, 1, 1, 1]],
+        }
+        for i, (expected, rows) in enumerate(cases.items()):
+            objects_csv, cameras_csv = fake_pipeline_sheet(self.root / f"bad{i}", prompts, rows=rows)
+            self.assertTrue(any(expected in p for p in check(objects_csv, cameras_csv, prompts)[0]), expected)
+        objects_csv, cameras_csv = fake_pipeline_sheet(self.root / "frames", prompts)
+        scene_sheet_creator.write_csv(cameras_csv, scene_sheet_report.CAMERA_COLUMNS, [[0] * 12])
+        self.assertIn("3 frame columns in objects.csv, 1 frames in cameras.csv", check(objects_csv, cameras_csv, prompts)[0])
+        cameras_csv.unlink()
+        self.assertTrue(check(objects_csv, cameras_csv, prompts)[0][0].startswith("no cameras.csv"))
+
+    def test_questions_come_from_the_export_or_a_file(self):
+        scene, rows = scene_sheet_report.load_questions("s1", data_root=self.data)
+        self.assertEqual((scene, len(rows)), ("scannet/s1", 3))
+        other = self.root / "test.jsonl"
+        self.write_questions(other, "s1", [{"id": 9, "dataset": "scannet", "scene_name": "s2", "question": "x"}])
+        scene, rows = scene_sheet_report.load_questions("scannet/s2", "gold", self.data, other, self.gold)
+        self.assertEqual((scene, [r["id"] for r in rows]), ("scannet/s2", [9]))  # not exported: gold only
+        with self.assertRaises(ValueError):
+            scene_sheet_report.load_questions("scannet/s2", "pipeline", self.data, other)
+
+    def test_command_line_exit_status(self):
+        base = ["s1", "--source", "gold", "--data-root", str(self.data), "--gold-dir", str(self.gold),
+                "--work-dir", str(self.root / "cli")]
+        with mock.patch.object(importlib.util, "find_spec", lambda name, *a: object()), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(scene_sheet_report.main(base), 0)
+            with mock.patch.object(scene_sheet_report, "check_gold_sheet", lambda *a: (["broken"], {})):
+                self.assertEqual(scene_sheet_report.main(base), 1)
+        with mock.patch.object(importlib.util, "find_spec", lambda name, *a: None), \
+                contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
+            scene_sheet_report.main(base)
+        self.assertIn("spacy", err.getvalue())
 
 
 if __name__ == "__main__":

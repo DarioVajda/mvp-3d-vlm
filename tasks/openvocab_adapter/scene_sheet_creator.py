@@ -36,10 +36,21 @@ Conventions
     along the world axes: size_x/y/z = max - min of its points on each axis (or the --size-trim
     and 100 - --size-trim percentiles, to ignore outliers), size = size_x * size_y * size_z.
 
+  --no-frames drops num_frames and the per-frame columns, and --no-cameras drops cameras.csv.
+
+Gold labels (--source gold): the sheet comes from VSI-Bench's ground-truth boxes (GOLD_REPO's data/meta_info/,
+downloaded to GOLD_DIR the first time) instead of SAM 3 and tracking. --scene is a VSI-Bench scene, e.g.
+scannet/scene0025_01. Columns as above up to size, with box centres and extents, in metres, in the dataset's frame
+(z up). Prompts match class names ignoring case and a plural "s" (plus GOLD_ALIASES); without --prompts every class
+is listed. There are no per-frame columns and no cameras.csv, and asking for them is an error: the metadata has
+nothing per frame, and the saved VGGT cameras are in a different frame and scale with nothing to align them by.
+
 Usage (with the OpenVocab-4D environment; paths are relative to where you run it):
   python tasks/openvocab_adapter/scene_sheet_creator.py --scene out/test_scene --prompts "table,dog,chair"
   python tasks/openvocab_adapter/scene_sheet_creator.py --images path/to/frames --scene out/my_scene ^
       --prompts table dog chair --relative-positions --size
+  python tasks/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01 ^
+      --prompts "table,chair,fan" --size --out-dir out/gold_sheet
 
 To go from a question about one of the saved VGGT scenes straight to its scene sheet, use
 question_scene_sheet.py, which picks the prompts, runs SAM 3 and calls the functions below.
@@ -47,8 +58,11 @@ question_scene_sheet.py, which picks the prompts, runs SAM 3 and calls the funct
 
 import argparse
 import csv
+import hashlib
+import json
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -58,6 +72,18 @@ import common  # noqa: E402
 
 PIPELINE = common.TRACK_A / "milestone4_video.py"
 IMAGE_EXTS = common.IMAGE_EXTS  # same as the pipeline
+
+# Gold labels: VSI-Bench's metadata (Apache-2.0), at the commit that added it (2025-08-05), with the files' SHA-256
+GOLD_DIR = common.REPO / "data" / "raw" / "VSI-Bench" / "meta_info"
+GOLD_REPO = "vision-x-nyu/thinking-in-space"
+GOLD_COMMIT = "ba7a6b2d2ea094ebbfcd2cd6e98e611f40e7a46f"
+GOLD_FILES = {
+    "scannet": ("scannet_meta_info_val.json", "569d91e0fcae23a83bb35dc390cb0077c4b4ba03011c34d265df7a361e24c43a"),
+    "scannetpp": ("scannetpp_meta_info_val.json", "ae414913186a477a79d8b753d2ab8039d8912088dda062ac80a2b71f487f5bb1"),
+    "arkitscenes": ("arkitscenes_meta_info_val.json", "77b1f90a33b4aaa032280cdfd6e43986a3e3d818c750b2e1059b1c664ecdc21b"),
+}
+# Names the questions use for a class the metadata names otherwise (scannetpp/1ada7a0617's questions say "coat rack")
+GOLD_ALIASES = {"coat rack": "coat hanger"}
 
 
 def parse_prompts(values):
@@ -323,11 +349,16 @@ def build_scene_sheet(
     min_points=300,
     size_trim=0.0,
     max_frame_points=5000,
+    frame_columns=True,
+    cameras=True,
 ):
     """Write objects.csv and cameras.csv for a scene that already has tracks for every prompt.
 
-    Returns the two CSV paths.
+    frame_columns=False leaves out num_frames and the per-frame columns, cameras=False leaves out cameras.csv.
+    Returns the two CSV paths (None for cameras.csv when it is left out).
     """
+    if relative_positions and not frame_columns:
+        raise ValueError("relative_positions are per-frame columns, which frame_columns=False leaves out")
     scene = Path(scene)
     out_dir = Path(out_dir) if out_dir else scene / "scene_sheet"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -357,11 +388,12 @@ def build_scene_sheet(
     header = ["object_id", "concept", "track_id", "x", "y", "z"]
     if include_size:
         header += ["size_x", "size_y", "size_z", "size"]
-    header.append("num_frames")
-    if relative_positions:
-        header += [f"{n}_{a}" for n in frame_names for a in "xyz"]
-    else:
-        header += frame_names
+    if frame_columns:
+        header.append("num_frames")
+        if relative_positions:
+            header += [f"{n}_{a}" for n in frame_names for a in "xyz"]
+        else:
+            header += frame_names
 
     rows = []
     for (pi, tid), obj in sorted(
@@ -376,16 +408,25 @@ def build_scene_sheet(
                 lo, hi = obj["lo"], obj["hi"]
             extent = hi - lo
             row += [*extent, float(np.prod(extent))]
-        row.append(len(obj["frames"]))
-        for t in range(S):
-            pos = obj["frames"].get(t)
-            if relative_positions:
-                row += [None] * 3 if pos is None else list(pos)
-            else:
-                row.append(0 if pos is None else 1)
+        if frame_columns:
+            row.append(len(obj["frames"]))
+            for t in range(S):
+                pos = obj["frames"].get(t)
+                if relative_positions:
+                    row += [None] * 3 if pos is None else list(pos)
+                else:
+                    row.append(0 if pos is None else 1)
         rows.append(row)
     objects_csv = out_dir / "objects.csv"
     write_csv(objects_csv, header, rows)
+    counts = {
+        p: sum(1 for (pi, _) in objects if pi == i) for i, p in enumerate(prompts)
+    }
+    print(f"[sheet] {len(rows)} objects over {S} frames: {counts}")
+    print(f"[sheet] wrote {objects_csv}")
+    if not cameras:
+        (out_dir / "cameras.csv").unlink(missing_ok=True)  # an earlier sheet's, which would no longer match
+        return objects_csv, None
 
     cam_rows = []
     for t in range(S):
@@ -413,30 +454,155 @@ def build_scene_sheet(
         ],
         cam_rows,
     )
-
-    counts = {
-        p: sum(1 for (pi, _) in objects if pi == i) for i, p in enumerate(prompts)
-    }
-    print(f"[sheet] {len(rows)} objects over {S} frames: {counts}")
-    print(f"[sheet] wrote {objects_csv}")
     print(f"[sheet] wrote {cameras_csv}")
     return objects_csv, cameras_csv
 
 
-def main():
+# ---------------------------------------------------------------------------
+# the sheet from gold labels
+# ---------------------------------------------------------------------------
+def ensure_gold_metadata(gold_dir=None):
+    """The folder with VSI-Bench's three metadata files, downloading any that is missing (checked against GOLD_FILES)."""
+    gold_dir = Path(gold_dir) if gold_dir else GOLD_DIR
+    for name, digest in GOLD_FILES.values():
+        path = gold_dir / name
+        if path.is_file():
+            continue
+        url = f"https://raw.githubusercontent.com/{GOLD_REPO}/{GOLD_COMMIT}/data/meta_info/{name}"
+        print(f"[sheet] downloading {url}")
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                data = response.read()
+        except OSError as error:
+            raise RuntimeError(f"could not download {url} ({error}); put the file in {gold_dir} by hand") from error
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise RuntimeError(f"{url} does not have the expected SHA-256 {digest}")
+        gold_dir.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    return gold_dir
+
+
+def load_gold_scene(scene, gold_dir=None):
+    """("<dataset>/<scene>", that scene's metadata) for "<dataset>/<scene>" or only a scene's name."""
+    gold_dir = ensure_gold_metadata(gold_dir)
+    dataset, _, name = scene.rpartition("/")
+    if dataset and dataset not in GOLD_FILES:
+        raise ValueError(f"unknown dataset {dataset!r}; VSI-Bench has {sorted(GOLD_FILES)}")
+    for ds in [dataset] if dataset else list(GOLD_FILES):
+        scenes = json.loads((gold_dir / GOLD_FILES[ds][0]).read_text())
+        if name in scenes:
+            return f"{ds}/{name}", scenes[name]
+    raise ValueError(f"{scene!r} is not a VSI-Bench scene (not in the metadata in {gold_dir})")
+
+
+def match_gold_class(info, prompt):
+    """The metadata class a prompt names, or None: exact up to case and spaces, a plural "s", or GOLD_ALIASES."""
+    classes = info["object_bbox"]
+    key = " ".join(prompt.lower().split())
+    for candidate in (key, GOLD_ALIASES.get(key), key[:-1] if key.endswith("s") else None):
+        if candidate in classes:
+            return candidate
+    return None
+
+
+def build_gold_scene_sheet(
+    scene,
+    prompts=None,
+    include_size=False,
+    out_dir=None,
+    gold_dir=None,
+    relative_positions=False,
+    frame_columns=False,
+    cameras=False,
+):
+    """Write objects.csv and sheet.json for a VSI-Bench scene from its gold labels, in metres. Returns (objects.csv,
+    None). prompts: the classes to list (None: all). Per-frame columns and cameras don't exist for gold labels, so
+    asking for them raises ValueError.
+    """
+    if relative_positions or frame_columns:
+        raise ValueError("a gold sheet has no per-frame columns: the metadata says nothing about single frames")
+    if cameras:
+        raise ValueError("a gold sheet has no cameras.csv: the only camera poses are VGGT's, in a different frame "
+                         "and scale from the gold labels, with nothing to align them by")
+    scene, info = load_gold_scene(scene, gold_dir)
+    out_dir = Path(out_dir) if out_dir else common.OUT_ROOT / scene.replace("/", "__") / "gold_sheet"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    asked = list(prompts) if prompts is not None else list(info["object_bbox"])
+    matched = {p: match_gold_class(info, p) for p in asked}
+    header = ["object_id", "concept", "track_id", "x", "y", "z"]
+    if include_size:
+        header += ["size_x", "size_y", "size_z", "size"]
+    rows, listed = [], set()
+    for prompt in asked:
+        if matched[prompt] is None or matched[prompt] in listed:  # a class two prompts name is listed once
+            continue
+        listed.add(matched[prompt])
+        for instance, box in enumerate(info["object_bbox"][matched[prompt]], start=1):
+            row = [len(rows), prompt, instance, *np.asarray(box["centroid"], float)]
+            if include_size:
+                extent = np.asarray(box["max"], float) - np.asarray(box["min"], float)
+                row += [*extent, float(np.prod(extent))]
+            rows.append(row)
+    objects_csv = out_dir / "objects.csv"
+    write_csv(objects_csv, header, rows)
+    (out_dir / "cameras.csv").unlink(missing_ok=True)  # an earlier pipeline sheet's, which would not match
+    (out_dir / "sheet.json").write_text(json.dumps({
+        "source": "gold",
+        "scene": scene,
+        "labels": f"github.com/{GOLD_REPO}@{GOLD_COMMIT}: data/meta_info/{GOLD_FILES[scene.split('/')[0]][0]}",
+        "frame": "the dataset's world frame, z up, metres",
+        "prompts": asked,
+        "matched_classes": matched,
+        "size": include_size,
+    }, indent=1))
+    found = {p: len(info["object_bbox"][c]) if c else 0 for p, c in matched.items()}
+    print(f"[sheet] gold labels for {scene}: {len(rows)} objects {found}")
+    if missing := [p for p, c in matched.items() if c is None]:
+        print(f"[sheet] no gold class for {missing}; the scene's classes are {sorted(info['object_bbox'])}")
+    print(f"[sheet] wrote {objects_csv}")
+    return objects_csv, None
+
+
+def main(argv=None):
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     p.add_argument(
+        "--source",
+        choices=["pipeline", "gold"],
+        default="pipeline",
+        help="pipeline: SAM 3 and tracking on the scene's geometry; gold: VSI-Bench's ground-truth boxes",
+    )
+    p.add_argument(
         "--prompts",
         nargs="+",
-        required=True,
-        help='concepts, e.g. "table,dog,chair" or table dog chair',
+        default=None,
+        help='concepts, e.g. "table,dog,chair" or table dog chair (needed for --source pipeline; '
+        "with --source gold, every class when left out)",
     )
     p.add_argument(
         "--scene",
         required=True,
-        help="scene folder (the pipeline's --out); created if --images is given",
+        help="scene folder (the pipeline's --out; created if --images is given), or with --source gold a VSI-Bench "
+        "scene, e.g. scannet/scene0025_01",
+    )
+    p.add_argument(
+        "--no-frames",
+        action="store_true",
+        help="leave out num_frames and the per-frame columns (always so with --source gold)",
+    )
+    p.add_argument(
+        "--no-cameras",
+        action="store_true",
+        help="leave out cameras.csv (always so with --source gold)",
+    )
+    gold = p.add_argument_group("--source gold")
+    gold.add_argument(
+        "--gold-dir",
+        default=None,
+        help=f"folder with VSI-Bench's metadata files (default {GOLD_DIR.relative_to(common.REPO)}, "
+        "downloaded when missing)",
     )
     p.add_argument(
         "--images",
@@ -500,9 +666,28 @@ def main():
         default=None,
         help="saved SAM 3 masks (sam3_infer.py) to track from, instead of running SAM 3",
     )
-    args = p.parse_args()
+    args = p.parse_args(argv)
 
-    prompts = parse_prompts(args.prompts)
+    prompts = parse_prompts(args.prompts) if args.prompts else None
+    if args.source == "gold":
+        if args.images:
+            p.error("--images is for --source pipeline: a gold sheet needs no frames")
+        try:
+            build_gold_scene_sheet(
+                args.scene,
+                prompts,
+                args.size,
+                args.out_dir,
+                args.gold_dir,
+                relative_positions=args.relative_positions,
+            )
+        except (ValueError, RuntimeError) as error:
+            p.error(str(error))
+        return
+    if not prompts:
+        p.error("--prompts is needed for --source pipeline")
+    if args.relative_positions and args.no_frames:
+        p.error("--relative-positions are per-frame columns, which --no-frames leaves out")
     scene = Path(args.scene)
     ensure_scene(
         scene,
@@ -524,6 +709,8 @@ def main():
         args.min_points,
         args.size_trim,
         args.max_frame_points,
+        frame_columns=not args.no_frames,
+        cameras=not args.no_cameras,
     )
 
 

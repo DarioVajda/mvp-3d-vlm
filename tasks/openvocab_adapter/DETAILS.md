@@ -365,12 +365,27 @@ python tasks/openvocab_adapter/prompt_object_extractor.py --explain "How far is 
 python tasks/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # every question of a few scenes
 ```
 
+## A scene sheet from the gold labels
+
+`scene_sheet_creator.py --source gold` writes the perfect sheet from VSI-Bench's ground-truth boxes
+([`thinking-in-space`](https://github.com/vision-x-nyu/thinking-in-space) `data/meta_info/`, commit `ba7a6b2`,
+downloaded to `data/raw/VSI-Bench/meta_info/` the first time). It needs no GPU:
+
+```bash
+python tasks/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01     --prompts "table,chair,fan" --size --out-dir out/gold_sheet
+```
+
+The columns are the pipeline sheet's up to `size`, in metres and in the dataset's frame (z up). There are no per-frame
+columns and no `cameras.csv`, because the saved VGGT cameras can't be aligned to the gold labels; asking for them is
+an error. Pass `--no-frames --no-cameras` for a pipeline sheet with the same columns.
+
 ## Files
 
 | File | Purpose |
 |---|---|
 | `question_scene_sheet.py` | One scene and one question in, the paths of its scene sheet out: prompts, SAM 3, the saved VGGT outputs, tracking, sheet |
-| `scene_sheet_creator.py` | Writes the scene sheet (`objects.csv`, `cameras.csv`) of a scene that has tracks |
+| `scene_sheet_creator.py` | Writes the scene sheet (`objects.csv`, `cameras.csv`) of a scene that has tracks, or from VSI-Bench's ground truth (`--source gold`) |
+| `scene_sheet_report.py` | Makes and checks the sheet of every question of a scene (pipeline or gold), and prints it all for checking by eye |
 | `prompt_object_extractor.py` | Picks the SAM 3 prompts from a question |
 | `prompt_extractor_report.py` | Prints the extractor's decisions on the questions of a few exported scenes, for checking it by eye |
 | `hpc/start.sh` | The one command: checks the inputs, then submits the setup, every scene and the summary |
