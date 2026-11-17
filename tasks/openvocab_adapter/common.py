@@ -9,6 +9,9 @@ REPO = HERE.parents[1]
 TRACK_A = REPO / "openvocab-4D-main" / "trackA"
 DATA_ROOT = REPO / "tasks" / "vggt_data" / "out" / "vggt_vsibench_75"
 OUT_ROOT = HERE / "out"
+# Folders that may hold an export's scenes/<dataset>/<scene>/, in the order they are tried (as in hpc/run_all.sh)
+DATA_ROOTS = [REPO / "tasks" / "vggt_data", DATA_ROOT, REPO / "tasks" / "vggt_data" / "out", OUT_ROOT / "export"]
+DENSE_ROOT = REPO / "data" / "vggt"  # <dataset>/<scene>/depth.npy and depth_conf.npy, on the cluster only
 
 DEFAULT_SCENE = "scannet/scene0025_01"
 # Objects named in the VSI-Bench questions of scannet/scene0025_01 (questions.jsonl)
@@ -67,6 +70,26 @@ def select_frames(spec, num_frames, meta=None):
     if any(b <= a for a, b in zip(indices, indices[1:])):
         raise ValueError(f"{spec!r} must select strictly increasing frames: {indices}")
     return indices
+
+
+def find_scene(scene, data_root=None):
+    """(data root, "<dataset>/<scene>") of an exported scene, given "<dataset>/<scene>" or only the scene's name.
+
+    Looks in data_root if given, otherwise in each of DATA_ROOTS. A scene name alone must be in one dataset only.
+    """
+    scene = str(scene).replace("\\", "/").strip("/")
+    roots = [Path(data_root)] if data_root else DATA_ROOTS
+    for root in roots:
+        if "/" in scene:
+            found = [scene] if (root / "scenes" / scene / "meta.json").is_file() else []
+        else:
+            found = sorted(f"{p.parent.parent.name}/{scene}" for p in (root / "scenes").glob(f"*/{scene}/meta.json"))
+        if len(found) > 1:
+            raise ValueError(f"scene {scene!r} is in several datasets, name one of them: {found}")
+        if found:
+            return root, found[0]
+    raise FileNotFoundError(f"no exported scene {scene!r} (scenes/<dataset>/<scene>/meta.json) in: "
+                            + ", ".join(str(r) for r in roots))
 
 
 def list_images(folder):

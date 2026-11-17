@@ -51,10 +51,10 @@ from its noun. "the length of the longest dimension of the stove" -> "length", "
 dimension", "stove". Useful as a baseline, and it does not need the WordNet data.
 
 Usage (with spacy and nltk installed, see below):
-  python scene_sheet_creation/prompt_object_extractor.py "How far is the red car from the stove?"
-  python scene_sheet_creation/prompt_object_extractor.py --explain "What is the size of this room?"
-  python scene_sheet_creation/prompt_object_extractor.py --file questions.txt
-  python scene_sheet_creation/prompt_object_extractor.py --syntactic --explain "..."
+  python tasks/openvocab_adapter/prompt_object_extractor.py "How far is the red car from the stove?"
+  python tasks/openvocab_adapter/prompt_object_extractor.py --explain "What is the size of this room?"
+  python tasks/openvocab_adapter/prompt_object_extractor.py --file questions.txt
+  python tasks/openvocab_adapter/prompt_object_extractor.py --syntactic --explain "..."
 
   Prints one line per question with its prompts joined by commas, the form scene_sheet_creator.py
   takes with --prompts. --explain also lists every candidate with the reason it was kept or

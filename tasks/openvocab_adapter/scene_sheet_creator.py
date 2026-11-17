@@ -36,10 +36,13 @@ Conventions
     along the world axes: size_x/y/z = max - min of its points on each axis (or the --size-trim
     and 100 - --size-trim percentiles, to ignore outliers), size = size_x * size_y * size_z.
 
-Usage (from the repo root, with the project venv):
-  python scene_sheet_creation/main.py --scene out/test_scene --prompts "table,dog,chair"
-  python scene_sheet_creation/main.py --images path/to/frames --scene out/my_scene ^
+Usage (with the OpenVocab-4D environment; paths are relative to where you run it):
+  python tasks/openvocab_adapter/scene_sheet_creator.py --scene out/test_scene --prompts "table,dog,chair"
+  python tasks/openvocab_adapter/scene_sheet_creator.py --images path/to/frames --scene out/my_scene ^
       --prompts table dog chair --relative-positions --size
+
+To go from a question about one of the saved VGGT scenes straight to its scene sheet, use
+question_scene_sheet.py, which picks the prompts, runs SAM 3 and calls the functions below.
 """
 
 import argparse
@@ -50,9 +53,11 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-PIPELINE = ROOT / "trackA" / "milestone4_video.py"
-IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}  # same as the pipeline
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402
+
+PIPELINE = common.TRACK_A / "milestone4_video.py"
+IMAGE_EXTS = common.IMAGE_EXTS  # same as the pipeline
 
 
 def parse_prompts(values):
@@ -69,16 +74,33 @@ def track_file(scene, prompt):
 # running the pipeline
 # ---------------------------------------------------------------------------
 def run_pipeline(
-    images, scene, prompts, stages, step, chunk_size=40, overlap=8, no_reid=False
+    images,
+    scene,
+    prompts,
+    stages,
+    step,
+    chunk_size=40,
+    overlap=8,
+    no_reid=False,
+    masks_dir=None,
+    conf_percentile=None,
+    min_points=None,
+    stdout=None,
 ):
+    """Run stages of the OpenVocab-4D pipeline (milestone 4) on a scene folder.
+
+    masks_dir: saved SAM 3 masks (sam3_infer.py) for the track stage, instead of running SAM 3.
+    conf_percentile, min_points: the pipeline's confident-depth rule; None keeps its defaults.
+    stdout: where the pipeline's log goes (default: this process's stdout).
+    """
     cmd = [
         sys.executable,
         "-u",
         str(PIPELINE),
         "--images",
-        str(images),
+        str(Path(images).resolve()),
         "--out",
-        str(scene),
+        str(Path(scene).resolve()),
         "--prompts",
         ",".join(prompts),
         "--stages",
@@ -92,8 +114,14 @@ def run_pipeline(
     ]
     if no_reid:
         cmd.append("--no-reid")
+    if masks_dir is not None:
+        cmd += ["--masks-dir", str(Path(masks_dir).resolve())]
+    if conf_percentile is not None:
+        cmd += ["--conf-percentile", str(conf_percentile)]
+    if min_points is not None:
+        cmd += ["--min-points", str(min_points)]
     print(f"[sheet] running pipeline stages '{stages}' for {prompts}")
-    if subprocess.run(cmd, cwd=str(ROOT)).returncode != 0:
+    if subprocess.run(cmd, stdout=stdout).returncode != 0:
         sys.exit("[sheet] pipeline failed, see its log above")
 
 
@@ -117,9 +145,19 @@ def frames_used_by(scene):
 
 
 def ensure_scene(
-    scene, prompts, images=None, step=1, chunk_size=40, overlap=8, no_reid=False
+    scene,
+    prompts,
+    images=None,
+    step=1,
+    chunk_size=40,
+    overlap=8,
+    no_reid=False,
+    masks_dir=None,
 ):
-    """Make sure the scene has geometry and tracks for every prompt, running the pipeline if not."""
+    """Make sure the scene has geometry and tracks for every prompt, running the pipeline if not.
+
+    With masks_dir, the track stage reads those saved SAM 3 masks instead of running SAM 3.
+    """
     if not ((scene / "cameras.npz").exists() and (scene / "depth.npz").exists()):
         if images is None:
             sys.exit(
@@ -135,6 +173,7 @@ def ensure_scene(
             chunk_size,
             overlap,
             no_reid,
+            masks_dir,
         )
         return
     missing = [p for p in prompts if not track_file(scene, p).exists()]
@@ -142,7 +181,9 @@ def ensure_scene(
         # "track" only: rerunning "fuse" would overwrite objects.rrd / labels.npz with just these
         # prompts. The scene sheet only needs the tracks.
         folder, scene_step = frames_used_by(scene)
-        run_pipeline(folder, scene, missing, "track", scene_step, no_reid=no_reid)
+        run_pipeline(
+            folder, scene, missing, "track", scene_step, no_reid=no_reid, masks_dir=masks_dir
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -454,6 +495,11 @@ def main():
         action="store_true",
         help="track without DINOv2 re-identification (fewer duplicate objects, shorter tracks)",
     )
+    p.add_argument(
+        "--masks-dir",
+        default=None,
+        help="saved SAM 3 masks (sam3_infer.py) to track from, instead of running SAM 3",
+    )
     args = p.parse_args()
 
     prompts = parse_prompts(args.prompts)
@@ -466,6 +512,7 @@ def main():
         args.chunk_size,
         args.overlap,
         args.no_reid,
+        args.masks_dir,
     )
     build_scene_sheet(
         scene,

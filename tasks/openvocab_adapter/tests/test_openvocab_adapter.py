@@ -6,9 +6,11 @@ SAM 3 is replaced by a fake that returns fixed rectangles.
 
   py -m unittest discover -s tasks/openvocab_adapter/tests -v
 """
+import contextlib
 import csv
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -17,6 +19,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 from PIL import Image
@@ -26,10 +29,10 @@ sys.path.insert(0, str(ADAPTER))
 import adapt_vggt  # noqa: E402
 import common  # noqa: E402
 import compare  # noqa: E402
+import question_scene_sheet  # noqa: E402
+import scene_sheet_creator  # noqa: E402
 
 sys.path.insert(0, str(common.TRACK_A))
-sys.path.insert(0, str(common.REPO / "openvocab-4D-main" / "scene_sheet_creation"))
-import scene_sheet_creator  # noqa: E402
 from saved_masks import SavedMasks  # noqa: E402
 
 M3 = common.TRACK_A / "milestone3_fuse.py"
@@ -870,6 +873,191 @@ class Summary(unittest.TestCase):
         self.assertIn("| scannet/a | eval32 | **INCOMPLETE** | 3 / 4 | 95.0% |", text)
         self.assertIn("| scannet/b | - | no result |", text)
         self.assertIn("no dense depth", text)
+
+
+def read_csv(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+class QuestionSceneSheet(unittest.TestCase):
+    """question_scene_sheet.py on the synthetic scene: the real adapter, sam3_infer.py with the fake SAM 3, the real
+    track stage and the real scene sheet. Only the prompt extractor is replaced, so that spaCy is not needed."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        _, self.data, self.dense = make_scene(self.root)
+        self.stubs, self.gpu = write_stubs(self.root)
+        self.work = self.root / "work"
+        self.calls = []  # (script, prompts) of every step that was run as a process
+        real_run = subprocess.run
+
+        def run(cmd, **kwargs):  # the steps' own processes, with the stand-ins on their path
+            script = Path(cmd[2]).name
+            self.calls.append((script, cmd[cmd.index("--prompts") + 1]))
+            paths = [str(self.gpu), str(self.stubs)] if script == "sam3_infer.py" else [str(self.stubs)]
+            done = real_run(cmd, env={**os.environ, "PYTHONPATH": os.pathsep.join(paths)}, capture_output=True, text=True)
+            if done.returncode:
+                sys.__stderr__.write(done.stderr)
+            return done
+
+        patcher = mock.patch.object(subprocess, "run", run)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def sheet(self, prompts, work=None, **kwargs):
+        options = {"data_root": self.data, "dense_dir": self.dense, "work_dir": work or self.work, "reid": False,
+                   "backend": "sam3", "conf_percentile": 10, "min_points": 20, **kwargs}
+        self.log = io.StringIO()
+        with mock.patch.object(question_scene_sheet, "extract_prompts", lambda question, syntactic=False: (prompts, "full")), \
+                contextlib.redirect_stderr(self.log):
+            return question_scene_sheet.create_scene_sheet("synthetic", "Is the chair near the table?", **options)
+
+    def test_sheet_lists_the_objects_the_question_names(self):
+        objects_csv, cameras_csv = self.sheet(["chair", "table"])
+        self.assertEqual(objects_csv, (self.work / "sheets/chair+table/objects.csv").resolve())
+        self.assertEqual(cameras_csv, (self.work / "sheets/chair+table/cameras.csv").resolve())
+        rows = read_csv(objects_csv)
+        self.assertEqual([r["concept"] for r in rows], ["chair", "table"])
+        self.assertTrue(all(int(r["num_frames"]) == T for r in rows))
+        self.assertTrue({"size_x", "size", "frame_000", f"frame_{T - 1:03d}"} <= set(rows[0]))
+        self.assertEqual(len(read_csv(cameras_csv)), T)
+        self.assertEqual(self.calls, [("sam3_infer.py", "chair,table"), ("milestone4_video.py", "chair,table")])
+        record = json.loads((objects_csv.parent / "question.json").read_text())
+        self.assertEqual((record["scene"], record["question"], record["prompts"]),
+                         ("scannet/synthetic", "Is the chair near the table?", ["chair", "table"]))
+        self.assertFalse((self.work / "scene/labels.npz").exists())  # the fuse stage is not run
+
+    def test_a_later_question_only_processes_new_prompts(self):
+        self.sheet(["chair"])
+        chair = common.sha256_file(self.work / "scene/tracks/chair.npz")
+        self.calls.clear()
+        objects_csv, _ = self.sheet(["table", "chair"])
+        self.assertEqual(self.calls, [("sam3_infer.py", "table"), ("milestone4_video.py", "table")])
+        self.assertEqual(common.sha256_file(self.work / "scene/tracks/chair.npz"), chair)
+        self.assertEqual([r["concept"] for r in read_csv(objects_csv)], ["table", "chair"])
+        self.assertIn("reusing the converted geometry", self.log.getvalue())
+        self.calls.clear()
+        self.sheet(["chair", "table"])
+        self.assertEqual(self.calls, [])
+
+    def test_reused_tracks_equal_tracking_every_prompt_at_once(self):
+        self.sheet(["chair"])
+        stepwise, _ = self.sheet(["chair", "table"])
+        at_once, _ = self.sheet(["chair", "table"], work=self.root / "other")
+        for prompt in ("chair", "table"):
+            with np.load(self.work / f"scene/tracks/{prompt}.npz") as a, \
+                    np.load(self.root / f"other/scene/tracks/{prompt}.npz") as b:
+                np.testing.assert_array_equal(a["labels"], b["labels"])
+        self.assertEqual(stepwise.read_text(), at_once.read_text())
+
+    def test_other_tracking_settings_track_again_from_the_saved_masks(self):
+        self.sheet(["chair"])
+        self.calls.clear()
+        self.sheet(["chair"], min_points=25)
+        self.assertEqual(self.calls, [("milestone4_video.py", "chair")])
+        settings = json.loads((self.work / "scene/tracks/chair.settings.json").read_text())["settings"]
+        self.assertEqual((settings["min_points"], settings["reid"]), (25, False))
+
+    def test_fresh_starts_the_scene_over(self):
+        self.sheet(["chair"])
+        self.calls.clear()
+        self.sheet(["chair"], fresh=True)
+        self.assertEqual(self.calls, [("sam3_infer.py", "chair"), ("milestone4_video.py", "chair")])
+
+    def test_a_prompt_sam3_does_not_find_gives_no_rows(self):
+        objects_csv, _ = self.sheet(["chair", "piano"])  # the fake SAM 3 knows no piano
+        self.assertEqual([r["concept"] for r in read_csv(objects_csv)], ["chair"])
+
+    def test_no_prompts_gives_a_sheet_without_objects(self):
+        objects_csv, cameras_csv = self.sheet([])
+        self.assertEqual(objects_csv.parent.name, "no_prompts")
+        self.assertEqual(read_csv(objects_csv), [])
+        self.assertIn("object_id,concept,track_id,x,y,z", objects_csv.read_text())
+        self.assertEqual(len(read_csv(cameras_csv)), T)
+        self.assertEqual(self.calls, [])
+
+    def test_stops_without_dense_depth(self):
+        with self.assertRaises(SystemExit) as stop:
+            self.sheet(["chair"], dense_dir=self.root / "nowhere")
+        self.assertIn("no dense depth", str(stop.exception))
+        self.assertFalse(self.work.exists())
+        self.assertEqual(self.calls, [])
+
+    def test_unknown_scene_and_empty_question(self):
+        with self.assertRaises(SystemExit) as stop, contextlib.redirect_stderr(io.StringIO()):
+            question_scene_sheet.create_scene_sheet("scannet/absent", "Where is the chair?", data_root=self.data)
+        self.assertIn("no exported scene", str(stop.exception))
+        with self.assertRaises(SystemExit) as stop, contextlib.redirect_stderr(io.StringIO()):
+            question_scene_sheet.create_scene_sheet("synthetic", "  ", data_root=self.data)
+        self.assertIn("empty", str(stop.exception))
+
+    def test_folder_names(self):
+        self.assertEqual(question_scene_sheet.folder_name(["chair", "trash can"]), "chair+trash_can")
+        many = [f"object {i}" for i in range(40)]
+        name = question_scene_sheet.folder_name(many)
+        self.assertLess(len(name), 100)
+        self.assertNotEqual(name, question_scene_sheet.folder_name(many[:-1]))
+
+    def test_frame_selection_names(self):
+        self.assertEqual(question_scene_sheet.frame_selection("all"), ("all", "all"))
+        self.assertEqual(question_scene_sheet.frame_selection("half"), (common.PRESETS["half"], "half"))
+        self.assertEqual(question_scene_sheet.frame_selection("list:0,4"), ("list:0,4", "list-0_4"))
+
+
+class FindScene(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        for scene in ("scannet/a", "scannet/b", "arkitscenes/b"):
+            (self.root / "scenes" / scene).mkdir(parents=True)
+            (self.root / "scenes" / scene / "meta.json").write_text("{}")
+
+    def test_full_name_and_scene_name_alone(self):
+        self.assertEqual(common.find_scene("scannet/b", self.root), (self.root, "scannet/b"))
+        self.assertEqual(common.find_scene("scannet\\b", self.root), (self.root, "scannet/b"))
+        self.assertEqual(common.find_scene("a", self.root), (self.root, "scannet/a"))
+
+    def test_a_name_in_two_datasets_must_say_which(self):
+        with self.assertRaises(ValueError):
+            common.find_scene("b", self.root)
+
+    def test_missing_scene(self):
+        with self.assertRaises(FileNotFoundError):
+            common.find_scene("scannet/c", self.root)
+
+
+@unittest.skipUnless(importlib.util.find_spec("spacy") and importlib.util.find_spec("nltk"), "spaCy and NLTK are absent")
+class QuestionPrompts(unittest.TestCase):
+    """The real prompt extractor, and the command line. No SAM 3: these questions name nothing it could segment."""
+
+    def quiet(self, question, **kwargs):
+        with contextlib.redirect_stderr(io.StringIO()):
+            return question_scene_sheet.extract_prompts(question, **kwargs)
+
+    def test_physical_objects_first_then_every_noun_phrase(self):
+        self.assertEqual(self.quiet("Is the chair closer to the table or to the door?"),
+                         (["chair", "table", "door"], "full"))
+        self.assertEqual(self.quiet("What is the total length?"), (["total length"], "syntactic fallback"))
+        self.assertEqual(self.quiet("How big is it?"), ([], "syntactic fallback"))
+        self.assertEqual(self.quiet("What is the size of this room?", syntactic=True)[1], "syntactic")
+
+    def test_command_line_prints_only_the_two_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, data, dense = make_scene(root)
+            done = subprocess.run(
+                [sys.executable, str(ADAPTER / "question_scene_sheet.py"), "scannet/synthetic", "How big is it?",
+                 "--data-root", str(data), "--dense-dir", str(dense), "--work-dir", str(root / "work")],
+                capture_output=True, text=True)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            lines = done.stdout.splitlines()
+            self.assertEqual([Path(line).name for line in lines], ["objects.csv", "cameras.csv"])
+            self.assertTrue(all(Path(line).is_file() for line in lines))
+            self.assertIn("[adapter]", done.stderr)
 
 
 if __name__ == "__main__":

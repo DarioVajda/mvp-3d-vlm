@@ -116,7 +116,7 @@ for RUN in $RUNS; do
 
     step "5/5 $RUN: scene sheets and comparison"
     for SIDE in adapted native; do
-        $PY $OV/scene_sheet_creation/scene_sheet_creator.py --scene "$R/$SIDE" --prompts "$PROMPTS" --size
+        $PY $A/scene_sheet_creator.py --scene "$R/$SIDE" --prompts "$PROMPTS" --size
     done
     $PY $A/compare.py --run-dir "$R" --masks "$MASKS" || echo "compare.py found a FAIL (see above)"
 

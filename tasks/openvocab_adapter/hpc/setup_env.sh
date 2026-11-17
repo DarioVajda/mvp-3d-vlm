@@ -43,6 +43,10 @@ $PY -m pip install -q "$NUMPY_SPEC" Pillow huggingface_hub einops safetensors "r
     opencv-python-headless "timm>=1.0.17" "transformers==5.20.1" "setuptools<81" \
     ftfy regex iopath pycocotools psutil tqdm typing_extensions
 # setuptools<81: SAM 3's model_builder imports pkg_resources, which setuptools 81 removed
+# The prompt extractor (prompt_object_extractor.py, used by question_scene_sheet.py): spaCy and its English model,
+# and NLTK for WordNet. $NUMPY_SPEC again, so that they cannot replace the numpy installed above.
+$PY -m pip install -q "spacy>=3.8,<3.9" nltk "$NUMPY_SPEC" \
+    "en_core_web_md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl"
 
 echo "== checks =="
 $PY - <<'EOF'
@@ -60,6 +64,16 @@ from sam3.model.sam3_image_processor import Sam3Processor  # noqa: F401
 from vggt.models.vggt import VGGT  # noqa: F401
 from vggt.utils.geometry import depth_to_world_coords_points  # noqa: F401
 print("imports ok: sam3, transformers, vggt, cv2, rerun")
+
+import nltk, spacy
+spacy.load("en_core_web_md")
+from nltk.corpus import wordnet
+try:
+    wordnet.ensure_loaded()
+except LookupError:  # only the comparison's jobs would work without it, so this is a warning
+    if not nltk.download("wordnet", quiet=True):
+        print("WARNING: could not download WordNet; the prompt extractor will try again when it is first used")
+print("prompt extractor ok: spaCy", spacy.__version__, "with en_core_web_md, NLTK", nltk.__version__)
 
 import os
 snapshot = os.path.join(os.environ.get("HF_HUB_CACHE", os.path.expanduser("~/.cache/huggingface/hub")),

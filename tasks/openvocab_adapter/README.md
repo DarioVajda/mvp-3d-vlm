@@ -150,6 +150,20 @@ scene sheets (`adapted/objects.csv` and `native/objects.csv`) for comparing by e
   same test with Nicolas's prompt extractor choosing the SAM 3 prompts.
 - **Some scenes DIFFER:** their `comparison.json` shows which objects or prompts disagree, and by how much.
 
+## A scene sheet for one question
+
+Separately from the test, `question_scene_sheet.py` goes from one scene and one question to that question's scene
+sheet. It picks the SAM 3 prompts from the question, runs SAM 3, and tracks the objects with the saved VGGT cameras
+and depth. It prints the paths of `objects.csv` and `cameras.csv`:
+
+```bash
+slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python tasks/openvocab_adapter/question_scene_sheet.py \
+    scannet/scene0025_01 "Which of these objects (table, chair, door, telephone) is the closest to the fan?"
+```
+
+Like the test, it needs the dense depth in `data/vggt/`, so it runs on the cluster. See
+[DETAILS.md](DETAILS.md#a-scene-sheet-for-one-question) for what it does, what it reuses, and its options.
+
 ---
 
 More detail is in [DETAILS.md](DETAILS.md): settings, running a single scene or other frame selections, what each step

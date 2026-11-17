@@ -16,6 +16,7 @@ Contents:
 - [Troubleshooting](#troubleshooting)
 - [Running the tests without a GPU](#running-the-tests-without-a-gpu)
 - [Running the steps by hand](#running-the-steps-by-hand)
+- [A scene sheet for one question](#a-scene-sheet-for-one-question)
 - [Files](#files)
 
 ## Before you start
@@ -275,7 +276,7 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
 5. **Scene sheets:**
    ```powershell
    foreach ($side in 'adapted','native') {
-     py openvocab-4D-main/scene_sheet_creation/scene_sheet_creator.py --scene "$scene/half/$side" --prompts $prompts --size
+     py tasks/openvocab_adapter/scene_sheet_creator.py --scene "$scene/half/$side" --prompts $prompts --size
    }
    ```
 6. **Compare.** This writes `$scene/half/comparison.json`. It runs at any stage, and anything that can't run yet is
@@ -287,10 +288,91 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
 Steps 3 to 5 need `opencv-python`, `rerun-sdk`, `numpy<2` and the VGGT repository code in `openvocab-4D-main/vggt`.
 Use a separate environment, not your system Python. Use the same `--no-reid` setting in both runs.
 
+## A scene sheet for one question
+
+`question_scene_sheet.py` takes one scene of the VGGT export and one question, and writes the scene sheet of the
+objects the question names. It is separate from the comparison above and uses only the saved VGGT outputs.
+
+```bash
+slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python tasks/openvocab_adapter/question_scene_sheet.py \
+    scannet/scene0025_01 "Which of these objects (table, chair, door, telephone) is the closest to the fan?"
+```
+
+It prints exactly two lines on stdout, the path of `objects.csv` and then of `cameras.csv`. Every log goes to stderr.
+(A cluster job writes both to the same file, `logs/scene_sheet_<job id>.out`, so there the paths are its last two
+lines.) From Python, `question_scene_sheet.create_scene_sheet(scene, question)` returns the two paths.
+
+The question is one string and doesn't have to be one of the scene's `questions.jsonl`. The scene is
+`<dataset>/<scene>`, or the scene's name alone.
+
+| Step | What happens |
+|---|---|
+| Prompts | `prompt_object_extractor.py` picks the SAM 3 prompts: the physical things the question names. If it finds none, its syntactic mode is tried instead (every noun phrase). If that finds none either, `objects.csv` has only its header row, and `cameras.csv` is written as usual |
+| Geometry | `adapt_vggt.py` validates the saved cameras and dense depth and writes them in OpenVocab-4D's format. The dense depth is read from `data/vggt/<dataset>/<scene>/` (or `--dense-dir`, or `$DENSE_ROOT`). Without it the script stops: depth is never approximated |
+| SAM 3 | `sam3_infer.py` segments every prompt in every selected frame |
+| Tracking | OpenVocab-4D's track stage links the masks into objects, with DINOv2 re-identification. The fuse stage is not run, because the scene sheet only needs the tracks |
+| Sheet | `scene_sheet_creator.py` writes the two CSVs, with the size columns and one 0/1 column per frame |
+
+**Defaults that differ from the comparison:** all 128 frames (the comparison uses 64), and re-identification on (the
+comparison ran with `--no-reid`). So a sheet from this script is not expected to equal the comparison's sheet for the
+same scene. `--frames half --no-reid` gives the comparison's settings.
+
+**What is kept and reused.** Everything goes to `tasks/openvocab_adapter/out/<dataset>__<scene>/all/` (`all` is the
+frame selection):
+
+```
+scene/              the converted geometry (frames/, cameras.npz, depth.npz) and tracks/<prompt>.npz
+masks/<prompts>/    the SAM 3 masks of the prompts that were segmented together
+sheets/<prompts>/   objects.csv, cameras.csv and question.json (the question, its prompts and the settings)
+```
+
+Tracks are independent between prompts. A later question about the same scene therefore runs SAM 3 and tracking only
+for prompts that have no tracks yet, and a question that names only known objects just rebuilds the sheet. Two
+questions that name the same objects, in the same order, share one sheet folder. Tracks made with other settings
+(re-identification, SAM 3 backend, thresholds) are made again from the saved masks. `--fresh` discards the scene's
+geometry, masks and tracks first. `RUNS=all` of the comparison deletes this folder too, since it uses the same
+`out/<dataset>__<scene>/all/`.
+
+Options (`--help` lists all of them):
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--frames` | `all` | A preset (`half`, `eval32`, `smoke5`, `all`) or a selection such as `uniform:32`. `frame_<t>` in the sheet counts the selected frames, and `cameras.csv` names each one's image |
+| `--dense-dir` | `data/vggt/<dataset>/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
+| `--out-dir` | `<work>/sheets/<prompts>` | Where the two CSVs go |
+| `--work-dir` | `out/<dataset>__<scene>/<frames>` | Where geometry, masks and tracks are kept |
+| `--no-reid` | off | Track without DINOv2 re-identification |
+| `--syntactic` | off | Use every noun phrase as a prompt from the start |
+| `--no-size`, `--relative-positions` | off | The sheet's columns, as in `scene_sheet_creator.py` |
+| `--backend` | `transformers` | How SAM 3 is run, as in `sam3_infer.py` |
+
+Things to know:
+
+- **It needs the environment from `hpc/setup_env.sh`**, which now also installs spaCy, its `en_core_web_md` model and
+  NLTK for the prompt extractor. An environment set up before that needs the setup job once more:
+  `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh`.
+- **Re-identification loads DINOv2 through `torch.hub`**, which downloads it the first time. If the job has no
+  network access and no cached copy, pass `--no-reid`.
+- **A question with an apostrophe can't be passed through `slurm/submit.sh`**, because of how it quotes the command.
+  The route-planning questions have them (`'turn left'`). Put the command in a small shell script and submit that.
+- **The syntactic fallback gives prompts that are not objects**, such as `distance` or `total length`. SAM 3 usually
+  finds nothing for them, so the sheet has no rows, but it can also return something unrelated.
+
+To see which prompts a question gives, and why, without running anything else:
+
+```bash
+python tasks/openvocab_adapter/prompt_object_extractor.py --explain "How far is the red car from the stove?"
+python tasks/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # every question of a few scenes
+```
+
 ## Files
 
 | File | Purpose |
 |---|---|
+| `question_scene_sheet.py` | One scene and one question in, the paths of its scene sheet out: prompts, SAM 3, the saved VGGT outputs, tracking, sheet |
+| `scene_sheet_creator.py` | Writes the scene sheet (`objects.csv`, `cameras.csv`) of a scene that has tracks |
+| `prompt_object_extractor.py` | Picks the SAM 3 prompts from a question |
+| `prompt_extractor_report.py` | Prints the extractor's decisions on the questions of a few exported scenes, for checking it by eye |
 | `hpc/start.sh` | The one command: checks the inputs, then submits the setup, every scene and the summary |
 | `hpc/setup_env.sh` | Installs `.venv-ov4d` and checks it (a job) |
 | `hpc/submit_scenes.sh` | Submits one `run_all.sh` job per scene in `scenes.tsv`, then the summary job |
