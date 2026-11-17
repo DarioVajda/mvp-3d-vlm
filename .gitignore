@@ -108,3 +108,6 @@ results/**/eval_bench.log
 results/explain_v7/sal/**/*.npz
 results/objwords_v7/**/*.npz
 results/*_undecayed_trunk/
+
+# Scene sheet-related ignores
+tasks/vggt_data/scenes
