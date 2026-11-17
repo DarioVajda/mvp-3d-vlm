@@ -1,0 +1,4 @@
+2B_v10_xa3_nu_s0 train 216506
+2B_v10_xa3_nu_s1 train 216507
+watch 216508
+v10_nu_cont 216884 (xa3_nu both seeds continued 5750->10750, branches 8250 10750, collectors; driver results/_scratch/v10_nu_continue/run.sh)

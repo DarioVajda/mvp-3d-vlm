@@ -12,6 +12,15 @@ Arms:
             rope3 (3-axis RoPE on frame, row, col) and local_bias (learned locality bias, init lam, mu); pe="3d"
             makes both 3D (RoPE on frame, x, y, z and a 3D-distance bias, init nu) from VGGT's point head, which is
             then loaded too (mvp.fusion.points)
+  hybrid    additive + xattn_aligned on one merger per injection point: the merger's trunk (RMSNorm, Linear, GELU) is
+            shared, with two output layers on it, the additive one (zero-initialised, added to its own visual token
+            as in the additive arm) and one for AlignedXAttn's keys / values (default init, as in xattn_aligned);
+            h_n += G_add[n] + AlignedXAttn(h_n, G_xa). Same options as xattn_aligned; at init it adds nothing
+  text_queries (xattn_aligned / hybrid): every other (non-padding) token of the sequence (the question, the chat
+            template and, in generation, every decoded token) also reads the geometry through the same AlignedXAttn,
+            with no position signal (AlignedXAttn.text); no new parameters, so the init is the same as without it.
+            In generate() the geometry keys / values of each injection point are computed once per video and reused
+            at every decoding step
 
 Defaults follow the released SpatialStack checkpoint: VGGT layers (11, 17, 23) paired in order with decoder layers
 (0, 1, 2) (their geometry_encoder_layers / geometry_fusion_layers). The fusion runs in a forward hook on those decoder
@@ -37,7 +46,8 @@ from mvp.fusion.inputs import EVAL_PIXELS, InputBuilder
 from mvp.fusion.modules import AdditiveMerger, AlignedXAttn, GatedXAttnDense, PerceiverResampler
 from mvp.fusion.points import cell_points
 
-ARMS = ("base", "lora", "additive", "xattn", "xattn_aligned")
+ARMS = ("base", "lora", "additive", "xattn", "xattn_aligned", "hybrid")
+ALIGNED = ("xattn_aligned", "hybrid")  # the arms with AlignedXAttn
 # All linear layers of the language model except Gated DeltaNet's in_proj_a / in_proj_b, which output one scalar per
 # head (16-32 wide), narrower than the rank
 LORA_TARGETS = (r".*layers\.\d+\.(self_attn\.(q|k|v|o)_proj|linear_attn\.(in_proj_qkv|in_proj_z|out_proj)"
@@ -49,9 +59,11 @@ class FusionVL(nn.Module):
     def __init__(self, model_id, arm, lora_r=64, lora_alpha=128, lora_dropout=0.05, vggt_layers=(11, 17, 23),
                  fusion_after=(0, 1, 2), gate="none", resampler_dim=1024, resampler_layers=8, resampler_heads=8,
                  num_latents=256, special_tokens=False, rope3=True, local_bias=True, bias_lam=1.5, bias_mu=3.0,
-                 train_frames=8, pe="grid", bias_nu=1.5, pe_dmax=10.0, pixels=None, grad_ckpt=False):
+                 train_frames=8, pe="grid", bias_nu=1.5, pe_dmax=10.0, text_queries=False, pixels=None,
+                 grad_ckpt=False):
         super().__init__()
         assert arm in ARMS, arm
+        assert not text_queries or arm in ALIGNED, "text_queries needs an AlignedXAttn arm"
         pixels = pixels or EVAL_PIXELS
         self.qwen = AutoModelForImageTextToText.from_pretrained(model_id, dtype=torch.bfloat16, attn_implementation="sdpa")
         self.qwen.requires_grad_(False)
@@ -66,12 +78,15 @@ class FusionVL(nn.Module):
                            vggt_layers=vggt_layers, fusion_after=fusion_after, gate=gate, resampler_dim=resampler_dim,
                            resampler_layers=resampler_layers, resampler_heads=resampler_heads, num_latents=num_latents,
                            special_tokens=special_tokens)
-        if arm == "xattn_aligned":
+        if arm in ALIGNED:
             self.config.update(rope3=rope3, local_bias=local_bias, bias_lam=bias_lam, bias_mu=bias_mu,
                                train_frames=train_frames)
             if pe != "grid":  # v5 (grid) configs stay as they were
                 self.config.update(pe=pe, bias_nu=bias_nu, pe_dmax=pe_dmax)
-        self.pe, self.pe_dmax = (pe, pe_dmax) if arm == "xattn_aligned" else ("grid", pe_dmax)
+            if text_queries:  # older configs stay as they were
+                self.config.update(text_queries=True)
+        self.text_queries = text_queries
+        self.pe, self.pe_dmax = (pe, pe_dmax) if arm in ALIGNED else ("grid", pe_dmax)
         self.arm = arm
         self.pairs = dict(zip(fusion_after, vggt_layers))  # decoder layer k -> VGGT layer whose features it receives
         self.processor = AutoProcessor.from_pretrained(model_id, **pixels)
@@ -88,7 +103,7 @@ class FusionVL(nn.Module):
                     p.requires_grad_(True)
 
         self.vggt = self.point_head = None
-        if arm in ("additive", "xattn", "xattn_aligned"):
+        if arm not in ("base", "lora"):
             from vggt.models.vggt import VGGT
             full = VGGT.from_pretrained(VGGT_ID)
             self.vggt = full.aggregator  # the other heads are not needed
@@ -107,17 +122,22 @@ class FusionVL(nn.Module):
             self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D) for k in keys})
         if arm == "xattn_aligned":
             self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D, zero_init=False) for k in keys})
+        if arm == "hybrid":
+            self.mergers = nn.ModuleDict({k: AdditiveMerger(2048, 4096, D, xa_head=True) for k in keys})
+        if arm in ALIGNED:
             self.aligned = nn.ModuleDict({k: AlignedXAttn(D, D // 128, rope3, local_bias, bias_lam, bias_mu, train_frames,
                                                           pe=pe, nu=bias_nu) for k in keys})
-        self._pos = None          # xattn_aligned: (t, r, c) of the current video's visual tokens [N, 3]
-        self._pts = None          # xattn_aligned, pe="3d": ScenePoints of the current video's merged cells
-        self.collect_attn = False  # xattn_aligned: record AlignedXAttn.attn_stats on the next forward (dev diagnostics)
+        self._pos = None          # ALIGNED: (t, r, c) of the current video's visual tokens [N, 3]
+        self._pts = None          # ALIGNED, pe="3d": ScenePoints of the current video's merged cells
+        self.collect_attn = False  # ALIGNED: record AlignedXAttn.attn_stats on the next forward (dev diagnostics)
         self.attn_stats = {}
 
         self._geo = None          # geometry of the current video per injection point: {k: latents [L, D] or merged tokens [N_visual, D]}
         self._visual_mask = None  # [B, T] visual-token positions of the current forward's input_ids
+        self._valid = None        # [B, T] non-padding positions of the current forward (attention_mask), or None
+        self._kv = None           # text_queries, in generate(): {k: AlignedXAttn.keys of the video}, else None
         self.stats = {}           # {k: ||added||/||h|| of the last forward}, how far the injection point has opened
-        if arm in ("additive", "xattn", "xattn_aligned"):
+        if arm not in ("base", "lora"):
             layers = self.qwen.model.language_model.layers
             for k in fusion_after:
                 layers[k].register_forward_hook(self._make_hook(str(k)))
@@ -166,14 +186,20 @@ class FusionVL(nn.Module):
                     x = torch.cat([torch.cat([s, p.reshape(-1, p.shape[-1])]) if self.config["special_tokens"]
                                    else p.reshape(-1, p.shape[-1]) for s, p in frames])
                     self._geo[str(k)] = self.resamplers[str(k)](x)
+                elif self.arm == "hybrid":  # (tokens to add, key / value tokens)
+                    add, xa = zip(*[self.mergers[str(k)](p) for _, p in frames])
+                    self._geo[str(k)] = (torch.cat(add), torch.cat(xa))
                 else:
                     self._geo[str(k)] = torch.cat([self.mergers[str(k)](p) for _, p in frames])
-        if self.arm == "xattn_aligned":
+        if self.arm in ALIGNED:
             self._pos = AlignedXAttn.positions(batch["image_grid_thw"], self.inputs.merge)
 
     def _capture_ids(self, module, args, kwargs):
         ids = kwargs.get("input_ids", args[0] if args else None)
         self._visual_mask = None if ids is None else ids == self.inputs.image_token_id
+        am = kwargs.get("attention_mask")  # [B, past + T] in generation: the last T columns are this forward's tokens
+        assert am is None or am.dim() == 2, "expects a 2D attention_mask"
+        self._valid = None if am is None or ids is None else am[:, -ids.shape[1]:].bool()
 
     def _make_hook(self, key):
         def hook(module, args, out):
@@ -188,21 +214,41 @@ class FusionVL(nn.Module):
                     ref = h
                 else:
                     m = self._visual_mask
-                    if m is None or m.shape != h.shape[:2] or not m.any():
+                    if self.text_queries:  # a decoding step must still see its token ids
+                        assert m is not None and m.shape == h.shape[:2], "text_queries needs input_ids in every forward"
+                    if m is None or m.shape != h.shape[:2]:
+                        return None
+                    tq = None  # text queries: every non-visual, non-padding token
+                    if self.text_queries:
+                        tq = ~m if self._valid is None else ~m & self._valid
+                    if not m.any() and (tq is None or not tq.any()):
                         return None  # decoding steps after the prefill: no visual tokens
-                    n = int(m[0].sum())
-                    assert n == len(geo) and bool((m.sum(1) == n).all()), "visual tokens != VGGT windows"
+                    add, geo = geo if self.arm == "hybrid" else (None, geo)
                     delta = torch.zeros_like(h)
-                    if self.arm == "xattn_aligned":  # visual tokens attend over the geometry tokens of the video
-                        y = h[m].view(h.shape[0], n, -1)
-                        if self.collect_attn and not torch.is_grad_enabled():
-                            self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos, self._pts)
-                        delta[m] = self.aligned[key](y, geo, self._pos, self._pts).reshape(-1, h.shape[-1]).to(h.dtype)
-                    else:
-                        delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
+                    kv = None
+                    if self.arm in ALIGNED:  # keys / values of the video, once per forward (or per video, in generate)
+                        kv = self._kv.get(key) if self._kv is not None else None
+                        if kv is None:
+                            kv = self.aligned[key].keys(geo, self._pos, self._pts)
+                            if self._kv is not None:
+                                self._kv[key] = kv
+                    if m.any():
+                        n = int(m[0].sum())
+                        assert n == len(geo) and bool((m.sum(1) == n).all()), "visual tokens != VGGT windows"
+                        if self.arm in ALIGNED:  # visual tokens attend over the geometry tokens of the video
+                            y = h[m].view(h.shape[0], n, -1)
+                            if self.collect_attn and not torch.is_grad_enabled():
+                                self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos, self._pts)
+                            delta[m] = self.aligned[key](y, geo, self._pos, self._pts, kv).reshape(-1, h.shape[-1]).to(h.dtype)
+                            if add is not None:  # hybrid: plus each token's own cell, unaveraged
+                                delta[m] += add.to(h.dtype).repeat(h.shape[0], 1)
+                        else:
+                            delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
+                    if tq is not None and tq.any():  # text tokens attend over the same keys, with no position
+                        delta[tq] = self.aligned[key].text(h[tq], kv).to(h.dtype)
                     new = h + delta
-                    ref = h[m]
-                if torch.is_grad_enabled() or not self.training:
+                    ref = h[m] if tq is None else h[m | tq]
+                if (torch.is_grad_enabled() or not self.training) and (self.arm == "xattn" or m.any()):  # not per decoded token
                     self.stats[key] = ((new - h).norm() / ref.norm().clamp(min=1e-6)).item()
             return (new, *out[1:]) if isinstance(out, tuple) else new
         return hook
@@ -240,12 +286,13 @@ class FusionVL(nn.Module):
         self._geo = None
         if self.vggt is not None:
             self.set_geometry(batch)
+        self._kv = {} if self.text_queries else None  # filled in the prefill, read at every decoding step
         try:
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 out = self.qwen.generate(**self.llm_inputs(batch), max_new_tokens=max_new_tokens, do_sample=False,
                                          temperature=None, top_p=None, top_k=None, **stop_tokens(self.processor.tokenizer))
         finally:
-            self._geo = None
+            self._geo = self._kv = None
         out = out[:, batch["input_ids"].shape[1]:]
         return [s.strip() for s in self.processor.batch_decode(out, skip_special_tokens=True)]
 
@@ -256,9 +303,9 @@ class FusionVL(nn.Module):
         return {k: g for k, b in self.blocks.items() if (g := b.gates())}
 
     def bias_slopes(self):
-        """xattn_aligned with local_bias: {k: {"lam": mean over heads, "mu": ...}} of the learned locality slopes, or
+        """xattn_aligned / hybrid with local_bias: {k: {"lam": mean over heads, "mu": ...}} of the learned locality slopes, or
         {k: {"nu": ...}} for the 3D-distance bias."""
-        if self.arm != "xattn_aligned" or not self.config["local_bias"]:
+        if self.arm not in ALIGNED or not self.config["local_bias"]:
             return {}
         if self.pe == "3d":
             return {k: {"nu": b.nu.mean().item()} for k, b in self.aligned.items()}
@@ -270,7 +317,7 @@ class FusionVL(nn.Module):
             return {k: (self.resamplers[k], self.blocks[k]) for k in self.blocks}
         if self.arm == "additive":
             return {k: (self.mergers[k],) for k in self.mergers}
-        if self.arm == "xattn_aligned":
+        if self.arm in ALIGNED:
             return {k: (self.mergers[k], self.aligned[k]) for k in self.mergers}
         return {}
 

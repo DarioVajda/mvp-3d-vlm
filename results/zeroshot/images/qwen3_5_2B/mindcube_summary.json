@@ -1,0 +1,13 @@
+{
+ "bench": "mindcube",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": null,
+ "arm": "base",
+ "limit": null,
+ "max_new_tokens": 1024,
+ "n": 1050,
+ "overall": 35.523809523809526,
+ "among": 30.333333333333336,
+ "around": 51.6,
+ "rotation": 31.0
+}

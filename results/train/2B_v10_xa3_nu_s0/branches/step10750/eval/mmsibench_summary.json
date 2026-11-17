@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_v10_xa3_nu_s0/branches/step10750/final.pt",
+ "arm": "xattn_aligned",
+ "n": 1000,
+ "Attribute (Appr.)": 16.7,
+ "Attribute (Meas.)": 18.8,
+ "MSR": 21.7,
+ "Motion (Cam.)": 14.9,
+ "Motion (Obj.)": 25.0,
+ "Positional Relationship (Cam.\u2013Cam.)": 20.4,
+ "Positional Relationship (Cam.\u2013Obj.)": 38.4,
+ "Positional Relationship (Cam.\u2013Reg.)": 27.7,
+ "Positional Relationship (Obj.\u2013Obj.)": 29.8,
+ "Positional Relationship (Obj.\u2013Reg.)": 28.2,
+ "Positional Relationship (Reg.\u2013Reg.)": 33.3,
+ "overall": 25.0,
+ "parse_rate": 100.0
+}

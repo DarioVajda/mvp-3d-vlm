@@ -1,0 +1,684 @@
+{
+ "arm": "xattn_aligned",
+ "N": 9600,
+ "margin": -0.6797447204589844,
+ "top_token": "B",
+ "gt_token": "C",
+ "grid": [
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ]
+ ],
+ "enrichment": {
+  "vis": {
+   "sofa": null,
+   "computer mouse": {
+    "enrichment": 11.62,
+    "share": 0.0094,
+    "area": 0.0008,
+    "frames": 4
+   },
+   "telephone": {
+    "enrichment": 6.252,
+    "share": 0.0299,
+    "area": 0.0048,
+    "frames": 3
+   }
+  },
+  "dest_0": {
+   "sofa": null,
+   "computer mouse": {
+    "enrichment": 11.441,
+    "share": 0.0093,
+    "area": 0.0008,
+    "frames": 4
+   },
+   "telephone": {
+    "enrichment": 4.019,
+    "share": 0.0193,
+    "area": 0.0048,
+    "frames": 3
+   }
+  },
+  "dest_1": {
+   "sofa": null,
+   "computer mouse": {
+    "enrichment": 11.7,
+    "share": 0.0095,
+    "area": 0.0008,
+    "frames": 4
+   },
+   "telephone": {
+    "enrichment": 4.542,
+    "share": 0.0218,
+    "area": 0.0048,
+    "frames": 3
+   }
+  },
+  "dest_2": {
+   "sofa": null,
+   "computer mouse": {
+    "enrichment": 11.07,
+    "share": 0.009,
+    "area": 0.0008,
+    "frames": 4
+   },
+   "telephone": {
+    "enrichment": 5.287,
+    "share": 0.0253,
+    "area": 0.0048,
+    "frames": 3
+   }
+  },
+  "dest_sum": {
+   "sofa": null,
+   "computer mouse": {
+    "enrichment": 11.458,
+    "share": 0.0093,
+    "area": 0.0008,
+    "frames": 4
+   },
+   "telephone": {
+    "enrichment": 4.535,
+    "share": 0.0217,
+    "area": 0.0048,
+    "frames": 3
+   }
+  }
+ },
+ "object_attention": {
+  "0": {
+   "pairs": {
+    "computer mouse -> telephone": {
+     "learned": 0.0,
+     "bias_only": 0.0001,
+     "area_y": 0.0004
+    },
+    "telephone -> computer mouse": {
+     "learned": 0.0,
+     "bias_only": 0.0,
+     "area_y": 0.0001
+    }
+   },
+   "scale": {
+    "qk_logit_std": 28.25,
+    "bias_std": 17.441171646118164,
+    "nu": [
+     0.13,
+     0.251,
+     0.302,
+     0.546,
+     0.452,
+     0.461,
+     0.595,
+     0.945,
+     1.26,
+     1.549,
+     1.751,
+     2.257,
+     3.005,
+     3.634,
+     4.925,
+     6.315
+    ]
+   },
+   "flow_mass": {
+    "self": 0.1261,
+    "same_frame": 0.0899,
+    "other_near": 0.0727,
+    "other_far": 0.7112
+   }
+  },
+  "1": {
+   "pairs": {
+    "computer mouse -> telephone": {
+     "learned": 0.0042,
+     "bias_only": 0.0002,
+     "area_y": 0.0004
+    },
+    "telephone -> computer mouse": {
+     "learned": 0.0,
+     "bias_only": 0.0,
+     "area_y": 0.0001
+    }
+   },
+   "scale": {
+    "qk_logit_std": 35.5,
+    "bias_std": 17.93228530883789,
+    "nu": [
+     0.17,
+     -0.093,
+     0.04,
+     0.147,
+     0.34,
+     0.428,
+     0.588,
+     0.825,
+     0.951,
+     1.362,
+     1.737,
+     2.153,
+     2.866,
+     3.732,
+     4.85,
+     6.271
+    ]
+   },
+   "flow_mass": {
+    "self": 0.103,
+    "same_frame": 0.0661,
+    "other_near": 0.0504,
+    "other_far": 0.7805
+   }
+  },
+  "2": {
+   "pairs": {
+    "computer mouse -> telephone": {
+     "learned": 0.0,
+     "bias_only": 0.0001,
+     "area_y": 0.0004
+    },
+    "telephone -> computer mouse": {
+     "learned": 0.0,
+     "bias_only": 0.0,
+     "area_y": 0.0001
+    }
+   },
+   "scale": {
+    "qk_logit_std": 58.0,
+    "bias_std": 17.108753204345703,
+    "nu": [
+     0.137,
+     0.211,
+     0.11,
+     0.145,
+     0.375,
+     0.418,
+     0.673,
+     0.799,
+     1.099,
+     1.337,
+     1.57,
+     2.224,
+     2.613,
+     3.464,
+     4.593,
+     6.24
+    ]
+   },
+   "flow_mass": {
+    "self": 0.0711,
+    "same_frame": 0.0684,
+    "other_near": 0.0279,
+    "other_far": 0.8326
+   }
+  }
+ },
+ "id": 1525,
+ "question_type": "object_rel_direction_medium",
+ "question": "If I am standing by the sofa and facing the computer mouse, is the telephone to my left, right, or back?\nAn object is to my back if I would have to turn at least 135 degrees in order to face it.",
+ "ground_truth": "C",
+ "options": [
+  "A. right",
+  "B. back",
+  "C. left"
+ ],
+ "video": "/shared/workspace/povejmo/math/projects/mvp/data/raw/VSI-Bench/scannetpp/fb5a96b1a2.mp4",
+ "frame_idx": [
+  0,
+  136,
+  273,
+  409,
+  546,
+  682,
+  819,
+  955,
+  1092,
+  1228,
+  1365,
+  1501,
+  1638,
+  1774,
+  1911,
+  2047,
+  2184,
+  2320,
+  2457,
+  2593,
+  2730,
+  2866,
+  3003,
+  3139,
+  3276,
+  3412,
+  3549,
+  3685,
+  3822,
+  3958,
+  4095,
+  4232
+ ],
+ "grids": [
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ],
+  [
+   1,
+   30,
+   40
+  ]
+ ],
+ "phrases": {
+  "sofa": "start",
+  "computer mouse": "facing",
+  "telephone": "target"
+ },
+ "masks": {
+  "sofa": {
+   "role": "start",
+   "frames_detected": 0,
+   "mean_cells_covered": 0.0,
+   "detections": {}
+  },
+  "computer mouse": {
+   "role": "facing",
+   "frames_detected": 4,
+   "mean_cells_covered": 0.24,
+   "detections": {
+    "2": [
+     [
+      0.867,
+      [
+       325,
+       56,
+       345,
+       68
+      ]
+     ]
+    ],
+    "23": [
+     [
+      0.762,
+      [
+       536,
+       192,
+       556,
+       209
+      ]
+     ]
+    ],
+    "24": [
+     [
+      0.899,
+      [
+       372,
+       191,
+       398,
+       205
+      ]
+     ]
+    ],
+    "25": [
+     [
+      0.592,
+      [
+       413,
+       146,
+       442,
+       161
+      ]
+     ]
+    ]
+   }
+  },
+  "telephone": {
+   "role": "target",
+   "frames_detected": 3,
+   "mean_cells_covered": 1.44,
+   "detections": {
+    "5": [
+     [
+      0.804,
+      [
+       411,
+       211,
+       446,
+       253
+      ]
+     ]
+    ],
+    "20": [
+     [
+      0.587,
+      [
+       0,
+       417,
+       58,
+       481
+      ]
+     ]
+    ],
+    "28": [
+     [
+      0.753,
+      [
+       264,
+       150,
+       310,
+       180
+      ]
+     ]
+    ]
+   }
+  }
+ }
+}

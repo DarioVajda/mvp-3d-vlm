@@ -1,0 +1,13 @@
+{
+ "bench": "videomme",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": "results/train/2B_v10_xa3_nu_s1/branches/step10750/final.pt",
+ "arm": "xattn_aligned",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 2700,
+ "overall": 45.25925925925926,
+ "long": 36.0,
+ "medium": 44.77777777777778,
+ "short": 55.00000000000001
+}

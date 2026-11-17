@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object Saliency Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: verdict first, then the question, the pipeline with its maths, the frame viewer, two charts, the interpretation, the caveats. Arm = orange/aqua everywhere; objects get their own five hues and always a name. */
+:root { --bg:#f6f7f9; --panel:#fff; --ink:#14171c; --ink2:#4a505b; --ink3:#737a86; --rule:#dde1e7; --rule2:#eceff3; --accent:#3d3a8f; --soft:#e9e8f6;
+  --add:#eb6834; --xa:#1baf7a; --base:#8a909b; --warn-bg:#fff6e0; --warn:#8a5a00;
+  --o0:#2a78d6; --o1:#eda100; --o2:#e87ba4; --o3:#6250d6; --o4:#e34948;
+  --disp:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121418; --panel:#1a1d22; --ink:#eceef2; --ink2:#b4bac5; --ink3:#868d99; --rule:#2e333b; --rule2:#23272d; --accent:#a9a6f0; --soft:#26253f;
+  --add:#d95926; --xa:#199e70; --base:#7c8491; --warn-bg:#3a2f14; --warn:#f0c060; --o0:#3987e5; --o1:#c98500; --o2:#d55181; --o3:#9085e9; --o4:#e66767; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#121418; --panel:#1a1d22; --ink:#eceef2; --ink2:#b4bac5; --ink3:#868d99; --rule:#2e333b; --rule2:#23272d; --accent:#a9a6f0; --soft:#26253f;
+  --add:#d95926; --xa:#199e70; --base:#7c8491; --warn-bg:#3a2f14; --warn:#f0c060; --o0:#3987e5; --o1:#c98500; --o2:#d55181; --o3:#9085e9; --o4:#e66767; color-scheme:dark; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 var(--body); }
+main { max-width:1060px; margin:0 auto; padding:40px 16px 80px; display:grid; gap:36px; }
+h1,h2,h3 { font-family:var(--disp); line-height:1.15; text-wrap:balance; margin:0; }
+h1 { font-size:clamp(30px,5vw,40px); font-weight:600; } h2 { font-size:23px; font-weight:600; } h3 { font-size:16.5px; font-weight:600; }
+p, ul, ol { margin:0; max-width:76ch; } ul, ol { padding-left:20px; display:grid; gap:7px; } code { font-family:var(--mono); font-size:.88em; }
+.eyebrow { font:500 12px/1.2 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); }
+header, section { display:grid; gap:12px; } .sub { color:var(--ink2); font-size:16.5px; max-width:78ch; }
+.panel { background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:14px 16px; min-width:0; display:grid; gap:10px; }
+.verdict { border-left:4px solid var(--accent); }
+.warnbox { background:var(--warn-bg); border:1px solid var(--rule); border-left:4px solid var(--warn); }
+.warnbox b { color:var(--warn); }
+.eq { font-family:var(--mono); font-size:.93em; background:var(--rule2); padding:2px 6px; border-radius:4px; }
+.eqblock { font-family:var(--mono); font-size:14px; background:var(--rule2); padding:10px 12px; border-radius:6px; overflow-x:auto; white-space:pre; line-height:1.7; }
+.steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:12px; }
+.step { background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:12px 14px; display:grid; gap:6px; align-content:start; }
+.step .n { font:500 11.5px var(--mono); color:var(--accent); letter-spacing:.06em; text-transform:uppercase; }
+.step p { font-size:14px; color:var(--ink2); }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+th,td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--rule2); vertical-align:top; }
+thead th { font:500 11.5px var(--mono); letter-spacing:.03em; text-transform:uppercase; color:var(--ink3); border-bottom:1px solid var(--rule); }
+td.num,th.num { text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.scroll { overflow-x:auto; }
+.ctitle { font:600 15.5px var(--disp); } .csub { font-size:13px; color:var(--ink2); margin-top:-8px; }
+.legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--ink2); align-items:center; }
+.chip { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+.ring { display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid var(--base); margin-right:6px; vertical-align:-1px; }
+.tickm { display:inline-block; width:14px; height:0; border-top:2px solid var(--ink); margin-right:6px; vertical-align:middle; }
+.grad { display:inline-block; width:90px; height:10px; border-radius:3px; background:linear-gradient(90deg, rgba(255,214,10,0), rgba(255,214,10,1)); border:1px solid var(--rule); margin:0 6px; vertical-align:-1px; }
+.viewer { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:12px; }
+.viewer figure { margin:0; display:grid; gap:6px; } .viewer figcaption { font-size:13px; color:var(--ink2); }
+canvas { width:100%; height:auto; border-radius:6px; display:block; background:var(--rule2); }
+.controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.controls .lbl { font:500 12px var(--mono); color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-right:4px; }
+button { font:500 13px var(--body); color:var(--ink); background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:5px 10px; cursor:pointer; }
+button[aria-pressed="true"] { background:var(--soft); border-color:var(--accent); color:var(--ink); }
+button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.strip { display:grid; grid-template-columns:repeat(16,minmax(44px,1fr)); gap:4px; overflow-x:auto; }
+.strip button { padding:0; border-width:2px; position:relative; overflow:hidden; line-height:0; }
+.strip img { width:100%; height:auto; display:block; opacity:.85; }
+.strip span { position:absolute; left:2px; top:2px; font:500 10px/1 var(--mono); color:#fff; background:rgba(0,0,0,.55); padding:2px 3px; border-radius:3px; }
+.strip button[aria-pressed="true"] { border-color:var(--accent); } .strip button[aria-pressed="true"] img { opacity:1; }
+svg { width:100%; height:auto; display:block; }
+svg .grid { stroke:var(--rule2); } svg .axis { stroke:var(--rule); } svg .tick { font:11px var(--mono); fill:var(--ink3); }
+svg .axlab { font:500 12px var(--body); fill:var(--ink2); } svg .cat { font:12px var(--body); fill:var(--ink); } svg .ref { stroke:var(--ink3); stroke-dasharray:4 3; }
+svg .reflab { font:11px var(--body); fill:var(--ink3); } svg .ptitle { font:600 13px var(--disp); fill:var(--ink); }
+.tip { position:fixed; pointer-events:none; background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:6px 9px; font:12px var(--mono);
+  color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.12); display:none; z-index:5; white-space:pre; }
+.sheet img { width:100%; height:auto; border-radius:6px; display:block; }
+.two { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr)); gap:14px; }
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style></head>
+<body><main>
+<header>
+  <div class="eyebrow">MVP project · object-based saliency · pipeline test on one question · 5 Nov 2026</div>
+  <h1>Object Saliency Test</h1>
+  <p class="sub">One VSI-Bench question run end to end through the new pipeline, twice: once with object masks from OWLv2 + SAM 2 and once from SAM 3. Each run computes saliency maps for the v10 cross-attention model and the additive control (both seed 0, step 5,750) and two object-level measures built on them.</p>
+</header>
+
+<section class="panel verdict">
+  <h2>Result</h2>
+  <ul>
+    <li><b>The pipeline works.</b> With SAM 3 the whole question takes 90 s on one B200 (masks 16 s, then about 20–35 s per model), against 2 min 36 s with OWLv2 + SAM 2. Only the job's own figure failed, because <code>matplotlib</code> isn't in the venv; this page draws the saved arrays instead.</li>
+    <li><b>SAM 3 gives clearly better masks.</b> It finds the table, the answer, in 10 frames instead of 4 (the desk and the coffee table by the sofa), and the nightstand only by the bed, not on the dresser, armchair or picture. "Door" is still wrong in both: the TV cabinet and the shower curtain.</li>
+    <li><b>The masks changed the conclusion.</b> With OWLv2 masks the table looked like the most salient object (2.07× in additive). With SAM 3 masks it drops to 1.34× in additive and 1.02× in cross-attention, which is no preference at all. The maps themselves barely moved between the runs (correlation 0.98–0.99), so this is the masks, not noise.</li>
+    <li><b>One signal held up.</b> At layer 0, cross-attention between the sofa and the table is about 3× what the 3D bias alone would give, in both directions, with either masker. And in every case the geometry's saliency tracks Qwen's own visual saliency, so there is no object focus here that comes from the geometry itself.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>The question</h2>
+  <div class="panel">
+    <p id="q-text"></p>
+    <p id="q-opts" class="sub"></p>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th>Checkpoint</th><th>Answer</th><th class="num">Margin m (run 1 / run 2)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip" style="background:var(--add)"></span>additive</td><td><code>2B_v9_fmix_additive_s0</code>, step 5,750, decayed</td><td id="a-add"></td><td class="num" id="m-add"></td></tr>
+        <tr><td><span class="chip" style="background:var(--xa)"></span>xa3_qknu (cross-attention)</td><td><code>2B_v10_xa3_qknu_s0</code>, step 5,750, decayed</td><td id="a-xa"></td><td class="num" id="m-xa"></td></tr>
+      </tbody></table></div>
+    <p class="sub" style="font-size:14px">The margin is the log-odds of the correct letter against the other three, shown for the OWLv2 run / the SAM 3 run. The model and the inputs are identical; the small difference is bf16 non-determinism across GPUs. Both models answer correctly, with similar confidence (a margin of 3.9 means about 98% of the probability on A among the four letters).</p>
+  </div>
+</section>
+
+<section>
+  <h2>The pipeline, step by step</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1 · objects</div><h3>Find the named objects</h3><p>Parse the question for its objects and their roles: the reference (sofa) and the four candidates. Same parser as the v7 object-word study.</p></div>
+    <div class="step"><div class="n">2 · masks</div><h3>Mask them in every frame</h3><p>Two maskers, same frames. <b>A:</b> OWLv2 boxes for "a photo of a {object}" (score ≥ 0.25, up to 3 per frame), each refined to a pixel mask by SAM 2. <b>B:</b> SAM 3, which segments every instance of a short text prompt directly (score ≥ 0.5, up to 3).</p></div>
+    <div class="step"><div class="n">3 · cells</div><h3>Pool onto the token grid</h3><p>Each frame is 640×480, so Qwen sees it as 20×15 merged cells of 32×32 px. A mask becomes the fraction of each cell it covers.</p></div>
+    <div class="step"><div class="n">4 · saliency</div><h3>Attribute the answer</h3><p>One backward pass of the answer margin through each model, read at the geometry injection and at Qwen's visual embedding.</p></div>
+    <div class="step"><div class="n">5 · measures</div><h3>Compare maps with masks</h3><p>Object enrichment for both models, and object-to-object attention for the cross-attention model.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>The maths</h2>
+  <div class="panel">
+    <h3>Cells and masks</h3>
+    <p>There are N = 32 frames × 300 cells = 9,600 visual tokens. Token <i>n</i> is cell (t, r, c) in row-major order. For an object <i>o</i> with pixel mask M<sub>o</sub>, its cell weight is the covered fraction:</p>
+    <div class="eqblock">f_o(n) = area(M_o ∩ cell n) / area(cell n)        ∈ [0, 1]</div>
+    <h3>Saliency</h3>
+    <p>The target is the answer margin, the log-odds of the correct letter among the options: <span class="eq">m = z_gt − log Σ_alt exp z_alt</span>. Saliency at a point in the network is the gradient × input, with its norm over the 2,048 channels taken per token:</p>
+    <div class="eqblock">dest_k(n) = ‖ Δ_k,n ⊙ ∂m/∂Δ_k,n ‖₂      geometry added at decoder layer k ∈ {0, 1, 2}
+vis(n)    = ‖ v_n ⊙ ∂m/∂v_n ‖₂            Qwen's own merged visual embedding
+
+additive:          Δ_k,n = g_k,n                       (the projected VGGT feature of cell n)
+cross-attention:   Δ_k,n = W_o Σ_j a_nj v_j            (what cell n reads from every geometry token j)
+dest(n) = dest_0(n) + dest_1(n) + dest_2(n)</pre></div>
+    <p><code>dest</code> asks how much the answer depends on the geometry that arrives at cell <i>n</i>. <code>vis</code> asks the same about the image itself, which makes it the control for "objects are salient anyway".</p>
+    <h3>Object enrichment</h3>
+    <p>Over the frames F<sub>o</sub> in which the object was detected, compare the share of saliency on the object with the share of area it covers:</p>
+    <div class="eqblock">share_o = Σ_n s(n) f_o(n) / Σ_n s(n)          area_o = Σ_n f_o(n) / |cells in F_o|
+E_o = share_o / area_o           (n over the cells of F_o;  E = 1: no preference for the object)</div>
+    <p>A large mask caps E: an object covering a quarter of its frames can reach at most 4.</p>
+    <h3>Object-to-object attention (cross-attention only)</h3>
+    <p>Average the attention over the 16 heads, Ā = mean<sub>h</sub> softmax(q·k/√d + b), and spread object X's cells by their weight:</p>
+    <div class="eqblock">mass(X → Y) = Σ_i w_i Σ_j Ā_ij f_Y(j),     w_i = f_X(i) / Σ f_X
+bias only:   Ā⁰ = mean_h softmax_j( b_hij ),   b_hij = −ν_h · min(‖x_i − x_j‖, 10)
+uniform:     mass = Σ_j f_Y(j) / N            (what attention spread evenly would give)</div>
+    <p>If <code>learned</code> exceeds <code>bias only</code>, the learned query–key scores send X's cells toward Y beyond what 3D proximity alone explains.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Frames, masks and maps</h2>
+  <div class="panel">
+    <div class="ctitle">Saliency over the video, frame by frame</div>
+    <div class="csub">Pick a frame, a map and a masker. Each heat map is scaled to its own model's 99th percentile over all 32 frames; the maps are from the first run.</div>
+    <div class="controls" role="group" aria-label="Map"><span class="lbl">Map</span>
+      <button id="b-dest" aria-pressed="true">Geometry injection (dest)</button><button id="b-vis" aria-pressed="false">Qwen visual (vis)</button></div>
+    <div class="controls" role="group" aria-label="Masker"><span class="lbl">Masks</span>
+      <button id="b-sam3" aria-pressed="true">SAM 3</button><button id="b-owl" aria-pressed="false">OWLv2 + SAM 2</button></div>
+    <div class="controls" id="objbtns" role="group" aria-label="Objects shown"><span class="lbl">Objects</span></div>
+    <div class="strip" id="strip" role="group" aria-label="Frame"></div>
+    <div class="legend"><span>Heat: low<span class="grad"></span>high</span><span>Object cells: outlined in the object's colour where the mask covers more than 25% of the cell</span></div>
+    <div class="steps" aria-label="How to read the heat">
+      <div class="step"><div class="n">bright cell</div><h3>The answer depends on this cell</h3><p>A small change to what enters here, the geometry for <b>dest</b> or the image token for <b>vis</b>, moves the answer margin m a lot. Removing it would change the model's confidence in its answer most.</p></div>
+      <div class="step"><div class="n">dark cell</div><h3>The answer barely depends on it</h3><p>The model may still see this cell, but changing what enters here leaves the margin almost unchanged, to first order.</p></div>
+      <div class="step"><div class="n">not a direction</div><h3>Bright isn't "for" or "against"</h3><p>The heat is a size, ‖input ⊙ gradient‖, so a bright cell can push toward the right answer or away from it. It also isn't where the model "looks": attention is a separate quantity, shown further down.</p></div>
+      <div class="step"><div class="n">comparing</div><h3>Compare patterns, not brightness</h3><p>Each model's map is scaled to its own 99th percentile, so the two panels share a pattern scale, not an absolute one. Compare which cells light up, and use the enrichment chart below for numbers.</p></div>
+    </div>
+    <div class="viewer">
+      <figure><canvas id="cv-obj" width="640" height="480" aria-label="Frame with object masks"></canvas><figcaption>Frame and object masks</figcaption></figure>
+      <figure><canvas id="cv-add" width="640" height="480" aria-label="Additive saliency"></canvas><figcaption><span class="chip" style="background:var(--add)"></span>additive</figcaption></figure>
+      <figure><canvas id="cv-xa" width="640" height="480" aria-label="Cross-attention saliency"></canvas><figcaption><span class="chip" style="background:var(--xa)"></span>xa3_qknu</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Object enrichment by object, under each masker</div>
+    <div class="csub">Geometry-injection saliency (dest) for each model, with Qwen's visual saliency (vis) as a tick; both panels on one scale</div>
+    <div class="legend"><span><span class="chip" style="background:var(--add)"></span>additive, dest</span><span><span class="chip" style="background:var(--xa)"></span>xa3_qknu, dest</span><span><span class="tickm"></span>same model, vis</span><span><span class="tickm" style="border-top-style:dashed;border-color:var(--ink3)"></span>1 = no preference</span></div>
+    <div class="two"><div id="c-enr-owl"></div><div id="c-enr-sam3"></div></div>
+    <figcaption class="sub" style="font-size:13.5px">Ticks close to the bar tops mean the geometry's saliency follows the image's own saliency. The table falls from 2.07× to 1.34× (additive) and from 1.62× to 1.02× (cross-attention) once SAM 3 finds it in 10 frames instead of 4.</figcaption>
+  </figure>
+</section>
+<section class="two">
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Object-to-object attention, OWLv2 + SAM 2 masks</div>
+    <div class="csub">xa3_qknu: attention mass between the sofa and each candidate, per decoder layer</div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa);border-radius:50%"></span>learned attention</span><span><span class="ring"></span>3D bias alone</span><span><span class="tickm" style="border-color:var(--ink3)"></span>uniform attention</span></div>
+    <div id="c-att-owl"></div>
+  </figure>
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Object-to-object attention, SAM 3 masks</div>
+    <div class="csub">xa3_qknu: attention mass between the sofa and each candidate, per decoder layer</div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa);border-radius:50%"></span>learned attention</span><span><span class="ring"></span>3D bias alone</span><span><span class="tickm" style="border-color:var(--ink3)"></span>uniform attention</span></div>
+    <div id="c-att-sam3"></div>
+  </figure>
+</section>
+<p class="cap sub" style="font-size:13.5px;margin-top:-22px">Each row is one direction, e.g. "sofa → table" = how much of the sofa cells' attention lands on table cells. The x-axis is capped at 0.08; hover for exact values.</p>
+
+<section>
+  <h2>What the cross-attention is doing</h2>
+  <p class="sub">Each visual cell asks "which geometry tokens of this video should I read?" Its attention weight on a key is <span class="eq">exp(q·k/√d − ν·distance)</span>, normalised over all 9,600 keys. Two forces set it: the learned score q·k, which can point anywhere, and the 3D bias, which pulls attention toward nearby points. These charts show which force wins, layer by layer, and then follow the sofa's cells in this question.</p>
+
+  <div class="two">
+    <figure class="panel" style="margin:0">
+      <div class="ctitle">Where a cell's attention goes</div>
+      <div class="csub">Mean share of attention by where the key sits, averaged over all cells of this question</div>
+      <div class="legend" id="lg-flow"></div>
+      <div id="c-flow"></div>
+      <figcaption class="sub" style="font-size:13.5px">The 3D bias would keep attention local, but at every layer most of it, 67–83%, goes to cells in other frames that are more than one cell away in 3D. Deeper layers read more widely.</figcaption>
+    </figure>
+    <figure class="panel" style="margin:0">
+      <div class="ctitle">Learned score against 3D bias</div>
+      <div class="csub">How much each force varies across keys: standard deviation of its logits over 512 random query cells</div>
+      <div class="legend"><span><span class="chip" style="background:var(--xa)"></span>learned score q·k/√d</span><span><span class="chip" style="background:var(--base)"></span>3D bias −ν·distance</span></div>
+      <div id="c-spread"></div>
+      <figcaption class="sub" style="font-size:13.5px">The force that varies more decides where attention goes. The learned score varies 1.5× as much as the bias at layer 0 and 3.2× at layer 2, so v10's higher query–key learning rate made the learned part count.</figcaption>
+    </figure>
+  </div>
+
+  <div class="two">
+    <figure class="panel" style="margin:0">
+      <div class="ctitle">Each head's distance slope ν, start against learned</div>
+      <div class="csub">16 heads per layer; heads start log-spaced from 0.1 to 6</div>
+      <div class="legend"><span><span class="ring"></span>at initialisation</span><span><span class="chip" style="background:var(--xa);border-radius:50%"></span>after 5,750 steps</span></div>
+      <div id="c-nuheads"></div>
+      <figcaption class="sub" style="font-size:13.5px">The heads kept their spread of scales: gentle heads stayed gentle and steep ones steep. Relative to where they started, the gentlest heads moved most (0.23 → 0.55 in layer 0), and one layer-1 head crossed zero to −0.09, so it now slightly favours far keys.</figcaption>
+    </figure>
+    <figure class="panel" style="margin:0">
+      <div class="ctitle">What a slope means: weight left after distance</div>
+      <div class="csub">The bias factor exp(−ν·d) for four layer-0 and layer-1 heads, before the learned score is added</div>
+      <div class="legend" id="lg-fall"></div>
+      <div id="c-fall"></div>
+      <figcaption class="sub" style="font-size:13.5px" id="fall-cap"></figcaption>
+    </figure>
+  </div>
+
+  <figure class="panel" style="margin:0">
+    <div class="ctitle">Worked example: where the sofa's cells read from</div>
+    <div class="csub">Attention of the cells covered by the sofa's SAM 3 mask (frames 7–11), summed per frame, learned against the 3D bias alone</div>
+    <div class="controls" role="group" aria-label="Object"><span class="lbl">From</span><button id="ex-sofa" aria-pressed="true">sofa (reference)</button><button id="ex-table" aria-pressed="false">table (answer A)</button></div>
+    <div class="controls" role="group" aria-label="Layer"><span class="lbl">Layer</span><button id="ex-l0" aria-pressed="true">0</button><button id="ex-l1" aria-pressed="false">1</button><button id="ex-l2" aria-pressed="false">2</button></div>
+    <div class="legend"><span><span class="chip" style="background:var(--xa)"></span>learned attention</span><span><span class="chip" style="background:var(--base)"></span>3D bias alone</span><span><span class="chip" style="background:var(--o4)"></span>frame where the source object is visible</span></div>
+    <div id="c-ex"></div>
+    <div class="steps" id="ex-stats"></div>
+    <div class="ctitle" style="font-size:14px">The four frames that receive the most learned attention</div>
+    <div class="csub">Heat = attention from the source object's cells, scaled to its 99.5th percentile; outlines = the source object's own cells</div>
+    <div class="viewer" id="ex-frames" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))"></div>
+    <figcaption class="sub" style="font-size:13.5px" id="ex-cap"></figcaption>
+  </figure>
+
+  <details class="panel"><summary style="cursor:pointer;font-weight:600">Exact numbers</summary>
+    <div class="scroll"><table><thead><tr><th>Layer</th><th class="num">Spread of q·k/√d</th><th class="num">Spread of bias</th><th class="num">Own cell</th><th class="num">Own frame</th><th class="num">Other frames, ≤ 1 cell in 3D</th><th class="num">Other frames, farther</th></tr></thead>
+    <tbody id="t-scale"></tbody></table></div>
+    <div class="eqblock" id="nu-heads"></div>
+  </details>
+</section>
+
+<section>
+  <h2>SAM 3 against OWLv2 + SAM 2</h2>
+  <div class="panel scroll">
+    <table><thead><tr><th>Object</th><th class="num">Frames, OWLv2 + SAM 2</th><th class="num">Frames, SAM 3</th><th class="num">Cells per frame, SAM 3</th><th>Checked by eye</th></tr></thead><tbody id="t-cmp"></tbody></table>
+    <p class="sub" style="font-size:13.5px">"Frames" counts frames with any detection. SAM 3 scores are calibrated differently from OWLv2's, so the thresholds (0.5 vs 0.25) are not comparable; both were picked to keep clear detections.</p>
+  </div>
+  <div class="two">
+    <figure class="panel sheet" style="margin:0"><div class="ctitle">OWLv2 + SAM 2 masks</div><div class="csub">Cells where a mask covers more than 25%; the number is the frame</div>
+      <div class="legend"><span><span class="chip" style="background:#e34948"></span>sofa</span><span><span class="chip" style="background:#2a78d6"></span>table</span><span><span class="chip" style="background:#6250d6"></span>nightstand</span><span><span class="chip" style="background:#eda100"></span>door</span><span><span class="chip" style="background:#e87ba4"></span>towel</span></div>
+      <img src="mask_sheet.jpg" alt="OWLv2 and SAM 2 masks on all 32 frames"></figure>
+    <figure class="panel sheet" style="margin:0"><div class="ctitle">SAM 3 masks</div><div class="csub">Cells where a mask covers more than 25%; the number is the frame</div>
+      <div class="legend"><span><span class="chip" style="background:#e34948"></span>sofa</span><span><span class="chip" style="background:#2a78d6"></span>table</span><span><span class="chip" style="background:#6250d6"></span>nightstand</span><span><span class="chip" style="background:#eda100"></span>door</span><span><span class="chip" style="background:#e87ba4"></span>towel</span></div>
+      <img src="mask_sheet_sam3.jpg" alt="SAM 3 masks on all 32 frames"></figure>
+  </div>
+</section>
+
+<section>
+  <h2>A careful interpretation</h2>
+  <div class="panel">
+    <ol>
+      <li><b>Masks decide object-level answers.</b> With OWLv2 masks the table, the correct answer, looked like the most salient object in both models. With SAM 3, which finds it in 10 frames rather than 4, that mostly goes away: 1.34× in additive, 1.02× in cross-attention. A measure this sensitive to the detector needs the better detector and a check of every object class.</li>
+      <li><b>The geometry follows the image.</b> Under both maskers and in both models the <code>vis</code> ticks sit close to the <code>dest</code> bars, usually a little above them. Wherever the answer depends on the image, it also depends on the geometry added there, a little less. So this question shows no object focus that comes from the geometry itself, which is why <code>vis</code> has to be reported next to <code>dest</code>.</li>
+      <li><b>Cross-attention spreads its saliency differently.</b> With SAM 3 masks its largest enrichments are on the towel (1.85×) and the door (1.47×). Both have the weakest masks (the door includes the shower curtain), and the towel's 12 cells per frame make it sensitive to the 12% run-to-run variation in the cross-attention maps, so I wouldn't read anything into this yet.</li>
+      <li><b>The learned scores matter now.</b> The spread of q·k/√d (26, 31 and 56 in layers 0–2) exceeds the spread of the 3D bias (about 18), so the higher query–key learning rate in v10 made the learned part count, unlike v9. Even so, 67–83% of each cell's attention goes to cells in other frames that are more than one cell away in 3D, so this is far from a local operation.</li>
+      <li><b>Sofa ↔ table attention is the one signal that held.</b> At layer 0 with SAM 3 masks, sofa cells put 0.052 of their attention on table cells against 0.017 under the 3D bias alone (3.1×), and table cells put 0.068 on sofa cells against 0.022 (3.1×). Both are also above uniform attention. With OWLv2 masks the same pair stood out at layer 0 too. Layer 2 is mildly above the bias, layer 1 at it. This is the pair the question is about, which makes it the lead to test across the 180 object questions.</li>
+      <li><b>One head has turned around.</b> In layer 1 the smallest-ν head went from 0.1 to −0.09, so it now slightly prefers far keys. The others kept their spread from 0.13 to 6.3.</li>
+    </ol>
+  </div>
+</section>
+
+
+
+<section>
+  <h2>What to change before the full run</h2>
+  <ul>
+    <li><b>Use SAM 3</b> at score ≥ 0.5. It's faster and clearly more accurate here.</li>
+    <li><b>Fix or flag the weak classes.</b> "door" picks up cabinets and shower curtains, and "towel" picks up cushions. Options: a more specific prompt ("room door"), a minimum mask area, or reporting these classes separately. Then check 20 masks by eye across several scenes.</li>
+    <li><b>Report vis next to dest every time,</b> with the ratio E<sub>dest</sub> / E<sub>vis</sub> as the headline object measure for the geometry.</li>
+    <li><b>Expect noise of 6–12%</b> in the maps between identical runs (bf16 on different GPUs: correlation 0.98–0.99, margins differing by up to 0.1). Single-question differences of that size mean nothing; the 180-question averages will.</li>
+    <li><b>Then run the plan:</b> 179 object questions × the two models, now about 45 GPU-minutes with SAM 3.</li>
+  </ul>
+</section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+const D = /*DATA*/;
+const OBJ = Object.keys(D.masks.sam3), OC = ["--o4", "--o0", "--o3", "--o1", "--o2"];
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, a, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const tip = document.getElementById("tip");
+const showTip = (ev, s) => { tip.textContent = s; tip.style.display = "block"; tip.style.left = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (ev.clientY + 14) + "px"; };
+const hideTip = () => tip.style.display = "none";
+
+// question
+document.getElementById("q-text").innerHTML = `<b>Question 3004</b> (relative distance, ScanNet scene0645_00): ${D.question}`;
+document.getElementById("q-opts").textContent = "Options: " + D.options.join("  ·  ") + `   Correct: ${D.gt}`;
+for (const k of ["add", "xa"]) { const a = D.models[k].owl, b = D.models[k].sam3; document.getElementById("a-" + k).textContent = a.top.trim() + (a.top.trim() === D.gt ? " (correct)" : ""); document.getElementById("m-" + k).textContent = `${a.margin.toFixed(2)} / ${b.margin.toFixed(2)}`; }
+
+// viewer
+let frame = 9, mapKey = "dest", masker = "sam3", shown = new Set(OBJ);
+const imgs = [...Array(32).keys()].map(t => { const i = new Image(); i.src = `frames/f${String(t).padStart(2, "0")}.jpg`; return i; });
+const strip = document.getElementById("strip");
+imgs.forEach((im, t) => { const b = document.createElement("button"); b.setAttribute("aria-pressed", t === frame); b.setAttribute("aria-label", `Frame ${t}`);
+  const c = im.cloneNode(); c.alt = ""; b.append(c); const s = document.createElement("span"); s.textContent = t; b.append(s);
+  b.onclick = () => { frame = t; [...strip.children].forEach((x, i) => x.setAttribute("aria-pressed", i === t)); draw(); }; strip.append(b); });
+const ob = document.getElementById("objbtns");
+OBJ.forEach((o, i) => { const b = document.createElement("button"); b.setAttribute("aria-pressed", "true");
+  b.innerHTML = `<span class="chip" style="background:var(${OC[i]})"></span>${o} <span style="color:var(--ink3)">(${D.masks.sam3[o].role === "ref" ? "reference" : "candidate " + "ABCD"["table nightstand door towel".split(" ").indexOf(o)]})</span>`;
+  b.onclick = () => { shown.has(o) ? shown.delete(o) : shown.add(o); b.setAttribute("aria-pressed", shown.has(o)); draw(); }; ob.append(b); });
+const setMap = k => { mapKey = k; document.getElementById("b-dest").setAttribute("aria-pressed", k === "dest"); document.getElementById("b-vis").setAttribute("aria-pressed", k === "vis"); draw(); };
+const setMask = k => { masker = k; document.getElementById("b-sam3").setAttribute("aria-pressed", k === "sam3"); document.getElementById("b-owl").setAttribute("aria-pressed", k === "owl"); draw(); };
+document.getElementById("b-sam3").onclick = () => setMask("sam3"); document.getElementById("b-owl").onclick = () => setMask("owl");
+document.getElementById("b-dest").onclick = () => setMap("dest"); document.getElementById("b-vis").onclick = () => setMap("vis");
+
+function outlines(ctx) {
+  OBJ.forEach((o, i) => { if (!shown.has(o)) return; ctx.strokeStyle = css(OC[i]); ctx.lineWidth = 3;
+    const f = D.masks[masker][o].f; for (let n = 0; n < 300; n++) if (f[frame * 300 + n] > 64) { const r = Math.floor(n / 20), c = n % 20; ctx.strokeRect(c * 32 + 1.5, r * 32 + 1.5, 29, 29); } });
+}
+function draw() {
+  const im = imgs[frame];
+  if (!im.complete) { im.onload = draw; return; }
+  const o = document.getElementById("cv-obj").getContext("2d"); o.drawImage(im, 0, 0, 640, 480); outlines(o);
+  for (const k of ["add", "xa"]) {
+    const ctx = document.getElementById("cv-" + k).getContext("2d"); ctx.drawImage(im, 0, 0, 640, 480);
+    ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(0, 0, 640, 480);
+    const v = D.maps[k][mapKey];
+    for (let n = 0; n < 300; n++) { const a = v[frame * 300 + n] / 255; if (a <= 0) continue; const r = Math.floor(n / 20), c = n % 20;
+      ctx.fillStyle = `rgba(255,214,10,${(0.08 + 0.9 * a).toFixed(3)})`; ctx.fillRect(c * 32, r * 32, 32, 32); }
+    outlines(ctx);
+  }
+}
+draw();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+
+// enrichment chart: grouped bars, dest per model, vis tick
+function enrChart(mk, title) {
+  const W = 480, H = 300, m = { l: 52, r: 12, t: 24, b: 48 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Object enrichment by object and model, ${title}` }); document.getElementById("c-enr-" + mk).append(svg);
+  el("text", { class: "ptitle", x: W / 2, y: 12, "text-anchor": "middle" }, svg).textContent = title;
+  const ymax = 2.5, Y = v => H - m.b - v / ymax * (H - m.t - m.b), bw = (W - m.l - m.r) / OBJ.length;
+  for (let t = 0; t <= ymax + 1e-9; t += 0.5) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg);
+    el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = t.toFixed(1); }
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0) }, svg);
+  el("line", { class: "ref", x1: m.l, x2: W - m.r, y1: Y(1), y2: Y(1) }, svg);
+  OBJ.forEach((o, i) => { const x0 = m.l + i * bw;
+    el("text", { class: "cat", x: x0 + bw / 2, y: H - m.b + 16, "text-anchor": "middle" }, svg).textContent = o;
+    ["add", "xa"].forEach((k, j) => { const v = D.models[k][mk].enr.dest_sum[o], vv = D.models[k][mk].enr.vis[o]; if (v == null) return;
+      const w = bw * 0.3, x = x0 + bw * 0.18 + j * (w + 4);
+      const r = el("rect", { x, y: Y(v), width: w, height: Y(0) - Y(v), rx: 3, fill: `var(--${k})` }, svg);
+      el("line", { x1: x - 3, x2: x + w + 3, y1: Y(vv), y2: Y(vv), stroke: "var(--ink)", "stroke-width": 2 }, svg);
+      const hit = el("rect", { x: x - 3, y: m.t, width: w + 6, height: Y(0) - m.t, fill: "transparent" }, svg);
+      hit.addEventListener("pointermove", ev => showTip(ev, `${o} · ${k === "add" ? "additive" : "xa3_qknu"}\ndest ${v.toFixed(2)}×\nvis  ${vv.toFixed(2)}×`)); hit.addEventListener("pointerleave", hideTip); }); });
+  el("text", { class: "axlab", x: (m.l + W - m.r) / 2, y: H - 8, "text-anchor": "middle" }, svg).textContent = "Object named in the question";
+  el("text", { class: "axlab", transform: `translate(14,${(m.t + H - m.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, svg).textContent = "Enrichment E (share ÷ area)";
+}
+enrChart("owl", "OWLv2 + SAM 2 masks"); enrChart("sam3", "SAM 3 masks");
+
+// attention chart: small multiples per layer, dot plot
+function attChart(mk) {
+  const A = D.models.xa[mk].attn, pairs = ["sofa -> table", "sofa -> nightstand", "sofa -> door", "sofa -> towel", "table -> sofa", "nightstand -> sofa", "door -> sofa", "towel -> sofa"];
+  const W = 480, rowH = 19, pw = 112, lab = 116, m = { t: 30, b: 46 }, H = m.t + pairs.length * rowH + m.b, xmax = 0.08;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Object-to-object attention by layer" }); document.getElementById("c-att-" + mk).append(svg);
+  pairs.forEach((p, i) => el("text", { class: "cat", x: lab - 8, y: m.t + i * rowH + rowH / 2 + 4, "text-anchor": "end" }, svg).textContent = p.replace("->", "→"));
+  ["0", "1", "2"].forEach((L, li) => { const x0 = lab + li * (pw + 6), X = v => x0 + v / xmax * pw;
+    el("text", { class: "ptitle", x: x0 + pw / 2, y: 16, "text-anchor": "middle" }, svg).textContent = `layer ${L}`;
+    for (const t of [0, 0.04, 0.08]) { el("line", { class: "grid", x1: X(t), x2: X(t), y1: m.t, y2: m.t + pairs.length * rowH }, svg);
+      el("text", { class: "tick", x: X(t), y: m.t + pairs.length * rowH + 14, "text-anchor": "middle" }, svg).textContent = t ? t.toFixed(2).slice(1) : "0"; }
+    pairs.forEach((p, i) => { const v = A[L].pairs[p], y = m.t + i * rowH + rowH / 2; if (!v) return;
+      el("line", { x1: X(v.area_y), x2: X(v.area_y), y1: y - 6, y2: y + 6, stroke: "var(--ink3)", "stroke-width": 2 }, svg);
+      el("line", { x1: X(v.bias_only), x2: X(v.learned), y1: y, y2: y, stroke: "var(--rule)", "stroke-width": 2 }, svg);
+      el("circle", { cx: X(v.bias_only), cy: y, r: 4.5, fill: "var(--panel)", stroke: "var(--base)", "stroke-width": 2 }, svg);
+      el("circle", { cx: X(Math.min(v.learned, xmax)), cy: y, r: 4.5, fill: "var(--xa)", stroke: "var(--panel)", "stroke-width": 1.5 }, svg);
+      const hit = el("rect", { x: x0, y: y - rowH / 2, width: pw, height: rowH, fill: "transparent" }, svg);
+      hit.addEventListener("pointermove", ev => showTip(ev, `${p.replace("->", "→")} · layer ${L}\nlearned   ${v.learned.toFixed(4)}\nbias only ${v.bias_only.toFixed(4)}\nuniform   ${v.area_y.toFixed(4)}`)); hit.addEventListener("pointerleave", hideTip); }); });
+  el("text", { class: "axlab", x: lab + (3 * pw + 12) / 2, y: H - 8, "text-anchor": "middle" }, svg).textContent = "Attention mass from X's cells to Y's cells";
+  el("text", { class: "axlab", x: 4, y: 16 }, svg).textContent = "Direction";
+}
+attChart("owl"); attChart("sam3");
+
+const EYE = { sofa: "Right in both (frames 7–11), large masks", table: "SAM 3 much better: desk and the coffee table by the sofa; OWLv2 missed it in most frames", nightstand: "SAM 3 right (bedside only); OWLv2 also on the dresser, an armchair and a picture", door: "Wrong in both: also the TV cabinet (18–19) and the shower curtain (25–28)", towel: "Mixed in both: bathroom towels, plus a few small false hits (a cushion, a chair)" };
+document.getElementById("t-cmp").innerHTML = OBJ.map((o, i) => `<tr><td><span class="chip" style="background:var(${OC[i]})"></span>${o}</td><td class="num">${D.masks.owl[o].frames}</td><td class="num">${D.masks.sam3[o].frames}</td><td class="num">${D.masks.sam3[o].cells.toFixed(1)}</td><td>${EYE[o]}</td></tr>`).join("");
+// ---- cross-attention section ----
+const EX = /*EXAMPLE*/;
+const LAYERS = ["0", "1", "2"];
+const ax = (svg, o) => { // axis labels helper
+  el("text", { class: "axlab", x: o.xc, y: o.yb, "text-anchor": "middle" }, svg).textContent = o.xlab;
+  el("text", { class: "axlab", transform: `translate(14,${o.yc}) rotate(-90)`, "text-anchor": "middle" }, svg).textContent = o.ylab;
+};
+const hover = (node, s) => { node.addEventListener("pointermove", ev => showTip(ev, s)); node.addEventListener("pointerleave", hideTip); };
+// 1. flow: 100% stacked bars, sequential single hue (near -> far)
+(function () {
+  const cats = [["self", "own cell"], ["same_frame", "rest of own frame"], ["other_near", "other frames, ≤ 1 cell in 3D"], ["other_far", "other frames, farther"]];
+  const shade = ["#c9c6f0", "#9c97e2", "#6c66cf", "#3d3a8f"];
+  document.getElementById("lg-flow").innerHTML = cats.map(([, n], i) => `<span><span class="chip" style="background:${shade[i]}"></span>${n}</span>`).join("");
+  const W = 480, H = 230, m = { l: 62, r: 14, t: 10, b: 48 }, bh = 34;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Attention share by source, per layer" }); document.getElementById("c-flow").append(svg);
+  const X = v => m.l + v * (W - m.l - m.r);
+  for (const t of [0, .25, .5, .75, 1]) { el("line", { class: "grid", x1: X(t), x2: X(t), y1: m.t, y2: H - m.b }, svg);
+    el("text", { class: "tick", x: X(t), y: H - m.b + 15, "text-anchor": "middle" }, svg).textContent = (t * 100) + "%"; }
+  LAYERS.forEach((L, i) => { const f = EX.flow[L], tot = cats.reduce((s, [k]) => s + f[k], 0); let x = 0; const y = m.t + 14 + i * (bh + 18);
+    el("text", { class: "cat", x: m.l - 8, y: y + bh / 2 + 4, "text-anchor": "end" }, svg).textContent = L;
+    cats.forEach(([k, n], j) => { const w = f[k] / tot; const r = el("rect", { x: X(x) + (j ? 1 : 0), y, width: Math.max(0, X(x + w) - X(x) - (j ? 1 : 0)), height: bh, rx: 3, fill: shade[j] }, svg);
+      hover(r, `layer ${L} · ${n}\n${(100 * f[k]).toFixed(1)}% of attention`);
+      if (w > 0.09) el("text", { x: X(x + w / 2), y: y + bh / 2 + 4, "text-anchor": "middle", fill: j > 1 ? "#fff" : "#14171c", style: "font:500 11.5px var(--mono);pointer-events:none" }, svg).textContent = (100 * f[k]).toFixed(0) + "%";
+      x += w; }); });
+  ax(svg, { xc: (m.l + W - m.r) / 2, yb: H - 8, yc: (m.t + H - m.b) / 2, xlab: "Share of the cell's attention", ylab: "Decoder layer" });
+})();
+// 2. spread: grouped bars
+(function () {
+  const W = 480, H = 230, m = { l: 52, r: 14, t: 14, b: 48 }, ymax = 60;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Spread of learned score and bias, per layer" }); document.getElementById("c-spread").append(svg);
+  const Y = v => H - m.b - v / ymax * (H - m.t - m.b), gw = (W - m.l - m.r) / 3;
+  for (let t = 0; t <= ymax; t += 15) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = t; }
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0) }, svg);
+  LAYERS.forEach((L, i) => { const s = EX.scale[L], x0 = m.l + i * gw, bw = gw * 0.28;
+    [[s.qk_logit_std, "var(--xa)", "learned score"], [s.bias_std, "var(--base)", "3D bias"]].forEach(([v, c, n], j) => {
+      const x = x0 + gw * 0.18 + j * (bw + 4); const r = el("rect", { x, y: Y(v), width: bw, height: Y(0) - Y(v), rx: 3, fill: c }, svg);
+      hover(r, `layer ${L} · ${n}\nspread ${v.toFixed(1)}`);
+      el("text", { x: x + bw / 2, y: Y(v) - 5, "text-anchor": "middle", class: "tick" }, svg).textContent = v.toFixed(0); });
+    el("text", { class: "cat", x: x0 + gw / 2, y: H - m.b + 16, "text-anchor": "middle" }, svg).textContent = `layer ${L} · ${(s.qk_logit_std / s.bias_std).toFixed(1)}×`; });
+  ax(svg, { xc: (m.l + W - m.r) / 2, yb: H - 8, yc: (m.t + H - m.b) / 2, xlab: "Decoder layer · learned ÷ bias", ylab: "Spread (std of logits)" });
+})();
+// 3. nu per head: dumbbells
+(function () {
+  const init = [...Array(16).keys()].map(i => 10 ** (Math.log10(0.1) + i / 15 * (Math.log10(6) - Math.log10(0.1))));
+  const W = 480, H = 240, m = { l: 62, r: 14, t: 12, b: 48 }, x0 = -0.5, x1 = 6.5;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Per-head nu, initial and learned" }); document.getElementById("c-nuheads").append(svg);
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+  for (let t = 0; t <= 6; t++) { el("line", { class: t ? "grid" : "ref", x1: X(t), x2: X(t), y1: m.t, y2: H - m.b }, svg); el("text", { class: "tick", x: X(t), y: H - m.b + 15, "text-anchor": "middle" }, svg).textContent = t; }
+  LAYERS.forEach((L, li) => { const nu = EX.scale[L].nu, yb = m.t + 22 + li * 58;
+    el("text", { class: "cat", x: m.l - 8, y: yb + 4, "text-anchor": "end" }, svg).textContent = L;
+    nu.forEach((v, h) => { const y = yb + (h % 2 ? 7 : -7);
+      el("line", { x1: X(init[h]), x2: X(v), y1: y, y2: y, stroke: "var(--rule)", "stroke-width": 2 }, svg);
+      el("circle", { cx: X(init[h]), cy: y, r: 3.5, fill: "var(--panel)", stroke: "var(--base)", "stroke-width": 1.5 }, svg);
+      const c = el("circle", { cx: X(v), cy: y, r: 4, fill: v < 0 ? "var(--o4)" : "var(--xa)", stroke: "var(--panel)", "stroke-width": 1 }, svg);
+      hover(c, `layer ${L} · head ${h}\nstart   ${init[h].toFixed(2)}\nlearned ${v.toFixed(2)}`); }); });
+  ax(svg, { xc: (m.l + W - m.r) / 2, yb: H - 8, yc: (m.t + H - m.b) / 2, xlab: "ν: bias lost per cell of 3D distance", ylab: "Decoder layer" });
+})();
+// 4. falloff curves
+(function () {
+  const heads = [[EX.scale["0"].nu[15], "steepest, layer 0", "#3d3a8f", ""], [EX.scale["0"].nu[9], "middle, layer 0", "#6c66cf", ""], [EX.scale["0"].nu[0], "gentlest, layer 0", "#9c97e2", ""], [EX.scale["1"].nu[1], "flipped, layer 1", "var(--o4)", "6 4"]];
+  document.getElementById("lg-fall").innerHTML = heads.map(([v, n, c, d]) => `<span><span class="sw" style="display:inline-block;width:22px;border-top:2px ${d ? "dashed" : "solid"} ${c};margin-right:6px;vertical-align:middle"></span>ν = ${v.toFixed(2)} (${n})</span>`).join("");
+  const W = 480, H = 250, m = { l: 52, r: 14, t: 12, b: 48 }, ymax = 1.2;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Bias factor against 3D distance" }); document.getElementById("c-fall").append(svg);
+  const X = d => m.l + d / 10 * (W - m.l - m.r), Y = v => H - m.b - v / ymax * (H - m.t - m.b);
+  for (let t = 0; t <= 1.2001; t += 0.2) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = t.toFixed(1); }
+  for (let d = 0; d <= 10; d += 2) el("text", { class: "tick", x: X(d), y: H - m.b + 15, "text-anchor": "middle" }, svg).textContent = d;
+  el("line", { class: "mk", x1: X(2), x2: X(2), y1: m.t, y2: H - m.b, stroke: "var(--ink3)", "stroke-dasharray": "3 3" }, svg);
+  el("text", { class: "reflab", x: X(2) + 4, y: m.t + 10 }, svg).textContent = "2 cells away";
+  const cp = el("clipPath", { id: "clip-fall" }, el("defs", {}, svg)); el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b }, cp);
+  const g = el("g", { "clip-path": "url(#clip-fall)" }, svg);
+  heads.forEach(([v, n, c, d]) => { const pts = [...Array(101).keys()].map(i => [i / 10, Math.exp(-v * i / 10)]);
+    el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join(""), fill: "none", stroke: c, "stroke-width": 2, "stroke-dasharray": d }, g);
+    const dot = el("circle", { cx: X(2), cy: Y(Math.exp(-2 * v)), r: 4, fill: c, stroke: "var(--panel)", "stroke-width": 1.5 }, g);
+    hover(dot, `ν = ${v.toFixed(2)} (${n})\nat 2 cells: ${(100 * Math.exp(-2 * v)).toPrecision(2)}% of the weight at 0`); });
+  ax(svg, { xc: (m.l + W - m.r) / 2, yb: H - 8, yc: (m.t + H - m.b) / 2, xlab: "3D distance to the key (cells, capped at 10)", ylab: "Bias factor exp(−ν·d)" });
+  const at2 = v => (100 * Math.exp(-2 * v)).toPrecision(2) + "%";
+  document.getElementById("fall-cap").textContent = `Read off at 2 cells away: the gentlest head keeps ${at2(heads[2][0])} of the weight, the middle one ${at2(heads[1][0])}, the steepest ${at2(heads[0][0])}. The flipped head gains slightly with distance (${at2(heads[3][0])} at 2 cells, ${(100 * Math.exp(-10 * heads[3][0])).toFixed(0)}% at 10). The learned score then shifts all of these, which is why so much attention still reaches far cells.`;
+})();
+// 5. worked example
+let exObj = "sofa", exL = "0";
+function exDraw() {
+  const rl = EX.rows[`${exL}:${exObj}:learned`], rb = EX.rows[`${exL}:${exObj}:bias`], pres = new Set(EX.present[exObj]);
+  const host = document.getElementById("c-ex"); host.innerHTML = "";
+  const W = 960, H = 240, m = { l: 56, r: 12, t: 12, b: 50 }, ymax = Math.max(0.25, Math.ceil(Math.max(...rl.frames, ...rb.frames) * 20) / 20);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Attention per frame from the source object" }); host.append(svg);
+  const bw = (W - m.l - m.r) / 32, Y = v => H - m.b - v / ymax * (H - m.t - m.b);
+  for (let t = 0; t <= ymax + 1e-9; t += 0.05) { el("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, svg); el("text", { class: "tick", x: m.l - 6, y: Y(t) + 4, "text-anchor": "end" }, svg).textContent = (100 * t).toFixed(0) + "%"; }
+  el("line", { class: "axis", x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0) }, svg);
+  for (let f = 0; f < 32; f++) { const x = m.l + f * bw, w = bw * 0.36;
+    if (pres.has(f)) el("rect", { x: x + 2, y: H - m.b + 20, width: bw - 4, height: 4, rx: 2, fill: "var(--o4)" }, svg);
+    el("text", { class: "tick", x: x + bw / 2, y: H - m.b + 14, "text-anchor": "middle" }, svg).textContent = f;
+    const a = el("rect", { x: x + bw * 0.12, y: Y(rl.frames[f]), width: w, height: Y(0) - Y(rl.frames[f]), rx: 2, fill: "var(--xa)" }, svg);
+    const b = el("rect", { x: x + bw * 0.12 + w + 2, y: Y(rb.frames[f]), width: w, height: Y(0) - Y(rb.frames[f]), rx: 2, fill: "var(--base)" }, svg);
+    const hit = el("rect", { x, y: m.t, width: bw, height: H - m.b - m.t, fill: "transparent" }, svg);
+    hover(hit, `frame ${f}${pres.has(f) ? ` (${exObj} visible)` : ""}\nlearned   ${(100 * rl.frames[f]).toFixed(1)}%\nbias only ${(100 * rb.frames[f]).toFixed(1)}%`); }
+  ax(svg, { xc: (m.l + W - m.r) / 2, yb: H - 4, yc: (m.t + H - m.b) / 2, xlab: "Frame (0–31)", ylab: "Share of attention" });
+  const other = exObj === "sofa" ? "table" : "sofa";
+  const ownL = rl.on[exObj], ownB = rb.on[exObj], oL = rl.on[other], oB = rb.on[other];
+  const inPres = fr => fr.reduce((s, v, i) => s + (pres.has(i) ? v : 0), 0);
+  document.getElementById("ex-stats").innerHTML = [
+    [`On its own ${exObj} cells`, ownL, ownB], [`On the ${other} cells`, oL, oB], [`In frames where the ${exObj} is visible`, inPres(rl.frames), inPres(rb.frames)]
+  ].map(([n, a, b]) => `<div class="step"><div class="n">${n}</div><h3 style="font-family:var(--mono);font-size:20px">${(100 * a).toFixed(1)}% <span style="font-size:13px;color:var(--ink3)">learned</span></h3><p>${(100 * b).toFixed(1)}% under the 3D bias alone (${(a / b).toFixed(1)}×)</p></div>`).join("");
+  const top = rl.frames.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]);
+  const box = document.getElementById("ex-frames"); box.innerHTML = "";
+  top.forEach(f => { const fig = document.createElement("figure"); const cv = document.createElement("canvas"); cv.width = 640; cv.height = 480; fig.append(cv);
+    const cap = document.createElement("figcaption"); cap.textContent = `frame ${f}: ${(100 * rl.frames[f]).toFixed(1)}% learned, ${(100 * rb.frames[f]).toFixed(1)}% bias${pres.has(f) ? ` · ${exObj} visible` : ""}`; fig.append(cap); box.append(fig);
+    const im = imgs[f], paint = () => { const ctx = cv.getContext("2d"); ctx.drawImage(im, 0, 0, 640, 480); ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 0, 640, 480);
+      for (let n = 0; n < 300; n++) { const a = rl.cells[f * 300 + n] / 255; if (a <= 0) continue; ctx.fillStyle = `rgba(255,214,10,${(0.1 + 0.9 * a).toFixed(3)})`; ctx.fillRect((n % 20) * 32, Math.floor(n / 20) * 32, 32, 32); }
+      ctx.strokeStyle = css("--o4"); ctx.lineWidth = 3; const mk = D.masks.sam3[exObj].f;
+      for (let n = 0; n < 300; n++) if (mk[f * 300 + n] > 64) ctx.strokeRect((n % 20) * 32 + 1.5, Math.floor(n / 20) * 32 + 1.5, 29, 29); };
+    im.complete ? paint() : im.addEventListener("load", paint); });
+  const CAP = {
+    "sofa:0": "Layer 0: the bias alone would keep half of the sofa's attention on the sofa itself. The learned attention keeps 36% there and sends 3× more than the bias to the table, the answer. It stays in the sofa's own frames (7–12).",
+    "sofa:1": "Layer 1: the learned attention leaves the sofa. Frames 16 and 18, where the room door is, get about as much as the sofa's own frames 8–10, and only 20% stays on the sofa against 46% under the bias.",
+    "sofa:2": "Layer 2: the widest reading. The largest share goes to frame 6, the window and lamp, and to frame 30 at the far end of the video; 17% stays on the sofa against 47% under the bias.",
+  };
+  document.getElementById("ex-cap").textContent = CAP[`${exObj}:${exL}`] || `From the table's cells at layer ${exL}. The table is visible in frames 5 and 7–15; compare how much of its attention stays on itself and how much reaches the sofa.`;
+}
+const exSet = () => { ["sofa", "table"].forEach(o => document.getElementById("ex-" + o).setAttribute("aria-pressed", o === exObj)); LAYERS.forEach(L => document.getElementById("ex-l" + L).setAttribute("aria-pressed", L === exL)); exDraw(); };
+["sofa", "table"].forEach(o => document.getElementById("ex-" + o).onclick = () => { exObj = o; exSet(); });
+LAYERS.forEach(L => document.getElementById("ex-l" + L).onclick = () => { exL = L; exSet(); });
+exDraw();
+document.getElementById("t-scale").innerHTML = LAYERS.map(L => { const s = EX.scale[L], f = EX.flow[L];
+  return `<tr><td>${L}</td><td class="num">${s.qk_logit_std.toFixed(1)}</td><td class="num">${s.bias_std.toFixed(1)}</td><td class="num">${(100 * f.self).toFixed(1)}%</td><td class="num">${(100 * f.same_frame).toFixed(1)}%</td><td class="num">${(100 * f.other_near).toFixed(1)}%</td><td class="num">${(100 * f.other_far).toFixed(1)}%</td></tr>`; }).join("");
+document.getElementById("nu-heads").textContent = LAYERS.map(L => `layer ${L}: ` + EX.scale[L].nu.map(v => v.toFixed(2).padStart(5)).join(" ")).join("\n");
+</script>
+</body></html>

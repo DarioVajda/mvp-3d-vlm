@@ -1,0 +1,13 @@
+{
+ "bench": "videomme",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": "results/train/2B_v9_fmix_additive_s1/branches/step10750/final.pt",
+ "arm": "additive",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 2700,
+ "overall": 46.666666666666664,
+ "long": 38.44444444444444,
+ "medium": 44.888888888888886,
+ "short": 56.666666666666664
+}

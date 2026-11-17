@@ -1,0 +1,7 @@
+2B_v7_lora_s0 train 210131 watch 210132
+2B_v7_additive_s0 train 210133 watch 210134
+2B_v7_xa3_both_s0 train 210135 watch 210136
+2B_v7_lora_s1 train 210137 watch 210138
+2B_v7_additive_s1 train 210139 watch 210140
+2B_v7_xa3_both_s1 train 210141 watch 210142
+watch_all 210144

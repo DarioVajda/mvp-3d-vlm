@@ -8,16 +8,22 @@
   * Step: `mb_per_step` micro-batches in total, spread over the GPUs: each rank runs mb_per_step / world_size of them
     one after the other (gradient accumulation). Different ranks and accumulation steps get different videos.
     The plan is the same for any world size, so a run on 1 GPU and on 4 GPUs sees the same steps.
+  * Frames: one count per step (step_frames), so every micro-batch of a step, on every rank, decodes the same number
+    of frames: no padding between sequences of different lengths and no rank waiting for a longer one.
 """
 import json
 import math
+import os
 import random
+import time
 from collections import defaultdict
+
+os.environ.setdefault("DECORD_EOF_RETRY_MAX", "40960")  # 4x decord's default: retries when seeking to the last frames
 
 import torch
 from torch.utils.data import Dataset
 
-from mvp.fusion.inputs import uniform_frames
+from mvp.fusion.inputs import media_frames
 from mvp.paths import DATA, TRAIN_ANN, TRAIN_MEDIA
 from mvp.reporting.train_examples import VLM3R_TASKS
 
@@ -60,7 +66,7 @@ def load_vlm3r(cap=3000, seed=0, dev_videos=0, dev_per_task=100):
     return out, dev
 
 
-def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150):
+def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150, return_held=False):
     """VSI-590K appearance-order questions (all 16,162: there are no more): (train, dev) lists of samples.
 
     Dev holds out whole videos: every video in `held_videos` (the VLM-3R dev videos, so a ScanNet scene is held out
@@ -91,7 +97,46 @@ def load_appearance(seed=0, held_videos=(), dev_videos=40, dev_q=150):
         train += [s for s in by_src[src] if s["video"] not in held]
         k = math.ceil(dev_q / len(by_src))
         dev += dev_src if len(dev_src) <= k else rng.sample(dev_src, k)
-    return train, dev
+    return (train, dev, held) if return_held else (train, dev)  # held: every held-out video, sampled into dev or not
+
+
+# VSI-590K question types that are VSI-Bench tasks (appearance order comes from load_appearance), in dev's task names.
+# Not used: relative_size_object, absolute_direction_object, relative_count, relative_*_camera (no VSI-Bench task) and
+# the image rows (no video). VSI-590K has no route-planning questions.
+VSI590K_TASKS = {"relative_direction_object": "rel_direction", "relative_distance_object": "rel_distance",
+                 "absolute_distance_object": "abs_distance", "absolute_size_object": "obj_size",
+                 "absolute_size_room": "room_size", "absolute_count": "counting"}
+
+
+def load_vsi590k(held_videos=()):
+    """VSI-590K's questions of the six VSI-Bench tasks other than appearance order, on every video source (ScanNet,
+    ScanNet++ v2, ARKitScenes, ADT, S3DIS, ProcTHOR), as samples. Skipped: videos in `held_videos` (dev, so no dev
+    scene is trained on), and videos that failed prep_vsi590k's decode check. None of the videos is a VSI-Bench test
+    scene (checked by scene id for ScanNet, ScanNet++ and ARKitScenes; ADT, S3DIS and ProcTHOR are not in VSI-Bench).
+    Templates are paraphrases of VSI-Bench's, some in other units (cm, inches); answers are letters or numbers."""
+    from mvp.train.prep_vsi590k import MANIFEST, media_path
+    ok = {p for p, r in json.loads(MANIFEST.read_text()).items() if r["ok"]}
+    held = set(held_videos)
+    out = []
+    for i, r in enumerate(map(json.loads, open(VSI590K))):
+        if "video" not in r or r["question_type"] not in VSI590K_TASKS:
+            continue
+        video = media_path(r["video"])
+        if video in held or video not in ok:
+            continue
+        q = r["conversations"][0]["value"].replace("<image>", "").strip()
+        out.append({"id": f"vsi590k-{i}", "video": video, "task": VSI590K_TASKS[r["question_type"]], "question": q,
+                    "answer": r["conversations"][1]["value"].strip()})
+    return out
+
+
+def cap_per_task(samples, cap, seed=0):
+    """At most `cap` samples per task (seeded, uniform over the pooled sources)."""
+    rng = random.Random(f"cap-{seed}")
+    by_task = defaultdict(list)
+    for s in samples:
+        by_task[s["task"]].append(s)
+    return [s for t in sorted(by_task) for s in (by_task[t] if len(by_task[t]) <= cap else rng.sample(by_task[t], cap))]
 
 
 def score_answer(pred, answer):
@@ -136,18 +181,53 @@ def rank_steps(mbs, mb_per_step, world_size, rank):
     return steps
 
 
+def step_frames(n_steps, mix, seed, epoch):
+    """Frame count of each of an epoch's n_steps steps. mix: {frames: percent}, percentages summing to 100; each count
+    gets its share of the steps exactly (largest remainder), in a seeded order that depends only on (seed, epoch),
+    so a wsd branch that resumes mid-epoch sees the trunk's counts."""
+    ks = sorted(mix)
+    exact = [mix[k] / 100 * n_steps for k in ks]
+    counts = [math.floor(x) for x in exact]
+    for i in sorted(range(len(ks)), key=lambda i: counts[i] - exact[i])[:n_steps - sum(counts)]:
+        counts[i] += 1
+    out = [k for k, c in zip(ks, counts) for _ in range(c)]
+    random.Random(f"frames-{seed}-{epoch}").shuffle(out)
+    return out
+
+
+def load_mix(path):
+    """Samples of a training mix built by mvp.train.mix (one JSON object per line)."""
+    return [json.loads(l) for l in open(path)]
+
+
 class MicroBatches(Dataset):
-    """Model-ready micro-batches (InputBuilder.build output + metadata), decoded in DataLoader workers."""
+    """Model-ready micro-batches (InputBuilder.build output + metadata), decoded in DataLoader workers. nframes: one
+    count for all micro-batches, or one per micro-batch. A sample's "media" (a path under TRAIN_MEDIA or a list of
+    them; default: its "video") is what is decoded, and its "frames", if set, overrides the count (questions that name
+    frames, e.g. "frame 3 of 32"); mvp.train.mix gives such samples a group key of their own, so all samples of a
+    micro-batch share media and count."""
 
     def __init__(self, mbs, builder, nframes=8):
-        self.mbs, self.builder, self.nframes = mbs, builder, nframes
+        self.mbs, self.builder = mbs, builder
+        self.nframes = [nframes] * len(mbs) if isinstance(nframes, int) else nframes
+        assert len(self.nframes) == len(mbs), (len(self.nframes), len(mbs))
 
     def __len__(self):
         return len(self.mbs)
 
     def __getitem__(self, i):
         mb = self.mbs[i]
-        frames, idx = uniform_frames(TRAIN_MEDIA / mb[0]["video"], self.nframes)
+        media = mb[0].get("media", mb[0]["video"])
+        media = [TRAIN_MEDIA / p for p in media] if isinstance(media, list) else TRAIN_MEDIA / media
+        k = mb[0].get("frames") or self.nframes[i]
+        for attempt in range(6):  # decord occasionally fails to seek near the end of a video under load (EOF retry
+            try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises.
+                frames, idx = media_frames(media, k)  # 3 attempts 2 s apart once failed (v9 lora_s0)
+                break
+            except Exception as e:
+                if attempt == 5:
+                    raise RuntimeError(f"cannot decode {media} ({k} frames)") from e
+                time.sleep(5 * (attempt + 1))
         batch = self.builder.build(frames, [s["question"] for s in mb], [s["answer"] for s in mb])
         batch["meta"] = {"video": mb[0]["video"], "ids": [s["id"] for s in mb], "tasks": [s["task"] for s in mb],
                          "frame_indices": idx}

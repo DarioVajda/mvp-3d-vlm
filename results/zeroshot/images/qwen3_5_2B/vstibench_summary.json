@@ -1,0 +1,19 @@
+{
+ "bench": "vstibench",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": null,
+ "arm": "base",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 5710,
+ "overall": 45.59727532423743,
+ "camera_displacement": 21.891566265060245,
+ "camera_movement_direction": 27.472527472527474,
+ "camera_obj_abs_dist": 40.631929046563194,
+ "camera_obj_rel_dist_v1": 37.362637362637365,
+ "camera_obj_rel_dist_v2": 49.693251533742334,
+ "camera_obj_rel_dist_v3": 57.931844888366626,
+ "obj_obj_relative_pos_lr": 58.80398671096345,
+ "obj_obj_relative_pos_nf": 52.34657039711191,
+ "obj_obj_relative_pos_ud": 64.24116424116424
+}

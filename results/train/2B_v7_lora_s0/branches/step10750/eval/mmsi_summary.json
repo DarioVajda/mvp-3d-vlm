@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_v7_lora_s0/branches/step10750/final.pt",
+ "arm": "lora",
+ "n": 1000,
+ "Attribute (Appr.)": 33.3,
+ "Attribute (Meas.)": 23.4,
+ "MSR": 19.7,
+ "Motion (Cam.)": 10.8,
+ "Motion (Obj.)": 23.7,
+ "Positional Relationship (Cam.\u2013Cam.)": 21.5,
+ "Positional Relationship (Cam.\u2013Obj.)": 34.9,
+ "Positional Relationship (Cam.\u2013Reg.)": 24.1,
+ "Positional Relationship (Obj.\u2013Obj.)": 25.5,
+ "Positional Relationship (Obj.\u2013Reg.)": 27.1,
+ "Positional Relationship (Reg.\u2013Reg.)": 28.4,
+ "overall": 24.2,
+ "parse_rate": 100.0
+}

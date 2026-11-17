@@ -1,0 +1,4 @@
+2B_v8_xa3_deep_s0 train 211853 watch 211854
+2B_v8_xa3_late_s0 train 211855 watch 211856
+2B_v8_xa3_deep_s1 train 211857 watch 211858
+2B_v8_xa3_late_s1 train 211859 watch 211860

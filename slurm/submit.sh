@@ -24,7 +24,7 @@ LOGS=$ROOT/logs${LOGDIR:+/$LOGDIR}
 mkdir -p "$LOGS"
 
 out=$(sbatch --parsable -p frida -A povejmo -c 16 --mem 128G -t 01:00:00 --gres gpu:1 \
-    --constraint 'GPU_BRD:B300|GPU_BRD:B200' \
+    --constraint 'GPU_BRD:B300|GPU_BRD:B200|GPU_BRD:H100' \
     -J mvp -o "$LOGS/%x_%j.out" "${opts[@]}" \
     --wrap "srun --export=ALL,MELLANOX_VISIBLE_DEVICES=none --container-image=$CONTAINER --container-mounts=/shared:/shared \
         env HOME=$HOME PYTHONUNBUFFERED=1 \

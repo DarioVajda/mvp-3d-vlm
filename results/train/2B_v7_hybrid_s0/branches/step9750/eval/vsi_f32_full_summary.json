@@ -1,0 +1,23 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "images",
+ "fusion_ckpt": "results/train/2B_v7_hybrid_s0/branches/step9750/final.pt",
+ "arm": "hybrid",
+ "nframes": 32,
+ "sampling": "qwen",
+ "vggt_root": "/shared/workspace/povejmo/math/projects/mvp/data/vggt",
+ "layout": "sit",
+ "system": "You are a helpful assistant.",
+ "fps": null,
+ "split": "full",
+ "n": 5130,
+ "object_counting": 70.42477876106196,
+ "object_abs_distance": 54.34052757793766,
+ "object_size_estimation": 74.42812172088144,
+ "room_size_estimation": 71.11111111111111,
+ "object_rel_distance": 69.01408450704226,
+ "object_rel_direction": 85.90388426503623,
+ "route_planning": 40.72164948453608,
+ "obj_appearance_order": 77.831715210356,
+ "overall": 67.97198407974534
+}

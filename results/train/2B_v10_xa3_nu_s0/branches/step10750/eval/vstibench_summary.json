@@ -1,0 +1,19 @@
+{
+ "bench": "vstibench",
+ "model": "Qwen/Qwen3.5-2B",
+ "fusion_ckpt": "results/train/2B_v10_xa3_nu_s0/branches/step10750/final.pt",
+ "arm": "xattn_aligned",
+ "limit": null,
+ "max_new_tokens": 16,
+ "n": 5710,
+ "overall": 51.77233442057158,
+ "camera_displacement": 26.385542168674696,
+ "camera_movement_direction": 43.07692307692308,
+ "camera_obj_abs_dist": 42.59423503325943,
+ "camera_obj_rel_dist_v1": 60.43956043956044,
+ "camera_obj_rel_dist_v2": 67.89366053169734,
+ "camera_obj_rel_dist_v3": 80.25851938895417,
+ "obj_obj_relative_pos_lr": 33.222591362126245,
+ "obj_obj_relative_pos_nf": 50.54151624548736,
+ "obj_obj_relative_pos_ud": 61.53846153846154
+}

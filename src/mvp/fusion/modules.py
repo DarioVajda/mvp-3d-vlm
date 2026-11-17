@@ -113,7 +113,11 @@ class RMSNorm(nn.Module):
 
 
 class AdditiveMerger(nn.Module):
-    def __init__(self, in_dim=2048, hidden=4096, out_dim=2560, merge=2, zero_init=True):
+    """xa_head (hybrid arm): a second output layer `xa` of the same shape on the shared trunk (ln, mlp[0], GELU), with
+    the default (non-zero) init; forward then returns (mlp[2] output, xa output): the zero-initialised tokens to add and
+    the tokens for AlignedXAttn's keys / values."""
+
+    def __init__(self, in_dim=2048, hidden=4096, out_dim=2560, merge=2, zero_init=True, xa_head=False):
         super().__init__()
         self.merge = merge
         self.ln = RMSNorm(in_dim)
@@ -121,12 +125,24 @@ class AdditiveMerger(nn.Module):
         if zero_init:  # off when the tokens feed AlignedXAttn's keys / values: there the zero sits in its W_o instead
             nn.init.zeros_(self.mlp[2].weight)
             nn.init.zeros_(self.mlp[2].bias)
+        self.xa = nn.Linear(hidden, out_dim) if xa_head else None
 
     def forward(self, grid):  # grid [h, w, in_dim] patch tokens of one frame -> [(h/2)*(w/2), out_dim]
         h, w, c = grid.shape  # in the row-major order of Qwen's merged visual tokens
         m = self.merge
         x = self.ln(grid).view(h // m, m, w // m, m, c).permute(0, 2, 1, 3, 4).reshape(-1, m * m * c)
-        return self.mlp(x)
+        if self.xa is None:
+            return self.mlp(x)
+        z = self.mlp[1](self.mlp[0](x))
+        return self.mlp[2](z), self.xa(z)
+
+
+def per_head(init, heads):
+    """Initial values of a per-head slope: `init` for every head, or (lo, hi) log-spaced over the heads."""
+    if isinstance(init, (int, float)):
+        return torch.full((heads,), float(init))
+    lo, hi = init
+    return torch.logspace(math.log10(lo), math.log10(hi), heads)
 
 
 class AlignedXAttn(nn.Module):
@@ -143,18 +159,25 @@ class AlignedXAttn(nn.Module):
     the token's (t~, r, c): 10 pairs by t~, 11 by r, 11 by c, fixed frequencies theta^(-j / n_axis); the rest of the
     head carries no position. t~ = t * (train_frames - 1) / (T - 1) puts the frames of any video on the training range,
     so 32 evaluation frames fall between the 8 trained positions instead of past them. q.k then depends only on the
-    offset between query and key. The locality bias (local_bias=True) has one learned slope pair (lam_h, mu_h) per head.
+    offset between query and key. The locality bias (local_bias=True) has one learned slope pair (lam_h, mu_h) per head,
+    init lam (or log-spaced over the heads from lam = (lo, hi), as nu below) and mu.
     W_o is zero-initialised: the block adds nothing at init. Returns the update to add to the visual tokens only.
 
     pe="3d" (needs the video's ScenePoints, mvp.fusion.points; xyz in merged-cell units, camera-0 frame) replaces both:
       RoPE: 8 pairs each for (t~, x, y, z); t~ as above with theta^(-j / 8); x, y, z with 2 pi / w_j, wavelengths w_j
             geometric from 1.5 to 100 cells (W3D)
-      bias: -nu_h * min(|xyz_i - xyz_j|, d_max) (ScenePoints.dist), one learned slope nu_h per head, init nu
+      bias: -nu_h * min(|xyz_i - xyz_j|, d_max) (ScenePoints.dist), one learned slope nu_h per head, init nu (or
+            log-spaced over the heads from nu = (lo, hi), so heads start at different locality scales)
+
+    Text queries (`text`): any other token of the sequence reads the same keys and values through the same W_q, W_o.
+    It has no position in the scene, so its query carries no position signal either: its rotated pairs are zero (it
+    matches keys on the unrotated pairs only) and its bias row is zero.
     """
 
     AXES = (10, 11, 11)   # rotary pairs for (t~, r, c)
     AXES_3D = (8, 8, 8, 8)  # rotary pairs for (t~, x, y, z)
     W3D = (1.5, 100.0)    # shortest and longest wavelength of the x, y, z pairs, in cells
+    QUERY_CHUNK = 4096    # query rows per attention call at inference (forward)
 
     def __init__(self, dim, heads, rope=True, local_bias=True, lam=1.5, mu=3.0, train_frames=8, theta=100.0, pe="grid",
                  nu=1.5):
@@ -165,11 +188,11 @@ class AlignedXAttn(nn.Module):
         self.norm_q, self.norm_kv = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.q, self.k, self.v, self.o = (nn.Linear(dim, dim, bias=False) for _ in range(4))
         nn.init.zeros_(self.o.weight)
-        if local_bias and pe == "grid":
-            self.lam = nn.Parameter(torch.full((heads,), float(lam)))
+        if local_bias and pe == "grid":  # lam: one init for every head, or (lo, hi): log-spaced over the heads
+            self.lam = nn.Parameter(per_head(lam, heads))
             self.mu = nn.Parameter(torch.full((heads,), float(mu)))
-        if local_bias and pe == "3d":
-            self.nu = nn.Parameter(torch.full((heads,), float(nu)))
+        if local_bias and pe == "3d":  # nu: likewise
+            self.nu = nn.Parameter(per_head(nu, heads))
         if rope:
             axes = self.AXES if pe == "grid" else self.AXES_3D
             assert 2 * sum(axes) <= self.head_dim, (axes, self.head_dim)
@@ -209,31 +232,60 @@ class AlignedXAttn(nn.Module):
         cos, sin = cos.to(x.dtype), sin.to(x.dtype)
         return torch.cat([x1 * cos - x2 * sin, x2 * cos + x1 * sin, rest], -1)
 
-    def bias(self, pos, dtype, pts=None):
-        """Additive attention mask [1, H, N, N]: -lam_h * (|dr| + |dc|) - mu_h * [t != t'], or -nu_h * dist (pe="3d")."""
+    def bias(self, pos, dtype, pts=None, rows=slice(None)):
+        """Additive attention mask [1, H, n, N] of the query rows `rows` (all N by default): -lam_h * (|dr| + |dc|) -
+        mu_h * [t != t'], or -nu_h * dist (pe="3d")."""
         if self.pe == "3d":
-            return -(self.nu[:, None, None] * pts.dist)[None].to(dtype)
+            return -(self.nu[:, None, None] * pts.dist[rows])[None].to(dtype)
         p = pos.float()
-        d = (p[:, None, 1:] - p[None, :, 1:]).abs().sum(-1)
-        other = (p[:, None, 0] != p[None, :, 0]).float()
+        d = (p[rows, None, 1:] - p[None, :, 1:]).abs().sum(-1)
+        other = (p[rows, None, 0] != p[None, :, 0]).float()
         return -(self.lam[:, None, None] * d + self.mu[:, None, None] * other)[None].to(dtype)
 
-    def project(self, y, g, pos, pts=None):
+    def keys(self, g, pos, pts=None):
+        """Keys (rotated) and values of the geometry tokens g [N, D]: [1, H, N, d] each. They depend on the video only,
+        so a caller may compute them once and pass them as `kv` to every call on the same video."""
         assert self.pe == "grid" or pts is not None, "pe='3d' needs the video's ScenePoints"
-        B, N, _ = y.shape
-        split = lambda t: t.view(t.shape[0], N, self.heads, self.head_dim).transpose(1, 2)
+        split = lambda t: t.view(1, len(g), self.heads, self.head_dim).transpose(1, 2)
         gn = self.norm_kv(g)[None]
-        q, k, v = split(self.q(self.norm_q(y))), split(self.k(gn)), split(self.v(gn))
+        k, v = split(self.k(gn)), split(self.v(gn))
         if self.rope:
             cos, sin = self.rotary(pos, pts)
-            q, k = self.apply_rotary(q, cos, sin), self.apply_rotary(k, cos, sin)
+            k = self.apply_rotary(k, cos, sin)
+        return k, v
+
+    def project(self, y, g, pos, pts=None, kv=None):
+        B, N, _ = y.shape
+        k, v = kv if kv is not None else self.keys(g, pos, pts)
+        q = self.q(self.norm_q(y)).view(B, N, self.heads, self.head_dim).transpose(1, 2)
+        if self.rope:
+            cos, sin = self.rotary(pos, pts)
+            q = self.apply_rotary(q, cos, sin)
         return q, k.expand(B, -1, -1, -1), v.expand(B, -1, -1, -1)
 
-    def forward(self, y, g, pos, pts=None):  # y [B, N, D] visual tokens; g [N, D] geometry; pos [N, 3]; pts: ScenePoints
+    def text(self, x, kv):
+        """Update of M text tokens x [M, D] (from any sequences about the video): attention over the keys / values
+        kv = keys(...) with no position signal (rotated query pairs zero, no bias). [M, D]"""
+        k, v = kv
+        q = self.q(self.norm_q(x)).view(1, len(x), self.heads, self.head_dim).transpose(1, 2)
+        if self.rope:
+            q = torch.cat([torch.zeros_like(q[..., :2 * len(self.rope_freq)]), q[..., 2 * len(self.rope_freq):]], -1)
+        out = F.scaled_dot_product_attention(q, k.to(q.dtype), v.to(q.dtype))
+        return self.o(out.transpose(1, 2).reshape(len(x), -1))
+
+    def forward(self, y, g, pos, pts=None, kv=None):  # y [B, N, D] visual tokens; g [N, D] geometry; pos [N, 3]; pts: ScenePoints
         B, N, D = y.shape
-        q, k, v = self.project(y, g, pos, pts)
-        mask = self.bias(pos, q.dtype, pts) if self.local_bias else None
-        out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+        q, k, v = self.project(y, g, pos, pts, kv)
+        if self.local_bias and not torch.is_grad_enabled() and N > self.QUERY_CHUNK:
+            # inference on long videos: the [H, N, N] mask (tens of GB at 128 frames) is built QUERY_CHUNK rows at a
+            # time; the same attention, row by row
+            out = torch.cat([F.scaled_dot_product_attention(q[:, :, i:i + self.QUERY_CHUNK], k, v,
+                                                            attn_mask=self.bias(pos, q.dtype, pts,
+                                                                                slice(i, i + self.QUERY_CHUNK)))
+                             for i in range(0, N, self.QUERY_CHUNK)], 2)
+        else:
+            mask = self.bias(pos, q.dtype, pts) if self.local_bias else None
+            out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
         return self.o(out.transpose(1, 2).reshape(B, N, D))
 
     @torch.no_grad()
@@ -245,7 +297,7 @@ class AlignedXAttn(nn.Module):
         idx = torch.linspace(0, y.shape[1] - 1, min(n_query, y.shape[1]), device=y.device).long()
         logits = (q[0][:, idx].float() @ k[0].float().transpose(-1, -2)) / math.sqrt(self.head_dim)  # [H, n, N]
         if self.local_bias:
-            logits = logits + self.bias(pos, torch.float, pts)[0][:, idx]
+            logits = logits + self.bias(pos, torch.float, pts, idx)[0]
         a = logits.softmax(-1)
         own = a[:, torch.arange(len(idx)), idx]
         same = (pos[None, :, 0] == pos[idx, 0][:, None]).float()  # [n, N]
