@@ -19,7 +19,7 @@ DEFAULT_SCENE = "scannet/scene0025_01"
 # Objects named in the VSI-Bench questions of scannet/scene0025_01 (questions.jsonl)
 SCENE0025_PROMPTS = ["chair", "door", "fan", "keyboard", "monitor", "pillow", "sofa", "table", "telephone", "window"]
 
-# smoke5: five nearby frames, so objects can reach the 3 frames milestone 4 needs to keep a track.
+# smoke5: five nearby frames, so objects are seen in several frames and tracking is exercised.
 # eval32: the uniform32 subset the group's experiments already use (meta.json).
 # half: every other frame (0, 2, ..., 126), half the cost of all 128.
 PRESETS = {"smoke5": "window:118:5:2", "eval32": "subset:uniform32", "half": "window:0:64:2", "all": "all"}

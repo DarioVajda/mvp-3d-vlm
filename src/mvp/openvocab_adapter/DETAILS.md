@@ -234,15 +234,18 @@ When a scene says `DIFFERS`, look here:
 
 ## Running the tests without a GPU
 
-The tests need only numpy, Pillow and a CPU build of torch. They run the real milestone scripts and the scene sheet
-creator on a small synthetic scene, with SAM 3, VGGT, `cv2` and `rerun` replaced by small fakes. From the repository
-root:
+The tests need only numpy, Pillow and torch (a CPU build is enough), plus spaCy, its `en_core_web_md` model and NLTK
+for the prompt extractor's tests; all are in the repository's `requirements.txt`. They run the real milestone scripts
+and the scene sheet creator on a small synthetic scene, with SAM 3, VGGT, `cv2` and `rerun` replaced by small fakes.
+From any folder, on Linux or in Git Bash on Windows:
 
 ```bash
-python -m unittest discover -s src/mvp/openvocab_adapter/tests      # on Windows: py -m unittest ...
+bash src/mvp/openvocab_adapter/run_tests.sh             # uses .venv; PYTHON=... for another; extra arguments go to unittest
 ```
 
-They should end with `OK`. A few tests are skipped where they don't apply, for example the tests for a machine without
+It checks the packages first, then runs `python -m unittest discover -s src/mvp/openvocab_adapter/tests -v` from the
+repository root with the venv's Python. The tests start the pipeline scripts with that same Python, so on Windows don't
+run them with `py`, which is usually another Python. They should end with `OK`. A few tests are skipped where they don't apply, for example the tests for a machine without
 a GPU when one is present.
 
 ## Running the steps by hand
@@ -261,7 +264,8 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
    py src/mvp/openvocab_adapter/sam3_infer.py --images $frames --frames all --prompts $prompts --out "$scene/masks" --overlays
    ```
 2. **Adapt the saved VGGT outputs (CPU).** `--dense-dir` is the folder with `depth.npy` and `depth_conf.npy`. Without it,
-   only the cameras are written, and tracking can't run.
+   only the cameras are written, and tracking can't run, unless `--patch-depth` approximates the depth from the patch
+   points (not for the comparison).
    ```powershell
    py src/mvp/openvocab_adapter/adapt_vggt.py --preset half --dense-dir <dense folder> --out "$scene/half/adapted" --overwrite
    ```
@@ -312,17 +316,24 @@ The question is one string and doesn't have to be one of the scene's `questions.
 | Step | What happens |
 |---|---|
 | Prompts | `prompt_object_extractor.py` picks the SAM 3 prompts: the physical things the question names. If it finds none, its syntactic mode is tried instead (every noun phrase). If that finds none either, `objects.csv` has only its header row, and `cameras.csv` is written as usual |
-| Geometry | `adapt_vggt.py` validates the saved cameras and dense depth and writes them in OpenVocab-4D's format. The dense depth is read from `data/vggt/<dataset>/<scene>/` (or `--dense-dir`, or `$DENSE_ROOT`). Without it the script stops: depth is never approximated |
+| Geometry | `adapt_vggt.py` validates the saved cameras and dense depth and writes them in OpenVocab-4D's format. The dense depth is read from `data/vggt/<dataset>/<scene>/` (or `--dense-dir`, or `$DENSE_ROOT`). Without it the script stops, unless `--patch-depth-fallback` is given (see below) |
 | SAM 3 | `sam3_infer.py` segments every prompt in every selected frame |
 | Tracking | OpenVocab-4D's track stage links the masks into objects, with DINOv2 re-identification. The fuse stage is not run, because the scene sheet only needs the tracks |
 | Sheet | `scene_sheet_creator.py` writes the two CSVs, with the size columns and one 0/1 column per frame |
 
-**Defaults that differ from the comparison:** all 128 frames (the comparison uses 64), and re-identification on (the
-comparison ran with `--no-reid`). So a sheet from this script is not expected to equal the comparison's sheet for the
-same scene. `--frames half --no-reid` gives the comparison's settings.
+**Defaults that differ from the comparison:** 16 frames uniformly sampled from the 128 (`subset:uniform16` of
+`meta.json`, the frames the VLM sees with `--sampling uniform128`; the comparison uses 64), and re-identification on
+(the comparison ran with `--no-reid`). So a sheet from this script is not expected to equal the comparison's sheet for
+the same scene. `--frames half --no-reid` gives the comparison's settings, and `--frames all` uses all 128 frames.
 
-**What is kept and reused.** Everything goes to `tasks/openvocab_adapter/out/<dataset>__<scene>/all/` (`all` is the
-frame selection):
+The track stage drops tracks seen in too few frames, with a minimum that scales linearly with the number of frames:
+1 of 16, 2 of 64, 4 of 128 (`min_track_frames` in `milestone4_video.py`, which records the value it used in
+`tracks/summary.json`; `--min-track-frames N` there fixes it). With the default 16 frames nothing is dropped for being
+short, so an object only briefly in view still gets a row, and so can a one-frame false detection or a fragment of an
+object that tracking failed to link. Tracks made before this rule are made again from the saved masks.
+
+**What is kept and reused.** Everything goes to `tasks/openvocab_adapter/out/<dataset>__<scene>/subset-uniform16/`
+(`subset-uniform16` is the frame selection):
 
 ```
 scene/              the converted geometry (frames/, cameras.npz, depth.npz) and tracks/<prompt>.npz
@@ -334,15 +345,16 @@ Tracks are independent between prompts. A later question about the same scene th
 for prompts that have no tracks yet, and a question that names only known objects just rebuilds the sheet. Two
 questions that name the same objects, in the same order, share one sheet folder. Tracks made with other settings
 (re-identification, SAM 3 backend, thresholds) are made again from the saved masks. `--fresh` discards the scene's
-geometry, masks and tracks first. `RUNS=all` of the comparison deletes this folder too, since it uses the same
-`out/<dataset>__<scene>/all/`.
+geometry, masks and tracks first. With `--frames all`, the work goes to `out/<dataset>__<scene>/all/`, which `RUNS=all`
+of the comparison deletes too, since it uses the same folder.
 
 Options (`--help` lists all of them):
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--frames` | `all` | A preset (`half`, `eval32`, `smoke5`, `all`) or a selection such as `uniform:32`. `frame_<t>` in the sheet counts the selected frames, and `cameras.csv` names each one's image |
+| `--frames` | `subset:uniform16` | 16 uniformly sampled frames of the 128, the VLM's. A preset (`half`, `eval32`, `smoke5`, `all`) or a selection such as `uniform:32`. `frame_<t>` in the sheet counts the selected frames, and `cameras.csv` names each one's image |
 | `--dense-dir` | `data/vggt/<dataset>/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
+| `--patch-depth-fallback` | off | Without the dense depth, approximate it from the export's patch points instead of stopping (also in `scene_sheet_report.py`) |
 | `--out-dir` | `<work>/sheets/<prompts>` | Where the two CSVs go |
 | `--work-dir` | `out/<dataset>__<scene>/<frames>` | Where geometry, masks and tracks are kept |
 | `--no-reid` | off | Track without DINOv2 re-identification |
@@ -355,6 +367,14 @@ Things to know:
 - **It needs the environment from `hpc/setup_env.sh`**, which now also installs spaCy, its `en_core_web_md` model and
   NLTK for the prompt extractor. An environment set up before that needs the setup job once more:
   `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash src/mvp/openvocab_adapter/hpc/setup_env.sh`.
+- **Without `data/vggt/`, `--patch-depth-fallback` makes a sheet from the exported scene alone.** Each 14×14 patch gets
+  the camera depth of its patch point (the median of VGGT's points in that patch) and its mean confidence
+  (`adapt_vggt.py --patch-depth`). A warning is printed on every run, `question.json` records `"depth": "patch_points"`,
+  and `adapter_report.json` records `"depth_source": "patch_points"`. Object outlines are blocky at that resolution, so
+  positions are coarser and sizes can take in a strip of background; on the synthetic test scene, centres move by
+  under 5% of the object's size and volumes are about 10% smaller. Once the dense depth is found, the scene is
+  converted and tracked again with it (the SAM 3 masks are kept). The comparison jobs in `hpc/` always use the dense
+  depth.
 - **Re-identification loads DINOv2 through `torch.hub`**, which downloads it the first time. If the job has no
   network access and no cached copy, pass `--no-reid`.
 - **A question with an apostrophe can't be passed through `slurm/submit.sh`**, because of how it quotes the command.
@@ -404,6 +424,7 @@ an error. Pass `--no-frames --no-cameras` for a pipeline sheet with the same col
 | `compare.py` | Compares an adapted run with a native run, including their scene sheets, and gives the verdict |
 | `common.py` | Paths, frame-selection presets and small helpers |
 | `tests/` | CPU-only tests |
+| `run_tests.sh` | Checks the packages the tests need, then runs them with the repository's `.venv` |
 | `tasks/openvocab_adapter/results/` | The small result files committed from the cluster |
 | `tasks/openvocab_adapter/out/` | The large intermediate files (gitignored) |
 | `openvocab-4D-main/trackA/saved_masks.py` | Lets milestones 3 and 4 reuse saved masks (`--masks-dir`) instead of running SAM 3 |

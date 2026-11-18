@@ -66,7 +66,19 @@ def parse_args():
                    help="re-id search radius as a fraction of the scene diagonal")
     p.add_argument("--masks-dir", default=None,
                    help="reuse saved SAM 3 masks from this folder in stage track instead of running SAM 3")
+    p.add_argument("--min-track-frames", type=int, default=None,
+                   help="frames a track must be seen in to be kept (default: scales linearly with the number of "
+                        "frames, 1 at 16 frames and 4 at 128, at least 1)")
     return p.parse_args()
+
+
+def min_track_frames(num_frames):
+    """Frames a track must be seen in to be kept: linear in the number of frames, 1 at 16 and 4 at 128, at least 1.
+
+    A fixed minimum would drop most objects of a short, sparse selection (16 frames ~8 apart) while barely filtering
+    flicker in a dense one, so the minimum grows with the frame count.
+    """
+    return max(1, round(1 + 3 * (num_frames - 16) / 112))
 
 
 # rerun must be imported+initialized before torch on this machine (heap
@@ -474,9 +486,12 @@ def stage_track(frames):
                "seconds": round(time.perf_counter() - tp, 1), "peak_vram_gib": round(peak, 2)}
     if saved:
         summary["saved_masks"] = saved.describe()
+    min_frames = ARGS.min_track_frames if ARGS.min_track_frames is not None else min_track_frames(S)
+    summary["min_track_frames"] = min_frames
+    print(f"[track] keeping tracks seen in at least {min_frames} of {S} frames")
     for pi, prompt in enumerate(prompts):
-        stable = {tid: tr for tid, tr in tracks[pi].items() if tr["frames"] >= 3}
-        # drop flicker tracks (seen <3 frames) from the volume
+        stable = {tid: tr for tid, tr in tracks[pi].items() if tr["frames"] >= min_frames}
+        # drop flicker tracks (seen in fewer than min_frames frames) from the volume
         vol = label_vols[pi]
         for tid in set(tracks[pi]) - set(stable):
             vol[vol == tid] = 0

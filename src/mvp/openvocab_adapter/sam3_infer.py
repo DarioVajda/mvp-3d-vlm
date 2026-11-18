@@ -93,8 +93,11 @@ def transformers_detector(torch):
 
     hub = os.environ.get("HF_HUB_CACHE", os.path.expanduser("~/.cache/huggingface/hub"))
     snapshot = os.path.join(hub, "models--facebook--sam3", "snapshots", SAM3_REV)
-    # facebook/sam3 is gated: the cached snapshot needs no Hub access; otherwise download that revision
-    source, kwargs = (snapshot, {}) if os.path.isdir(snapshot) else ("facebook/sam3", {"revision": SAM3_REV})
+    # facebook/sam3 is gated: the cached snapshot needs no Hub access; otherwise download that revision. The snapshot
+    # folder can exist with only Meta's sam3.pt in it, so it counts as cached only with transformers' weights (as in
+    # hpc/setup_env.sh)
+    cached = os.path.isfile(os.path.join(snapshot, "model.safetensors"))
+    source, kwargs = (snapshot, {}) if cached else ("facebook/sam3", {"revision": SAM3_REV})
     print(f"[sam3] transformers Sam3Model from {source}")
     processor = Sam3Processor.from_pretrained(source, **kwargs)
     model = Sam3Model.from_pretrained(source, **kwargs).to("cuda").eval()

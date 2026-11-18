@@ -12,8 +12,11 @@ For each VSI-Bench question about the scene, in the order of the scene's questio
 The sheet comes from one of two sources, each with its default settings:
 
   pipeline (default)  question_scene_sheet.create_scene_sheet(scene, question): SAM 3, then tracking on the saved VGGT
-                      outputs, 128 frames, size columns, one 0/1 column per frame, cameras.csv. Needs what
-                      question_scene_sheet.py needs: the OpenVocab-4D environment, a GPU, and the scene's dense depth.
+                      outputs, 16 uniformly sampled frames of the 128 (meta.json's uniform16, the VLM's frames), size
+                      columns, one 0/1 column per frame, cameras.csv. Needs what
+                      question_scene_sheet.py needs: the OpenVocab-4D environment, a GPU, and the scene's dense depth
+                      (or --patch-depth-fallback, which approximates it from the exported patch points, with a
+                      warning, where there is none).
   --source gold       the same prompts, then scene_sheet_creator.build_gold_scene_sheet: VSI-Bench's ground-truth
                       boxes, in metres, with the size columns (question_scene_sheet.py's default). Needs spaCy, NLTK
                       and numpy only, no GPU, and works for any of the 288 VSI-Bench scenes.
@@ -201,7 +204,7 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
     """Print the report of a scene's questions to out (default stdout). Returns one result dict per question.
 
     sheet_options go to question_scene_sheet.create_scene_sheet (pipeline only); the command line passes none but
-    --dense-dir, so that the sheets have the default settings.
+    --dense-dir and --patch-depth-fallback, so that the sheets have the default settings.
     """
     out = out or sys.stdout
     scene, rows = load_questions(scene, source, data_root, questions, gold_dir)
@@ -211,6 +214,9 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
     info = sheet.load_gold_scene(scene, gold_dir)[1] if source == "gold" else None
     what = "gold sheets (VSI-Bench's labels, metres, sizes)" if source == "gold" else "pipeline sheets (default settings)"
     print(f"Scene {scene}: {len(rows)} questions, {what}", file=out, flush=True)
+    if source == "pipeline" and sheet_options.get("patch_depth_fallback"):
+        print("--patch-depth-fallback: without the dense depth, the sheets' depth is approximated from the patch "
+              "points (each sheet's question.json says which depth it used)", file=out, flush=True)
 
     results = []
     for n, row in enumerate(rows, start=1):
@@ -266,14 +272,19 @@ def main(argv=None):
     p.add_argument("--limit", type=int, help="only the first N questions")
     p.add_argument("--data-root", help="folder holding the exported scenes/ (default: as question_scene_sheet.py)")
     p.add_argument("--dense-dir", help="pipeline: folder with the scene's depth.npy and depth_conf.npy")
+    p.add_argument("--patch-depth-fallback", action="store_true",
+                   help="pipeline: if the dense depth is not found, approximate it from the exported patch points "
+                        "(coarser, with a warning) instead of failing every question")
     p.add_argument("--work-dir", help="where geometry, masks, tracks and sheets are kept (default: "
-                                      "tasks/openvocab_adapter/out/<dataset>__<scene>/all, or .../gold)")
+                                      "tasks/openvocab_adapter/out/<dataset>__<scene>/subset-uniform16, or "
+                                      ".../gold)")
     p.add_argument("--gold-dir", help="gold: folder with VSI-Bench's metadata (default: as scene_sheet_creator.py)")
     args = p.parse_args(argv)
     missing = [m for m in ("spacy", "nltk", "en_core_web_md") if importlib.util.find_spec(m) is None]
     if missing:  # fail here, not once per question
         p.error(f"the prompt extractor needs {', '.join(missing)} in this Python; see prompt_object_extractor.py")
-    options = {"dense_dir": args.dense_dir} if args.source == "pipeline" else {}
+    options = ({"dense_dir": args.dense_dir, "patch_depth_fallback": args.patch_depth_fallback}
+               if args.source == "pipeline" else {})
     try:
         results = report(args.scene, args.source, args.data_root, args.questions, args.work_dir, args.gold_dir,
                          args.types, args.limit, **options)

@@ -16,3 +16,11 @@ einops
 peft==0.21.2
 opencv-python-headless
 wandb==0.31.0
+# prompt extractor (src/mvp/openvocab_adapter/prompt_object_extractor.py); WordNet's data is downloaded on first use
+spacy>=3.8,<3.9
+nltk
+en_core_web_md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl
+# OpenVocab-4D's milestone scripts (question_scene_sheet.py, scene_sheet_report.py). They also need VGGT from the clone
+# in openvocab-4D-main/vggt, installed without its dependencies (it pins numpy<2):
+#   uv pip install --python .venv --no-deps -e openvocab-4D-main/vggt
+rerun-sdk>=0.23

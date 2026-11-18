@@ -4,14 +4,18 @@ No model is run and the source data is only read. Output, in --out:
 
   frames/         byte-identical copies of the selected frames, under their original names
   cameras.npz     extrinsic [S,3,4] float32, intrinsic [S,3,3] float32, image_paths [S]
-  depth.npz       depth [S,H,W] float16, conf [S,H,W] float16; only with --dense-dir
-  adapter_report.json   selection, source frame indices, every validation result
+  depth.npz       depth [S,H,W] float16, conf [S,H,W] float16; only with --dense-dir or --patch-depth
+  adapter_report.json   selection, source frame indices, every validation result, where the depth came from
 
-Dense depth is never approximated from the patch points. Without --dense-dir, depth.npz is not written and the
-pipeline's track and fuse stages cannot run yet. The patch points are used only as validation data.
+With --dense-dir, depth.npz is VGGT's per-pixel depth, checked against the patch points. Without it, depth.npz is not
+written and the pipeline's track and fuse stages cannot run, unless --patch-depth asks for an approximation: each
+14x14 patch gets the camera depth of its exported patch point (the median of VGGT's points in that patch) and its
+mean confidence. That is coarser than the dense depth, so it comes with a warning and is recorded in
+adapter_report.json ("depth_source": "patch_points"). The comparison in hpc/ always uses the dense depth.
 
   py src/mvp/openvocab_adapter/adapt_vggt.py --preset smoke5
   py src/mvp/openvocab_adapter/adapt_vggt.py --preset eval32 --dense-dir <folder with depth.npy, depth_conf.npy>
+  py src/mvp/openvocab_adapter/adapt_vggt.py --preset eval32 --patch-depth
   py src/mvp/openvocab_adapter/adapt_vggt.py --frames list:0,40,80 --label three_frames
 """
 import argparse
@@ -224,6 +228,41 @@ def check_dense(checks, dense_dir, cams, patches, meta, selected):
     return depth, conf
 
 
+PATCH_DEPTH_WARNING = ("depth.npz is APPROXIMATED from the patch points, not VGGT's per-pixel depth: one depth per "
+                       "{P}x{P} patch. Object outlines are blocky, so positions are coarser and sizes can take in a "
+                       "strip of the background. Use --dense-dir where data/vggt/ is for the real depth.")
+
+
+def check_patch_depth(checks, cams, patches, meta, selected):
+    """Depth and confidence maps made from the patch points, when there is no dense depth. Returns ({t: depth},
+    {t: conf}) at the image size, or None.
+
+    Every pixel of a patch gets the camera depth of the patch's point and the patch's confidence. The patch point is
+    the median of VGGT's points in the patch (tasks/vggt_data/export.py), so this is the dense depth at 1/14 of the
+    resolution, without interpolation across object edges.
+    """
+    T, P = meta["num_frames"], meta["patch_size"]
+    gh, gw = meta["patch_grid_hw"]
+    xyz, patch_conf = patches.get("xyz"), patches.get("conf")
+    shapes = (None if xyz is None else xyz.shape, None if patch_conf is None else patch_conf.shape)
+    if not checks.add("patch depth: points and confidence of every patch", shapes == ((T, gh, gw, 3), (T, gh, gw)),
+                      f"{shapes}, expected {((T, gh, gw, 3), (T, gh, gw))}"):
+        return None
+    depth, conf = {}, {}
+    finite, nearest, lowest = True, np.inf, np.inf
+    for t in selected:
+        _, z = common.project(xyz[t].reshape(-1, 3), cams["extrinsic"][t], cams["intrinsic"][t])
+        z, c = z.reshape(gh, gw), patch_conf[t]
+        finite &= bool(np.isfinite(z).all() and np.isfinite(c).all())
+        nearest, lowest = min(nearest, float(z.min())), min(lowest, float(c.min()))
+        depth[t] = np.repeat(np.repeat(z, P, axis=0), P, axis=1).astype(np.float16)
+        conf[t] = np.repeat(np.repeat(c, P, axis=0), P, axis=1).astype(np.float16)
+    checks.add("patch depth: finite", finite)
+    checks.add("patch depth: every patch point is in front of its camera", nearest > 0, f"nearest {nearest:.3g}")
+    checks.add("patch depth: confidence is at least 1", lowest >= 1.0 - 1e-3, f"lowest {lowest:.3g}")
+    return depth, conf
+
+
 def resolve_out(args, meta, label, scene_dir, data_root):
     out = Path(args.out) if args.out else common.OUT_ROOT / f"{meta['dataset']}__{meta['scene']}" / label / "adapted"
     out = out.resolve()
@@ -245,7 +284,7 @@ def prepare_out(out, overwrite):
     (out / "frames").mkdir(parents=True, exist_ok=True)
 
 
-def write_outputs(out, frames, cams, selected, dense):
+def write_outputs(out, frames, cams, selected, depth_maps):
     copies = []
     for t in selected:
         copy = out / "frames" / frames[t].name
@@ -254,8 +293,8 @@ def write_outputs(out, frames, cams, selected, dense):
     # exactly what milestone 1 / milestone 4's "vggt" stage write
     np.savez(out / "cameras.npz", extrinsic=cams["extrinsic"][selected], intrinsic=cams["intrinsic"][selected],
              image_paths=np.array(copies))
-    if dense is not None:
-        depth, conf = dense
+    if depth_maps is not None:
+        depth, conf = depth_maps
         np.savez_compressed(out / "depth.npz", depth=np.stack([depth[t] for t in selected]).astype(np.float16),
                             conf=np.stack([conf[t] for t in selected]).astype(np.float16))
 
@@ -268,7 +307,11 @@ def parse_args(argv):
     group.add_argument("--preset", choices=sorted(common.PRESETS))
     group.add_argument("--frames", help="selection: all | uniform:K | subset:NAME | window:START:COUNT[:STRIDE] | list:a,b")
     p.add_argument("--label", help="name of this selection in the output path (default: the preset or the spec)")
-    p.add_argument("--dense-dir", help="folder with the saved depth.npy and depth_conf.npy for this scene")
+    depth = p.add_mutually_exclusive_group()
+    depth.add_argument("--dense-dir", help="folder with the saved depth.npy and depth_conf.npy for this scene")
+    depth.add_argument("--patch-depth", action="store_true",
+                       help="no dense depth: write depth.npz approximated from the patch points (coarser, with a "
+                            "warning)")
     p.add_argument("--out", help="output folder (default tasks/openvocab_adapter/out/<dataset>__<scene>/<label>/adapted)")
     p.add_argument("--overwrite", action="store_true", help="replace an earlier run's adapter files")
     return p.parse_args(argv)
@@ -291,33 +334,39 @@ def main(argv=None):
     checks = Checks()
     usable = check_cameras(checks, cams, meta)
     frames = check_frames(checks, scene_dir, cams, meta)
-    dense = None
+    depth_maps = None
+    depth_source = "dense" if args.dense_dir else "patch_points" if args.patch_depth else None
     if usable:
         check_patch_reprojection(checks, cams, patches, meta)
         if frames is not None:
             check_cloud_colours(checks, frames, cams, cloud, selected)
-        if args.dense_dir:
-            dense = check_dense(checks, Path(args.dense_dir), cams, patches, meta, selected)
+        if depth_source == "dense":
+            depth_maps = check_dense(checks, Path(args.dense_dir), cams, patches, meta, selected)
+        elif depth_source == "patch_points":
+            depth_maps = check_patch_depth(checks, cams, patches, meta, selected)
     if checks.failed or frames is None or not usable:
         print(f"[adapter] {len(checks.failed)} check(s) failed, nothing written: {checks.failed}")
         return 1
 
     prepare_out(out, args.overwrite)
-    write_outputs(out, frames, cams, selected, dense)
-    depth_status = "written" if dense is not None else "missing: pass --dense-dir with depth.npy and depth_conf.npy"
+    write_outputs(out, frames, cams, selected, depth_maps)
+    depth_status = {"dense": "written", "patch_points": "approximated from the patch points (--patch-depth)",
+                    None: "missing: pass --dense-dir with depth.npy and depth_conf.npy"}[depth_source]
     source_indices = cams["frame_indices"][selected].tolist() if "frame_indices" in cams else None
     (out / "adapter_report.json").write_text(json.dumps({
         "scene": args.scene, "frame_selection": spec, "label": label,
         "selected_frames": selected, "source_video_frames": source_indices,
-        "image_hw": meta["image_hw"], "depth_npz": depth_status,
+        "image_hw": meta["image_hw"], "depth_npz": depth_status, "depth_source": depth_source,
         "world_frame": "camera of frame 0 of the full 128-frame reconstruction, which a selection may not include",
         "scale": "VGGT's arbitrary scale of the full 128-frame reconstruction",
         "checks": checks.results,
     }, indent=1))
     print(f"[adapter] wrote {len(selected)} frames and cameras.npz to {out}")
-    if dense is None:
+    if depth_source is None:
         print("[adapter] depth.npz NOT written: the dense depth files were not given, "
-              "so track and fuse cannot run on this output yet")
+              "so track and fuse cannot run on this output yet (--patch-depth would approximate it)")
+    elif depth_source == "patch_points":
+        print(f"[adapter] WARNING: {PATCH_DEPTH_WARNING.format(P=meta['patch_size'])}", file=sys.stderr)
     else:
         print("[adapter] wrote depth.npz")
     return 0

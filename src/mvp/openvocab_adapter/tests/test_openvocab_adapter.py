@@ -4,12 +4,15 @@ The milestone scripts are run for real, on a small synthetic scene. Three things
 stand-ins written to a temporary folder: cv2, rerun, and vggt.utils.geometry (a numpy version of the same formulas).
 SAM 3 is replaced by a fake that returns fixed rectangles.
 
-  py -m unittest discover -s src/mvp/openvocab_adapter/tests -v
+  bash src/mvp/openvocab_adapter/run_tests.sh
+  (or, from the repository root, with the venv's Python: python -m unittest discover -s src/mvp/openvocab_adapter/tests -v)
 """
+import ast
 import contextlib
 import csv
 import hashlib
 import importlib.util
+import inspect
 import io
 import json
 import os
@@ -292,6 +295,36 @@ class Adapter(unittest.TestCase):
             self.assertEqual((z["depth"].shape, z["depth"].dtype), ((3, H, W), np.float16))
             self.assertEqual(z["conf"].dtype, np.float16)
             np.testing.assert_array_equal(z["depth"], source[[0, 2, 5]])
+
+    def test_patch_depth_is_the_patch_points_depth_in_every_pixel_of_the_patch(self):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertEqual(adapt(self.data, self.out, "--frames", "list:0,2,5", "--patch-depth"), 0)
+        self.assertIn("WARNING: depth.npz is APPROXIMATED", err.getvalue())
+        report = json.loads((self.out / "adapter_report.json").read_text())
+        self.assertEqual((report["depth_source"], report["depth_npz"]),
+                         ("patch_points", "approximated from the patch points (--patch-depth)"))
+        with np.load(self.out / "depth.npz") as z, np.load(self.scene / "patch_points.npz") as patches:
+            self.assertEqual((z["depth"].shape, z["depth"].dtype, z["conf"].dtype), ((3, H, W), np.float16, np.float16))
+            depth = z["depth"].astype(np.float32).reshape(3, GH, P, GW, P)
+            conf = z["conf"].astype(np.float32).reshape(3, GH, P, GW, P)
+            self.assertTrue((depth == depth[:, :, :1, :, :1]).all() and (conf == conf[:, :, :1, :, :1]).all())
+            np.testing.assert_allclose(conf[:, :, 0, :, 0], patches["conf"][[0, 2, 5]], rtol=1e-3)
+        dense = np.load(self.dense / "depth.npy")[[0, 2, 5]].astype(np.float32).reshape(3, GH, P, GW, P)
+        np.testing.assert_allclose(depth[:, :, 0, :, 0], np.median(dense, axis=(2, 4)), rtol=2e-3)
+
+    def test_patch_depth_and_dense_depth_exclude_each_other(self):
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            adapt(self.data, self.out, "--frames", "all", "--patch-depth", "--dense-dir", str(self.dense))
+
+    def test_patch_depth_rejects_a_patch_point_behind_its_camera(self):
+        with np.load(self.scene / "patch_points.npz") as z:
+            patches = {k: z[k] for k in z.files}
+        patches["xyz"][2, 1, 1] = [0.0, 0.0, -1.0]
+        np.savez(self.scene / "patch_points.npz", **patches)
+        with contextlib.redirect_stdout(io.StringIO()) as log:
+            self.assertEqual(adapt(self.data, self.out, "--frames", "list:0,2", "--patch-depth"), 1)
+        self.assertIn("FAIL patch depth: every patch point is in front of its camera", log.getvalue())
+        self.assertFalse(self.out.exists())
 
     def test_all_frames(self):
         self.assertEqual(adapt(self.data, self.out, "--frames", "all", "--dense-dir", str(self.dense)), 0)
@@ -628,6 +661,27 @@ class Integration(unittest.TestCase):
         summary = json.loads((self.adapted / "tracks/summary.json").read_text())
         self.assertEqual(len(summary["saved_masks"]["fingerprint"]), 64)
 
+    def test_min_track_frames_scales_linearly_with_the_frame_count(self):
+        tree = ast.parse(M4.read_text(encoding="utf-8"))  # the script parses its arguments on import
+        function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "min_track_frames")
+        namespace = {}
+        exec(compile(ast.Module([function], type_ignores=[]), str(M4), "exec"), namespace)
+        rule = namespace["min_track_frames"]
+        self.assertEqual({n: rule(n) for n in (1, 5, 8, 16, 32, 64, 128, 240)},
+                         {1: 1, 5: 1, 8: 1, 16: 1, 32: 1, 64: 2, 128: 4, 240: 7})
+        values = [rule(n) for n in range(1, 300)]
+        self.assertEqual(values, sorted(values))
+
+    def test_milestone4_minimum_track_frames(self):
+        summary = json.loads((self.adapted / "tracks/summary.json").read_text())
+        self.assertEqual(summary["min_track_frames"], 1)  # the default rule, on the synthetic scene's 8 frames
+        strict = self.root / "strict"
+        self.copy_geometry(strict)
+        done = self.milestone4(strict, "--masks-dir", str(self.masks), "--min-track-frames", str(T + 1))
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(json.loads((strict / "tracks/summary.json").read_text())["min_track_frames"], T + 1)
+        self.assertEqual(json.loads((strict / "tracks/summary.json").read_text())["chair"]["objects"], 0)
+
     def test_saved_masks_give_the_same_tracks_as_live_sam3(self):
         live = self.root / "live"
         self.copy_geometry(live)
@@ -921,7 +975,7 @@ class QuestionSceneSheet(unittest.TestCase):
 
     def sheet(self, prompts, work=None, **kwargs):
         options = {"data_root": self.data, "dense_dir": self.dense, "work_dir": work or self.work, "reid": False,
-                   "backend": "sam3", "conf_percentile": 10, "min_points": 20, **kwargs}
+                   "backend": "sam3", "conf_percentile": 10, "min_points": 20, "frames": "all", **kwargs}
         self.log = io.StringIO()
         with mock.patch.object(question_scene_sheet, "extract_prompts", lambda question, syntactic=False: (prompts, "full")), \
                 contextlib.redirect_stderr(self.log):
@@ -956,7 +1010,7 @@ class QuestionSceneSheet(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()):
             results = scene_sheet_report.report(
                 "synthetic", data_root=self.data, work_dir=self.work, out=out, dense_dir=self.dense, reid=False,
-                backend="sam3", conf_percentile=10, min_points=20)
+                backend="sam3", conf_percentile=10, min_points=20, frames="all")
         self.assertEqual([r["problems"] for r in results], [[], [], []], out.getvalue())
         self.assertEqual([r["counts"] for r in results],
                          [{"chair": 1, "table": 1}, {"chair": 1}, {"chair": 1, "lamp": 0}])
@@ -995,6 +1049,17 @@ class QuestionSceneSheet(unittest.TestCase):
         settings = json.loads((self.work / "scene/tracks/chair.settings.json").read_text())["settings"]
         self.assertEqual((settings["min_points"], settings["reid"]), (25, False))
 
+    def test_tracks_made_under_the_old_fixed_minimum_are_made_again(self):
+        self.sheet(["chair"])
+        path = self.work / "scene/tracks/chair.settings.json"
+        record = json.loads(path.read_text())
+        self.assertEqual(record["settings"]["min_track_frames"], question_scene_sheet.MIN_TRACK_FRAMES_RULE)
+        del record["settings"]["min_track_frames"]  # as written before the rule scaled with the frame count
+        path.write_text(json.dumps(record))
+        self.calls.clear()
+        self.sheet(["chair"])
+        self.assertEqual(self.calls, [("milestone4_video.py", "chair")])  # masks reused, tracking redone
+
     def test_fresh_starts_the_scene_over(self):
         self.sheet(["chair"])
         self.calls.clear()
@@ -1017,8 +1082,38 @@ class QuestionSceneSheet(unittest.TestCase):
         with self.assertRaises(SystemExit) as stop:
             self.sheet(["chair"], dense_dir=self.root / "nowhere")
         self.assertIn("no dense depth", str(stop.exception))
+        self.assertIn("--patch-depth-fallback", str(stop.exception))
         self.assertFalse(self.work.exists())
         self.assertEqual(self.calls, [])
+
+    def test_patch_depth_fallback_warns_and_gives_way_to_the_dense_depth_once_found(self):
+        nowhere = self.root / "nowhere"
+        objects_csv, _ = self.sheet(["chair", "table"], dense_dir=nowhere, patch_depth_fallback=True)
+        self.assertIn("WARNING: no dense depth", self.log.getvalue())
+        self.assertIn("made with depth approximated from the patch points", self.log.getvalue())
+        self.assertEqual(json.loads((objects_csv.parent / "question.json").read_text())["depth"], "patch_points")
+        def main_tracks(path):  # each concept's longest track: with 8 frames a 1-frame fragment is also kept
+            return {r["concept"]: r for r in sorted(read_csv(path), key=lambda r: int(r["num_frames"]))}
+
+        approximated = main_tracks(objects_csv)
+        self.assertEqual(sorted(approximated), ["chair", "table"])
+
+        self.calls.clear()  # a second question reuses the approximated geometry and tracks, and warns again
+        self.sheet(["chair"], dense_dir=nowhere, patch_depth_fallback=True)
+        self.assertEqual(self.calls, [])
+        self.assertIn("reusing the converted geometry", self.log.getvalue())
+        self.assertIn("WARNING: no dense depth", self.log.getvalue())
+        with self.assertRaises(SystemExit) as stop:  # without the option, approximated geometry is not used
+            self.sheet(["chair"], dense_dir=nowhere)
+        self.assertIn("no dense depth", str(stop.exception))
+
+        objects_csv, _ = self.sheet(["chair", "table"])  # the dense depth: converted and tracked again, masks reused
+        self.assertEqual(self.calls, [("milestone4_video.py", "chair,table")])
+        self.assertEqual(json.loads((objects_csv.parent / "question.json").read_text())["depth"], "dense")
+        self.assertEqual(json.loads((self.work / "scene/adapter_report.json").read_text())["depth_source"], "dense")
+        for concept, row in main_tracks(objects_csv).items():  # close on this smooth depth
+            moved = np.linalg.norm([float(approximated[concept][a]) - float(row[a]) for a in ("x", "y", "z")])
+            self.assertLess(moved, 0.1 * max(float(row[a]) for a in ("size_x", "size_y", "size_z")), concept)
 
     def test_unknown_scene_and_empty_question(self):
         with self.assertRaises(SystemExit) as stop, contextlib.redirect_stderr(io.StringIO()):
@@ -1039,6 +1134,18 @@ class QuestionSceneSheet(unittest.TestCase):
         self.assertEqual(question_scene_sheet.frame_selection("all"), ("all", "all"))
         self.assertEqual(question_scene_sheet.frame_selection("half"), (common.PRESETS["half"], "half"))
         self.assertEqual(question_scene_sheet.frame_selection("list:0,4"), ("list:0,4", "list-0_4"))
+
+    def test_default_frames_are_16_uniformly_sampled(self):
+        """By default, from Python and from the command line, the sheet uses the VLM's 16 uniform frames of the 128."""
+        default = question_scene_sheet.DEFAULT_FRAMES
+        self.assertEqual(inspect.signature(question_scene_sheet.create_scene_sheet).parameters["frames"].default, default)
+        self.assertEqual(question_scene_sheet.parse_args(["synthetic", "Where is the chair?"]).frames, default)
+        spec, label = question_scene_sheet.frame_selection(default)
+        self.assertEqual(label, "subset-uniform16")
+        uniform16 = np.linspace(0, 127, 16, dtype=int).tolist()
+        self.assertEqual(common.select_frames(spec, 128, {"frame_subsets": {"uniform16": uniform16}}), uniform16)
+        self.assertEqual(common.select_frames(spec, 128, {"frame_subsets": {"uniform16": uniform16}}),
+                         common.select_frames("uniform:16", 128))
 
 
 class FindScene(unittest.TestCase):
@@ -1085,8 +1192,8 @@ class QuestionPrompts(unittest.TestCase):
             _, data, dense = make_scene(root)
             done = subprocess.run(
                 [sys.executable, str(ADAPTER / "question_scene_sheet.py"), "scannet/synthetic", "How big is it?",
-                 "--data-root", str(data), "--dense-dir", str(dense), "--work-dir", str(root / "work")],
-                capture_output=True, text=True)
+                 "--data-root", str(data), "--dense-dir", str(dense), "--work-dir", str(root / "work"),
+                 "--frames", "all"], capture_output=True, text=True)  # the synthetic scene has only 8 frames
             self.assertEqual(done.returncode, 0, done.stderr)
             lines = done.stdout.splitlines()
             self.assertEqual([Path(line).name for line in lines], ["objects.csv", "cameras.csv"])
