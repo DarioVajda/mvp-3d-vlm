@@ -30,6 +30,7 @@ from PIL import Image
 ADAPTER = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ADAPTER))
 import adapt_vggt  # noqa: E402
+import camera_sheet_format_converter  # noqa: E402
 import common  # noqa: E402
 import compare  # noqa: E402
 import question_scene_sheet  # noqa: E402
@@ -1453,6 +1454,82 @@ class SceneSheetReport(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
             scene_sheet_report.main(base)
         self.assertIn("spacy", err.getvalue())
+
+
+def camera_in_gravity(heading, pitch):
+    """Camera-to-world rotation, in east-north-up axes, of a camera with no roll facing heading (degrees clockwise
+    from north) at pitch (degrees, up positive). Its columns are the OpenCV axes: x right, y down, z forward."""
+    h, p = np.radians(heading), np.radians(pitch)
+    forward = np.array([np.cos(p) * np.sin(h), np.cos(p) * np.cos(h), np.sin(p)])
+    right = np.array([np.cos(h), -np.sin(h), 0.0])
+    return np.column_stack([right, np.cross(forward, right), forward])
+
+
+def write_camera_sheet(path, steps, views, scale=0.3):
+    """cameras.csv of a trajectory with frame 0 at the origin, given in east-north-up axes: the step to each later
+    frame, and every frame's (heading, pitch). It is written as the pipeline writes it: in frame 0's camera axes, at
+    an arbitrary scale."""
+    first = camera_in_gravity(*views[0])
+    positions = np.cumsum([[0, 0, 0]] + list(steps), axis=0)
+    rows = []
+    for t, (position, view) in enumerate(zip(positions, views)):
+        rotation = first.T @ camera_in_gravity(*view)
+        rows.append([t, f"{t}.jpg", *(scale * first.T @ position), *scene_sheet_creator.rotation_to_quaternion(rotation),
+                     *rotation[:, 2]])
+    scene_sheet_creator.write_csv(path, scene_sheet_report.CAMERA_COLUMNS, rows)
+    return path
+
+
+class CameraSheetText(unittest.TestCase):
+    """camera_sheet_format_converter.py, on synthetic trajectories whose words are known."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def test_moves_and_turns(self):
+        s = np.sqrt(0.5)
+        steps = [(0, 1, 0), (s, s, 0), (-0.3, 0, 0), (3 * s, -3 * s, 0), (0.05, 0, 0), (0, 0, 1), (0, s, s),
+                 (0, 0, -0.4)]  # median length 1
+        views = [(0, -30), (45, -30), (45, -20), (15, -20), (15, -25), (15, -25), (-150, -25), (-120, -25),
+                 (-119, -24)]  # frame 0 looks down, so the sheet's world axes are tilted
+        sheet = write_camera_sheet(self.root / "cameras.csv", steps, views)
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet), [
+            "Start facing north, looking 30° down.",
+            "Go north and turn 45° to the right.",
+            "Go north-east and turn 10° up.",
+            "Go a little west and turn 30° to the left.",
+            "Go far south-east and turn 5° down.",
+            "Stay still.",  # 0.05 median steps, no turn
+            "Go up and turn 165° to the left.",
+            "Go north and up, and turn 30° to the right.",
+            "Go a little down.",  # turns under 2° are left out
+        ])
+
+    def test_paragraph_folder_and_command_line(self):
+        write_camera_sheet(self.root / "cameras.csv", [(1, 0, 0)], [(0, 0), (-90, 0)])
+        expected = "Start facing north, looking straight ahead. Go east and turn 90° to the left."
+        self.assertEqual(camera_sheet_format_converter.describe_cameras(self.root), expected)  # the sheet folder
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(camera_sheet_format_converter.main([str(self.root / "cameras.csv")]), 0)
+        self.assertEqual(out.getvalue().strip(), expected)
+
+    def test_camera_that_never_turns_or_looks_straight_down(self):
+        sheet = write_camera_sheet(self.root / "a.csv", [(0, 1, 0), (0, 1, 0)], [(0, 0)] * 3)
+        self.assertEqual(camera_sheet_format_converter.describe_cameras(sheet),
+                         "Start facing north, looking straight ahead. Go north. Go north.")
+        sheet = write_camera_sheet(self.root / "b.csv", [], [(0, 10)])  # no horizon to fit: its own up is taken
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet),
+                         ["Start facing north, looking straight ahead."])
+        sheet = write_camera_sheet(self.root / "c.csv", [(0, 0, 0)], [(0, -90), (90, -30)])
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet),
+                         ["Start facing north, looking 90° down.", "Turn 90° to the right and 60° up."])
+
+    def test_not_a_camera_sheet(self):
+        bad = self.root / "objects.csv"
+        bad.write_text("object_id,concept,x,y,z\n")
+        with self.assertRaises(ValueError):
+            camera_sheet_format_converter.describe_cameras(bad)
 
 
 if __name__ == "__main__":
