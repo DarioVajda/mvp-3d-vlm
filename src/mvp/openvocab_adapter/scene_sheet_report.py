@@ -58,6 +58,11 @@ GLOBAL_COLUMNS = ["object_id", "concept", "track_id", "x", "y", "z", "size_x", "
 CAMERA_COLUMNS = ["frame", "image", "x", "y", "z", "qw", "qx", "qy", "qz", "forward_x", "forward_y", "forward_z"]
 
 
+# create_scene_sheet's options that question_scene_sheet.prepare_scene takes too
+PREPARE_OPTIONS = {"frames", "dense_dir", "syntactic", "reid", "conf_percentile", "min_points", "backend", "min_score",
+                   "checkpoint", "overlays", "patch_depth_fallback"}
+
+
 def read_jsonl(path):
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
@@ -217,6 +222,18 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
     if source == "pipeline" and sheet_options.get("patch_depth_fallback"):
         print("--patch-depth-fallback: without the dense depth, the sheets' depth is approximated from the patch "
               "points (each sheet's question.json says which depth it used)", file=out, flush=True)
+
+    if source == "pipeline" and rows:
+        # SAM 3 and tracking once for every prompt of the scene; each question below then only builds its sheet
+        prepare = {k: v for k, v in sheet_options.items() if k in PREPARE_OPTIONS}
+        try:
+            question_scene_sheet.prepare_scene(scene, [r["question"] for r in rows], data_root=data_root,
+                                               work_dir=work_dir, **prepare)
+        except SystemExit as error:  # each question then runs its own steps and reports the problem
+            print(f"preparing the scene failed ({error.code}); each question runs its own steps", file=out, flush=True)
+        except Exception as error:  # noqa: BLE001 - as for one question below
+            print(f"preparing the scene failed ({type(error).__name__}: {error}); each question runs its own steps",
+                  file=out, flush=True)
 
     results = []
     for n, row in enumerate(rows, start=1):

@@ -999,8 +999,8 @@ class QuestionSceneSheet(unittest.TestCase):
 
     @unittest.skipIf(importlib.util.find_spec("torch") is None, "the track stage needs torch")
     def test_report_makes_a_correct_sheet_for_every_question(self):
-        """scene_sheet_report.py through the real steps: every question gets a sheet that passes its checks, and the
-        second question, which names a tracked prompt, runs SAM 3 and tracking only for the new one."""
+        """scene_sheet_report.py through the real steps: every question gets a sheet that passes its checks, and SAM 3
+        runs once, for every prompt of the scene's questions."""
         questions = {"Is the chair near the table?": ["chair", "table"], "Where is the chair?": ["chair"],
                      "How many lamps are there?": ["chair", "lamp"]}
         with open(self.data / "scenes/scannet/synthetic/questions.jsonl", "w") as f:
@@ -1017,7 +1017,7 @@ class QuestionSceneSheet(unittest.TestCase):
                          [{"chair": 1, "table": 1}, {"chair": 1}, {"chair": 1, "lamp": 0}])
         self.assertIn("no rows:  lamp (SAM 3 found nothing)", out.getvalue())
         self.assertEqual([c for c in self.calls if c[0] == "sam3_infer.py"],
-                         [("sam3_infer.py", "chair,table"), ("sam3_infer.py", "lamp")])
+                         [("sam3_infer.py", "chair,table,lamp")])
 
     def test_a_later_question_only_processes_new_prompts(self):
         self.sheet(["chair"])

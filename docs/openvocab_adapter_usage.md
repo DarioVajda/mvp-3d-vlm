@@ -223,8 +223,24 @@ slurm/submit.sh -J sheet_report -t 02:00:00 -- .venv-ov4d/bin/python src/mvp/ope
     scannet/scene0025_01                                                                                      # pipeline, GPU
 ```
 
-The report prints, for each question, its prompts, `OK` or `FAILED` for its sheet, the prompts with no rows, and the
-files. It exits with status 1 if any sheet failed.
+For pipeline sheets, the report first runs SAM 3 and tracking once for the prompts of all the scene's questions, so the
+models load once per scene; each question then only builds its sheet. The sheets are the same as from one question at
+a time, because SAM 3 and the tracker handle each prompt on its own. The report prints, for each question, its
+prompts, `OK` or `FAILED` for its sheet, the prompts with no rows, and the files. It exits with status 1 if any sheet
+failed.
+
+### 7. Every question of every exported scene
+
+```bash
+slurm/submit.sh -J sheets -t 02:00:00 --gres gpu:1 -c 48 --mem 256G -- bash src/mvp/openvocab_adapter/hpc/run_sheets.sh
+```
+
+Runs the report of step 6, pipeline and gold, on 8 scenes at a time on one GPU (the 75 scenes take about 15 minutes
+on a B200 or B300), skipping scenes already done. Then `sheet_index.py` writes `out/index.csv`, which gives each
+question's prompts and the folders of its two sheets, and compares the object counts of the counting questions with
+the true answers, and zips it all to `tasks/openvocab_adapter/scene_sheets_75.zip` (about 70 MB). The script's header
+lists its settings. [scene_sheets_75.md](scene_sheets_75.md), copied into the zip as its README, explains the output:
+how to find a question's sheets, the columns, the coordinate frames and the results.
 
 ### From Python
 
@@ -418,7 +434,7 @@ Use `--no-frames --no-cameras` to make a pipeline sheet with the same columns as
 Builds and checks the sheet of every question of one scene, and prints the results for checking by eye. With
 `--source gold`, it runs on a CPU for any of the 288 VSI-Bench scenes. Questions come from the exported
 `questions.jsonl`, or else from `data/raw/VSI-Bench/test.jsonl`. Pipeline sheets use `question_scene_sheet.py`'s
-defaults.
+defaults, and SAM 3 and tracking run once for all the questions' prompts (`question_scene_sheet.prepare_scene`).
 
 | Option | Default | Meaning |
 |---|---|---|

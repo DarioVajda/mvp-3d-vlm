@@ -232,7 +232,15 @@ same SAM 3 masks (`src/mvp/openvocab_adapter/README.md`, results in `tasks/openv
 - **The tracks don't:** 29–73% of tracked pixels get the same object in both runs (pass mark ≥ 90%), and 54–100% of
   sheet rows appear in both sheets (pass mark ≥ 80%).
 - **So 11 of the 12 comparisons are DIFFERS.** The twelfth, `arkitscenes/41069025`, failed the adapter's camera check
-  ("world frame is frame 0") and produced nothing. The pass marks are provisional.
+  ("world frame is frame 0") and produced nothing. The pass marks are provisional. Its frame-0 camera is 1.4e-3 off
+  the origin, which is numerical noise, so the check's limit is now 1e-2 instead of 1e-3; two other ARKitScenes scenes
+  (3.5e-3, 1.4e-3) failed it too.
+
+**All 75 exported scenes** (`hpc/run_sheets.sh`, 16 uniform frames, default settings): all 2,728 questions get a
+pipeline sheet and a gold sheet. On the 223 counting questions, the pipeline sheet has the true number of rows of the
+asked class for 38, too many for 97, too few for 52 and none for 36 (732 rows for 662 objects); doors are the worst
+(12 for 2, 15 for 5, 14 for 4). The gold sheets are exact for 218. So the same object is often split into several
+rows, and small or rare objects are often missed.
 
 **Each sheet.** `scene_sheet_report.py` builds the sheet of every question of a scene and checks its columns, values
 and prompts. With `--source gold`, it runs on a CPU for any of the 288 VSI-Bench scenes.
