@@ -28,7 +28,8 @@ FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]
 N_FRAMES = 16  # the pipeline's frames: 16 uniform over the 128 exported ones (docs/scene_sheets_75.md)
 MERGE = 2  # Qwen3-VL / Qwen3.5 merge video frames in pairs and show one timestamp per pair
 DECIMALS = 3
-EMPTY = "No objects were found."
+EMPTY = ("The detector did not find the objects named in the question. This does not mean they are absent from "
+         "the room.")
 
 POSITION = ["x", "y", "z"]
 EXTENT = ["size_x", "size_y", "size_z"]

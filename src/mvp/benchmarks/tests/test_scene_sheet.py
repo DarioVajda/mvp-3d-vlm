@@ -152,6 +152,9 @@ class Synthetic(unittest.TestCase):
         for source in ss.SOURCES:
             for fmt in ss.FORMATS:
                 self.assertEqual(self.render(2, source, fmt), ss.preamble(source) + "\n" + ss.EMPTY)
+        # the same line in every format, worded so that an empty sheet doesn't read as "the objects aren't there"
+        self.assertEqual(ss.EMPTY, "The detector did not find the objects named in the question. This does not mean "
+                                   "they are absent from the room.")
 
     def test_formats(self):
         self.assertEqual(self.render(1, "gold", "csv").splitlines()[1:],
