@@ -16,7 +16,7 @@ the scene sheet of the objects the question names:
 On stdout it prints exactly two lines, the path of objects.csv and then of cameras.csv. Every log goes to stderr.
 From Python, create_scene_sheet(scene, question) returns the same two paths.
 
-  python tasks/openvocab_adapter/question_scene_sheet.py scannet/scene0025_01 \
+  python src/mvp/openvocab_adapter/question_scene_sheet.py scannet/scene0025_01 \
       "Measuring from the closest point of each object, which of these objects (table, chair) is the closest to the fan?"
 
 Work is kept and reused, in tasks/openvocab_adapter/out/<dataset>__<scene>/<frames>/ (<frames> is "all" by default):
@@ -206,7 +206,7 @@ def create_scene_sheet(scene, question, frames="all", dense_dir=None, data_root=
                 frame_<t> in the sheet counts the selected frames, cameras.csv names each one's image
     dense_dir   folder with depth.npy and depth_conf.npy (default: $DENSE_ROOT or data/vggt, then /<dataset>/<scene>)
     out_dir     where the two CSVs go (default: <work_dir>/sheets/<prompts>)
-    work_dir    where geometry, masks and tracks are kept (default: out/<dataset>__<scene>/<frames>)
+    work_dir    where geometry, masks and tracks are kept (default: tasks/openvocab_adapter/out/<dataset>__<scene>/<frames>)
     The other arguments are the command line's options; see --help.
     """
     with contextlib.redirect_stdout(sys.stderr):  # every step prints its log; stdout is kept for the two paths
@@ -262,7 +262,7 @@ def parse_args(argv):
     p.add_argument("--syntactic", action="store_true",
                    help="take every noun phrase of the question as a prompt (the extractor's syntactic mode)")
     p.add_argument("--no-reid", action="store_true",
-                   help="track without DINOv2 re-identification, as the comparison in results/ did")
+                   help="track without DINOv2 re-identification, as the comparison in tasks/openvocab_adapter/results/ did")
     p.add_argument("--no-size", action="store_true", help="leave out the size columns")
     p.add_argument("--relative-positions", action="store_true",
                    help="per-frame positions in camera coordinates instead of the 0/1 seen flags")

@@ -1,17 +1,17 @@
-"""Collect every scene's results into four flat CSV tables for analysis: results/data/*.csv.
+"""Collect every scene's results into four flat CSV tables for analysis: tasks/openvocab_adapter/results/data/*.csv.
 
-  python tasks/openvocab_adapter/export_tables.py [--results tasks/openvocab_adapter/results]
+  python src/mvp/openvocab_adapter/export_tables.py [--results tasks/openvocab_adapter/results]
 
 One row per object, camera, comparison criterion and SAM 3 frame, each tagged with dataset, scene, frame selection
 and run (adapted = the saved VGGT outputs, native = OpenVocab-4D's own VGGT). Needs only the standard library; the
-column meanings are in results/data/README.md.
+column meanings are in tasks/openvocab_adapter/results/data/README.md.
 """
 import argparse
 import csv
 import json
 from pathlib import Path
 
-RESULTS = Path(__file__).resolve().parent / "results"
+RESULTS = Path(__file__).resolve().parents[3] / "tasks" / "openvocab_adapter" / "results"
 RUNS = ("adapted", "native")
 
 

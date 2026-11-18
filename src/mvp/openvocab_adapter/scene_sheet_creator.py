@@ -46,10 +46,10 @@ is listed. There are no per-frame columns and no cameras.csv, and asking for the
 nothing per frame, and the saved VGGT cameras are in a different frame and scale with nothing to align them by.
 
 Usage (with the OpenVocab-4D environment; paths are relative to where you run it):
-  python tasks/openvocab_adapter/scene_sheet_creator.py --scene out/test_scene --prompts "table,dog,chair"
-  python tasks/openvocab_adapter/scene_sheet_creator.py --images path/to/frames --scene out/my_scene ^
+  python src/mvp/openvocab_adapter/scene_sheet_creator.py --scene out/test_scene --prompts "table,dog,chair"
+  python src/mvp/openvocab_adapter/scene_sheet_creator.py --images path/to/frames --scene out/my_scene ^
       --prompts table dog chair --relative-positions --size
-  python tasks/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01 ^
+  python src/mvp/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01 ^
       --prompts "table,chair,fan" --size --out-dir out/gold_sheet
 
 To go from a question about one of the saved VGGT scenes straight to its scene sheet, use

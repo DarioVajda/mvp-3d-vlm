@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Everything in one command, on the login node, as one Slurm job:
 #
-#   bash tasks/openvocab_adapter/hpc/start.sh
+#   bash src/mvp/openvocab_adapter/hpc/start.sh
 #
 # 1. checks the inputs of every scene in hpc/scenes.tsv, before anything is submitted
 # 2. creates .venv-ov4d if it is missing, and clones SAM 3 and VGGT at OpenVocab-4D's pinned commits (both on the
@@ -11,11 +11,11 @@
 #
 # Settings: GPUS (default 5), TIME (default 02:00:00), RUNS, SCENES_FILE, DENSE_ROOT, DATA; SETUP=1 runs the setup
 # again. A short test first, on two scenes:
-#   RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=tasks/openvocab_adapter/hpc/scenes_smoke.tsv \
-#       bash tasks/openvocab_adapter/hpc/start.sh
+#   RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=src/mvp/openvocab_adapter/hpc/scenes_smoke.tsv \
+#       bash src/mvp/openvocab_adapter/hpc/start.sh
 set -euo pipefail
-cd "$(dirname "$0")/../../.."
-SCENES_FILE=${SCENES_FILE:-tasks/openvocab_adapter/hpc/scenes.tsv}
+cd "$(dirname "$0")/../../../.."
+SCENES_FILE=${SCENES_FILE:-src/mvp/openvocab_adapter/hpc/scenes.tsv}
 DENSE_ROOT=${DENSE_ROOT:-data/vggt}
 RUNS=${RUNS:-half}
 SETUP=${SETUP:-0}
@@ -64,7 +64,7 @@ echo "== 3. one job =="
 GPUS=${GPUS:-5}
 mkdir -p logs/ov4d
 id=$(LOGDIR=ov4d slurm/submit.sh -J ov4d_compare --gres "gpu:$GPUS" -c $((8 * GPUS)) --mem $((64 * GPUS))G \
-    -t "${TIME:-02:00:00}" --constraint 'GPU_BRD:B300|GPU_BRD:B200' -- bash tasks/openvocab_adapter/hpc/run_packed.sh)
+    -t "${TIME:-02:00:00}" --constraint 'GPU_BRD:B300|GPU_BRD:B200' -- bash src/mvp/openvocab_adapter/hpc/run_packed.sh)
 echo "submitted job $id on $GPUS GPUs (runs: $RUNS); log: logs/ov4d/ov4d_compare_$id.out"
 
 cat <<EOF

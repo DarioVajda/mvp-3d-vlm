@@ -4,7 +4,7 @@ The milestone scripts are run for real, on a small synthetic scene. Three things
 stand-ins written to a temporary folder: cv2, rerun, and vggt.utils.geometry (a numpy version of the same formulas).
 SAM 3 is replaced by a fake that returns fixed rectangles.
 
-  py -m unittest discover -s tasks/openvocab_adapter/tests -v
+  py -m unittest discover -s src/mvp/openvocab_adapter/tests -v
 """
 import contextlib
 import csv
@@ -443,7 +443,7 @@ class Sam3Script(unittest.TestCase):
         done = self.run_script(gpu=False)
         self.assertNotEqual(done.returncode, 0)
         self.assertIn("no CUDA GPU", done.stderr)
-        self.assertNotIn("sam3", done.stderr.replace("[sam3]", "").replace("sam3_infer", "").replace("tasks/openvocab_adapter/README", ""))
+        self.assertNotIn("sam3", done.stderr.replace("[sam3]", "").replace("sam3_infer", "").replace("src/mvp/openvocab_adapter/README", ""))
 
     def test_output_is_the_milestone_2_format_plus_a_manifest(self):
         done = self.run_script("--frames", "list:0,3")

@@ -1,6 +1,7 @@
-"""One table of every scene's comparison: results/<dataset>__<scene>/<selection>/comparison.json -> results/SUMMARY.md.
+"""One table of every scene's comparison, in tasks/openvocab_adapter/:
+results/<dataset>__<scene>/<selection>/comparison.json -> results/SUMMARY.md.
 
-  python tasks/openvocab_adapter/summarize.py [--results tasks/openvocab_adapter/results]
+  python src/mvp/openvocab_adapter/summarize.py [--results tasks/openvocab_adapter/results]
 
 A scene whose job failed before comparing shows as "no result", with the end of its run.log to say why.
 """
@@ -9,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-RESULTS = Path(__file__).resolve().parent / "results"
+RESULTS = Path(__file__).resolve().parents[3] / "tasks" / "openvocab_adapter" / "results"
 SELECTION_ORDER = ["smoke5", "eval32", "half", "all"]
 
 

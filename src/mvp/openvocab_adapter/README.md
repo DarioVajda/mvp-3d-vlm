@@ -1,5 +1,9 @@
 # Testing OpenVocab-4D on the saved VGGT outputs
 
+The code is here, in `src/mvp/openvocab_adapter/`. Its outputs go to `tasks/openvocab_adapter/`: `out/` holds the large
+intermediate files (gitignored), and `results/` holds the small files that are committed. Every command below runs
+from the repository root.
+
 ## Goal
 
 OpenVocab-4D turns a video into a list of objects with 3D positions, and the scene sheets are built from that list.
@@ -83,7 +87,7 @@ and log in with `.venv/bin/hf auth login`. `--backend sam3` uses Meta's own pack
 git fetch origin
 git checkout vggt_output_adapter
 git pull
-bash tasks/openvocab_adapter/hpc/start.sh
+bash src/mvp/openvocab_adapter/hpc/start.sh
 ```
 
 `start.sh` does the rest itself, and ends by printing `All submitted`:
@@ -99,8 +103,8 @@ Settings: `GPUS`, `TIME`, `RUNS`, `SCENES_FILE`, `DENSE_ROOT` and `DATA` (the la
 without `data/vggt/` and `tasks/vggt_data/out/`). A short test first, on two scenes with five frames each:
 
 ```bash
-RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=tasks/openvocab_adapter/hpc/scenes_smoke.tsv \
-    bash tasks/openvocab_adapter/hpc/start.sh
+RUNS=smoke5 GPUS=2 TIME=01:00:00 SCENES_FILE=src/mvp/openvocab_adapter/hpc/scenes_smoke.tsv \
+    bash src/mvp/openvocab_adapter/hpc/start.sh
 ```
 
 `hpc/submit_scenes.sh` still submits one job per scene, for rerunning a single scene.
@@ -138,9 +142,9 @@ Running `start.sh` again is safe. It skips the setup if that already finished, a
 
 ## The results
 
-Flat tables of every scene's output, for analysis, are in `results/data/` (`objects.csv`, `cameras.csv`,
-`comparisons.csv`, `detections.csv`; columns in `results/data/README.md`). Rebuild them with
-`python tasks/openvocab_adapter/export_tables.py`.
+Flat tables of every scene's output, for analysis, are in `tasks/openvocab_adapter/results/data/` (`objects.csv`,
+`cameras.csv`, `comparisons.csv`, `detections.csv`; columns in its `README.md`). Rebuild them with
+`python src/mvp/openvocab_adapter/export_tables.py`.
 
 The results go to `tasks/openvocab_adapter/results/`. **`SUMMARY.md`** has one row per scene: the verdict, how many
 objects each run found, and the numbers behind the verdict. Each scene's folder has the details, including both runs'
@@ -157,7 +161,7 @@ sheet. It picks the SAM 3 prompts from the question, runs SAM 3, and tracks the 
 and depth. It prints the paths of `objects.csv` and `cameras.csv`:
 
 ```bash
-slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python tasks/openvocab_adapter/question_scene_sheet.py \
+slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python src/mvp/openvocab_adapter/question_scene_sheet.py \
     scannet/scene0025_01 "Which of these objects (table, chair, door, telephone) is the closest to the fan?"
 ```
 

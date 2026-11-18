@@ -7,12 +7,12 @@
 #
 # On the login node (the container has no ensurepip), then as a job:
 #   /usr/bin/python3 -m venv .venv-ov4d
-#   slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh
+#   slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash src/mvp/openvocab_adapter/hpc/setup_env.sh
 #
 # SAM 3's weights are gated: accept the license at https://huggingface.co/facebook/sam3 with the account whose token
 # is in ~/.cache/huggingface or $HF_HOME. The last step below checks this.
 set -euo pipefail
-cd "$(dirname "$0")/../../.."
+cd "$(dirname "$0")/../../../.."
 PY=.venv-ov4d/bin/python
 OV=openvocab-4D-main
 NUMPY_SPEC=${NUMPY_SPEC:-"numpy>=1.26,<2"}

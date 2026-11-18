@@ -18,7 +18,7 @@ Output, in --out:
   manifest.json       written last, so it marks a finished run: prompts, score threshold and, per frame, the
                       image's SHA-256, its size and the detections per prompt
 
-  python tasks/openvocab_adapter/sam3_infer.py --images <scene>/frames --frames all \
+  python src/mvp/openvocab_adapter/sam3_infer.py --images <scene>/frames --frames all \
       --prompts "chair,door,fan" --out masks/scannet__scene0025_01
 """
 import argparse
@@ -152,7 +152,7 @@ def run(args, frames, prompts, out):
     import torch
 
     if not torch.cuda.is_available():
-        sys.exit("[sam3] no CUDA GPU here. This script is meant for a machine with an NVIDIA GPU; see tasks/openvocab_adapter/README.md")
+        sys.exit("[sam3] no CUDA GPU here. This script is meant for a machine with an NVIDIA GPU; see src/mvp/openvocab_adapter/README.md")
 
     sys.path.insert(0, str(common.TRACK_A))
     from milestone2_sam3_concepts import draw_overlay, to_numpy_masks

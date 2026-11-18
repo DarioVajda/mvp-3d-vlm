@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The whole OpenVocab-4D comparison for one scene, on one GPU. After hpc/setup_env.sh:
 #
-#   slurm/submit.sh -J ov4d_compare -t 02:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
+#   slurm/submit.sh -J ov4d_compare -t 02:00:00 -- bash src/mvp/openvocab_adapter/hpc/run_all.sh
 #
 #   1. CPU tests of the adapter, loader and comparison
 #   2. SAM 3 masks for the frames the selections need, saved once and reused by every run below
@@ -11,9 +11,9 @@
 #   5. a scene sheet of each, then compare.py
 #
 # The small results (reports, scene sheets, comparison, environment, log; no frames) go to
-# tasks/openvocab_adapter/results/<dataset>__<scene>/, to be committed. Everything else stays in out/ (gitignored).
+# tasks/openvocab_adapter/results/<dataset>__<scene>/, to be committed. Everything else stays in tasks/openvocab_adapter/out/ (gitignored).
 #
-# Optional settings, e.g.  RUNS=eval32 slurm/submit.sh ... -- bash tasks/openvocab_adapter/hpc/run_all.sh
+# Optional settings, e.g.  RUNS=eval32 slurm/submit.sh ... -- bash src/mvp/openvocab_adapter/hpc/run_all.sh
 #   SCENE    scannet/scene0025_01
 #   PROMPTS  objects to find (default: those named in scene0025_01's VSI-Bench questions)
 #   RUNS     "half": every other frame (64). Others: smoke5 (5 nearby frames), eval32 (the uniform32 subset),
@@ -24,7 +24,7 @@
 #   DATA     the export holding scenes/<scene>/ (default: found under tasks/vggt_data/out, else exported)
 #   WORK, RESULTS   tasks/openvocab_adapter/out/<name>, tasks/openvocab_adapter/results/<name>
 set -euo pipefail
-cd "$(dirname "$0")/../../.."
+cd "$(dirname "$0")/../../../.."
 SCENE=${SCENE:-scannet/scene0025_01}
 PROMPTS=${PROMPTS:-chair,door,fan,keyboard,monitor,pillow,sofa,table,telephone,window}
 RUNS=${RUNS:-half}
@@ -32,12 +32,13 @@ PY=${PY:-.venv-ov4d/bin/python}
 REID_FLAG=--no-reid
 [[ ${REID:-0} == 1 ]] && REID_FLAG=
 
-A=tasks/openvocab_adapter
+A=src/mvp/openvocab_adapter  # the code
+T=tasks/openvocab_adapter     # its outputs: out/ (gitignored) and results/ (committed)
 OV=openvocab-4D-main
 NAME=${SCENE/\//__}
-WORK=${WORK:-$A/out/$NAME}
+WORK=${WORK:-$T/out/$NAME}
 MASKS=$WORK/masks
-RESULTS=${RESULTS:-$A/results/$NAME}
+RESULTS=${RESULTS:-$T/results/$NAME}
 DENSE=${DENSE:-${DENSE_ROOT:-data/vggt}/$SCENE}
 
 mkdir -p "$WORK" "$RESULTS"
@@ -45,15 +46,15 @@ exec > >(tee "$RESULTS/run.log") 2>&1
 step() { echo; echo "=== $(date +%H:%M:%S) $* ==="; }
 
 step "inputs"
-command -v "$PY" >/dev/null || { echo "no $PY: run tasks/openvocab_adapter/hpc/setup_env.sh first" >&2; exit 1; }
+command -v "$PY" >/dev/null || { echo "no $PY: run src/mvp/openvocab_adapter/hpc/setup_env.sh first" >&2; exit 1; }
 [[ -f $DENSE/depth.npy && -f $DENSE/depth_conf.npy ]] || { echo "no dense depth in $DENSE" >&2; exit 1; }
 FOUND=""
-for root in ${DATA:-} tasks/vggt_data/out/vggt_vsibench_75 tasks/vggt_data/out $A/out/export; do
+for root in ${DATA:-} tasks/vggt_data/out/vggt_vsibench_75 tasks/vggt_data/out $T/out/export; do
     [[ -f $root/scenes/$SCENE/meta.json ]] && { FOUND=$root; break; }
 done
 DATA=$FOUND
 if [[ -z $DATA ]]; then  # re-export the one scene from data/vggt/, with the project's environment
-    DATA=$A/out/export
+    DATA=$T/out/export
     .venv/bin/python tasks/vggt_data/export.py --scenes "$SCENE" --out "$DATA"
 fi
 FRAMES=$DATA/scenes/$SCENE/frames

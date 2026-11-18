@@ -3,6 +3,10 @@
 This is the reference for the test described in [README.md](README.md). The README explains what is being tested and
 how to run it. This file covers everything else.
 
+The code is in `src/mvp/openvocab_adapter/`, and its outputs go to `tasks/openvocab_adapter/`. Below, `out/` and
+`results/` are the folders there: `tasks/openvocab_adapter/out/` (large intermediate files, gitignored) and
+`tasks/openvocab_adapter/results/` (the small files that are committed). Every command runs from the repository root.
+
 Contents:
 
 - [Before you start](#before-you-start)
@@ -45,7 +49,7 @@ the group's shared Hugging Face cache, which `slurm/submit.sh` sets up.
 2. **Creates the environment**, if it is missing: `/usr/bin/python3 -m venv .venv-ov4d`. This has to happen on the
    login node, because the container has no `ensurepip`.
 3. **Submits the setup job**, unless an earlier one finished (`SETUP=1` forces it):
-   `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh`. The setup:
+   `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash src/mvp/openvocab_adapter/hpc/setup_env.sh`. The setup:
    - clones SAM 3 and VGGT at the commits OpenVocab-4D pins, into `openvocab-4D-main/sam3` and
      `openvocab-4D-main/vggt` (both gitignored);
    - installs PyTorch 2.14.1 for CUDA 13.0, the same build as the project's `.venv`. OpenVocab-4D's own
@@ -53,7 +57,7 @@ the group's shared Hugging Face cache, which `slurm/submit.sh` sets up.
    - installs `numpy<2`, which SAM 3 and VGGT need, and the pipeline's other packages;
    - checks the result. Its log, `logs/ov4d/ov4d_setup_<id>.out`, should end with `GPU ok`, `imports ok`,
      `access to facebook/sam3 ok` and `setup done`.
-4. **Submits the scenes:** `bash tasks/openvocab_adapter/hpc/submit_scenes.sh`. This submits one `hpc/run_all.sh`
+4. **Submits the scenes:** `bash src/mvp/openvocab_adapter/hpc/submit_scenes.sh`. This submits one `hpc/run_all.sh`
    job per scene, all running in parallel and each waiting for the setup job. It also submits an `ov4d_summary` job,
    which waits for every scene and then writes `results/SUMMARY.md`.
 
@@ -111,21 +115,21 @@ need frames or prompts that the saved masks lack.
   asked-about objects come first, and there are at most 12. Route-planning questions are skipped.
 
 To change the scenes, edit `scenes.tsv` directly, or rerun
-`python tasks/openvocab_adapter/hpc/make_scene_list.py --per-dataset scannet=2 scannetpp=2 arkitscenes=1`.
+`python src/mvp/openvocab_adapter/hpc/make_scene_list.py --per-dataset scannet=2 scannetpp=2 arkitscenes=1`.
 
 ## Running one scene, or other settings
 
 To run one scene, as a job:
 
 ```bash
-slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
+slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash src/mvp/openvocab_adapter/hpc/run_all.sh
 ```
 
 Settings go in front of the command, because `slurm/submit.sh` passes your environment on to the job. For example:
 
 ```bash
-RUNS=all bash tasks/openvocab_adapter/hpc/start.sh
-SCENE=scannet/scene0046_01 PROMPTS="lamp,door,bed" slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash tasks/openvocab_adapter/hpc/run_all.sh
+RUNS=all bash src/mvp/openvocab_adapter/hpc/start.sh
+SCENE=scannet/scene0046_01 PROMPTS="lamp,door,bed" slurm/submit.sh -J ov4d_compare -t 01:00:00 -- bash src/mvp/openvocab_adapter/hpc/run_all.sh
 ```
 
 For `start.sh` and `submit_scenes.sh`:
@@ -148,13 +152,13 @@ For `run_all.sh` (one scene):
 | `PY` | `.venv-ov4d/bin/python` | The Python to use |
 | `DENSE` | `data/vggt/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
 | `DATA` | found automatically | The export folder that holds `scenes/<scene>/` |
-| `WORK`, `RESULTS` | `out/<name>`, `results/<name>` | Where the intermediate files and the results go |
+| `WORK`, `RESULTS` | `tasks/openvocab_adapter/out/<name>`, `tasks/openvocab_adapter/results/<name>` | Where the intermediate files and the results go |
 
 ## Reading the results
 
 Start with `results/SUMMARY.md`, which has one row per scene. A scene whose job failed still gets a row, saying
 `no result`, with the last line of its log. If the summary job didn't run, write the summary with
-`.venv-ov4d/bin/python tasks/openvocab_adapter/summarize.py`.
+`.venv-ov4d/bin/python src/mvp/openvocab_adapter/summarize.py`.
 
 Each scene has its own folder, `results/<dataset>__<scene>/`:
 
@@ -219,12 +223,12 @@ When a scene says `DIFFERS`, look here:
 | `no git in this container` | Run the two `git clone` commands it prints on the login node, then run `start.sh` again |
 | `no CUDA GPU visible` / `no CUDA GPU here` | Run through `slurm/submit.sh`, not directly on the login node |
 | `no kernel image is available for execution on the device` | This PyTorch build doesn't support the GPU. Check that `.venv-ov4d/bin/pip show torch` says `2.14.1+cu130` |
-| numpy fails to install (building from source) | The container's Python is too new for numpy<2. Run `NUMPY_SPEC=numpy SETUP=1 bash tasks/openvocab_adapter/hpc/start.sh` |
+| numpy fails to install (building from source) | The container's Python is too new for numpy<2. Run `NUMPY_SPEC=numpy SETUP=1 bash src/mvp/openvocab_adapter/hpc/start.sh` |
 | `no access to facebook/sam3`, `401`, `gated repo` | Accept the license on Hugging Face and check `.venv/bin/hf auth whoami` |
 | The tests in step 1/5 fail | The environment differs from the one the tests expect. Send `run.log` |
 | `[adapter] FAIL ...` and `nothing written` | The exported frames and `data/vggt/` disagree, for example frames from another run. The line names the check. Send `run.log` |
 | `masks are (...) the image is (...)` | SAM 3 returned masks at another size. Send `run.log` |
-| A job hits its time limit | Rerun with a longer limit, e.g. `TIME=02:00:00 bash tasks/openvocab_adapter/hpc/start.sh`. Saved masks are reused |
+| A job hits its time limit | Rerun with a longer limit, e.g. `TIME=02:00:00 bash src/mvp/openvocab_adapter/hpc/start.sh`. Saved masks are reused |
 | A scene says `no result` in `SUMMARY.md` | Its job stopped before comparing. The row shows the last line of its log, and `results/<scene>/run.log` has the rest |
 | CUDA out of memory in the VGGT stage | Unlikely on a B200, but if it happens, run with `RUNS=smoke5` and send the log |
 
@@ -235,7 +239,7 @@ creator on a small synthetic scene, with SAM 3, VGGT, `cv2` and `rerun` replaced
 root:
 
 ```bash
-python -m unittest discover -s tasks/openvocab_adapter/tests      # on Windows: py -m unittest ...
+python -m unittest discover -s src/mvp/openvocab_adapter/tests      # on Windows: py -m unittest ...
 ```
 
 They should end with `OK`. A few tests are skipped where they don't apply, for example the tests for a machine without
@@ -254,12 +258,12 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
 
 1. **SAM 3 masks (GPU).** `--dry-run` checks the inputs without loading SAM 3.
    ```powershell
-   py tasks/openvocab_adapter/sam3_infer.py --images $frames --frames all --prompts $prompts --out "$scene/masks" --overlays
+   py src/mvp/openvocab_adapter/sam3_infer.py --images $frames --frames all --prompts $prompts --out "$scene/masks" --overlays
    ```
 2. **Adapt the saved VGGT outputs (CPU).** `--dense-dir` is the folder with `depth.npy` and `depth_conf.npy`. Without it,
    only the cameras are written, and tracking can't run.
    ```powershell
-   py tasks/openvocab_adapter/adapt_vggt.py --preset half --dense-dir <dense folder> --out "$scene/half/adapted" --overwrite
+   py src/mvp/openvocab_adapter/adapt_vggt.py --preset half --dense-dir <dense folder> --out "$scene/half/adapted" --overwrite
    ```
    Other selections: `--frames uniform:16 --label u16`, `--frames list:0,40,80 --label three`,
    `--frames window:START:COUNT[:STRIDE]`, or `--frames subset:<name from meta.json>`.
@@ -276,13 +280,13 @@ $frames  = 'tasks/vggt_data/out/vggt_vsibench_75/scenes/scannet/scene0025_01/fra
 5. **Scene sheets:**
    ```powershell
    foreach ($side in 'adapted','native') {
-     py tasks/openvocab_adapter/scene_sheet_creator.py --scene "$scene/half/$side" --prompts $prompts --size
+     py src/mvp/openvocab_adapter/scene_sheet_creator.py --scene "$scene/half/$side" --prompts $prompts --size
    }
    ```
 6. **Compare.** This writes `$scene/half/comparison.json`. It runs at any stage, and anything that can't run yet is
    reported as `BLOCKED`, along with what it needs.
    ```powershell
-   py tasks/openvocab_adapter/compare.py --run-dir "$scene/half" --masks "$scene/masks"
+   py src/mvp/openvocab_adapter/compare.py --run-dir "$scene/half" --masks "$scene/masks"
    ```
 
 Steps 3 to 5 need `opencv-python`, `rerun-sdk`, `numpy<2` and the VGGT repository code in `openvocab-4D-main/vggt`.
@@ -294,7 +298,7 @@ Use a separate environment, not your system Python. Use the same `--no-reid` set
 objects the question names. It is separate from the comparison above and uses only the saved VGGT outputs.
 
 ```bash
-slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python tasks/openvocab_adapter/question_scene_sheet.py \
+slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python src/mvp/openvocab_adapter/question_scene_sheet.py \
     scannet/scene0025_01 "Which of these objects (table, chair, door, telephone) is the closest to the fan?"
 ```
 
@@ -350,7 +354,7 @@ Things to know:
 
 - **It needs the environment from `hpc/setup_env.sh`**, which now also installs spaCy, its `en_core_web_md` model and
   NLTK for the prompt extractor. An environment set up before that needs the setup job once more:
-  `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash tasks/openvocab_adapter/hpc/setup_env.sh`.
+  `slurm/submit.sh -J ov4d_setup -t 00:45:00 -- bash src/mvp/openvocab_adapter/hpc/setup_env.sh`.
 - **Re-identification loads DINOv2 through `torch.hub`**, which downloads it the first time. If the job has no
   network access and no cached copy, pass `--no-reid`.
 - **A question with an apostrophe can't be passed through `slurm/submit.sh`**, because of how it quotes the command.
@@ -361,8 +365,8 @@ Things to know:
 To see which prompts a question gives, and why, without running anything else:
 
 ```bash
-python tasks/openvocab_adapter/prompt_object_extractor.py --explain "How far is the red car from the stove?"
-python tasks/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # every question of a few scenes
+python src/mvp/openvocab_adapter/prompt_object_extractor.py --explain "How far is the red car from the stove?"
+python src/mvp/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # every question of a few scenes
 ```
 
 ## A scene sheet from the gold labels
@@ -372,7 +376,7 @@ python tasks/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # e
 downloaded to `data/raw/VSI-Bench/meta_info/` the first time). It needs no GPU:
 
 ```bash
-python tasks/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01     --prompts "table,chair,fan" --size --out-dir out/gold_sheet
+python src/mvp/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01     --prompts "table,chair,fan" --size --out-dir out/gold_sheet
 ```
 
 The columns are the pipeline sheet's up to `size`, in metres and in the dataset's frame (z up). There are no per-frame
@@ -400,5 +404,6 @@ an error. Pass `--no-frames --no-cameras` for a pipeline sheet with the same col
 | `compare.py` | Compares an adapted run with a native run, including their scene sheets, and gives the verdict |
 | `common.py` | Paths, frame-selection presets and small helpers |
 | `tests/` | CPU-only tests |
-| `results/` | The small result files committed from the cluster |
-| `../../openvocab-4D-main/trackA/saved_masks.py` | Lets milestones 3 and 4 reuse saved masks (`--masks-dir`) instead of running SAM 3 |
+| `tasks/openvocab_adapter/results/` | The small result files committed from the cluster |
+| `tasks/openvocab_adapter/out/` | The large intermediate files (gitignored) |
+| `openvocab-4D-main/trackA/saved_masks.py` | Lets milestones 3 and 4 reuse saved masks (`--masks-dir`) instead of running SAM 3 |

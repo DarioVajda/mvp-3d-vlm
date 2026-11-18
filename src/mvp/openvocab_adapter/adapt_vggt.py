@@ -10,9 +10,9 @@ No model is run and the source data is only read. Output, in --out:
 Dense depth is never approximated from the patch points. Without --dense-dir, depth.npz is not written and the
 pipeline's track and fuse stages cannot run yet. The patch points are used only as validation data.
 
-  py tasks/openvocab_adapter/adapt_vggt.py --preset smoke5
-  py tasks/openvocab_adapter/adapt_vggt.py --preset eval32 --dense-dir <folder with depth.npy, depth_conf.npy>
-  py tasks/openvocab_adapter/adapt_vggt.py --frames list:0,40,80 --label three_frames
+  py src/mvp/openvocab_adapter/adapt_vggt.py --preset smoke5
+  py src/mvp/openvocab_adapter/adapt_vggt.py --preset eval32 --dense-dir <folder with depth.npy, depth_conf.npy>
+  py src/mvp/openvocab_adapter/adapt_vggt.py --frames list:0,40,80 --label three_frames
 """
 import argparse
 import json
@@ -269,7 +269,7 @@ def parse_args(argv):
     group.add_argument("--frames", help="selection: all | uniform:K | subset:NAME | window:START:COUNT[:STRIDE] | list:a,b")
     p.add_argument("--label", help="name of this selection in the output path (default: the preset or the spec)")
     p.add_argument("--dense-dir", help="folder with the saved depth.npy and depth_conf.npy for this scene")
-    p.add_argument("--out", help="output folder (default out/<dataset>__<scene>/<label>/adapted)")
+    p.add_argument("--out", help="output folder (default tasks/openvocab_adapter/out/<dataset>__<scene>/<label>/adapted)")
     p.add_argument("--overwrite", action="store_true", help="replace an earlier run's adapter files")
     return p.parse_args(argv)
 

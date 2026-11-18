@@ -9,9 +9,9 @@ to spot a word that is wrongly kept or dropped.
 Scenes are taken in name order; --seed picks them at random instead.
 
 Usage (from the repo root, in an environment with spacy and nltk, see prompt_object_extractor.py):
-  python tasks/openvocab_adapter/prompt_extractor_report.py
-  python tasks/openvocab_adapter/prompt_extractor_report.py --per-dataset 2 --types route_planning
-  python tasks/openvocab_adapter/prompt_extractor_report.py --seed 0 > prompts_report.txt
+  python src/mvp/openvocab_adapter/prompt_extractor_report.py
+  python src/mvp/openvocab_adapter/prompt_extractor_report.py --per-dataset 2 --types route_planning
+  python src/mvp/openvocab_adapter/prompt_extractor_report.py --seed 0 > prompts_report.txt
 
 This is a report to read, not a unit test: those are in tests/.
 """
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from prompt_object_extractor import SPACY_MODEL, analyse, kept_prompts
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 SCENES_DIR = REPO / "tasks" / "vggt_data" / "scenes"
 
 

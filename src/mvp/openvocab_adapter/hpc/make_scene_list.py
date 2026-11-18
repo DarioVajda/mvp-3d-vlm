@@ -7,8 +7,8 @@ Scenes: scannet/scene0025_01 (the first test scene), then the first landscape sc
 Portrait scenes are left out: OpenVocab-4D's own VGGT loader resizes portrait frames to a different shape than the
 saved VGGT export, so the two runs' depth maps could not be compared pixel by pixel.
 
-  py tasks/openvocab_adapter/hpc/make_scene_list.py            (reads tasks/vggt_data/out/vggt_vsibench_75)
-  py tasks/openvocab_adapter/hpc/make_scene_list.py --data-root <export> --per-dataset scannet=4 scannetpp=3 arkitscenes=3
+  py src/mvp/openvocab_adapter/hpc/make_scene_list.py            (reads tasks/vggt_data/out/vggt_vsibench_75)
+  py src/mvp/openvocab_adapter/hpc/make_scene_list.py --data-root <export> --per-dataset scannet=4 scannetpp=3 arkitscenes=3
 """
 import argparse
 import csv

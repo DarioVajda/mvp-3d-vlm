@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 # The whole comparison in one job: the setup (hpc/setup_env.sh, on the first GPU, only if no earlier setup finished),
-# then every scene of hpc/scenes.tsv, one scene per GPU at a time, then results/SUMMARY.md. As in
+# then every scene of hpc/scenes.tsv, one scene per GPU at a time, then tasks/openvocab_adapter/results/SUMMARY.md. As in
 # slurm/eval_bench.sh, the scenes form one queue, most prompts first (SAM 3 time grows with them); one worker per GPU
 # takes the next scene until none is left. A scene whose comparison.json exists for every selection in RUNS is skipped,
 # so a resubmission picks up where a job stopped. hpc/start.sh submits it; by hand (after creating .venv-ov4d):
 #
-#   slurm/submit.sh -J ov4d_scenes --gres gpu:5 -c 40 --mem 320G -t 02:00:00 -- bash tasks/openvocab_adapter/hpc/run_packed.sh
+#   slurm/submit.sh -J ov4d_scenes --gres gpu:5 -c 40 --mem 320G -t 02:00:00 -- bash src/mvp/openvocab_adapter/hpc/run_packed.sh
 #
 # 5 GPUs for 10 scenes: two rounds of five. 8 GPUs would also need two rounds (8 + 2) and leave 6 idle in the second.
 # Settings as in run_all.sh (RUNS, REID, PY, DENSE_ROOT, DATA), plus SCENES_FILE (default hpc/scenes.tsv) and SETUP=1
 # (run the setup again).
-# One log per scene in logs/ov4d/scenes_<job id>/; each scene's run.log also goes to results/<scene>/.
+# One log per scene in logs/ov4d/scenes_<job id>/; each scene's run.log also goes to tasks/openvocab_adapter/results/<scene>/.
 # Exits non-zero if any scene failed.
 set -uo pipefail
-cd "$(dirname "$0")/../../.."
-A=tasks/openvocab_adapter
+cd "$(dirname "$0")/../../../.."
+A=src/mvp/openvocab_adapter  # the code
+T=tasks/openvocab_adapter     # its outputs: out/ (gitignored) and results/ (committed)
 SCENES_FILE=${SCENES_FILE:-$A/hpc/scenes.tsv}
 export RUNS=${RUNS:-half}
 PY=${PY:-.venv-ov4d/bin/python}
@@ -36,7 +37,7 @@ fi
 
 done_already() {  # scene: true if every selection in RUNS has its comparison
     local r
-    for r in $RUNS; do [[ -f $A/results/${1/\//__}/$r/comparison.json ]] || return 1; done
+    for r in $RUNS; do [[ -f $T/results/${1/\//__}/$r/comparison.json ]] || return 1; done
 }
 
 queue=$(mktemp)

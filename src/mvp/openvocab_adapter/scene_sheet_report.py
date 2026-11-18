@@ -28,8 +28,8 @@ numbers are finite and size is the product of the extents; sheet.json lists the 
 The questions come from the exported scene (scenes/<dataset>/<scene>/questions.jsonl), or from --questions: a .jsonl in
 VSI-Bench's format (data/raw/VSI-Bench/test.jsonl, which is tried last for a gold report of a scene not exported).
 
-  python tasks/openvocab_adapter/scene_sheet_report.py scannet/scene0025_01 --source gold
-  slurm/submit.sh -J sheet_report -t 02:00:00 -- .venv-ov4d/bin/python tasks/openvocab_adapter/scene_sheet_report.py \
+  python src/mvp/openvocab_adapter/scene_sheet_report.py scannet/scene0025_01 --source gold
+  slurm/submit.sh -J sheet_report -t 02:00:00 -- .venv-ov4d/bin/python src/mvp/openvocab_adapter/scene_sheet_report.py \
       scannet/scene0025_01
 
 The report goes to stdout; the steps' own logs go to stderr (add 2> log.txt to keep them apart). Work is kept and

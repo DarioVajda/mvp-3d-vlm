@@ -1,7 +1,7 @@
 """Load SAM 3 masks saved earlier, so tracking and fusion can reuse them instead of running SAM 3.
 
 Reads a folder of <stem>__masks.npz files, matched to frames by file stem. It accepts the output of
-tasks/openvocab_adapter/sam3_infer.py (finished runs have manifest.json) and of milestone 2 (report.json).
+src/mvp/openvocab_adapter/sam3_infer.py (finished runs have manifest.json) and of milestone 2 (report.json).
 Anything that would silently change the result is an error: a frame or prompt that is missing, a different image
 than the one segmented, masks of another size, or masks saved with a stricter score threshold.
 """

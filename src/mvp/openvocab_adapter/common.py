@@ -4,11 +4,13 @@ from pathlib import Path
 
 import numpy as np
 
-HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
+HERE = Path(__file__).resolve().parent  # src/mvp/openvocab_adapter: the code
+REPO = HERE.parents[2]
+TASK_DIR = REPO / "tasks" / "openvocab_adapter"  # the outputs: out/ (gitignored) and results/ (committed)
 TRACK_A = REPO / "openvocab-4D-main" / "trackA"
 DATA_ROOT = REPO / "tasks" / "vggt_data" / "out" / "vggt_vsibench_75"
-OUT_ROOT = HERE / "out"
+OUT_ROOT = TASK_DIR / "out"
+RESULTS_ROOT = TASK_DIR / "results"
 # Folders that may hold an export's scenes/<dataset>/<scene>/, in the order they are tried (as in hpc/run_all.sh)
 DATA_ROOTS = [REPO / "tasks" / "vggt_data", DATA_ROOT, REPO / "tasks" / "vggt_data" / "out", OUT_ROOT / "export"]
 DENSE_ROOT = REPO / "data" / "vggt"  # <dataset>/<scene>/depth.npy and depth_conf.npy, on the cluster only

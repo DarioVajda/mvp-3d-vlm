@@ -1,6 +1,6 @@
 """Compare OpenVocab-4D run on the saved VGGT outputs (adapted) with OpenVocab-4D's own VGGT, on the same frames and masks.
 
-  py tasks/openvocab_adapter/compare.py --run-dir tasks/openvocab_adapter/out/scannet__scene0025_01/smoke5 \
+  py src/mvp/openvocab_adapter/compare.py --run-dir tasks/openvocab_adapter/out/scannet__scene0025_01/smoke5 \
       --masks tasks/openvocab_adapter/out/scannet__scene0025_01/masks
 
 --run-dir holds adapted/ and native/ (each one is milestone 4's --out). Every comparison ends in one state:
