@@ -1,12 +1,12 @@
-"""The checks run_all.sh runs on the cluster before submitting the 11 runs. Each exits non-zero on failure.
+"""Checks for the README's Runs checklist, run on the cluster before the 11 runs. Each exits non-zero on failure.
 
   python cluster_checks.py prompts LOG --sheets-root DIR [--vggt-root DIR]   # output of vsibench --print-prompt
   python cluster_checks.py smoke A.jsonl B.jsonl --n 20                       # smoke runs: video only, with a sheet
   python cluster_checks.py revision Qwen/Qwen3.5-2B OUT                       # the cached snapshot the runs load
 
 prompts: for each printed question, the video's "<t seconds>" labels must be exactly the sheet's frame timestamps
-(scene_sheet.frame_timestamps, one per pair of frames), every first_seen in the sheet must be one of them, and the sheet
-must appear in the prompt as render_sheet writes it.
+(scene_sheet.frame_timestamps, one per pair of frames), every first_seen in the sheet must be one of them, the sheet
+must appear in the prompt as render_sheet writes it, and the whole prompt must be build_sheet_prompt's.
 """
 import argparse
 import datetime
@@ -24,6 +24,7 @@ from mvp.paths import VGGT_DIR
 
 HEADER = re.compile(r"^===== question (\d+) \((\S+)\), (\S+), video fps (\S+), frames (\[.*\])$", re.M)
 LABEL = re.compile(r"<(\d+(?:\.\d+)?) seconds>")
+FRAME_TOKENS = re.compile(re.escape(ss.VIDEO_PAD) + r" x (\d+)")
 
 
 def check_prompts(text, sheets_root, vggt_root, source="pipeline", fmt="csv"):
@@ -51,6 +52,11 @@ def check_prompts(text, sheets_root, vggt_root, source="pipeline", fmt="csv"):
             problems.append(f"question {qid}: first_seen {sorted(set(seen) - set(labels))} not among the labels")
         if ss.render_sheet(qid, source, fmt, sheets_root, vggt_root=vggt_root) not in block:
             problems.append(f"question {qid}: the rendered sheet is not in the prompt")
+        tokens = FRAME_TOKENS.search(block)
+        expected_prompt = ss.build_sheet_prompt(qid, source, fmt, sheets_root, vggt_root,
+                                                frame_tokens=tokens.group(1) if tokens else None)
+        if block.strip("\n") != expected_prompt.strip("\n"):
+            problems.append(f"question {qid}: the prompt is not build_sheet_prompt's")
     return problems
 
 

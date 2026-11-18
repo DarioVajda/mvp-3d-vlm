@@ -2,10 +2,13 @@
 
 Every format is parsed back and compared with the canonical object list, on small synthetic sheets and, when
 data/scene_sheets_75 and the VGGT meta.json files are there, on every question of both sources. The meta.json files
-are read from SCENE_SHEET_VGGT_ROOT if set, else from data/vggt.
+are read from SCENE_SHEET_VGGT_ROOT if set, else from data/vggt. build_sheet_prompt's chat template is checked against
+the Qwen3.5-2B tokenizer's when it is in the Hugging Face cache (and transformers and jinja2 are installed), and its
+questions against VSI-Bench's test.jsonl (SCENE_SHEET_VSI_JSONL, else data/raw/VSI-Bench/test.jsonl) when present.
 
   PYTHONPATH=src python -m unittest discover -s src/mvp/benchmarks/tests -v      (from the repository root)
 """
+import ast
 import csv
 import json
 import os
@@ -16,9 +19,11 @@ import unittest
 from pathlib import Path
 
 from mvp.benchmarks import scene_sheet as ss
-from mvp.paths import SCENE_SHEETS, VGGT_DIR
+from mvp.paths import SCENE_SHEETS, VGGT_DIR, VSI_DIR
 
 VGGT_ROOT = Path(os.environ.get("SCENE_SHEET_VGGT_ROOT", VGGT_DIR))
+VSI_JSONL = Path(os.environ.get("SCENE_SHEET_VSI_JSONL", VSI_DIR / "test.jsonl"))
+QWEN_VL = Path(__file__).parents[2] / "models" / "qwen_vl.py"
 NUM = rf"-?\d+\.\d{{{ss.DECIMALS}}}"
 TEXT_PATTERN = re.compile(
     rf"^(?P<id>\S+) is an? (?P<label>.+?) centred at x=(?P<x>{NUM}), y=(?P<y>{NUM}), z=(?P<z>{NUM}), with extent "
@@ -191,6 +196,25 @@ class Synthetic(unittest.TestCase):
         with self.assertRaises(ValueError):
             ss.merge([a, [dict(a[0], x="9.000")]])
 
+    def test_build_sheet_prompt(self):
+        prompt = ss.build_sheet_prompt(1, "pipeline", "csv", self.root, self.vggt)
+        video = "".join(f"<{2 * k}.5 seconds><|vision_start|><|video_pad|><|vision_end|>" for k in range(8))
+        self.assertEqual(prompt, "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n"
+                         f"<|vision_start|>{video}<|vision_end|>These are frames of a video.\n"
+                         f"{self.render(1, 'pipeline', 'csv')}\nHow many?\n"
+                         "Please answer the question using a single word or phrase.<|im_end|>\n"
+                         "<|im_start|>assistant\n<think>\n\n</think>\n\n")
+        # the gold sheet in the same place, the video's labels unchanged; no sheet for A
+        gold = ss.build_sheet_prompt(1, "gold", "json", self.root, self.vggt)
+        self.assertEqual(gold, prompt.replace(self.render(1, "pipeline", "csv"), self.render(1, "gold", "json")))
+        self.assertEqual(ss.build_sheet_prompt(1, None, None, self.root, self.vggt),
+                         prompt.replace(self.render(1, "pipeline", "csv") + "\n", ""))
+        # with the frame's token count, as QwenVL.render_prompt (--print-prompt) writes it
+        self.assertIn("<0.5 seconds><|vision_start|><|video_pad|> x 64<|vision_end|><2.5 seconds>",
+                      ss.build_sheet_prompt(1, "pipeline", "csv", self.root, self.vggt, frame_tokens=64))
+        with self.assertRaises(ValueError):
+            ss.build_sheet_prompt(1, "pipeline", "yaml", self.root, self.vggt)
+
     def test_special_characters(self):
         self.assertEqual(ss.render_csv([{"id": "a,b_1", "label": "a,b"}], ["id", "label"]), 'id,label\n"a,b_1","a,b"')
         with self.assertRaises(ValueError):
@@ -211,6 +235,28 @@ class Prompt(unittest.TestCase):
             vsibench.build_prompt_parts(mca, "stit", "SHEET")
 
 
+class PromptTemplate(unittest.TestCase):
+    def test_system_prompt_is_the_models(self):
+        tree = ast.parse(QWEN_VL.read_text())
+        value = next(node.value.value for node in tree.body if isinstance(node, ast.Assign)
+                     and getattr(node.targets[0], "id", None) == "SYSTEM_PROMPT")
+        self.assertEqual(ss.SYSTEM_PROMPT, value)
+
+    def test_chat_template_is_the_tokenizers(self):
+        """ss.CHAT with the video as the template writes it is apply_chat_template's output, as QwenVL builds it."""
+        try:
+            import jinja2  # noqa: F401
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3.5-2B", local_files_only=True)
+        except Exception as e:  # no transformers, no jinja2, or no tokenizer in the cache
+            self.skipTest(f"Qwen3.5-2B tokenizer not available: {e}")
+        messages = [{"role": "system", "content": [{"type": "text", "text": ss.SYSTEM_PROMPT}]},
+                    {"role": "user", "content": [{"type": "video"}, {"type": "text", "text": "POST"}]}]
+        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True,
+                                             enable_thinking=False)
+        self.assertEqual(text, ss.CHAT.format(system=ss.SYSTEM_PROMPT, pre="", video=ss.VIDEO_PAD, post="POST"))
+
+
 @unittest.skipUnless((SCENE_SHEETS / "index.csv").exists() and VGGT_ROOT.exists(),
                      "data/scene_sheets_75 or the VGGT meta.json files are not here")
 class RealSheets(unittest.TestCase):
@@ -221,6 +267,17 @@ class RealSheets(unittest.TestCase):
                 for fmt in ss.FORMATS:
                     rendered = ss.render_sheet(q, source, fmt, vggt_root=VGGT_ROOT)
                     self.assertEqual(parse(rendered, source, fmt), canonical, (q, source, fmt))
+
+    def test_prompt_questions_are_vsibench(self):
+        """build_sheet_prompt takes the question from index.csv; the eval takes it from VSI-Bench's test.jsonl."""
+        if not VSI_JSONL.exists():
+            self.skipTest(f"no {VSI_JSONL}")
+        from mvp.benchmarks.vsibench import build_prompt
+        docs = {d["id"]: d for d in map(json.loads, open(VSI_JSONL))}
+        for q in ss.load_index(SCENE_SHEETS):
+            prompt = ss.build_sheet_prompt(q, "gold", "csv", vggt_root=VGGT_ROOT)
+            expected = build_prompt(docs[q], ss.render_sheet(q, "gold", "csv", vggt_root=VGGT_ROOT))
+            self.assertIn("<|vision_end|><|vision_end|>" + expected + "<|im_end|>", prompt, q)
 
     def test_same_triples_in_every_format(self):
         ids = random.Random(0).sample(sorted(ss.load_index(SCENE_SHEETS)), 50)

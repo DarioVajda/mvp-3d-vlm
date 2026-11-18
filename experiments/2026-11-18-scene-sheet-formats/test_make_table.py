@@ -127,29 +127,39 @@ class PromptCheck(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def prompt(self, labels):
-        sheet = ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt)
-        video = "".join(f"<{t} seconds><|vision_start|><|video_pad|> x 64<|vision_end|>" for t in labels)
+    def prompt(self, labels=None, sheet_text=None):
+        """--print-prompt's output for question 1: a header, then the prompt as QwenVL.render_prompt writes it."""
+        prompt = ss.build_sheet_prompt(1, "pipeline", "csv", self.root, self.vggt, frame_tokens=64)
+        if labels:
+            for k, t in enumerate(labels):
+                prompt = prompt.replace(f"<{2 * k + 0.5:.1f} seconds>", f"<{t} seconds>", 1)
+        if sheet_text:
+            prompt = prompt.replace(*sheet_text)
         return (f"===== question 1 (object_counting), /x/s/1.mp4, video fps 30.0, frames {list(range(0, 480, 30))}\n"
-                f"<|im_start|>user\n{video}These are frames of a video.\n{sheet}\nHow many?<|im_end|>\n")
+                f"{prompt}\n")
 
     def test_good_and_bad_labels(self):
-        good = [f"{2 * k + 0.5:.1f}" for k in range(8)]
-        self.assertEqual(cluster_checks.check_prompts(self.prompt(good), self.root, self.vggt), [])
-        bad = good[:1] + ["2.4"] + good[2:]
+        self.assertEqual(cluster_checks.check_prompts(self.prompt(), self.root, self.vggt), [])
+        bad = ["0.5", "2.4"] + [f"{2 * k + 0.5:.1f}" for k in range(2, 8)]
         problems = cluster_checks.check_prompts(self.prompt(bad), self.root, self.vggt)
-        self.assertEqual(len(problems), 2)  # the labels differ, and door_2's first_seen 2.5 isn't among them
+        # the labels differ, door_2's first_seen 2.5 isn't among them, and the prompt isn't build_sheet_prompt's
+        self.assertEqual(len(problems), 3)
         self.assertIn("not the sheet's", problems[0])
         self.assertIn("2.5", problems[1])
+        self.assertIn("not build_sheet_prompt's", problems[2])
         self.assertEqual(cluster_checks.check_prompts("nothing printed", self.root, self.vggt),
                          ["no '===== question' blocks in the output"])
 
     def test_sheet_must_be_in_prompt(self):
-        good = [f"{2 * k + 0.5:.1f}" for k in range(8)]
-        text = self.prompt(good).replace("coffee_table_1", "coffee_table_9")
-        self.assertIn("the rendered sheet is not in the prompt",
-                      cluster_checks.check_prompts(text, self.root, self.vggt)[0])
+        text = self.prompt(sheet_text=("coffee_table_1", "coffee_table_9"))
+        problems = cluster_checks.check_prompts(text, self.root, self.vggt)
+        self.assertIn("the rendered sheet is not in the prompt", problems[0])
+        self.assertIn("not build_sheet_prompt's", problems[1])
 
+    def test_any_other_difference(self):
+        text = self.prompt(sheet_text=("You are a helpful assistant.", "You are helpful."))
+        self.assertEqual(cluster_checks.check_prompts(text, self.root, self.vggt),
+                         ["question 1: the prompt is not build_sheet_prompt's"])
 
 if __name__ == "__main__":
     unittest.main()

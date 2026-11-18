@@ -176,7 +176,7 @@ data:
 
 visual:
   video: true
-  model: Qwen/Qwen3.5-2B       # revision: the cluster's cached snapshot, written by run_all.sh to model_revision.txt next to the outputs
+  model: Qwen/Qwen3.5-2B       # revision: the cluster's cached snapshot, recorded by the smoke test (Runs) in model_revision.txt
   protocol: video
   nframes: 16
   sampling: uniform128
@@ -270,53 +270,79 @@ task files. -->
 <!-- One row per run. A run can serve several conditions (one sheet job for B and C, say). Output: the folder with the
 predictions (.jsonl), the summaries and the run's freeze.txt or environment.txt. -->
 
-Run everything with
+All commands run from the repository root on the cluster, at a commit with this folder, in the project's environment
+(`.venv`, with the linear-attention kernels). The sheets of `run_sheets.sh` are in `tasks/openvocab_adapter/out/`.
+
+**Checklist, before the runs:**
+
+1. **meta.json exists.** Every scene needs `data/vggt/<dataset>/<scene>/meta.json` with `video_fps`, because
+   `render_sheet` reads it for `first_seen`. This prints the number of scenes and any without `video_fps`, and stops
+   with an error if a file is missing:
+
+   ```bash
+   python -c "import csv, json; s = {r['scene'] for r in csv.DictReader(open('tasks/openvocab_adapter/out/index.csv'))}; print(len(s), 'scenes; without video_fps:', [x for x in s if 'video_fps' not in json.load(open(f'data/vggt/{x}/meta.json'))])"
+   ```
+
+2. **Timestamp check with `--print-prompt`.** This prints the full prompts of `prompt_check_ids.txt` without loading
+   the weights: 706 and 680 (ARKitScenes, 30 fps; 680's scene has a pair at exactly 139.65 s, where rounding is most
+   fragile), 4853 (ScanNet, 24 fps) and 1776 (ScanNet++). The check then confirms three things: the video's
+   `<t seconds>` labels are the sheet's timestamps, every `first_seen` is one of them, and each prompt is exactly
+   `build_sheet_prompt`'s. This is also the first run of `QwenVL.render_prompt`.
+
+   ```bash
+   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source pipeline \
+       --sheet-format csv --sheets-root tasks/openvocab_adapter/out \
+       --ids experiments/2026-11-18-scene-sheet-formats/prompt_check_ids.txt --print-prompt 4 > prompts.txt
+   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py prompts prompts.txt \
+       --sheets-root tasks/openvocab_adapter/out
+   ```
+
+3. **20-question smoke test.** This runs A and B on `smoke_ids.txt` (2 per question type). It passes if both answer
+   all 20, at least 90% of answers parse, and B's prompts are longer than A's. It then records the model's cached
+   revision next to the outputs.
+
+   ```bash
+   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 \
+       --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/A.jsonl
+   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 \
+       --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/B.jsonl \
+       --sheet-source pipeline --sheet-format csv --sheets-root tasks/openvocab_adapter/out
+   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py smoke results/_scratch/ssf_smoke/A.jsonl \
+       results/_scratch/ssf_smoke/B.jsonl --n 20
+   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
+       results/zeroshot/vsibench/scene_sheet_formats/model_revision.txt
+   ```
+
+**The 11 runs**, one command per condition. They are independent, so they can run in parallel, and each resumes
+from its `--out` file if stopped:
 
 ```bash
-bash experiments/2026-11-18-scene-sheet-formats/run_all.sh
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --ids experiments/2026-11-18-scene-sheet-formats/question_ids.txt"
+OUT=results/zeroshot/vsibench/scene_sheet_formats
+SHEETS=tasks/openvocab_adapter/out
+python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_A_video.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source pipeline --sheet-format csv            --sheets-root $SHEETS --out $OUT/qwen3_5_2B_B_csv.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source pipeline --sheet-format markdown_table --sheets-root $SHEETS --out $OUT/qwen3_5_2B_C_markdown_table.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source pipeline --sheet-format json           --sheets-root $SHEETS --out $OUT/qwen3_5_2B_D_json.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source pipeline --sheet-format markdown_kv    --sheets-root $SHEETS --out $OUT/qwen3_5_2B_E_markdown_kv.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source pipeline --sheet-format text           --sheets-root $SHEETS --out $OUT/qwen3_5_2B_F_text.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold     --sheet-format csv            --sheets-root $SHEETS --out $OUT/qwen3_5_2B_G_gold_csv.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold     --sheet-format markdown_table --sheets-root $SHEETS --out $OUT/qwen3_5_2B_H_gold_markdown_table.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold     --sheet-format json           --sheets-root $SHEETS --out $OUT/qwen3_5_2B_I_gold_json.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold     --sheet-format markdown_kv    --sheets-root $SHEETS --out $OUT/qwen3_5_2B_J_gold_markdown_kv.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold     --sheet-format text           --sheets-root $SHEETS --out $OUT/qwen3_5_2B_K_gold_text.jsonl
 ```
 
-from the repository root on the cluster, at a commit with this folder. It needs no manual steps, and it:
+Record the commit each run was made at (`git rev-parse HEAD`) in the Log.
 
-1. Checks the inputs. The sheets of `run_sheets.sh` are in `tasks/openvocab_adapter/out/` (override with `SHEETS=`),
-   and its `index.csv` must hold exactly the 2,728 questions of `question_ids.txt`. Every scene must have a
-   `data/vggt/<dataset>/<scene>/meta.json` with `video_fps`, which `render_sheet` reads for `first_seen`.
-2. Prints the full prompts of `prompt_check_ids.txt`, one question per dataset plus 680, with `--print-prompt`
-   (processor only, no weights). It checks that the video's `<t seconds>` labels are the sheet's timestamps, that
-   every `first_seen` is one of them, and that the sheet appears in the prompt as rendered (`cluster_checks.py
-   prompts`). The four are 706 and 680 (ARKitScenes, 30 fps; 680's scene has a pair at exactly 139.65 s, where
-   rounding is most fragile), 4853 (ScanNet, 24 fps) and 1776 (ScanNet++, 30 fps). This is also the first run of
-   `render_prompt` (`src/mvp/models/qwen_vl.py`).
-3. Runs A and B on the 20 questions of `smoke_ids.txt` (2 per question type). It stops unless both answer all 20,
-   at least 90% of the answers parse, and B's prompts are longer than A's (`cluster_checks.py smoke`). It then writes
-   the model's cached revision and the code commit to `model_revision.txt` next to the outputs.
-4. Submits the 11 runs below with `slurm/submit.sh` (logs in `logs/scene_sheet_formats/`) and writes their job ids
-   and the commit to `jobs.txt` next to the outputs.
+**Afterwards**, `PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/make_table.py` does the rest. It
+checks that the 11 files answer the same 2,728 questions, then writes the Results table below, `results.csv`, and
+the LaTeX tables `results_pipeline.tex` (`tab:sheet-format`) and `results_gold.tex` (`tab:sheet-format-gold`).
 
-Steps 2 and 3 are Slurm jobs the script waits for. Their outputs go to `results/_scratch/scene_sheet_formats_checks/`.
-Every run uses `--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --vggt-root data/vggt --ids
-experiments/2026-11-18-scene-sheet-formats/question_ids.txt`, and B–K add `--sheet-source <source> --sheet-format
-<format> --sheets-root tasks/openvocab_adapter/out`. Each writes to
-`results/zeroshot/vsibench/scene_sheet_formats/qwen3_5_2B_<output>.jsonl`:
-
-| Run | Conditions | Sheet | Output | Commit |
-|---|---|---|---|---|
-| A | A | none | `A_video` | in `jobs.txt` |
-| B | B | pipeline, csv | `B_csv` | in `jobs.txt` |
-| C | C | pipeline, markdown_table | `C_markdown_table` | in `jobs.txt` |
-| D | D | pipeline, json | `D_json` | in `jobs.txt` |
-| E | E | pipeline, markdown_kv | `E_markdown_kv` | in `jobs.txt` |
-| F | F | pipeline, text | `F_text` | in `jobs.txt` |
-| G | G | gold, csv | `G_gold_csv` | in `jobs.txt` |
-| H | H | gold, markdown_table | `H_gold_markdown_table` | in `jobs.txt` |
-| I | I | gold, json | `I_gold_json` | in `jobs.txt` |
-| J | J | gold, markdown_kv | `J_gold_markdown_kv` | in `jobs.txt` |
-| K | K | gold, text | `K_gold_text` | in `jobs.txt` |
-
-When all 11 have finished, `PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/make_table.py` does
-the rest. It checks that the 11 files answer the same 2,728 questions, and writes the Results table below,
-`results.csv`, and the LaTeX tables `results_pipeline.tex` (`tab:sheet-format`) and `results_gold.tex`
-(`tab:sheet-format-gold`).
+**To see a prompt** without the cluster, use the exact text input the eval sends for one question, with each frame
+pair's video tokens as one `<|video_pad|>`:
+`python -m mvp.benchmarks.scene_sheet --question 706 --source pipeline --format csv --prompt` (`--source gold`, or
+`none` for A; `build_sheet_prompt` in `src/mvp/benchmarks/scene_sheet.py`).
 
 **Cost:** about 1–1.5 GPU hours in total (*estimate*). The README times Qwen3.5-4B, 16 frames, on the full VSI-Bench
 (5,130 questions) at about 18 min on one H100 with the kernels; there is no timing for the 2B. Scaled to 2,728
@@ -382,3 +408,12 @@ Not run yet: `make_table.py` writes the table here.
   `jobs.txt`). It mostly resolves TODO (3): the pipeline metrics are now in `sheet_quality.md`, but the answer a fixed
   rule reads off the sheet alone isn't computed yet. That part and TODO (2), the sources for the choice of formats,
   are still open, and neither blocks the runs.
+- 2026-11-18 (hand-off): added `build_sheet_prompt(question_id, source, fmt)` to `src/mvp/benchmarks/scene_sheet.py`.
+  It returns the exact text input the eval sends: the chat template with thinking off, the 8 `<t seconds>` labels
+  with a `<|video_pad|>` per frame pair, the sheet and the question. The CLI is
+  `python -m mvp.benchmarks.scene_sheet --question <id> --source pipeline|gold|none --format <fmt> --prompt`.
+  - Tests check it against the Qwen3.5-2B tokenizer's chat template and against VSI-Bench's `test.jsonl` for all
+    2,728 questions. The `--print-prompt` check now also compares each whole prompt with it.
+  - Replaced `run_all.sh` with the checklist and the 11 commands under Runs, which run without Slurm wrappers.
+  - So TODO (1), the model revision, is recorded by the smoke-test step, and TODO (4), the commit, goes in this Log by
+    hand.

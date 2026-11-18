@@ -7,9 +7,11 @@ information: one canonical object list per question (load_objects), the same pre
 renderers that differ only in layout. cameras.csv is not used. Nothing here writes to the sheets folder.
 
   render_sheet(question_id, source, fmt) -> str     source: pipeline | gold; fmt: one of FORMATS
+  build_sheet_prompt(question_id, source, fmt) -> str   the whole text input the eval sends with that sheet
 
   python -m mvp.benchmarks.scene_sheet --examples experiments/2026-11-18-scene-sheet-formats/examples --question 706
   python -m mvp.benchmarks.scene_sheet --tokens Qwen/Qwen3.5-2B     # needs the tokenizer (transformers)
+  python -m mvp.benchmarks.scene_sheet --question 706 --source pipeline --format csv --prompt
 """
 import argparse
 import csv
@@ -21,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
+from mvp.benchmarks.vsibench import build_prompt_parts
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
 
 SOURCES = ["pipeline", "gold"]
@@ -222,7 +225,40 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
     return render_objects(load_objects(question_id, source, root, volume, vggt_root=vggt_root), source, fmt, volume)
 
 
-# ---- command line: examples and token counts ----
+# ---- the whole prompt ----
+
+# Qwen3.5's chat template with thinking off (enable_thinking=False), as QwenVL.generate_video applies it, with
+# mvp.models.qwen_vl.SYSTEM_PROMPT. The template writes the video as <|vision_start|><|video_pad|><|vision_end|>; the
+# processor (Qwen3VLProcessor.replace_video_token) then replaces <|video_pad|> with, per pair of frames, "<t seconds>"
+# and that pair's video tokens between <|vision_start|> and <|vision_end|>. Checked against the tokenizer's template
+# (test_scene_sheet.PromptTemplate).
+SYSTEM_PROMPT = "You are a helpful assistant."
+CHAT = ("<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{pre}<|vision_start|>{video}<|vision_end|>{post}"
+        "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n")
+VIDEO_PAD = "<|video_pad|>"
+
+
+def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None):
+    """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
+    question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the sheet after
+    "These are frames of a video." and the question. source None gives the video-only prompt (condition A).
+
+    Each frame pair's video tokens are written as one <|video_pad|>, or as "<|video_pad|> x frame_tokens", which is
+    how QwenVL.render_prompt (--print-prompt) writes them, so the two can be compared. The question comes from
+    index.csv, which gives the same prompt as VSI-Bench's test.jsonl for all 2,728 questions (checked 2026-11-18)."""
+    row = load_index(root)[int(question_id)]
+    doc = {"question_type": row["question_type"], "question": row["question"],
+           "options": row["options"].split(" | ") if row["options"] else None}
+    sheet = None if source is None else render_sheet(question_id, source, fmt, root, vggt_root=vggt_root)
+    pre, post = build_prompt_parts(doc, "sit", sheet)
+    # the video's labels are the pipeline frames' timestamps, whichever sheet goes in
+    times = frame_timestamps((Path(root) / row["pipeline_sheet"]).parents[1] / "scene", row["scene"], Path(vggt_root))
+    pad = VIDEO_PAD if frame_tokens is None else f"{VIDEO_PAD} x {frame_tokens}"
+    video = "".join(f"<{t} seconds><|vision_start|>{pad}<|vision_end|>" for t in times[::MERGE])
+    return CHAT.format(system=SYSTEM_PROMPT, pre=pre, video=video, post=post)
+
+
+# ---- command line: examples, token counts and prompts ----
 
 def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR):
     """The question rendered in every format and source, one file each, plus the question itself."""
@@ -260,8 +296,15 @@ def main():
     ap.add_argument("--examples", help="write --question's sheet in every format and source to this folder")
     ap.add_argument("--question", type=int, default=706)
     ap.add_argument("--tokens", metavar="MODEL", help="print the token table with this model's tokenizer")
+    ap.add_argument("--prompt", action="store_true", help="print --question's whole prompt (build_sheet_prompt)")
+    ap.add_argument("--source", choices=SOURCES + ["none"], default="pipeline", help="for --prompt; none: video only")
+    ap.add_argument("--format", choices=FORMATS, default="csv", help="for --prompt")
     args = ap.parse_args()
     root, vggt_root = Path(args.root), Path(args.vggt_root)
+    if args.prompt:
+        source = None if args.source == "none" else args.source
+        print(build_sheet_prompt(args.question, source, args.format, root, vggt_root))
+        return
     if args.examples:
         write_examples(args.examples, args.question, root, vggt_root)
     if args.tokens:
