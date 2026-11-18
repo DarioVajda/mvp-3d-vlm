@@ -53,11 +53,13 @@ def task_of(question_type):
     return "object_rel_direction" if question_type.startswith("object_rel_direction") else question_type
 
 
-def build_prompt(doc):
+def build_prompt(doc, sheet=None):
+    """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question."""
+    pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
     if doc["question_type"] in NA_QUESTION_TYPES:
-        return PRE_PROMPT + "\n" + doc["question"] + "\n" + NA_POST_PROMPT
+        return pre + "\n" + doc["question"] + "\n" + NA_POST_PROMPT
     options = "Options:\n" + "\n".join(doc["options"])
-    return "\n".join([PRE_PROMPT, doc["question"], options, MCA_POST_PROMPT])
+    return "\n".join([pre, doc["question"], options, MCA_POST_PROMPT])
 
 
 # ---- prompt layouts for the prompt-echoing experiment (Abhinandan et al., arXiv 2607.15565) ----
@@ -74,15 +76,18 @@ def question_block(doc):
     return doc["question"] + "\nOptions:\n" + "\n".join(doc["options"])
 
 
-def build_prompt_parts(doc, layout="sit"):
+def build_prompt_parts(doc, layout="sit", sheet=None):
     """(text before the video, text after the video). The chat template joins parts with no separator, so text
     before the video ends in a newline to put the first frame timestamp on its own line.
       sit:  ("", baseline)                      question after the video (lmms-eval)
       sti:  (baseline + "\n", "")               the same text moved before the video
       stit: (question_block + "\n", baseline)   question echoed: before the video, and unchanged after it
+    A scene sheet goes between the video and the question, so only with sit.
     """
+    if sheet is not None and layout != "sit":
+        raise ValueError("a scene sheet goes between the video and the question: layout sit only")
     if layout == "sit":
-        return "", build_prompt(doc)
+        return "", build_prompt(doc, sheet)
     if layout == "sti":
         return build_prompt(doc) + "\n", ""
     if layout == "stit":
@@ -159,6 +164,15 @@ def score(doc, prediction):
     if pred is None:
         return 0.0
     return float(mean_relative_accuracy(pred, float(doc["ground_truth"])))
+
+
+def parsed(doc, prediction):
+    """Whether the extraction rule of score() could read an answer: an option letter for multiple choice (the first
+    word, as fuzzy_matching reads it), a number for numeric questions. An unread answer scores 0."""
+    if doc["question_type"] in MCA_QUESTION_TYPES:
+        letters = {o.split(".", 1)[0].strip().lower() for o in doc["options"]}
+        return fuzzy_matching(prediction).lower() in letters
+    return extract_number(prediction) is not None
 
 
 def summarize(df):

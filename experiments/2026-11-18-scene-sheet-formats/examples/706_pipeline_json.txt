@@ -1,0 +1,7 @@
+Scene sheet. Positions x, y, z are object centres in the 3D reconstruction's relative units, not metres. The origin is the camera of the first video frame: x points right, y down and z forward as seen from that camera. size_x, size_y and size_z are each object's extent along x, y and z, in the same units. first_seen is the video timestamp, in seconds, at which the object first appears, as the video's timestamps show it, and num_frames is how many of the 16 video frames it appears in.
+[
+{"id": "dishwasher_1", "label": "dishwasher", "x": -0.238, "y": -0.373, "z": 1.209, "size_x": 0.062, "size_y": 0.283, "size_z": 0.241, "first_seen": 3.0, "num_frames": 4},
+{"id": "refrigerator_1", "label": "refrigerator", "x": -0.361, "y": -0.168, "z": 0.575, "size_x": 0.031, "size_y": 0.178, "size_z": 0.215, "first_seen": 15.5, "num_frames": 1},
+{"id": "dishwasher_2", "label": "dishwasher", "x": 0.036, "y": -0.437, "z": 1.245, "size_x": 0.161, "size_y": 0.153, "size_z": 0.164, "first_seen": 41.3, "num_frames": 2},
+{"id": "refrigerator_2", "label": "refrigerator", "x": -0.364, "y": -0.250, "z": 0.644, "size_x": 0.186, "size_y": 0.370, "size_z": 0.170, "first_seen": 92.9, "num_frames": 1}
+]

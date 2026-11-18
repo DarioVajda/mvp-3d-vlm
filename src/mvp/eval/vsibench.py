@@ -6,6 +6,9 @@
   python -m mvp.eval.vsibench ... --layout stit [--echo-system]  # prompt echoing (see mvp.benchmarks.vsibench.build_prompt_parts)
   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-4B --images --nframes 32 ...  # frames as images (SpatialStack protocol)
   python -m mvp.eval.vsibench --fusion-ckpt results/train/2B_xattn/final.pt --nframes 32 ...  # a trained arm (images)
+  python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source pipeline \
+      --sheet-format json ...  # + scene sheet (mvp.benchmarks.scene_sheet); Qwen3.5 runs with thinking off
+  python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
 
 Questions are grouped by video so each video is decoded once; resumes from an existing --out file.
 """
@@ -18,8 +21,9 @@ import pandas as pd
 
 from pathlib import Path
 
+from mvp.benchmarks.scene_sheet import FORMATS as SHEET_FORMATS, load_index, render_sheet
 from mvp.benchmarks.vsibench import ECHO_SYSTEM_PROMPT, LAYOUTS, build_prompt_parts, load_vsibench, score, summarize, task_of
-from mvp.paths import VGGT_DIR
+from mvp.paths import SCENE_SHEETS, VGGT_DIR
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -35,6 +39,27 @@ def frame_indices(path, sampling, nframes, vggt_root):
     else:
         picks = uniform_subset(len(candidates), nframes)
     return candidates[picks].tolist()
+
+
+def print_prompts(df, args):
+    """--print-prompt: the first N questions' prompts exactly as generate_video builds them, without the weights."""
+    from mvp.models.qwen_vl import QwenVL, SYSTEM_PROMPT
+    assert not args.images, "--print-prompt: video protocol only"
+    model = QwenVL(args.model, weights=False)
+    system = ECHO_SYSTEM_PROMPT if args.echo_system else SYSTEM_PROMPT
+    docs = df.head(args.print_prompt)
+    for path, group in docs.groupby("video_path", sort=False):
+        if args.sampling == "qwen":
+            video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
+        else:
+            video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
+        for d in group.to_dict("records"):
+            sheet = (render_sheet(d["id"], args.sheet_source, args.sheet_format, Path(args.sheets_root),
+                                  vggt_root=Path(args.vggt_root)) if args.sheet_source else None)
+            pre, post = build_prompt_parts(d, args.layout, sheet)
+            print(f"===== question {d['id']} ({d['question_type']}), {path}, video fps {meta.get('fps')}, "
+                  f"frames {list(meta['frames_indices'])}")
+            print(model.render_prompt(video, meta, vkw, post, pre=pre, system=system), flush=True)
 
 
 def main():
@@ -53,6 +78,12 @@ def main():
     ap.add_argument("--echo-system", action="store_true", help="system prompt that mentions the repeated question")
     ap.add_argument("--vggt-root", default=str(VGGT_DIR),
                     help="VGGT outputs used by --sampling sa (data/vggt_portrait_rotated for Spatial-MLLM's rotated portrait frames)")
+    ap.add_argument("--sheet-source", choices=["pipeline", "gold"],
+                    help="add each question's scene sheet between the video and the question (mvp.benchmarks.scene_sheet); "
+                         "only questions in the sheets' index.csv are evaluated")
+    ap.add_argument("--sheet-format", default="csv", choices=SHEET_FORMATS,
+                    help="how the scene sheet is written (scene_sheet.format)")
+    ap.add_argument("--sheets-root", default=str(SCENE_SHEETS), help="the scene sheets folder, with index.csv")
     ap.add_argument("--split", default="full", choices=["full", "debiased", "pruned"])
     ap.add_argument("--per-type", type=int, default=None, help="sample this many questions per question type")
     ap.add_argument("--ids", default=None, help="file with one question id per line: evaluate only these")
@@ -61,12 +92,20 @@ def main():
     ap.add_argument("--token-budget", type=int, default=120000, help="max total input tokens per batch")
     ap.add_argument("--shard", type=int, default=0, help="process only videos with index %% num_shards == shard")
     ap.add_argument("--num-shards", type=int, default=1)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--print-prompt", type=int, metavar="N", default=0,
+                    help="print the first N questions' full prompts (chat template, the video's '<t seconds>' labels, "
+                         "the scene sheet) and exit; loads the processor and the videos, not the model's weights")
+    ap.add_argument("--out", help="required unless --print-prompt is given")
     args = ap.parse_args()
     args.images = args.images or args.fusion_ckpt is not None
     assert args.model or args.fusion_ckpt, "--model or --fusion-ckpt"
+    assert args.out or args.print_prompt, "--out"
     if args.images:
         assert args.sampling == "qwen" and args.fps is None and args.layout == "sit", "images mode: uniform frames, sit layout"
+    if args.sheet_source:
+        assert not args.images and args.layout == "sit", "scene sheets: video protocol, sit layout"
+        assert args.sampling == "uniform128" and args.nframes == 16, \
+            "scene sheets are built on the 16 uniform128 frames: use --sampling uniform128 --nframes 16"
 
     df = load_vsibench(args.split)
     if args.per_type:
@@ -76,9 +115,17 @@ def main():
         df = df[df["scene_name"].isin(args.scenes)]
     if args.ids:
         df = df[df["id"].isin([int(l) for l in open(args.ids) if l.strip()])]
+    if args.sheet_source:
+        with_sheets = df["id"].isin(load_index(Path(args.sheets_root)))
+        print(f"scene sheets ({args.sheet_source}, {args.sheet_format}): {with_sheets.sum()} of {len(df)} questions "
+              f"have one; only those are evaluated", flush=True)
+        df = df[with_sheets]
     if args.num_shards > 1:
         videos = sorted(df["video_path"].unique())
         df = df[df["video_path"].isin(videos[args.shard::args.num_shards])]
+    if args.print_prompt:
+        print_prompts(df, args)
+        return
     done = set()
     if os.path.exists(args.out):
         with open(args.out) as f:
@@ -117,7 +164,9 @@ def main():
             bs = max(1, min(args.batch_size, args.token_budget // (n_vis + 200)))
             for i in range(0, len(docs), bs):
                 batch = docs[i:i + bs]
-                parts = [build_prompt_parts(d, args.layout) for d in batch]
+                sheets = [render_sheet(d["id"], args.sheet_source, args.sheet_format, Path(args.sheets_root),
+                                       vggt_root=Path(args.vggt_root)) if args.sheet_source else None for d in batch]
+                parts = [build_prompt_parts(d, args.layout, s) for d, s in zip(batch, sheets)]
                 if args.images:
                     batch_in = {**vis, **model.inputs.text([p for _, p in parts], vis["image_grid_thw"], padding_side="left")}
                     preds = model.generate({k: v.cuda() for k, v in batch_in.items()})
@@ -146,7 +195,9 @@ def main():
     with open(args.out.replace(".jsonl", "_summary.json"), "w") as f:
         json.dump({"model": args.model, "protocol": "images" if args.images else "video", "fusion_ckpt": args.fusion_ckpt,
                    "arm": model.arm if args.images else None, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
-                   "layout": args.layout, "system": system, "fps": args.fps, "split": args.split, "n": len(res), **summary}, f, indent=1)
+                   "layout": args.layout, "system": system, "fps": args.fps, "split": args.split,
+                   "scene_sheet": {"source": args.sheet_source, "format": args.sheet_format, "root": args.sheets_root}
+                   if args.sheet_source else None, "n": len(res), **summary}, f, indent=1)
 
 
 if __name__ == "__main__":

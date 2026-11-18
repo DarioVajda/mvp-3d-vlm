@@ -114,9 +114,9 @@ scene_sheet:                   # "scene_sheet: none" instead of this block if no
   sam3_prompts: full           # full | syntactic (prompt_object_extractor.py) | scene (hpc/scenes.tsv) | ground truth
   sam3: {backend: transformers, model: facebook/sam3@3c879f3, min_score: 0.5}
   tracking: {reid: true, conf_percentile: 55, min_points: 300}  # question_scene_sheet.py defaults
-  content: [position, size, num_frames, frame_flags]  # frame_flags or frame_positions; + cameras, pairwise distances
+  content: [position, size, num_frames, frame_flags]  # frame_flags, first_seen (timestamp shown by the video) or frame_positions; + cameras, pairwise distances
   units: relative              # relative: VGGT's scale, said in the sheet | metres: rescaled (how) | ground truth
-  format: csv                  # csv | json | text
+  format: csv                  # csv | json | markdown_kv | markdown_table | text
   renderer:                    # the code that turns the sheet into prompt text (file:function)
   placement: between video and question  # before the video | between video and question | after the question
 

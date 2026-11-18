@@ -9,6 +9,7 @@ VGGT_DIR = DATA / "vggt"
 TRAIN_ANN = DATA / "raw" / "SpatialStackData"  # SpatialStack's training annotations
 TRAIN_MEDIA = DATA / "train_media"  # their media, laid out as the annotations' paths expect
 BENCH_MEDIA = DATA / "bench_media"  # videos of VSTI-Bench and Video-MME (slurm/prep_bench_media.sh)
+SCENE_SHEETS = DATA / "scene_sheets_75"  # scene sheets of the 75 exported scenes (docs/scene_sheets_75.md)
 RESULTS = ROOT / "results"
 ZEROSHOT = RESULTS / "zeroshot"
 FIGURES = RESULTS / "figures"

@@ -3,6 +3,8 @@ qwen_vl_utils frame sampling/resizing with image_patch_size=16, processor called
 system prompt "You are a helpful assistant.", greedy decoding. Qwen3.5 (same processor as Qwen3-VL) thinks by
 default; thinking is turned off, as in SpatialStack's lmms-eval `qwen3_5` model (disable_thinking=true).
 """
+import re
+
 import torch
 from decord import VideoReader, cpu
 from qwen_vl_utils import process_vision_info
@@ -16,9 +18,10 @@ SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 class QwenVL:
-    def __init__(self, model_id, min_pixels=256 * 32 * 32, max_pixels=2048 * 32 * 32, attn="sdpa"):
+    def __init__(self, model_id, min_pixels=256 * 32 * 32, max_pixels=2048 * 32 * 32, attn="sdpa", weights=True):
+        """weights=False loads only the processor: enough to build prompts (render_prompt), not to generate."""
         self.model = AutoModelForImageTextToText.from_pretrained(
-            model_id, dtype=torch.bfloat16, attn_implementation=attn, device_map="cuda").eval()
+            model_id, dtype=torch.bfloat16, attn_implementation=attn, device_map="cuda").eval() if weights else None
         self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=min_pixels, max_pixels=max_pixels)
         self.processor.tokenizer.padding_side = "left"
         self.min_pixels, self.max_pixels = min_pixels, max_pixels
@@ -72,6 +75,18 @@ class QwenVL:
         inputs = self.processor(text=texts, videos=[video] * len(texts), video_metadata=[meta] * len(texts),
                                 do_resize=False, padding=True, return_tensors="pt", **video_kwargs)
         return self._generate(inputs, max_new_tokens)
+
+    def render_prompt(self, video, meta, video_kwargs, prompt, pre="", system=SYSTEM_PROMPT):
+        """The full input of generate_video for one prompt, as text: the chat template with the processor's
+        "<t seconds>" label before each merged frame, and each frame's run of video tokens shown as
+        "<|video_pad|> x N"."""
+        text = self.processor.apply_chat_template(self._messages(prompt, "video", pre=pre, system=system), tokenize=False,
+                                                  add_generation_prompt=True, **self.template_kwargs)
+        inputs = self.processor(text=[text], videos=[video], video_metadata=[meta], do_resize=False, return_tensors="pt",
+                                **video_kwargs)
+        decoded = self.processor.tokenizer.decode(inputs["input_ids"][0])
+        pad = self.processor.video_token
+        return re.sub(f"(?:{re.escape(pad)})+", lambda m: f"{pad} x {len(m.group(0)) // len(pad)}", decoded)
 
     @torch.inference_mode()
     def generate_images(self, images, prompt, max_new_tokens=16):

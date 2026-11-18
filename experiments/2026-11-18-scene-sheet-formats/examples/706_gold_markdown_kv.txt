@@ -1,0 +1,22 @@
+Scene sheet. Positions x, y, z are object centres in metres, with the z axis pointing up. size_x, size_y and size_z are each object's extent along x, y and z, in metres.
+## dishwasher_1
+```
+label: dishwasher
+x: -4.429
+y: -1.033
+z: -0.569
+size_x: 0.701
+size_y: 0.739
+size_z: 0.908
+```
+
+## refrigerator_1
+```
+label: refrigerator
+x: -2.070
+y: -1.531
+z: -0.095
+size_x: 0.814
+size_y: 0.779
+size_z: 1.857
+```
