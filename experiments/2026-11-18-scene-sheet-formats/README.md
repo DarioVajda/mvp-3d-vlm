@@ -81,9 +81,19 @@ paper backs as an assumption. -->
   frame's camera (x right, y down, z forward); which way is up in the room can't be read from the sheet
   (`docs/scene_sheet_plan.md`, "Units and scale"; checked in `src/mvp/benchmarks/scene_sheet.py`). So the metric
   questions (absolute distance, object size, room size) can't be answered from the sheet's numbers alone.
-- **Format choice.** *Assumption:* the five formats were chosen from reading on how LLMs read structured data
-  in prompts. TODO, not blocking the runs: add the sources (papers in `papers/`, page and verbatim quote), or keep
-  this marked as an assumption.
+- **Format choice.** The five formats come from work on how the way structured data is written in a prompt
+  affects LLMs:
+  - **Prompt format matters:** LLM accuracy is sensitive to prompt formatting (Sclar et al. 2024, ICLR; He et al.
+    2024, arXiv 2411.10541).
+  - **Table formats:** CSV is the most token-efficient, while Markdown and HTML are often more accurate (Sui et al.
+    2024, WSDM, "Table Meets LLM"; Qiu et al. 2024, TQA-Bench, arXiv 2411.19504). These give csv and markdown_table.
+  - **Markdown key-value records:** from the Improving Agents benchmark (blog, 2025). This gives markdown_kv.
+  - **Natural-language templates:** from TabLLM (Hegselmann et al. 2023). This gives text.
+  - **3D objects as text on VSI-Bench:** MLLMs have been given 3D object information as text on VSI-Bench (Yuan et
+    al. 2026, GR3D, arXiv 2603.08592; Zhu et al. 2025, Struct2D).
+
+  None of these tested the formats on a small VLM with 3D scene sheets, which is what this experiment does. TODO,
+  not blocking the runs: add the PDFs to `papers/`, with page and verbatim quote for each claim.
 - **Tokens.** The formats differ a lot in length; see the token table under Metrics.
 
 ## Design
@@ -191,7 +201,7 @@ scene_sheet:                   # A has none; B–K as below
   sam3: {backend: transformers, model: facebook/sam3@3c879f3, min_score: 0.5}
   tracking: {reid: true, conf_percentile: 55, min_points: 300}  # question.json of the sheets
   content: [position, size, first_seen, num_frames]
-  units: relative              # pipeline: VGGT's scale; gold: metres. Said in each source's preamble
+  units: varies                # pipeline (B–F): VGGT's relative units; gold (G–K): metres. Said in each source's preamble
   format: varies
   renderer: src/mvp/benchmarks/scene_sheet.py:render_sheet
   placement: between video and question  # after "These are frames of a video.", before the question
@@ -344,11 +354,14 @@ pair's video tokens as one `<|video_pad|>`:
 `python -m mvp.benchmarks.scene_sheet --question 706 --source pipeline --format csv --prompt` (`--source gold`, or
 `none` for A; `build_sheet_prompt` in `src/mvp/benchmarks/scene_sheet.py`).
 
-**Cost:** about 1–1.5 GPU hours in total (*estimate*). The README times Qwen3.5-4B, 16 frames, on the full VSI-Bench
-(5,130 questions) at about 18 min on one H100 with the kernels; there is no timing for the 2B. Scaled to 2,728
-questions that is about 10 min per run as an upper bound for the 2B, plus the sheet's tokens (median 390–607 per
-question). Eleven runs, gold sheets being about half as long as pipeline sheets: about 2–2.5 GPU hours, plus a few
-minutes for the checks. No sheets are built (they exist) and nothing is trained.
+**Cost:** about 2–2.5 GPU hours in total, for the eleven runs (*estimate*).
+- **Basis:** the repository README times Qwen3.5-4B, 16 frames, on the full VSI-Bench (5,130 questions) at about 18
+  min on one H100 with the kernels. There is no timing for the 2B.
+- **Per run:** scaled to 2,728 questions, that is about 10 min per run as an upper bound for the 2B, before the
+  sheet's tokens.
+- **Sheet tokens:** the median is 390–607 per question for pipeline sheets, and gold sheets are about half as long.
+
+The checks add a few minutes. No sheets are built (they exist) and nothing is trained.
 
 ## Results
 
@@ -421,3 +434,10 @@ Not run yet: `make_table.py` writes the table here.
   commit of each run, goes in this Log when the runs are made. TODO (3) is mostly resolved, since the pipeline
   metrics are in `sheet_quality.md`, but the answer a fixed rule reads off the sheet alone isn't computed yet. That
   part and TODO (2), the sources for the choice of formats, are still open, and neither blocks the runs.
+- 2026-11-18: three fixes to the plan:
+  - The cost estimate now covers the eleven runs only (about 2–2.5 GPU hours). The six-run figure from before G–K
+    was removed.
+  - `scene_sheet.units` is now `varies`, because pipeline sheets are in VGGT's relative units and gold sheets in
+    metres.
+  - The format choice now cites its sources instead of being marked an assumption. TODO (2) is reduced to adding the
+    PDFs to `papers/` with page and verbatim quote.
