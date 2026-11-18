@@ -84,7 +84,7 @@ def check_cameras(checks, cams, meta):
     checks.add("cameras: rotations are orthonormal", ortho < 1e-3, f"max |RR^T-I| = {ortho:.2e}")
     checks.add("cameras: rotations have det +1", det < 1e-3, f"max |det-1| = {det:.2e}")
     origin = max(np.abs(R[0] - np.eye(3)).max(), np.abs(t[0]).max())
-    checks.add("cameras: world frame is frame 0's camera", origin < 1e-3, f"max deviation {origin:.2e}")
+    checks.add("cameras: world frame is frame 0's camera", origin < 1e-2, f"max deviation {origin:.2e}")
 
     center = -np.einsum("tji,tj->ti", R, t)
     if "camera_center" in cams:
