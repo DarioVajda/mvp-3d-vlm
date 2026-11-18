@@ -229,6 +229,41 @@ def ensure_tracks(scene_out, masks_root, prompts, settings, checkpoint=None, ove
                 {"prompt": prompt, "masks": masks_dir.name, "settings": settings}, indent=1))
 
 
+def track_settings(reid, backend, min_score, conf_percentile, min_points):
+    """The settings a prompt's masks and tracks are kept under; tracks made under other settings are made again."""
+    # min_track_frames names milestone 4's rule, so that tracks made under its old fixed 3 are made again
+    return {"reid": bool(reid), "backend": backend, "min_score": min_score, "conf_percentile": conf_percentile,
+            "min_points": min_points, "min_track_frames": MIN_TRACK_FRAMES_RULE}
+
+
+def prepare_scene(scene, questions, frames=DEFAULT_FRAMES, dense_dir=None, data_root=None, work_dir=None,
+                  syntactic=False, reid=True, conf_percentile=55.0, min_points=300, backend="transformers",
+                  min_score=0.5, checkpoint=None, overlays=False, patch_depth_fallback=False):
+    """Segment and track the prompts of several questions about one scene together. Returns the prompts.
+
+    Without it, create_scene_sheet starts SAM 3 and the track stage (each in its own process, with its models loaded
+    again) for every question that names an object not tracked yet. With it, they run once for all the questions, and
+    create_scene_sheet then only builds each sheet. The sheets are the same: SAM 3 and the tracker handle each prompt
+    on its own. The arguments are create_scene_sheet's.
+    """
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
+            data_root, scene = common.find_scene(scene, data_root)
+        except (FileNotFoundError, ValueError) as error:
+            sys.exit(f"[question] {error}")
+        spec, label = frame_selection(frames)
+        work = (Path(work_dir) if work_dir else common.OUT_ROOT / scene.replace("/", "__") / label).resolve()
+        prompts = []
+        for question in questions:
+            if question.strip():
+                prompts += [p for p in extract_prompts(question, syntactic)[0] if p not in prompts]
+        log(f"{scene}: {len(questions)} questions name {len(prompts)} prompts {prompts}")
+        ensure_geometry(scene, data_root, spec, label, dense_dir, work / "scene", patch_depth_fallback)
+        settings = track_settings(reid, backend, min_score, conf_percentile, min_points)
+        ensure_tracks(work / "scene", work / "masks", prompts, settings, checkpoint, overlays)
+    return prompts
+
+
 def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, data_root=None, out_dir=None, work_dir=None,
                        syntactic=False, reid=True, include_size=True, relative_positions=False, size_trim=0.02,
                        conf_percentile=55.0, min_points=300, backend="transformers", min_score=0.5, checkpoint=None,
@@ -267,10 +302,7 @@ def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, d
             shutil.rmtree(scene_out, ignore_errors=True)
             shutil.rmtree(masks_root, ignore_errors=True)
         depth_source = ensure_geometry(scene, data_root, spec, label, dense_dir, scene_out, patch_depth_fallback)
-        # min_track_frames names milestone 4's rule, so that tracks made under its old fixed 3 are made again
-        settings = {"reid": bool(reid), "backend": backend, "min_score": min_score,
-                    "conf_percentile": conf_percentile, "min_points": min_points,
-                    "min_track_frames": MIN_TRACK_FRAMES_RULE}
+        settings = track_settings(reid, backend, min_score, conf_percentile, min_points)
         ensure_tracks(scene_out, masks_root, prompts, settings, checkpoint, overlays)
 
         out = Path(out_dir).resolve() if out_dir else work / "sheets" / folder_name(prompts)
