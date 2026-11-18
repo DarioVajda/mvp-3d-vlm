@@ -81,7 +81,7 @@ paper backs as an assumption. -->
   frame's camera (x right, y down, z forward); which way is up in the room can't be read from the sheet
   (`docs/scene_sheet_plan.md`, "Units and scale"; checked in `src/mvp/benchmarks/scene_sheet.py`). So the metric
   questions (absolute distance, object size, room size) can't be answered from the sheet's numbers alone.
-- **Format choice.** *Assumption:* the five formats were chosen from earlier reading on how LLMs read structured data
+- **Format choice.** *Assumption:* the five formats were chosen from reading on how LLMs read structured data
   in prompts. TODO, not blocking the runs: add the sources (papers in `papers/`, page and verbatim quote), or keep
   this marked as an assumption.
 - **Tokens.** The formats differ a lot in length; see the token table under Metrics.
@@ -386,34 +386,38 @@ Not run yet: `make_table.py` writes the table here.
   `visual.model`); (2) sources for the choice of formats (Background); (3) the pipeline metrics not computed yet
   (Metrics); (4) the Commit column under Runs, filled in when the runs are submitted.
 
-- 2026-11-18 (later): compared the pipeline sheets with the gold sheets (`sheet_quality.md`, written by
+- 2026-11-18: the pipeline sheets were compared with the gold sheets (`sheet_quality.md`, written by
   `sheet_quality.py`). 73.4% of the objects the questions name have a pipeline row, against 97.4% in gold, and only
   48.8% of questions have every one. 69% of pipeline rows are seen in a single frame, so large objects are split into
   several rows, and counts match gold in 28% of (question, class) pairs. 205 of the 208 empty pipeline sheets have
   gold objects, and 122 of them are object-size questions. Relative sizes are roughly right: the same largest object
   in 68% of questions, against 38% by chance. Gold misses only prompts matched to no class (route-planning
-  landmarks, plus the `ceiling` + `light` and `shoe` extraction bugs). Changes, all before the first run:
-  - added the gold-sheet conditions G–K (upper bound for content), with `varies` now
-    `[scene_sheet.source, scene_sheet.format]`, the gold − A and pipeline − gold comparisons, and a Holm family of
-    ten against A plus one of five for pipeline − gold;
-  - updated the hypothesis: format differences should be clearer with gold sheets, and pipeline gains may be small;
-  - added threats for the units (metres vs relative) and for noisy pipeline content;
-  - changed the empty-sheet line to "The detector did not find the objects named in the question. This does not mean
-    they are absent from the room.";
-  - added `run_all.sh` (checks, prompt and timestamp check, smoke test, model revision, the 11 submissions) with
-    `cluster_checks.py`, and `make_table.py` (Results table, `results.csv`, LaTeX), both tested in
-    `test_make_table.py`.
+  landmarks, plus the `ceiling` + `light` and `shoe` extraction bugs). These changes follow, all before the first run:
+  - Gold-sheet conditions G–K were added (upper bound for content), with `varies` now
+    `[scene_sheet.source, scene_sheet.format]`. Noise at this level could hide a format effect in B–F; the same formats
+    with gold content show the format effect on correct content, and pipeline − gold per format gives the cost of
+    pipeline errors. Holm is applied to the ten comparisons with A as one family and to the five pipeline − gold
+    comparisons as another.
+  - The hypothesis now expects clearer format differences with gold sheets and possibly small gains with pipeline
+    sheets, given the coverage and split objects above.
+  - Threats now cover the units (gold in metres, pipeline in relative units), which make pipeline − gold a difference
+    in units as well as content on the metric questions, and the noisy pipeline content.
+  - The empty-sheet line changed from "No objects were found." to "The detector did not find the objects named in the
+    question. This does not mean they are absent from the room.". In 205 of the 208 empty sheets the objects are in
+    the room, and the old line read as if they weren't.
+  - `make_table.py` (Results table, `results.csv`, LaTeX tables) and `cluster_checks.py` (prompt and timestamp check,
+    smoke-test check, model revision) were added, both tested in `test_make_table.py`, so the analysis and the checks
+    before the runs are scripted rather than done by hand.
+  - `build_sheet_prompt(question_id, source, fmt)` was added to `src/mvp/benchmarks/scene_sheet.py`, with the CLI
+    `python -m mvp.benchmarks.scene_sheet --question <id> --source pipeline|gold|none --format <fmt> --prompt`. It
+    returns the exact text input the eval sends: the chat template with thinking off, the 8 `<t seconds>` labels
+    with a `<|video_pad|>` per frame pair, the sheet and the question. Any condition's prompt can then be read without
+    a GPU. It is tested against the Qwen3.5-2B tokenizer's chat template and against VSI-Bench's `test.jsonl` for all
+    2,728 questions, and the `--print-prompt` check compares each whole prompt with it.
+  - Runs lists a checklist and one command per condition, without job-system wrappers, so that each condition's
+    settings are visible in the plan and the runs can be scheduled with whatever the cluster uses.
 
-  This resolves TODO (1), the model revision (now in `model_revision.txt`), and TODO (4), the Commit column (now in
-  `jobs.txt`). It mostly resolves TODO (3): the pipeline metrics are now in `sheet_quality.md`, but the answer a fixed
-  rule reads off the sheet alone isn't computed yet. That part and TODO (2), the sources for the choice of formats,
-  are still open, and neither blocks the runs.
-- 2026-11-18 (hand-off): added `build_sheet_prompt(question_id, source, fmt)` to `src/mvp/benchmarks/scene_sheet.py`.
-  It returns the exact text input the eval sends: the chat template with thinking off, the 8 `<t seconds>` labels
-  with a `<|video_pad|>` per frame pair, the sheet and the question. The CLI is
-  `python -m mvp.benchmarks.scene_sheet --question <id> --source pipeline|gold|none --format <fmt> --prompt`.
-  - Tests check it against the Qwen3.5-2B tokenizer's chat template and against VSI-Bench's `test.jsonl` for all
-    2,728 questions. The `--print-prompt` check now also compares each whole prompt with it.
-  - Replaced `run_all.sh` with the checklist and the 11 commands under Runs, which run without Slurm wrappers.
-  - So TODO (1), the model revision, is recorded by the smoke-test step, and TODO (4), the commit, goes in this Log by
-    hand.
+  TODO (1), the model revision, is now recorded by the smoke-test step (`model_revision.txt`), and TODO (4), the
+  commit of each run, goes in this Log when the runs are made. TODO (3) is mostly resolved, since the pipeline
+  metrics are in `sheet_quality.md`, but the answer a fixed rule reads off the sheet alone isn't computed yet. That
+  part and TODO (2), the sources for the choice of formats, are still open, and neither blocks the runs.
