@@ -1487,43 +1487,78 @@ class CameraSheetText(unittest.TestCase):
         self.root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
 
-    def test_moves_and_turns(self):
+    def trajectory(self):
         s = np.sqrt(0.5)
         steps = [(0, 1, 0), (s, s, 0), (-0.3, 0, 0), (3 * s, -3 * s, 0), (0.05, 0, 0), (0, 0, 1), (0, s, s),
                  (0, 0, -0.4)]  # median length 1
         views = [(0, -30), (45, -30), (45, -20), (15, -20), (15, -25), (15, -25), (-150, -25), (-120, -25),
                  (-119, -24)]  # frame 0 looks down, so the sheet's world axes are tilted
-        sheet = write_camera_sheet(self.root / "cameras.csv", steps, views)
-        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet), [
+        return write_camera_sheet(self.root / "cameras.csv", steps, views)
+
+    def test_global_moves_and_facings(self):
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(self.trajectory(), "global"), [
             "Start facing north, looking 30° down.",
-            "Go north and turn 45° to the right.",
-            "Go north-east and turn 10° up.",
-            "Go a little west and turn 30° to the left.",
-            "Go far south-east and turn 5° down.",
-            "Stay still.",  # 0.05 median steps, no turn
-            "Go up and turn 165° to the left.",
-            "Go north and up, and turn 30° to the right.",
-            "Go a little down.",  # turns under 2° are left out
+            "Go north and face 45° clockwise from north, looking 30° down.",
+            "Go north-east and face 45° clockwise from north, looking 20° down.",
+            "Go a little west and face 15° clockwise from north, looking 20° down.",
+            "Go far south-east and face 15° clockwise from north, looking 25° down.",
+            "Face 15° clockwise from north, looking 25° down.",  # 0.05 median steps: no move
+            "Go up and face 150° counter-clockwise from north, looking 25° down.",
+            "Go north and up, and face 120° counter-clockwise from north, looking 25° down.",
+            "Go a little down and face 119° counter-clockwise from north, looking 24° down.",
         ])
+
+    def test_relative_moves_and_turns(self):
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(self.trajectory(), "relative"), [
+            "Start looking 30° down.",
+            "Move forward and turn 45° to the right.",
+            "Move forward and turn 10° up.",  # north-east, facing north-east
+            "Move a little backward and to the left, and turn 30° to the left.",  # west, facing 45°
+            "Move far backward and to the right, and turn 5° down.",  # south-east, facing 15°
+            "Stay still.",  # 0.05 median steps, no turn
+            "Move up and turn 165° to the left.",
+            "Move up, backward and to the right, and turn 30° to the right.",  # north and up, facing -150°
+            "Move a little down.",  # turns under 2° are left out
+        ])
+        sheet = write_camera_sheet(self.root / "east.csv", [(0, -1, 0), (-1, 0, 0), (0, 1, 1), (1, 0, 1)],
+                                   [(90, 0)] * 5)  # facing east all along
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet, "relative"), [
+            "Start looking straight ahead.", "Strafe to the right.", "Move backward.", "Strafe to the left and up.",
+            "Move forward and up."])
+
+    def test_facings_round_to_north_and_south(self):
+        sheet = write_camera_sheet(self.root / "cameras.csv", [(0, 0, 0)] * 3, [(0, 0), (179.8, 0), (-0.3, 0), (90, 0)])
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet)[1:], [
+            "Face south, looking straight ahead.", "Face north, looking straight ahead.",
+            "Face 90° clockwise from north, looking straight ahead."])
 
     def test_paragraph_folder_and_command_line(self):
         write_camera_sheet(self.root / "cameras.csv", [(1, 0, 0)], [(0, 0), (-90, 0)])
-        expected = "Start facing north, looking straight ahead. Go east and turn 90° to the left."
-        self.assertEqual(camera_sheet_format_converter.describe_cameras(self.root), expected)  # the sheet folder
-        with contextlib.redirect_stdout(io.StringIO()) as out:
-            self.assertEqual(camera_sheet_format_converter.main([str(self.root / "cameras.csv")]), 0)
-        self.assertEqual(out.getvalue().strip(), expected)
+        expected = {"global": "Start facing north, looking straight ahead. "
+                              "Go east and face 90° counter-clockwise from north, looking straight ahead.",
+                    "relative": "Start looking straight ahead. Strafe to the right and turn 90° to the left."}
+        for mode, text in expected.items():
+            self.assertEqual(camera_sheet_format_converter.describe_cameras(self.root, mode), text)  # the folder
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(camera_sheet_format_converter.main([str(self.root / "cameras.csv"), "--mode", mode]), 0)
+            self.assertEqual(out.getvalue().strip(), text)
+        self.assertEqual(camera_sheet_format_converter.describe_cameras(self.root), expected["global"])  # the default
+        with self.assertRaises(ValueError):
+            camera_sheet_format_converter.describe_cameras(self.root, "compass")
 
     def test_camera_that_never_turns_or_looks_straight_down(self):
         sheet = write_camera_sheet(self.root / "a.csv", [(0, 1, 0), (0, 1, 0)], [(0, 0)] * 3)
-        self.assertEqual(camera_sheet_format_converter.describe_cameras(sheet),
-                         "Start facing north, looking straight ahead. Go north. Go north.")
+        self.assertEqual(camera_sheet_format_converter.describe_cameras(sheet, "relative"),
+                         "Start looking straight ahead. Move forward. Move forward.")
         sheet = write_camera_sheet(self.root / "b.csv", [], [(0, 10)])  # no horizon to fit: its own up is taken
         self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet),
                          ["Start facing north, looking straight ahead."])
         sheet = write_camera_sheet(self.root / "c.csv", [(0, 0, 0)], [(0, -90), (90, -30)])
-        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet),
-                         ["Start facing north, looking 90° down.", "Turn 90° to the right and 60° up."])
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet, "relative"),
+                         ["Start looking 90° down.", "Turn 90° to the right and 60° up."])
+        self.assertEqual(camera_sheet_format_converter.frame_instructions(sheet, "global"),
+                         ["Start facing north, looking 90° down.",
+                          "Face 90° clockwise from north, looking 30° down."])
 
     def test_not_a_camera_sheet(self):
         bad = self.root / "objects.csv"
