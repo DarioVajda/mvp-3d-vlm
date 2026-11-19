@@ -44,8 +44,10 @@ def paired(reference, other):
 
 
 def parse_rate(run):
-    """Share of answers the extraction rule could read (mvp.benchmarks.vsibench.parsed)."""
-    return sum(parsed(row, row["prediction"]) for _, row in run.iterrows()) / len(run)
+    """Share of answers the extraction rule could read (mvp.benchmarks.vsibench.parsed): the final-answer rule for a
+    run made with --final-answer (it has score_first), else lmms-eval's."""
+    final = "score_first" in run
+    return sum(parsed(row, row["prediction"], final) for _, row in run.iterrows()) / len(run)
 
 
 def main():

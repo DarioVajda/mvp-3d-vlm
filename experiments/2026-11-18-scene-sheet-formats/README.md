@@ -24,7 +24,9 @@ How to use this template
 
 # Which scene-sheet format helps Qwen3.5-2B most on VSI-Bench
 
-**Outcome:** <!-- one line once the experiment is done: the answer and its headline number -->
+**Outcome:** no format helps. Pipeline sheets lower the overall from 43.2 (video only) to 25.5–35.1, whatever the
+format. Gold sheets raise it to 48.4–49.4, but only because they give away the counting answers; without counting
+they are slightly below video only. The five formats are within 1 point of each other with gold sheets.
 
 ## Question
 
@@ -211,9 +213,9 @@ prompt:
   template: lmms-eval          # build_prompt in src/mvp/benchmarks/vsibench.py, with the sheet inserted
   reasoning: direct
   thinking: off                # enable_thinking=False
-  max_new_tokens: 16
+  max_new_tokens: 2048         # --max-new-tokens 2048; 16 cuts Qwen3.5's replies off before the answer (Log, 2026-11-19)
   decoding: greedy
-  answer_extraction: lmms-eval
+  answer_extraction: final     # --final-answer: the letter or number the reply ends on (score_final); lmms-eval's first-word score kept as score_first
 
 training: none
 ```
@@ -312,10 +314,10 @@ All commands run from the repository root on the cluster, at a commit with this 
    revision next to the outputs.
 
    ```bash
-   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 \
-       --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/A.jsonl
-   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 \
-       --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/B.jsonl \
+   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 \
+       --final-answer --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/A.jsonl
+   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 \
+       --final-answer --ids experiments/2026-11-18-scene-sheet-formats/smoke_ids.txt --out results/_scratch/ssf_smoke/B.jsonl \
        --sheet-source pipeline --sheet-format csv --sheets-root tasks/openvocab_adapter/out
    python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py smoke results/_scratch/ssf_smoke/A.jsonl \
        results/_scratch/ssf_smoke/B.jsonl --n 20
@@ -327,7 +329,7 @@ All commands run from the repository root on the cluster, at a commit with this 
 from its `--out` file if stopped:
 
 ```bash
-COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --ids experiments/2026-11-18-scene-sheet-formats/question_ids.txt"
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer --ids experiments/2026-11-18-scene-sheet-formats/question_ids.txt"
 OUT=results/zeroshot/vsibench/scene_sheet_formats
 SHEETS=tasks/openvocab_adapter/out
 python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_A_video.jsonl
@@ -354,7 +356,8 @@ pair's video tokens as one `<|video_pad|>`:
 `python -m mvp.benchmarks.scene_sheet --question 706 --source pipeline --format csv --prompt` (`--source gold`, or
 `none` for A; `build_sheet_prompt` in `src/mvp/benchmarks/scene_sheet.py`).
 
-**Cost:** about 2–2.5 GPU hours in total, for the eleven runs (*estimate*).
+**Cost:** 0.5 GPU hours in all, measured: one B200 ran the checks and then the eleven runs side by side, in 31 minutes
+(job 228061, 2026-11-19). The estimate before the runs was 2–2.5 GPU hours:
 - **Basis:** the repository README times Qwen3.5-4B, 16 frames, on the full VSI-Bench (5,130 questions) at about 18
   min on one H100 with the kernels. There is no timing for the 2B.
 - **Per run:** scaled to 2,728 questions, that is about 10 min per run as an upper bound for the 2B, before the
@@ -366,23 +369,90 @@ The checks add a few minutes. No sheets are built (they exist) and nothing is tr
 ## Results
 
 <!-- make_table:start -->
-Not run yet: `make_table.py` writes the table here.
+Written by `make_table.py` from `results/zeroshot/vsibench/scene_sheet_formats` (2,728 questions per condition; scores ×100).
+
+| ID | Sheet | Format | Overall | Count | Abs. dist. | Obj. size | Room size | Rel. dist. | Rel. dir. | Route | Order | Parsed | Sheet tokens | vs A: better / worse | p | Holm p |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | none | none | 43.2 | 39.6 | 37.2 | 59.4 | 44.8 | 47.5 | 45.6 | 27.6 | 44.1 | 100.0% | – | – | – | – |
+| B | pipeline | csv | 34.9 | 35.9 | 20.3 | 18.2 | 38.3 | 42.0 | 46.2 | 39.7 | 38.8 | 100.0% | 469 | 382 / 815 | 1.48e-36 | 1.04e-35 |
+| C | pipeline | markdown_table | 35.1 | 36.4 | 22.4 | 16.7 | 45.3 | 38.5 | 47.1 | 34.5 | 39.8 | 100.0% | 563 | 387 / 814 | 1.87e-35 | 1.12e-34 |
+| D | pipeline | json | 31.3 | 33.6 | 21.7 | 22.0 | 16.7 | 38.8 | 47.0 | 29.3 | 41.7 | 100.0% | 767 | 367 / 828 | 2.06e-41 | 1.65e-40 |
+| E | pipeline | markdown_kv | 25.5 | 30.6 | 14.6 | 21.0 | 1.7 | 29.6 | 40.7 | 31.0 | 34.7 | 100.0% | 693 | 370 / 1012 | 3.66e-69 | 3.66e-68 |
+| F | pipeline | text | 29.0 | 34.5 | 18.7 | 23.4 | 16.4 | 30.9 | 38.2 | 36.2 | 34.1 | 100.0% | 708 | 394 / 975 | 4.2e-57 | 3.78e-56 |
+| G | gold | csv | 49.4 | 98.3 | 30.9 | 55.8 | 49.3 | 47.5 | 46.6 | 32.8 | 34.1 | 100.0% | 215 | 668 / 611 | 0.117 | 0.352 |
+| H | gold | markdown_table | 49.4 | 98.1 | 32.7 | 60.6 | 49.7 | 41.7 | 47.6 | 31.0 | 34.1 | 100.0% | 269 | 691 / 602 | 0.0144 | 0.0718 |
+| I | gold | json | 49.4 | 98.3 | 26.4 | 62.0 | 50.4 | 45.9 | 44.7 | 29.3 | 38.6 | 100.0% | 341 | 668 / 597 | 0.049 | 0.196 |
+| J | gold | markdown_kv | 48.4 | 98.3 | 28.7 | 61.0 | 49.2 | 38.5 | 45.6 | 36.2 | 29.6 | 100.0% | 305 | 731 / 700 | 0.428 | 0.856 |
+| K | gold | text | 48.7 | 98.3 | 30.1 | 62.0 | 49.2 | 40.6 | 42.1 | 36.2 | 31.0 | 100.0% | 281 | 725 / 708 | 0.673 | 0.856 |
+
+Pipeline − gold, per format (better / worse: questions where the pipeline sheet scores higher / lower; Holm over the five formats):
+
+| Format | Conditions | Overall difference | Better / worse / same | p | Holm p |
+|---|---|---:|---:|---:|---:|
+| csv | B − G | -14.5 | 372 / 858 / 1498 | 1.21e-44 | 1.21e-44 |
+| markdown_table | C − H | -14.3 | 330 / 856 / 1542 | 2.88e-54 | 8.64e-54 |
+| json | D − I | -18.1 | 361 / 872 / 1495 | 3.36e-49 | 6.72e-49 |
+| markdown_kv | E − J | -22.9 | 244 / 893 / 1591 | 2.48e-87 | 1.24e-86 |
+| text | F − K | -19.6 | 241 / 824 / 1663 | 4.53e-75 | 1.81e-74 |
 <!-- make_table:end -->
 
 ### Examples
 
--
+None picked yet; each condition's answers are in its `.jsonl` (Runs).
 
 ### What the results show
 
--
+All 11 runs answered all 2,728 questions, and every answer could be read (parse rate 100%). The replies are a bare
+letter or number (median length one character), so the first-word and the final-answer scores are identical in
+every run: the 2,048-token limit changed nothing here.
+
+- **Pipeline sheets make every format worse than video only.** The overall falls by 8 to 18 points, and each of the
+  five drops has Holm p < 1e-34. Most of the loss is on the three questions that need real sizes and distances:
+  on those the score falls by 26–31 points on average per question, against 2–10 points on the other question types
+  (counting left out). Object size goes from 59.4 to 17–23 and absolute distance from 37.2 to 15–22. The pipeline
+  sheets are in VGGT's own units, not metres, and the model reads those numbers as if they were metres: on the
+  absolute-distance questions its median answer is 1.0–1.1, against 2.1 with video only (true median 2.0 m).
+- **Gold sheets seem to help, but only on counting.** The overall rises by 5–6 points, but counting alone goes from
+  39.6 to 98.1–98.3, because a gold sheet lists every labelled object of the asked class and the model just counts
+  the rows. Without counting, the gold-sheet overall is 41.3–42.5 against 43.8 for video only. None of the gold
+  overall gains passes the planned test (Holm p ≥ 0.07). A check that was not in the plan, leaving counting out,
+  finds more questions made worse than better for every gold format (e.g. csv 511 better / 610 worse, p = 0.003,
+  uncorrected).
+- **Even correct coordinates in metres don't help on distances.** With gold sheets, absolute distance falls from
+  37.2 to 26.4–32.7, relative distance stays the same or falls (38.5–47.5 against 47.5), and relative direction
+  barely moves (42.1–47.6 against 45.6). The 2B model does not compute distances or directions from the coordinates
+  it is given.
+- **The format matters little.** With gold sheets the five formats are within 1.0 point overall. With pipeline
+  sheets the spread is 9.6 points, and the tables (csv 34.9, markdown table 35.1) lose least, followed by json
+  (31.3), sentences (29.0) and key-value lists (25.5). The two tables are also among the shortest formats.
+- **Pipeline − gold** is 14–23 points against the pipeline for every format (all Holm p < 1e-43). Part of this is
+  units rather than content (Threats), so it overstates what better detection alone would gain.
 
 ## Conclusion
 
-- **Answer to the question:**
-- **Hypothesis:** <!-- supported, rejected or inconclusive, and why -->
-- **Caveats:** <!-- what limits the conclusion: subset size, one seed, one model -->
-- **Next:** <!-- the decision this leads to, and follow-up experiments by id -->
+- **Answer to the question:** no format improves Qwen3.5-2B's VSI-Bench score over the video alone. With pipeline
+  sheets every format hurts, and the tables (csv, markdown table) hurt least. With gold sheets the only gain is on
+  counting, where the sheet contains the answer, and the formats are equal within 1 point.
+- **Hypothesis:** rejected. Gold sheets were expected to help most on distance, direction and size, and they don't
+  help there at all; the gain over video only comes from counting alone. Format differences are not clearer with gold
+  sheets but smaller. The case that applies is *"no format helps even with gold sheets"*.
+- **Caveats:**
+  - One model (the 2B), one seed and greedy decoding, on the 75-scene subset (2,728 questions; room size 75 and route
+    planning 58).
+  - The model answered in one word or number every time, so these results say nothing about a model that reasons
+    over the sheet before answering.
+  - The pipeline sheets differ from gold in units as well as content, so pipeline − gold mixes the two on the metric
+    questions.
+  - The format is compared on the same questions it would be chosen on; there is no held-out set. With no format
+    helping, this does not change the conclusion.
+- **Next:**
+  - Leave counting out (or report it apart) whenever a gold sheet is compared with video only, since the gold sheet
+    contains the counting answer.
+  - Before trying more formats, fix what the pipeline sheet says: put it in metres (or leave sizes and distances
+    out), and merge the objects split over several rows (`sheet_quality.md`).
+  - Try the sheet with a model that reasons before answering (thinking on, or a larger model), since the 2B does not
+    use coordinates even when they are right.
+  - If a format is needed now, use csv: it is the shortest and among the best with both kinds of sheet.
 
 ## Log
 
@@ -441,3 +511,16 @@ Not run yet: `make_table.py` writes the table here.
     metres.
   - The format choice now cites its sources instead of being marked an assumption. TODO (2) is reduced to adding the
     PDFs to `papers/` with page and verbatim quote.
+- 2026-11-19, before the first run: answers may now be up to 2,048 tokens long and are scored on the answer the reply
+  ends on (`--max-new-tokens 2048 --final-answer`, `score_final` in `src/mvp/benchmarks/vsibench.py`), instead of 16
+  tokens scored on the first word. Qwen3.5 often reasons before answering even with thinking off, and 16 tokens cut it
+  off before the letter: on the full VSI-Bench this lifts zero-shot Qwen3.5-2B (32 frames as images) from 36.6 to
+  45.7 (repository README, "Decoding"). With 16 tokens a format that makes the model talk more would also be cut off
+  more, and score lower for that reason alone. The parse rate now uses the same final-answer rule (`parsed(...,
+  final=True)`, chosen by `compare_runs.parse_rate` and `cluster_checks.py smoke` when a run has `score_first`); the
+  lmms-eval first-word score stays in each record as `score_first`.
+- 2026-11-19, the runs: Slurm job 228061, one B200 (ixb3), 31 minutes, at commit 07bad18 plus the uncommitted
+  2,048-token fix (its diff is saved as `uncommitted.diff` next to the outputs). The checks passed: the prompts and
+  timestamps matched, and the smoke test answered and parsed 20 of 20 for A and B (mean input 2,599 and 3,076
+  tokens). The eleven runs ran side by side on the one GPU, then `make_table.py` wrote the Results. Results,
+  conclusion and the measured cost were written up the same day.

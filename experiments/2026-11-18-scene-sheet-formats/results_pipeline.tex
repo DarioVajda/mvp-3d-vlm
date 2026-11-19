@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\small
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Format & Overall & Count & Abs. dist. & Obj. size & Room size & Rel. dist. & Rel. dir. & Route & Order & Tokens \\
+\midrule
+Video only & \textbf{43.2} & \textbf{39.6} & \textbf{37.2} & \textbf{59.4} & 44.8 & \textbf{47.5} & 45.6 & 27.6 & \textbf{44.1} & -- \\
+\midrule
+CSV & 34.9 & 35.9 & 20.3 & 18.2 & 38.3 & 42.0 & 46.2 & \textbf{39.7} & 38.8 & \textbf{469} \\
+Markdown table & 35.1 & 36.4 & 22.4 & 16.7 & \textbf{45.3} & 38.5 & \textbf{47.1} & 34.5 & 39.8 & 563 \\
+JSON & 31.3 & 33.6 & 21.7 & 22.0 & 16.7 & 38.8 & 47.0 & 29.3 & 41.7 & 767 \\
+Markdown key-value & 25.5 & 30.6 & 14.6 & 21.0 & 1.7 & 29.6 & 40.7 & 31.0 & 34.7 & 693 \\
+Text & 29.0 & 34.5 & 18.7 & 23.4 & 16.4 & 30.9 & 38.2 & 36.2 & 34.1 & 708 \\
+\bottomrule
+\end{tabular}
+\caption{Qwen3.5-2B on the 2{,}728 VSI-Bench questions of the 75 exported scenes, 16 frames, video plus the pipeline (VGGT + SAM~3) scene sheet in each format. Scores $\times 100$; Tokens: mean tokens of the sheet. Best per column in bold.}
+\label{tab:sheet-format}
+\end{table*}

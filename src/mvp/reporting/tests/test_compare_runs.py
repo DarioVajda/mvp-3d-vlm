@@ -51,6 +51,17 @@ class Parsed(unittest.TestCase):
         self.assertTrue(parsed(na, "about three"))
         self.assertFalse(parsed(na, "I can't tell"))
 
+    def test_final_rules(self):
+        mca = {"question_type": "object_rel_distance", "options": ["A. tv", "B. sofa", "C. bed"]}
+        na = {"question_type": "object_counting", "options": None}
+        reply = "The sofa is nearer than the bed.\nThe answer is B."
+        self.assertFalse(parsed(mca, reply))  # the first word is not a letter
+        self.assertTrue(parsed(mca, reply, final=True))
+        self.assertFalse(parsed(mca, "The answer is D.", final=True))  # not one of the options
+        self.assertFalse(parsed(mca, "Let me look at the frames", final=True))  # cut off before the answer
+        self.assertTrue(parsed(na, "I see 2 on the left and 3 more, so 5", final=True))
+        self.assertFalse(parsed(na, "I can't tell", final=True))
+
 
 class Main(unittest.TestCase):
     def test_report(self):

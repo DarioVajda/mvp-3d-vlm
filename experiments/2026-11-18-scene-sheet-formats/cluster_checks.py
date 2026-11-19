@@ -68,7 +68,7 @@ def check_smoke(video, sheet, n):
         if not Path(path).exists():
             return [f"{name}: {path} was not written"]
         runs[name] = run = pd.read_json(path, lines=True)
-        ok = sum(parsed(r, r["prediction"]) for _, r in run.iterrows())
+        ok = sum(parsed(r, r["prediction"], "score_first" in run) for _, r in run.iterrows())  # final-answer rule if used
         print(f"{name}: {len(run)} predictions, {ok} parsed, mean input tokens {run['n_input_tokens'].mean():.0f}")
         if len(run) != n or run["id"].nunique() != n:
             problems.append(f"{name}: {len(run)} predictions ({run['id'].nunique()} questions), expected {n}")
