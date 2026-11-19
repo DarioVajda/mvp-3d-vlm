@@ -1,33 +1,50 @@
-"""Scene sheets as prompt text: one question's sheet rendered as csv, json, markdown_kv, markdown_table or text.
+"""Scene sheets as prompt text: one question's objects, and for pipeline sheets its cameras, written out for the model.
 
 The sheets are the CSVs of hpc/run_sheets.sh (docs/scene_sheets_75.md): index.csv gives each VSI-Bench question a
-pipeline sheet folder (VGGT + SAM 3 + tracking, 16 uniform frames) and a gold sheet folder (VSI-Bench's labelled boxes),
-each with an objects.csv. The formats are for comparing how the sheet is written, so they hold exactly the same
-information: one canonical object list per question (load_objects), the same preamble per source (PREAMBLES), and
-renderers that differ only in layout. cameras.csv is not used. Nothing here writes to the sheets folder.
+pipeline sheet folder (VGGT + SAM 3 + tracking, 16 uniform frames: objects.csv and cameras.csv) and a gold sheet folder
+(VSI-Bench's labelled boxes: objects.csv only). The table formats are for comparing how the sheet is written, so they
+hold exactly the same information: one canonical object list per question (load_objects) and one canonical camera list
+(load_cameras), the same preamble per source, and renderers that differ only in layout. cameras.csv's image column is
+never written. Nothing here writes to the sheets folder.
 
-  render_sheet(question_id, source, fmt) -> str     source: pipeline | gold; fmt: one of FORMATS
-  build_sheet_prompt(question_id, source, fmt) -> str   the whole text input the eval sends with that sheet
+  render_sheet(question_id, source, fmt)      the objects. source: pipeline | gold; fmt: one of SHEET_FORMATS, where
+                                              "narrative" is objects and cameras told as one walk through the frames
+                                              (pipeline only)
+  render_cameras(question_id, camera_fmt)     the pipeline's cameras. camera_fmt: one of CAMERA_FORMATS, where "text" is
+                                              the compass directions of camera_sheet_format_converter.py, frame by frame
+  render_scene(question_id, source, fmt, camera_fmt)   what the prompt carries: objects, then cameras (None: neither)
+  build_sheet_prompt(question_id, source, fmt)  the whole text input the eval sends with that sheet
+
+time_unit, for all of them: "seconds" (the default) writes a frame as the video timestamp the model's video input shows
+for it (Qwen's processor writes one per pair of frames); "frames" writes it as its number, 1 to 16. The video's own
+labels are always in seconds. check_options says which combinations of options are contradictory.
 
   python -m mvp.benchmarks.scene_sheet --examples experiments/2026-11-18-scene-sheet-formats/examples --question 706
   python -m mvp.benchmarks.scene_sheet --tokens Qwen/Qwen3.5-2B     # needs the tokenizer (transformers)
   python -m mvp.benchmarks.scene_sheet --question 706 --source pipeline --format csv --prompt
+  python -m mvp.benchmarks.scene_sheet --question 706 --format narrative --time-unit frames --reasoning cot --prompt
 """
 import argparse
 import csv
 import io
 import json
+import math
 import statistics
 from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
 
-from mvp.benchmarks.vsibench import build_prompt_parts
+from mvp.benchmarks.vsibench import REASONING, build_prompt_parts
+from mvp.openvocab_adapter import camera_sheet_format_converter as directions
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
 
 SOURCES = ["pipeline", "gold"]
-FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]
+FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]  # the object sheet's layouts, both sources
+NARRATIVE = "narrative"  # objects and cameras as one walk through the frames: pipeline only
+SHEET_FORMATS = FORMATS + [NARRATIVE]
+CAMERA_FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]
+TIME_UNITS = ["seconds", "frames"]
 N_FRAMES = 16  # the pipeline's frames: 16 uniform over the 128 exported ones (docs/scene_sheets_75.md)
 MERGE = 2  # Qwen3-VL / Qwen3.5 merge video frames in pairs and show one timestamp per pair
 DECIMALS = 3
@@ -37,12 +54,18 @@ EMPTY = ("The detector did not find the objects named in the question. This does
 POSITION = ["x", "y", "z"]
 EXTENT = ["size_x", "size_y", "size_z"]
 FRAME_FIELDS = ["first_seen", "num_frames"]  # pipeline only; gold sheets have no per-frame columns
+CAMERA_COLUMNS = ["x", "y", "z", "qw", "qx", "qy", "qz", "forward_x", "forward_y", "forward_z"]  # minus frame, image
+FRAME_KEY = {"seconds": "time", "frames": "frame"}  # the camera rows' first field
 
 
 def fields(source, volume=False):
     """The canonical field order. `size` (the product of the three extents) is left out unless volume is set."""
     return (["id", "label"] + POSITION + EXTENT + (["size"] if volume else [])
             + (FRAME_FIELDS if source == "pipeline" else []))
+
+
+def camera_fields(time_unit="seconds"):
+    return [FRAME_KEY[time_unit]] + CAMERA_COLUMNS
 
 
 # The axis convention, checked against the code and the data (2026-11-18):
@@ -53,20 +76,69 @@ def fields(source, volume=False):
 #    which is often tilted (camera_sheet_format_converter.py estimates up from the camera path instead).
 #  - gold: the dataset's frame in metres, z up (sheet.json; scene_sheet_creator.py). Doors and refrigerators are
 #    tallest along z in 962 of their 1,021 gold rows.
-PREAMBLES = {
-    "pipeline": ("Scene sheet. Positions x, y, z are object centres in the 3D reconstruction's relative units, not "
-                 "metres. The origin is the camera of the first video frame: x points right, y down and z forward as "
-                 "seen from that camera. size_x, size_y and size_z are each object's extent along x, y and z, in the "
-                 "same units. first_seen is the video timestamp, in seconds, at which the object first appears, as "
-                 "the video's timestamps show it, and num_frames is how many of the 16 video frames it appears in."),
+PIPELINE_AXES = ("Positions x, y, z are object centres in the 3D reconstruction's relative units, not metres. The "
+                 "origin is the camera of the first video frame: x points right, y down and z forward as seen from that "
+                 "camera. size_x, size_y and size_z are each object's extent along x, y and z, in the same units.")
+FRAME_NUMBERS = ("The 16 video frames are numbered 1 to 16 in the order the video shows them. The video shows them in "
+                 "pairs under one label each: frames 1 and 2 under its first label, frames 3 and 4 under the next one, "
+                 "and so on.")
+FIRST_SEEN = {
+    "seconds": ("first_seen is the video timestamp, in seconds, at which the object first appears, as the video's "
+                "timestamps show it, and num_frames is how many of the 16 video frames it appears in."),
+    "frames": ("first_seen is the number of the frame in which the object first appears, and num_frames is how many "
+               "of the 16 frames it appears in. " + FRAME_NUMBERS),
+}
+PREAMBLES = {  # with time_unit "seconds"; preamble() gives the others
+    "pipeline": "Scene sheet. " + PIPELINE_AXES + " " + FIRST_SEEN["seconds"],
     "gold": ("Scene sheet. Positions x, y, z are object centres in metres, with the z axis pointing up. size_x, size_y "
              "and size_z are each object's extent along x, y and z, in metres."),
 }
 VOLUME_NOTE = " size is the product of the three extents."
 
+CAMERA_PREAMBLE = (
+    "Camera sheet: where the camera is in each of the 16 video frames, one entry per frame. x, y, z is the camera's "
+    "position in the 3D reconstruction's relative units, not metres. The origin is the camera of the first video "
+    "frame: x points right, y down and z forward as seen from that camera. qw, qx, qy, qz is the camera's orientation, "
+    "the unit quaternion that turns the camera's own axes (x right, y down, z forward) into these axes, and forward_x, "
+    "forward_y, forward_z is the direction the camera looks.")
+CAMERA_KEY = {
+    "seconds": ("time is the frame's video timestamp, in seconds, as the video's timestamps show it. The video shows "
+                "one timestamp per pair of frames, so two entries share each time."),
+    "frames": "frame is the frame's number. " + FRAME_NUMBERS,
+}
+DIRECTIONS = (
+    "Camera path: how the camera moves through the 16 video frames. North is the direction the camera faces in the "
+    "first frame, along the floor, and east is 90° to its right; up is estimated from the camera's path. Each sentence "
+    "after the first says how the camera got to its frame from the frame before: how far it moved, in the 3D "
+    "reconstruction's relative units (not metres), in which direction, and how many degrees it turned left or right "
+    "and up or down.")
+NARRATIVE_PREAMBLE = (
+    "Scene walkthrough: the camera's path through the 16 video frames, told from the camera's point of view, with the "
+    "objects the detector found in each frame. Forward, back, left and right are relative to where the camera faces at "
+    "that moment, up and down are estimated from the camera's path, and turns are in degrees. Distances and sizes are "
+    "in the 3D reconstruction's relative units, not metres: an object's distance is from the camera to the object's "
+    "centre, and its size is its extent along three perpendicular axes.")
+LINE_LABELS = {  # the line-per-frame texts: the camera directions and the narrative
+    "seconds": ("Each line starts with a video timestamp, in seconds, as the video's timestamps show it, and holds the "
+                "sentences of the two frames shown under it."),
+    "frames": "Each line starts with its frame's number. " + FRAME_NUMBERS,
+}
 
-def preamble(source, volume=False):
-    return PREAMBLES[source] + (VOLUME_NOTE if volume else "")
+
+def check_time_unit(time_unit):
+    if time_unit not in TIME_UNITS:
+        raise ValueError(f"time_unit must be one of {TIME_UNITS}, not {time_unit!r}")
+
+
+def preamble(source, volume=False, time_unit="seconds"):
+    check_time_unit(time_unit)
+    text = "Scene sheet. " + PIPELINE_AXES + " " + FIRST_SEEN[time_unit] if source == "pipeline" else PREAMBLES[source]
+    return text + (VOLUME_NOTE if volume else "")
+
+
+def camera_preamble(time_unit="seconds"):
+    check_time_unit(time_unit)
+    return CAMERA_PREAMBLE + " " + CAMERA_KEY[time_unit]
 
 
 def fmt_float(value):
@@ -75,7 +147,7 @@ def fmt_float(value):
     return s[1:] if s.startswith("-") and float(s) == 0 else s
 
 
-# ---- step 1: the canonical object list ----
+# ---- step 1: the canonical object and camera lists ----
 
 @lru_cache(maxsize=None)
 def load_index(root=SCENE_SHEETS):
@@ -88,6 +160,11 @@ def sheet_folders(question_id, source, root=SCENE_SHEETS):
     """The sheet folders index.csv lists for this question and source (one in every row of the 75-scene index)."""
     row = load_index(root)[int(question_id)]
     return [Path(root) / row[f"{source}_sheet"]]
+
+
+def camera_folder(question_id, root=SCENE_SHEETS):
+    """The folder of the question's cameras.csv: its pipeline sheet's (gold sheets have none)."""
+    return sheet_folders(question_id, "pipeline", root)[0]
 
 
 @lru_cache(maxsize=None)
@@ -108,24 +185,43 @@ def frame_timestamps(scene_dir, scene, vggt_root=VGGT_DIR):
     return tuple(f"{pairs[t // MERGE]:.1f}" for t in range(len(indices)))
 
 
-def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR):
+def frame_labels(folder, time_unit="seconds", vggt_root=VGGT_DIR):
+    """How a pipeline sheet folder's 16 frames are written: their video timestamps ('6.4'; the two frames of a pair
+    share one), or their numbers ('1' to '16')."""
+    check_time_unit(time_unit)
+    if time_unit == "frames":
+        return tuple(str(t + 1) for t in range(N_FRAMES))
+    folder = Path(folder)
+    scene = json.loads((folder / "question.json").read_text())["scene"]
+    return frame_timestamps(folder.parents[1] / "scene", scene, Path(vggt_root))
+
+
+def object_id(row):
+    return f"{row['concept'].replace(' ', '_')}_{row['track_id']}"
+
+
+def seen_in(row):
+    """The frames (0 to 15) a pipeline objects.csv row was seen in, from its frame flags."""
+    return [t for t in range(N_FRAMES) if row[f"frame_{t:03d}"] == "1"]
+
+
+def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="seconds"):
     """One sheet folder's objects.csv as canonical objects: dicts of formatted strings in the order of fields()."""
     folder = Path(folder)
     with open(folder / "objects.csv", newline="") as f:
         rows = list(csv.DictReader(f))
     if source == "pipeline" and rows:
-        scene = json.loads((folder / "question.json").read_text())["scene"]
-        times = frame_timestamps(folder.parents[1] / "scene", scene, Path(vggt_root))
+        labels = frame_labels(folder, time_unit, vggt_root)
     objects = []
     for row in rows:
-        obj = {"id": f"{row['concept'].replace(' ', '_')}_{row['track_id']}", "label": row["concept"]}
+        obj = {"id": object_id(row), "label": row["concept"]}
         for key in POSITION + EXTENT + (["size"] if volume else []):
             obj[key] = fmt_float(row[key])
         if source == "pipeline":
-            seen = [t for t in range(N_FRAMES) if row[f"frame_{t:03d}"] == "1"]
+            seen = seen_in(row)
             if not seen or len(seen) != int(row["num_frames"]):
                 raise ValueError(f"{folder}: {obj['id']} has num_frames {row['num_frames']} but frame flags {seen}")
-            obj["first_seen"], obj["num_frames"] = times[seen[0]], str(len(seen))
+            obj["first_seen"], obj["num_frames"] = labels[seen[0]], str(len(seen))
         objects.append(obj)
     return objects
 
@@ -150,15 +246,39 @@ def sort_key(obj):
     return (float(obj["first_seen"]),) + order if "first_seen" in obj else order
 
 
-def load_objects(question_id, source, root=SCENE_SHEETS, volume=False, stats=None, vggt_root=VGGT_DIR):
+def load_objects(question_id, source, root=SCENE_SHEETS, volume=False, stats=None, vggt_root=VGGT_DIR,
+                 time_unit="seconds"):
     """The question's canonical object list: every sheet folder of this source merged, sorted by first_seen, label
     and track_id (gold: label and track_id). stats, a dict, counts merged folders and dropped duplicates."""
     folders = sheet_folders(question_id, source, root)
-    objects, dropped = merge([read_objects(folder, source, volume, vggt_root) for folder in folders])
+    objects, dropped = merge([read_objects(folder, source, volume, vggt_root, time_unit) for folder in folders])
     if stats is not None:
         stats["merged_questions"] = stats.get("merged_questions", 0) + (len(folders) > 1)
         stats["duplicates_dropped"] = stats.get("duplicates_dropped", 0) + dropped
     return sorted(objects, key=sort_key)
+
+
+def frames_seen(question_id, root=SCENE_SHEETS):
+    """{object id: the set of frames (0 to 15) it was seen in}, over the question's pipeline sheet folders."""
+    seen = {}
+    for folder in sheet_folders(question_id, "pipeline", root):
+        with open(folder / "objects.csv", newline="") as f:
+            for row in csv.DictReader(f):
+                seen.setdefault(object_id(row), set()).update(seen_in(row))
+    return seen
+
+
+def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
+    """The question's canonical camera list: one dict of formatted strings per frame, in frame order, with the fields
+    of camera_fields(time_unit). cameras.csv's frame becomes the frame's label and its image column is dropped."""
+    folder = camera_folder(question_id, root)
+    with open(folder / "cameras.csv", newline="") as f:
+        rows = sorted(csv.DictReader(f), key=lambda r: int(r["frame"]))
+    if [int(r["frame"]) for r in rows] != list(range(N_FRAMES)):
+        raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
+    key = FRAME_KEY[time_unit]
+    labels = frame_labels(folder, time_unit, vggt_root)
+    return [{key: label, **{c: fmt_float(row[c]) for c in CAMERA_COLUMNS}} for label, row in zip(labels, rows)]
 
 
 # ---- the renderers, each the body that follows the preamble ----
@@ -179,7 +299,11 @@ def render_json(objects, keys):
 
 
 def render_markdown_kv(objects, keys):
-    blocks = [f"## {obj['id']}\n```\n" + "\n".join(f"{k}: {obj[k]}" for k in keys if k != "id") + "\n```"
+    """One block per row, headed by its first field: the id of an object ('## chair_1'), or the field and its value
+    for a camera ('## frame 3', '## time 2.5')."""
+    def title(obj):
+        return obj[keys[0]] if keys[0] == "id" else f"{keys[0]} {obj[keys[0]]}"
+    blocks = [f"## {title(obj)}\n```\n" + "\n".join(f"{k}: {obj[k]}" for k in keys[1:]) + "\n```"
               for obj in objects]
     return "\n\n".join(blocks)
 
@@ -191,38 +315,221 @@ def render_markdown_table(objects, keys):
     return "\n".join("| " + " | ".join(row) + " |" for row in rows)
 
 
-def text_sentence(obj):
+def article(label):
+    return "an" if label[0].lower() in "aeiou" else "a"
+
+
+def text_sentence(obj, time_unit="seconds"):
     """The fixed sentence template; TEXT_PATTERN in the tests parses it back."""
-    article = "an" if obj["label"][0].lower() in "aeiou" else "a"
     volume = f" and volume {obj['size']}" if "size" in obj else ""
-    s = (f"{obj['id']} is {article} {obj['label']} centred at x={obj['x']}, y={obj['y']}, z={obj['z']}, with extent "
-         f"{obj['size_x']} along x, {obj['size_y']} along y and {obj['size_z']} along z{volume}.")
+    s = (f"{obj['id']} is {article(obj['label'])} {obj['label']} centred at x={obj['x']}, y={obj['y']}, z={obj['z']}, "
+         f"with extent {obj['size_x']} along x, {obj['size_y']} along y and {obj['size_z']} along z{volume}.")
     if "first_seen" in obj:
-        s += (f" It is first seen at {obj['first_seen']} seconds and is visible in {obj['num_frames']} of the "
-              f"{N_FRAMES} frames.")
+        when = f"at {obj['first_seen']} seconds" if time_unit == "seconds" else f"in frame {obj['first_seen']}"
+        s += f" It is first seen {when} and is visible in {obj['num_frames']} of the {N_FRAMES} frames."
     return s
 
 
-def render_text(objects, keys):
-    return "\n".join(text_sentence(obj) for obj in objects)
+def render_text(objects, keys, time_unit="seconds"):
+    return "\n".join(text_sentence(obj, time_unit) for obj in objects)
 
 
 RENDERERS = {"csv": render_csv, "json": render_json, "markdown_kv": render_markdown_kv,
              "markdown_table": render_markdown_table, "text": render_text}
 
 
-def render_objects(objects, source, fmt, volume=False):
+def render_objects(objects, source, fmt, volume=False, time_unit="seconds"):
     """Preamble, then the objects in this format, or EMPTY (the same line in every format) if there are none."""
-    body = RENDERERS[fmt](objects, fields(source, volume)) if objects else EMPTY
-    return preamble(source, volume) + "\n" + body
+    if not objects:
+        body = EMPTY
+    elif fmt == "text":
+        body = render_text(objects, fields(source, volume), time_unit)
+    else:
+        body = RENDERERS[fmt](objects, fields(source, volume))
+    return preamble(source, volume, time_unit) + "\n" + body
 
 
-def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR):
-    """One question's scene sheet as prompt text. source: pipeline | gold; fmt: one of FORMATS. vggt_root holds each
-    video's meta.json (its fps, for the pipeline's timestamps)."""
-    if source not in SOURCES or fmt not in FORMATS:
-        raise ValueError(f"source must be one of {SOURCES} and fmt one of {FORMATS}, not {source!r}, {fmt!r}")
-    return render_objects(load_objects(question_id, source, root, volume, vggt_root=vggt_root), source, fmt, volume)
+def label_lines(sentences, labels, time_unit="seconds"):
+    """One sentence per frame as lines: 'Frame 3: ...', or, in seconds, one line per timestamp holding the sentences
+    of the frames shown under it: 'At 2.5 seconds: ... ...'."""
+    if time_unit == "frames":
+        return [f"Frame {label}: {s}" for label, s in zip(labels, sentences)]
+    groups = []
+    for label, s in zip(labels, sentences):
+        if groups and groups[-1][0] == label:
+            groups[-1][1].append(s)
+        else:
+            groups.append((label, [s]))
+    return [f"At {label} seconds: {' '.join(group)}" for label, group in groups]
+
+
+def render_cameras(question_id, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
+    """The question's camera sheet as prompt text: a table format of CAMERA_FORMATS (the canonical camera list), or
+    "text", the compass directions of camera_sheet_format_converter.py with each move's length, one line per frame."""
+    if fmt not in CAMERA_FORMATS:
+        raise ValueError(f"camera format must be one of {CAMERA_FORMATS}, not {fmt!r}")
+    check_time_unit(time_unit)
+    if fmt == "text":
+        folder = camera_folder(question_id, root)
+        sentences = directions.frame_instructions(folder, units=True)
+        if len(sentences) != N_FRAMES:
+            raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
+        lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
+        return DIRECTIONS + " " + LINE_LABELS[time_unit] + "\n" + "\n".join(lines)
+    cameras = load_cameras(question_id, root, vggt_root, time_unit)
+    return camera_preamble(time_unit) + "\n" + RENDERERS[fmt](cameras, camera_fields(time_unit))
+
+
+# ---- the narrative: objects and cameras as one walk through the frames ----
+
+AHEAD_DEG, SLIGHTLY_DEG, SIDE_DEG = 10, 35, 100  # where an object is: in front, slightly to a side, to a side, behind
+MOVES = ["forward", "forward and to the right", "to the right", "back and to the right", "back",
+         "back and to the left", "to the left", "forward and to the left"]  # clockwise from where the camera faces
+
+
+def view_side(offset):
+    """Where a point is for a camera, from its offset in the camera's axes (x right, z forward)."""
+    angle = math.degrees(math.atan2(offset[0], offset[2]))
+    side = "right" if angle > 0 else "left"
+    if abs(angle) < AHEAD_DEG:
+        return "in front of you"
+    if abs(angle) < SLIGHTLY_DEG:
+        return f"ahead, slightly to your {side}"
+    if abs(angle) <= SIDE_DEG:
+        return f"on your {side}"
+    return f"behind you on your {side}"
+
+
+def walk_move(step, median_step, up, ahead):
+    """'move 0.812 units forward and to the left', relative to where the camera faced before it moved, or None when
+    the step is too short to mention. The thresholds are camera_sheet_format_converter.py's."""
+    length = float(np.linalg.norm(step))
+    if median_step <= 0 or length < directions.NO_MOVE * median_step:
+        return None
+    rise = float(step @ up)
+    flat = step - rise * up
+    climb = math.degrees(math.atan2(abs(rise), np.linalg.norm(flat)))
+    vertical = "up" if rise > 0 else "down"
+    if climb > directions.VERTICAL_DEG:
+        where = vertical
+    else:
+        where = MOVES[round(directions.bearing(flat, ahead, np.cross(ahead, up)) / 45) % 8]
+        if climb > directions.CLIMB_DEG:
+            where += f", going {vertical}"
+    return f"move {fmt_float(length)} units {where}"
+
+
+def object_clauses(objects, seen, t, centre, rotation, mentioned):
+    """What the camera sees in frame t: each object seen in it, then each one seen in the frame before but not in
+    this one. Sizes are given the first time an object is seen."""
+    clauses = []
+    for obj in objects:
+        if t not in seen[obj["id"]]:
+            continue
+        offset = np.array([float(obj[k]) for k in POSITION]) - centre
+        where = f"{view_side(rotation.T @ offset)}, {fmt_float(np.linalg.norm(offset))} units away"
+        if t - 1 in seen[obj["id"]]:
+            clauses.append(f"you still see {obj['id']} {where}")
+        elif obj["id"] in mentioned:
+            clauses.append(f"you see {obj['id']} again {where}")
+        else:
+            size = " × ".join(obj[k] for k in EXTENT)
+            clauses.append(f"you see {obj['id']} ({article(obj['label'])} {obj['label']}, {size} units) {where}")
+            mentioned.add(obj["id"])
+    clauses += [f"{obj['id']} is no longer in view" for obj in objects
+                if t - 1 in seen[obj["id"]] and t not in seen[obj["id"]]]
+    return clauses
+
+
+def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
+    """The pipeline sheet's objects and cameras as one walk, a sentence per frame: how the camera moved and turned
+    since the frame before (forward, left... relative to where it faced), then what it sees: "Move 0.812 units forward
+    and turn 30° to the right; you see table_1 (a table, 1.200 × 0.800 × 0.700 units) ahead, slightly to your left,
+    2.100 units away; lamp_1 is no longer in view." Up is camera_sheet_format_converter.py's estimate."""
+    check_time_unit(time_unit)
+    folder = camera_folder(question_id, root)
+    objects = load_objects(question_id, "pipeline", root, vggt_root=vggt_root, time_unit=time_unit)
+    seen = frames_seen(question_id, root)
+    centres, rotations = directions.read_cameras(folder)
+    if len(centres) != N_FRAMES:
+        raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
+    up = directions.estimate_up(rotations)
+    facings = [directions.facing(r, up) for r in rotations]
+    north, east = facings[0], np.cross(facings[0], up)
+    headings = [directions.bearing(f, north, east) for f in facings]
+    pitches = [math.degrees(math.asin(np.clip(r[:, 2] @ up, -1, 1))) for r in rotations]
+    steps = np.diff(centres, axis=0)
+    median_step = float(np.median(np.linalg.norm(steps, axis=1)))
+
+    sentences, mentioned = [], set()
+    for t in range(N_FRAMES):
+        if t == 0:
+            pitch = round(abs(pitches[0]))
+            looking = ("straight ahead" if pitch < directions.MIN_TURN_DEG
+                       else f"{pitch}° {'up' if pitches[0] > 0 else 'down'}")
+            action = f"start facing forward, looking {looking}"
+        else:
+            move = walk_move(steps[t - 1], median_step, up, facings[t - 1])
+            turn = directions.turn_phrase(headings[t] - headings[t - 1], pitches[t] - pitches[t - 1])
+            if move and turn:
+                action = f"{move}{',' if ', going' in move else ''} and {turn}"
+            else:
+                action = move or (f"don't move and {turn}" if turn else "stay still")
+        clauses = object_clauses(objects, seen, t, centres[t], rotations[t], mentioned)
+        sentences.append(action[0].upper() + action[1:] + "".join("; " + c for c in clauses) + ".")
+    lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
+    head = NARRATIVE_PREAMBLE + " " + LINE_LABELS[time_unit] + ("" if objects else "\n" + EMPTY)
+    return head + "\n" + "\n".join(lines)
+
+
+# ---- one question's scene information ----
+
+def check_options(source, fmt, camera_fmt=None, time_unit="seconds"):
+    """ValueError if these sheet options are unknown or contradict each other. fmt is ignored without a source.
+      - gold objects with cameras, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and
+        the only cameras are VGGT's, in another frame and scale, with nothing to align the two by
+      - the narrative with a camera format: the narrative already tells the cameras"""
+    if source is not None and source not in SOURCES:
+        raise ValueError(f"source must be one of {SOURCES} or None, not {source!r}")
+    if source is not None and fmt not in SHEET_FORMATS:
+        raise ValueError(f"the sheet format must be one of {SHEET_FORMATS}, not {fmt!r}")
+    if camera_fmt is not None and camera_fmt not in CAMERA_FORMATS:
+        raise ValueError(f"the camera format must be one of {CAMERA_FORMATS} or None, not {camera_fmt!r}")
+    check_time_unit(time_unit)
+    if source == "gold" and (camera_fmt or fmt == NARRATIVE):
+        raise ValueError("gold sheets have no cameras: they are in metres in the dataset's frame, and the only cameras "
+                         "are VGGT's, in another frame and scale (so no camera format, and no narrative)")
+    if source == "pipeline" and fmt == NARRATIVE and camera_fmt:
+        raise ValueError("the narrative already tells where the camera goes: give no camera format with it")
+
+
+def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds"):
+    """One question's objects as prompt text. source: pipeline | gold; fmt: one of SHEET_FORMATS ("narrative":
+    pipeline only, with its cameras). vggt_root holds each video's meta.json (its fps, for timestamps)."""
+    if source not in SOURCES or fmt not in SHEET_FORMATS:
+        raise ValueError(f"source must be one of {SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, {fmt!r}")
+    check_options(source, fmt, None, time_unit)
+    if fmt == NARRATIVE:
+        return render_narrative(question_id, root, vggt_root, time_unit)
+    objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit)
+    return render_objects(objects, source, fmt, volume, time_unit)
+
+
+def render_scene(question_id, source=None, fmt=None, camera_fmt=None, root=SCENE_SHEETS, vggt_root=VGGT_DIR,
+                 time_unit="seconds"):
+    """What the prompt carries about the scene: the objects (source and fmt), then the cameras (camera_fmt), or
+    either alone. None when there is neither. Contradictory options raise ValueError (check_options)."""
+    check_options(source, fmt, camera_fmt, time_unit)
+    parts = [render_sheet(question_id, source, fmt, root, vggt_root=vggt_root, time_unit=time_unit)] if source else []
+    if camera_fmt:
+        parts.append(render_cameras(question_id, camera_fmt, root, vggt_root, time_unit))
+    return "\n".join(parts) if parts else None
+
+
+def sheet_kind(source, camera_fmt=None):
+    """Where the scene information comes from, for the chain-of-thought instructions (vsibench.cot_prompt): 'gold'
+    (labels, in metres), 'pipeline' (computed from the video, in relative units; cameras are always this) or None."""
+    return source or ("pipeline" if camera_fmt else None)
 
 
 # ---- the whole prompt ----
@@ -238,10 +545,13 @@ CHAT = ("<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{pre}<|vision
 VIDEO_PAD = "<|video_pad|>"
 
 
-def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None):
+def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None,
+                       camera_fmt=None, time_unit="seconds", reasoning="direct"):
     """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
-    question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the sheet after
-    "These are frames of a video." and the question. source None gives the video-only prompt (condition A).
+    question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the scene
+    information (render_scene) after "These are frames of a video." and the question. source None and camera_fmt None
+    give the video-only prompt (condition A). reasoning: one of vsibench.REASONING ("cot": think step by step, end on
+    "Answer: X").
 
     Each frame pair's video tokens are written as one <|video_pad|>, or as "<|video_pad|> x frame_tokens", which is
     how QwenVL.render_prompt (--print-prompt) writes them, so the two can be compared. The question comes from
@@ -249,9 +559,9 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
     row = load_index(root)[int(question_id)]
     doc = {"question_type": row["question_type"], "question": row["question"],
            "options": row["options"].split(" | ") if row["options"] else None}
-    sheet = None if source is None else render_sheet(question_id, source, fmt, root, vggt_root=vggt_root)
-    pre, post = build_prompt_parts(doc, "sit", sheet)
-    # the video's labels are the pipeline frames' timestamps, whichever sheet goes in
+    sheet = render_scene(question_id, source, fmt, camera_fmt, root, vggt_root, time_unit)
+    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, sheet_kind(source, camera_fmt))
+    # the video's labels are the pipeline frames' timestamps, whichever sheet goes in, and always in seconds
     times = frame_timestamps((Path(root) / row["pipeline_sheet"]).parents[1] / "scene", row["scene"], Path(vggt_root))
     pad = VIDEO_PAD if frame_tokens is None else f"{VIDEO_PAD} x {frame_tokens}"
     video = "".join(f"<{t} seconds><|vision_start|>{pad}<|vision_end|>" for t in times[::MERGE])
@@ -260,32 +570,42 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
 
 # ---- command line: examples, token counts and prompts ----
 
-def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR):
-    """The question rendered in every format and source, one file each, plus the question itself."""
+def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
+    """The question rendered in every format and source, its cameras in every camera format and its narrative, one
+    file each, plus the question itself."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     row = load_index(root)[int(question_id)]
     (out_dir / f"{question_id}_question.txt").write_text(
         f"{row['scene']} ({row['question_type']})\n{row['question']}\n{row['options']}\nground truth: "
         f"{row['ground_truth']}\n")
-    for source in SOURCES:
-        for fmt in FORMATS:
-            (out_dir / f"{question_id}_{source}_{fmt}.txt").write_text(
-                render_sheet(question_id, source, fmt, root, vggt_root=vggt_root) + "\n")
-    print(f"wrote {len(SOURCES) * len(FORMATS) + 1} files to {out_dir}")
+    texts = {f"{source}_{fmt}": render_sheet(question_id, source, fmt, root, vggt_root=vggt_root, time_unit=time_unit)
+             for source in SOURCES for fmt in FORMATS}
+    texts["pipeline_narrative"] = render_sheet(question_id, "pipeline", NARRATIVE, root, vggt_root=vggt_root,
+                                               time_unit=time_unit)
+    texts.update({f"cameras_{fmt}": render_cameras(question_id, fmt, root, vggt_root, time_unit)
+                  for fmt in CAMERA_FORMATS})
+    suffix = "" if time_unit == "seconds" else f"_{time_unit}"
+    for name, text in texts.items():
+        (out_dir / f"{question_id}_{name}{suffix}.txt").write_text(text + "\n", encoding="utf-8")
+    print(f"wrote {len(texts) + 1} files to {out_dir}")
 
 
-def token_table(count, root=SCENE_SHEETS, vggt_root=VGGT_DIR):
+def token_table(count, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
     """Tokens per rendered sheet (count: text -> number of tokens) over every question: a markdown table with the mean,
-    median and max per source and format, and the question with the most."""
+    median and max per source and format (and for the cameras), and the question with the most."""
     ids = sorted(load_index(root))
+    renders = [(source, fmt, lambda q, s=source, f=fmt: render_sheet(q, s, f, root, vggt_root=vggt_root,
+                                                                     time_unit=time_unit))
+               for source in SOURCES for fmt in (SHEET_FORMATS if source == "pipeline" else FORMATS)]
+    renders += [("cameras", fmt, lambda q, f=fmt: render_cameras(q, f, root, vggt_root, time_unit))
+                for fmt in CAMERA_FORMATS]
     lines = ["| source | format | mean | median | max | question with max |", "|---|---|---|---|---|---|"]
-    for source in SOURCES:
-        for fmt in FORMATS:
-            counts = {q: count(render_sheet(q, source, fmt, root, vggt_root=vggt_root)) for q in ids}
-            worst = max(counts, key=counts.get)
-            lines.append(f"| {source} | {fmt} | {statistics.mean(counts.values()):.0f} | "
-                         f"{statistics.median(counts.values()):.0f} | {counts[worst]} | {worst} |")
+    for source, fmt, render in renders:
+        counts = {q: count(render(q)) for q in ids}
+        worst = max(counts, key=counts.get)
+        lines.append(f"| {source} | {fmt} | {statistics.mean(counts.values()):.0f} | "
+                     f"{statistics.median(counts.values()):.0f} | {counts[worst]} | {worst} |")
     return "\n".join(lines)
 
 
@@ -297,20 +617,24 @@ def main():
     ap.add_argument("--question", type=int, default=706)
     ap.add_argument("--tokens", metavar="MODEL", help="print the token table with this model's tokenizer")
     ap.add_argument("--prompt", action="store_true", help="print --question's whole prompt (build_sheet_prompt)")
-    ap.add_argument("--source", choices=SOURCES + ["none"], default="pipeline", help="for --prompt; none: video only")
-    ap.add_argument("--format", choices=FORMATS, default="csv", help="for --prompt")
+    ap.add_argument("--source", choices=SOURCES + ["none"], default="pipeline", help="for --prompt; none: no objects")
+    ap.add_argument("--format", choices=SHEET_FORMATS, default="csv", help="for --prompt")
+    ap.add_argument("--camera-format", choices=CAMERA_FORMATS, help="for --prompt: add the cameras in this format")
+    ap.add_argument("--reasoning", choices=REASONING, default="direct", help="for --prompt")
+    ap.add_argument("--time-unit", choices=TIME_UNITS, default="seconds", help="how the sheets write frames")
     args = ap.parse_args()
     root, vggt_root = Path(args.root), Path(args.vggt_root)
     if args.prompt:
         source = None if args.source == "none" else args.source
-        print(build_sheet_prompt(args.question, source, args.format, root, vggt_root))
+        print(build_sheet_prompt(args.question, source, args.format, root, vggt_root, camera_fmt=args.camera_format,
+                                 time_unit=args.time_unit, reasoning=args.reasoning))
         return
     if args.examples:
-        write_examples(args.examples, args.question, root, vggt_root)
+        write_examples(args.examples, args.question, root, vggt_root, args.time_unit)
     if args.tokens:
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.tokens)
-        print(token_table(lambda text: len(tokenizer(text)["input_ids"]), root, vggt_root))
+        print(token_table(lambda text: len(tokenizer(text)["input_ids"]), root, vggt_root, args.time_unit))
     if not (args.examples or args.tokens):
         stats, empty = {}, {s: 0 for s in SOURCES}
         for q in load_index(root):

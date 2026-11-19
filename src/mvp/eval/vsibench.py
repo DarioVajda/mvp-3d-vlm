@@ -8,8 +8,12 @@
   python -m mvp.eval.vsibench --fusion-ckpt results/train/2B_xattn/final.pt --nframes 32 ...  # a trained arm (images)
   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source pipeline \
       --sheet-format json ...  # + scene sheet (mvp.benchmarks.scene_sheet); Qwen3.5 runs with thinking off
+  python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format csv --camera-format markdown_table
+  python -m mvp.eval.vsibench ... --camera-format text            # cameras only (compass directions), no objects
+  python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format narrative --time-unit frames
   python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
   python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
+  python -m mvp.eval.vsibench ... --reasoning cot      # ask it to reason step by step (implies --final-answer)
 
 Questions are grouped by video so each video is decoded once; resumes from an existing --out file.
 """
@@ -22,10 +26,22 @@ import pandas as pd
 
 from pathlib import Path
 
-from mvp.benchmarks.scene_sheet import FORMATS as SHEET_FORMATS, load_index, render_sheet
-from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, build_prompt_parts, load_vsibench, score, score_final,
-                                     summarize, task_of)
+from mvp.benchmarks.scene_sheet import (CAMERA_FORMATS, SHEET_FORMATS, TIME_UNITS, check_options, load_index,
+                                        render_scene, sheet_kind)
+from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
+                                     score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
+
+COT_MAX_NEW_TOKENS = 2048  # --reasoning cot's default --max-new-tokens
+MIN_COT_TOKENS = 256  # fewer leaves no room to reason
+
+
+def prompt_parts(d, args):
+    """(text before the video, text after it) for question d: the scene information the options ask for, the
+    layout and the reasoning instructions."""
+    sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.camera_format, Path(args.sheets_root),
+                          Path(args.vggt_root), args.time_unit) if args.sheets else None)
+    return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.camera_format))
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -56,9 +72,7 @@ def print_prompts(df, args):
         else:
             video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
         for d in group.to_dict("records"):
-            sheet = (render_sheet(d["id"], args.sheet_source, args.sheet_format, Path(args.sheets_root),
-                                  vggt_root=Path(args.vggt_root)) if args.sheet_source else None)
-            pre, post = build_prompt_parts(d, args.layout, sheet)
+            pre, post = prompt_parts(d, args)
             print(f"===== question {d['id']} ({d['question_type']}), {path}, video fps {meta.get('fps')}, "
                   f"frames {list(meta['frames_indices'])}")
             print(model.render_prompt(video, meta, vkw, post, pre=pre, system=system), flush=True)
@@ -83,9 +97,19 @@ def main():
     ap.add_argument("--sheet-source", choices=["pipeline", "gold"],
                     help="add each question's scene sheet between the video and the question (mvp.benchmarks.scene_sheet); "
                          "only questions in the sheets' index.csv are evaluated")
-    ap.add_argument("--sheet-format", default="csv", choices=SHEET_FORMATS,
-                    help="how the scene sheet is written (scene_sheet.format)")
+    ap.add_argument("--sheet-format", choices=SHEET_FORMATS,
+                    help="how the scene sheet's objects are written (default csv); narrative: objects and cameras as "
+                         "one walk through the frames (pipeline only)")
+    ap.add_argument("--camera-format", choices=CAMERA_FORMATS,
+                    help="add the pipeline sheet's cameras, written this way (text: compass directions, frame by "
+                         "frame); with or without --sheet-source pipeline, not with gold sheets or the narrative")
+    ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
+                    help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
+                         "1-16 (the video's own labels are always seconds)")
     ap.add_argument("--sheets-root", default=str(SCENE_SHEETS), help="the scene sheets folder, with index.csv")
+    ap.add_argument("--reasoning", default="direct", choices=REASONING,
+                    help="direct: lmms-eval's 'answer directly'; cot: reason step by step, then end on 'Answer: X' "
+                         "(implies --final-answer; --max-new-tokens defaults to %d)" % COT_MAX_NEW_TOKENS)
     ap.add_argument("--split", default="full", choices=["full", "debiased", "pruned"])
     ap.add_argument("--per-type", type=int, default=None, help="sample this many questions per question type")
     ap.add_argument("--ids", default=None, help="file with one question id per line: evaluate only these")
@@ -94,7 +118,9 @@ def main():
     ap.add_argument("--token-budget", type=int, default=120000, help="max total input tokens per batch")
     ap.add_argument("--shard", type=int, default=0, help="process only videos with index %% num_shards == shard")
     ap.add_argument("--num-shards", type=int, default=1)
-    ap.add_argument("--max-new-tokens", type=int, default=16, help="16 as in lmms-eval; raise it with --final-answer")
+    ap.add_argument("--max-new-tokens", type=int, default=None,
+                    help="16 as in lmms-eval (default; %d with --reasoning cot); raise it with --final-answer"
+                         % COT_MAX_NEW_TOKENS)
     ap.add_argument("--final-answer", action="store_true", help="score the answer the reply ends on (score_final) "
                     "instead of its first word; the lmms-eval score is kept as score_first")
     ap.add_argument("--print-prompt", type=int, metavar="N", default=0,
@@ -105,9 +131,26 @@ def main():
     args.images = args.images or args.fusion_ckpt is not None
     assert args.model or args.fusion_ckpt, "--model or --fusion-ckpt"
     assert args.out or args.print_prompt, "--out"
+    if args.sheet_format and not args.sheet_source:
+        ap.error("--sheet-format needs --sheet-source")
+    if args.sheet_source and args.sheet_format is None:
+        args.sheet_format = "csv"
+    try:
+        check_options(args.sheet_source, args.sheet_format, args.camera_format, args.time_unit)
+    except ValueError as e:
+        ap.error(str(e))
+    args.sheets = bool(args.sheet_source or args.camera_format)
+    if args.reasoning == "cot":
+        args.final_answer = True
+        if args.max_new_tokens is None:
+            args.max_new_tokens = COT_MAX_NEW_TOKENS
+        elif args.max_new_tokens < MIN_COT_TOKENS:
+            ap.error(f"--reasoning cot needs room to reason: --max-new-tokens of at least {MIN_COT_TOKENS}")
+    elif args.max_new_tokens is None:
+        args.max_new_tokens = 16
     if args.images:
         assert args.sampling == "qwen" and args.fps is None and args.layout == "sit", "images mode: uniform frames, sit layout"
-    if args.sheet_source:
+    if args.sheets:
         assert not args.images and args.layout == "sit", "scene sheets: video protocol, sit layout"
         assert args.sampling == "uniform128" and args.nframes == 16, \
             "scene sheets are built on the 16 uniform128 frames: use --sampling uniform128 --nframes 16"
@@ -120,10 +163,11 @@ def main():
         df = df[df["scene_name"].isin(args.scenes)]
     if args.ids:
         df = df[df["id"].isin([int(l) for l in open(args.ids) if l.strip()])]
-    if args.sheet_source:
+    if args.sheets:
         with_sheets = df["id"].isin(load_index(Path(args.sheets_root)))
-        print(f"scene sheets ({args.sheet_source}, {args.sheet_format}): {with_sheets.sum()} of {len(df)} questions "
-              f"have one; only those are evaluated", flush=True)
+        print(f"scene sheets (objects {args.sheet_source}, {args.sheet_format}; cameras {args.camera_format}; "
+              f"{args.time_unit}): {with_sheets.sum()} of {len(df)} questions have one; only those are evaluated",
+              flush=True)
         df = df[with_sheets]
     if args.num_shards > 1:
         videos = sorted(df["video_path"].unique())
@@ -169,9 +213,7 @@ def main():
             bs = max(1, min(args.batch_size, args.token_budget // (n_vis + 200)))
             for i in range(0, len(docs), bs):
                 batch = docs[i:i + bs]
-                sheets = [render_sheet(d["id"], args.sheet_source, args.sheet_format, Path(args.sheets_root),
-                                       vggt_root=Path(args.vggt_root)) if args.sheet_source else None for d in batch]
-                parts = [build_prompt_parts(d, args.layout, s) for d, s in zip(batch, sheets)]
+                parts = [prompt_parts(d, args) for d in batch]
                 if args.images:
                     batch_in = {**vis, **model.inputs.text([p for _, p in parts], vis["image_grid_thw"], padding_side="left")}
                     preds = model.generate({k: v.cuda() for k, v in batch_in.items()}, max_new_tokens=args.max_new_tokens)
@@ -205,9 +247,11 @@ def main():
         json.dump({"model": args.model, "protocol": "images" if args.images else "video", "fusion_ckpt": args.fusion_ckpt,
                    "arm": model.arm if args.images else None, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
                    "layout": args.layout, "system": system, "fps": args.fps, "max_new_tokens": args.max_new_tokens,
-                   "final_answer": args.final_answer, "split": args.split,
-                   "scene_sheet": {"source": args.sheet_source, "format": args.sheet_format, "root": args.sheets_root}
-                   if args.sheet_source else None, "n": len(res), **summary}, f, indent=1)
+                   "final_answer": args.final_answer, "reasoning": args.reasoning, "split": args.split,
+                   "scene_sheet": {"source": args.sheet_source, "format": args.sheet_format,
+                                   "camera_format": args.camera_format, "time_unit": args.time_unit,
+                                   "root": args.sheets_root}
+                   if args.sheets else None, "n": len(res), **summary}, f, indent=1)
 
 
 if __name__ == "__main__":

@@ -53,9 +53,16 @@ def task_of(question_type):
     return "object_rel_direction" if question_type.startswith("object_rel_direction") else question_type
 
 
-def build_prompt(doc, sheet=None):
-    """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question."""
+def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None):
+    """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question.
+    reasoning: "direct" (lmms-eval's prompt: answer at once) or "cot" (reason step by step first, then end on
+    "Answer: X", which score_final reads; cot_prompt). sheet_kind: where the sheet comes from (scene_sheet.sheet_kind),
+    for cot's instructions."""
     pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
+    if reasoning not in REASONING:
+        raise ValueError(f"reasoning must be one of {REASONING}, not {reasoning!r}")
+    if reasoning == "cot":
+        return "\n".join([pre, question_block(doc), cot_prompt(doc, sheet is not None, sheet_kind)])
     if doc["question_type"] in NA_QUESTION_TYPES:
         return pre + "\n" + doc["question"] + "\n" + NA_POST_PROMPT
     options = "Options:\n" + "\n".join(doc["options"])
@@ -76,23 +83,76 @@ def question_block(doc):
     return doc["question"] + "\nOptions:\n" + "\n".join(doc["options"])
 
 
-def build_prompt_parts(doc, layout="sit", sheet=None):
+def build_prompt_parts(doc, layout="sit", sheet=None, reasoning="direct", sheet_kind=None):
     """(text before the video, text after the video). The chat template joins parts with no separator, so text
     before the video ends in a newline to put the first frame timestamp on its own line.
       sit:  ("", baseline)                      question after the video (lmms-eval)
       sti:  (baseline + "\n", "")               the same text moved before the video
       stit: (question_block + "\n", baseline)   question echoed: before the video, and unchanged after it
-    A scene sheet goes between the video and the question, so only with sit.
+    A scene sheet goes between the video and the question, so only with sit. reasoning and sheet_kind: build_prompt's.
     """
     if sheet is not None and layout != "sit":
         raise ValueError("a scene sheet goes between the video and the question: layout sit only")
     if layout == "sit":
-        return "", build_prompt(doc, sheet)
+        return "", build_prompt(doc, sheet, reasoning, sheet_kind)
     if layout == "sti":
-        return build_prompt(doc) + "\n", ""
+        return build_prompt(doc, reasoning=reasoning) + "\n", ""
     if layout == "stit":
-        return question_block(doc) + "\n", build_prompt(doc)
+        return question_block(doc) + "\n", build_prompt(doc, reasoning=reasoning)
     raise ValueError(layout)
+
+
+# ---- chain-of-thought instructions (reasoning="cot"; not part of lmms-eval) ----
+# They take the place of the "answer directly" line, so nothing in the prompt asks for a bare answer. The procedure is
+# the same for every question; each question type adds one hint on how to get its quantity, and the scene
+# information's origin adds what to watch for in it. The answer line is the one score_final reads.
+REASONING = ["direct", "cot"]
+COT_STEPS = (
+    "Think it through step by step before you answer. First, say which objects or places the question is about and "
+    "find them in the video{where}. Then write down the facts you need, such as positions, distances, sizes, counts or "
+    "the order in which things appear, and work out the answer from them one step at a time, showing any arithmetic. "
+    "Before answering, check that the result agrees with what the video shows.")
+COT_HINTS = {
+    "object_counting": ("Count each physical object once, even if it appears in many frames, and remember that some "
+                        "may be out of view in a given frame."),
+    "object_abs_distance": ("Find where each of the two objects is, then work out the straight-line distance between "
+                            "them in metres, measured as the question says."),
+    "object_size_estimation": ("Work out the object's length, width and height, and give the longest of the three in "
+                               "centimetres."),
+    "room_size_estimation": ("Work out the room's length and width from its walls, the furniture along them and how far "
+                             "the camera moves, and multiply them to get the floor area in square metres; for several "
+                             "rooms, add up their areas."),
+    "object_rel_distance": ("Estimate the distance from the reference object to each of the options, then pick the one "
+                            "the question asks for."),
+    "object_rel_direction": ("Picture yourself standing where the question puts you and facing the way it says. Work "
+                             "on the floor plan, ignoring height: decide whether the target is in front of you or "
+                             "behind you and whether it is on your left or your right, then pick the matching option."),
+    "route_planning": ("Walk the route one step at a time from the given start and facing: at each step say which way "
+                       "you face, and choose the turn that points you towards the next object."),
+    "obj_appearance_order": "Find the first frame in which each object appears, and order the objects by it.",
+}
+METRIC_TASKS = {"object_abs_distance", "object_size_estimation", "room_size_estimation"}
+COT_PIPELINE = ("The scene information was computed automatically from the video and can be wrong: an object can be "
+                "missed, counted twice or misplaced. Where it disagrees with what you see, weigh the two.")
+COT_SCALE = ("Its distances and sizes are in the 3D reconstruction's own units, not metres: to answer in metres or "
+             "centimetres, first work out its scale from an object whose real size you know, such as a door (about 2 "
+             "metres tall) or a chair seat (about 0.45 metres off the floor).")
+COT_ANSWER = {
+    "mca": 'End your reply with a last line of the form "Answer: X", where X is only the letter of the correct option.',
+    "na": ('End your reply with a last line of the form "Answer: X", where X is only a number, in the unit the question '
+           'asks for.'),
+}
+
+
+def cot_prompt(doc, has_sheet=False, sheet_kind=None):
+    """The chain-of-thought instructions that end the prompt. has_sheet: the prompt carries scene information;
+    sheet_kind: where it comes from ('pipeline': computed from the video, in relative units; 'gold': labels, in
+    metres; None: not said)."""
+    task = task_of(doc["question_type"])
+    text = COT_STEPS.format(where=" and in the scene information above" if has_sheet else "") + " " + COT_HINTS[task]
+    if has_sheet and sheet_kind == "pipeline":
+        text += " " + COT_PIPELINE + (" " + COT_SCALE if task in METRIC_TASKS else "")
+    return text + "\n" + COT_ANSWER["na" if doc["question_type"] in NA_QUESTION_TYPES else "mca"]
 
 
 # ---- scoring (verbatim logic from lmms-eval) ----

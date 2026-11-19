@@ -16,7 +16,8 @@ Conventions. The sheet has no gravity, no compass and no metric scale, so these 
   - North: where frame 0 looks, projected onto the floor (the plane perpendicular to up). East is 90° to its right.
     Directions are rounded to the 8 compass points.
   - Moves: the step from one camera centre to the next, compared with the trajectory's median step (the sheet's units
-    are VGGT's arbitrary scale). Under 0.1 median steps, no move is mentioned. Under 0.5 it is "a little", over 2 "far".
+    are VGGT's arbitrary scale). Under 0.1 median steps, no move is mentioned. Under 0.5 it is "a little", over 2 "far";
+    with units=True, the step's length in the sheet's units is given instead ("Go 0.812 units north-east").
     A step climbing or dropping more than 30° adds "and up" / "and down", and over 70° it is only "up" / "down".
   - Turns: the change in heading (left/right) and in pitch (up/down), both measured against up, in whole degrees.
     Changes under 2° are left out, and roll is never mentioned. A frame with no move and no turn is "Stay still."
@@ -43,6 +44,7 @@ CLIMB_DEG = 30  # a step steeper than this adds "and up" / "and down"
 VERTICAL_DEG = 70  # a step steeper than this is only "up" / "down"
 MIN_TURN_DEG = 2  # heading and pitch changes that round below this are left out
 LEVEL_RATIO = 0.25  # the horizon fit is used only if its best axis fits this much better than the next one
+UNIT_DECIMALS = 3  # move lengths with units=True, as mvp.benchmarks.scene_sheet writes numbers
 
 
 def quaternion_to_rotation(w, x, y, z):
@@ -104,8 +106,9 @@ def bearing(vector, north, east):
     return math.degrees(math.atan2(vector @ east, vector @ north))
 
 
-def move_phrase(step, median_step, up, north, east):
-    """'Go a little north-east and up', or None when the step is too short to mention."""
+def move_phrase(step, median_step, up, north, east, units=False):
+    """'Go a little north-east and up', or None when the step is too short to mention. units=True gives the step's
+    length instead of "a little" / "far": 'Go 0.812 units north-east and up'."""
     length = float(np.linalg.norm(step))
     if median_step <= 0 or length < NO_MOVE * median_step:
         return None
@@ -119,6 +122,8 @@ def move_phrase(step, median_step, up, north, east):
         where = COMPASS[round(bearing(flat, north, east) / 45) % 8]
         if climb > CLIMB_DEG:
             where += f" and {vertical}"
+    if units:
+        return f"Go {length:.{UNIT_DECIMALS}f} units {where}"
     ratio = length / median_step
     how_far = "a little " if ratio < A_LITTLE else "far " if ratio > FAR else ""
     return f"Go {how_far}{where}"
@@ -135,8 +140,9 @@ def turn_phrase(heading_change, pitch_change):
     return "turn " + " and ".join(parts) if parts else None
 
 
-def frame_instructions(path):
-    """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame."""
+def frame_instructions(path, units=False):
+    """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame.
+    units=True says how far each move goes, in the sheet's units, instead of "a little" / "far"."""
     centres, rotations = read_cameras(path)
     if not len(centres):
         return []
@@ -152,7 +158,7 @@ def frame_instructions(path):
     looking = "straight ahead" if pitch < MIN_TURN_DEG else f"{pitch}° {'up' if pitches[0] > 0 else 'down'}"
     sentences = [f"Start facing north, looking {looking}."]
     for t in range(1, len(centres)):
-        move = move_phrase(steps[t - 1], median_step, up, north, east)
+        move = move_phrase(steps[t - 1], median_step, up, north, east, units)
         turn = turn_phrase(headings[t] - headings[t - 1], pitches[t] - pitches[t - 1])
         if move and turn:
             # a comma keeps "Go north and up, and turn ..." readable
