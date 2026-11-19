@@ -6,7 +6,8 @@ Reads a scene sheet's cameras.csv (its columns are described in scene_sheet_crea
   Go north-east and turn 70° to the right. ...
 
 The first sentence is frame 0's view. Each later one says how the camera got to its frame from the frame before:
-first where it moved, then how it turned.
+first where it moved, then how it turned (or, with turn_first, the other way round: the words for each change the same,
+since compass directions don't depend on where the camera faces).
 
 Conventions. The sheet has no gravity, no compass and no metric scale, so these are assumptions:
   - Up: the direction that makes the camera's horizon most level over the whole trajectory, i.e. the one most
@@ -140,9 +141,10 @@ def turn_phrase(heading_change, pitch_change):
     return "turn " + " and ".join(parts) if parts else None
 
 
-def frame_instructions(path, units=False):
+def frame_instructions(path, units=False, turn_first=False):
     """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame.
-    units=True says how far each move goes, in the sheet's units, instead of "a little" / "far"."""
+    units=True says how far each move goes, in the sheet's units, instead of "a little" / "far". turn_first=True says
+    the turn before the move ("Turn 30° to the right and go north."); compass directions don't depend on the order."""
     centres, rotations = read_cameras(path)
     if not len(centres):
         return []
@@ -160,7 +162,11 @@ def frame_instructions(path, units=False):
     for t in range(1, len(centres)):
         move = move_phrase(steps[t - 1], median_step, up, north, east, units)
         turn = turn_phrase(headings[t] - headings[t - 1], pitches[t] - pitches[t - 1])
-        if move and turn:
+        if move and turn and turn_first:
+            # a comma keeps "Turn 23° to the right and 5° down, and go ..." readable
+            sentences.append(f"{turn[0].upper()}{turn[1:]}{', and' if ' and ' in turn else ' and'} "
+                             f"{move[0].lower()}{move[1:]}.")
+        elif move and turn:
             # a comma keeps "Go north and up, and turn ..." readable
             sentences.append(f"{move}{', and' if ' and ' in move else ' and'} {turn}.")
         elif move or turn:

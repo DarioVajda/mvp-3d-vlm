@@ -369,7 +369,8 @@ def compare_sheets(report, adapted, native, matches, sim3, diag):
                        "max_position_error_of_scene": round(float(np.max(errors)), 5),
                        "same_num_frames_share": round(float(np.mean(np.equal(frame_differences, 0))), 4),
                        "per_object": rows})
-    # Sizes are not compared: they are extents along the world axes, and the two runs' world axes differ by a rotation.
+    # Sizes are not compared: size_x/y/z are the sides of each object's box nearest the world axes, and the two runs'
+    # world axes differ by a rotation, so the same side can be filed under a different axis.
     report.add("scene sheet: objects", "MEASURED", "" if errors else "no rows could be paired", values=values)
 
 

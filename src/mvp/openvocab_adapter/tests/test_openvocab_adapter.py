@@ -889,6 +889,66 @@ class ComparisonMaths(unittest.TestCase):
             self.assertTrue(any("dtype" in p for p in compare.array_problems(path, compare.ARRAY_SPECS["depth.npz"], {})))
 
 
+class ObjectSize(unittest.TestCase):
+    """scene_sheet_creator.fit_box: the smallest box around an object's points, turned to fit it."""
+
+    SIDES = np.array([2.0, 1.0, 0.5])
+
+    def box_points(self, rotation, n=20000, seed=0):
+        """Points filling a box with sides SIDES, turned by rotation and moved away from the origin."""
+        local = np.random.default_rng(seed).uniform(-0.5, 0.5, size=(n, 3)) * self.SIDES
+        return local @ rotation.T + np.array([3.0, -1.0, 7.0])
+
+    def test_an_unturned_box_is_the_axis_aligned_box(self):
+        points = self.box_points(np.eye(3))
+        axes, sides = scene_sheet_creator.fit_box(points)
+        np.testing.assert_allclose(sides, points.max(axis=0) - points.min(axis=0), rtol=1e-6)
+        np.testing.assert_allclose(np.abs(axes), np.eye(3), atol=1e-6)
+
+    def test_a_box_turned_about_the_vertical_keeps_its_sides(self):
+        points = self.box_points(rotation_y(np.deg2rad(30)))
+        aligned = points.max(axis=0) - points.min(axis=0)
+        self.assertGreater(np.prod(aligned) / np.prod(self.SIDES), 2.5)  # what the axis-aligned box made of it
+        axes, sides = scene_sheet_creator.fit_box(points)
+        np.testing.assert_allclose(sides, self.SIDES, rtol=0.01)  # 30 degrees: each side is still nearest its axis
+        np.testing.assert_allclose(axes, rotation_y(np.deg2rad(30)), atol=0.01)
+
+    def test_any_rotation_is_undone_and_the_box_is_never_bigger(self):
+        rng = np.random.default_rng(3)
+        for trim in (0.0, 0.02):
+            for _ in range(3):
+                q, r = np.linalg.qr(rng.normal(size=(3, 3)))
+                rotation = q * np.sign(np.diag(r)) * np.sign(np.linalg.det(q))
+                points = self.box_points(rotation)
+                axes, sides = scene_sheet_creator.fit_box(points, trim)
+                np.testing.assert_allclose(np.sort(sides), np.sort(self.SIDES), rtol=0.01)
+                np.testing.assert_allclose(axes.T @ axes, np.eye(3), atol=1e-9)
+                self.assertLessEqual(np.prod(sides), np.prod(points.max(axis=0) - points.min(axis=0)))
+
+    def test_trim_keeps_outliers_from_turning_or_growing_the_box(self):
+        points = self.box_points(rotation_y(np.deg2rad(20)))
+        points[:2] += [[30.0, 30.0, 0.0], [-30.0, 0.0, 30.0]]  # 0.01% of the points, far away
+        _, sides = scene_sheet_creator.fit_box(points, trim=0.02)
+        np.testing.assert_allclose(sides, self.SIDES, rtol=0.01)
+
+    def test_a_flat_object_gets_a_flat_box(self):
+        local = np.random.default_rng(0).uniform(-0.5, 0.5, size=(5000, 3)) * [1.5, 0.0, 1.0]
+        _, sides = scene_sheet_creator.fit_box(local @ rotation_y(0.4).T)
+        np.testing.assert_allclose(sides, [1.5, 0.0, 1.0], atol=0.01)
+
+    def test_a_single_point_has_no_size(self):
+        for points in (np.ones((1, 3)), np.ones((10, 3))):
+            axes, sides = scene_sheet_creator.fit_box(points)
+            np.testing.assert_array_equal(axes, np.eye(3))
+            np.testing.assert_array_equal(sides, np.zeros(3))
+
+    def test_sides_are_matched_to_the_nearest_world_axes(self):
+        axes = np.array([[0.0, 0.0, -1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])  # box axes: y, z, -x
+        matched, sides = scene_sheet_creator.match_world_axes(axes, [1.0, 2.0, 3.0])
+        np.testing.assert_array_equal(matched, np.eye(3))
+        np.testing.assert_array_equal(sides, [3.0, 1.0, 2.0])
+
+
 class SceneList(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, str(ADAPTER / "hpc"))
@@ -1202,12 +1262,19 @@ class QuestionPrompts(unittest.TestCase):
             self.assertIn("[adapter]", done.stderr)
 
 
-def gold_box(centre, axes_lengths):
-    """A gold-label box in the metadata's format, axis-aligned, so min/max are centre -+ half the lengths."""
-    centre, half = np.array(centre, float), np.array(axes_lengths, float) / 2
+def gold_box(centre, axes_lengths, axes=np.eye(3)):
+    """A gold-label box in the metadata's format: axes has one box axis per row, as normalizedAxes does, and min/max
+    are the axis-aligned box around it (so centre -+ half the lengths when it is not turned)."""
+    centre, axes = np.array(centre, float), np.array(axes, float)
+    half = np.abs(axes.T) @ np.array(axes_lengths, float) / 2
     return {"centroid": centre.tolist(), "axesLengths": list(axes_lengths),
-            "normalizedAxes": np.eye(3).ravel().tolist(), "min": (centre - half).tolist(),
+            "normalizedAxes": axes.ravel().tolist(), "min": (centre - half).tolist(),
             "max": (centre + half).tolist()}
+
+
+def rotation_z(angle):
+    c, s = np.cos(angle), np.sin(angle)
+    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
 
 class GoldSheet(unittest.TestCase):
@@ -1222,6 +1289,8 @@ class GoldSheet(unittest.TestCase):
             "chair": [gold_box([1, 2, 0.5], [0.5, 0.6, 1.0]), gold_box([3, 1, 0.5], [0.5, 0.5, 1.0])],
             "table": [gold_box([2, 2, 0.4], [2.0, 1.0, 0.8])],
             "coat hanger": [gold_box([0, 0, 1], [0.4, 0.4, 1.8])],
+            # turned 30 degrees about z, with its axes listed long side, height, short side
+            "sofa": [gold_box([4, 0, 0.4], [2.0, 0.8, 0.9], rotation_z(np.deg2rad(30)).T[[0, 2, 1]])],
         }}}, "scannetpp": {}, "arkitscenes": {}}
         for dataset, (name, _) in scene_sheet_creator.GOLD_FILES.items():
             (self.gold / name).write_text(json.dumps(scenes[dataset]))
@@ -1247,6 +1316,14 @@ class GoldSheet(unittest.TestCase):
         self.assertEqual(info["source"], "gold")
         self.assertIn(scene_sheet_creator.GOLD_COMMIT, info["labels"])
 
+    def test_a_turned_box_has_its_own_sides_matched_to_the_axes(self):
+        rows, _ = self.sheet(["sofa"], include_size=True)
+        sofa = {a: float(rows[0][a]) for a in ("size_x", "size_y", "size_z", "size")}
+        box = gold_box([4, 0, 0.4], [2.0, 0.8, 0.9], rotation_z(np.deg2rad(30)).T[[0, 2, 1]])
+        self.assertGreater(box["max"][1] - box["min"][1], 1.5)  # what max - min made of the 0.9 m side
+        self.assertEqual([sofa[a] for a in ("size_x", "size_y", "size_z")], [2.0, 0.9, 0.8])
+        self.assertAlmostEqual(sofa["size"], 1.44)
+
     def test_prompts_match_classes_by_case_plural_and_alias(self):
         rows, info = self.sheet(["Chairs", "coat rack", "chair", "lamp"])
         self.assertEqual([r["concept"] for r in rows], ["Chairs", "Chairs", "coat rack"])  # chair only once
@@ -1255,7 +1332,7 @@ class GoldSheet(unittest.TestCase):
 
     def test_without_prompts_every_class_is_listed(self):
         rows, _ = self.sheet()
-        self.assertEqual(len(rows), 4)
+        self.assertEqual(len(rows), 5)
 
     def test_per_frame_columns_and_cameras_are_refused(self):
         for options in ({"relative_positions": True}, {"frame_columns": True}, {"cameras": True}):

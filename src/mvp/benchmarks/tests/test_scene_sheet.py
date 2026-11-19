@@ -20,6 +20,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 from mvp.benchmarks import scene_sheet as ss
 from mvp.paths import SCENE_SHEETS, VGGT_DIR, VSI_DIR
 
@@ -31,14 +33,28 @@ TEXT_PATTERN = re.compile(
     rf"^(?P<id>\S+) is an? (?P<label>.+?) centred at x=(?P<x>{NUM}), y=(?P<y>{NUM}), z=(?P<z>{NUM}), with extent "
     rf"(?P<size_x>{NUM}) along x, (?P<size_y>{NUM}) along y and (?P<size_z>{NUM}) along z"
     rf"(?: and volume (?P<size>{NUM}))?\."
-    rf"(?: It is first seen (?:at (?P<first_seen>\d+\.\d) seconds|in frame (?P<first_frame>\d+)) and is visible in "
-    rf"(?P<num_frames>\d+) of the 16 frames\.)?$")
+    rf"(?: It is visible (?P<visible>.+)\.)?$")
+SECONDS_ITEM = re.compile(r"from (\S+) to (\S+) seconds|at (\S+) seconds")
 
 
-def parse(rendered, source, fmt, volume=False, time_unit="seconds"):
+def parse_visibility(phrase):
+    """scene_sheet.visibility_phrase's words back to a visible field: 'in frames 2 to 4 and 6' -> '[2, 4], [6, 6]'."""
+    if phrase.startswith("in frame"):
+        items = re.split(r", | and ", phrase.split(" ", 2)[2])
+        pairs = [item.split(" to ") if " to " in item else [item, item] for item in items]
+    else:
+        pairs = []
+        for item in re.split(r", | and ", phrase):
+            m = SECONDS_ITEM.fullmatch(item)
+            assert m, item
+            pairs.append([m.group(1), m.group(2)] if m.group(1) else [m.group(3)] * 2)
+    return ", ".join(f"[{a}, {b}]" for a, b in pairs)
+
+
+def parse(rendered, source, fmt, volume=False, time_unit="seconds", visibility="bridged"):
     """A rendered sheet back to the canonical list of {field: string}; the preamble must be the source's."""
     head, body = rendered.split("\n", 1)
-    assert head == ss.preamble(source, volume, time_unit), head
+    assert head == ss.preamble(source, volume, time_unit, visibility), head
     if body == ss.EMPTY:
         return []
     return parse_body(body, fmt, ss.fields(source, volume))
@@ -61,6 +77,10 @@ def parse_body(body, fmt, keys):
         objects = json.loads(body, parse_float=str, parse_int=str)
         strings = sum(k in ("id", "label") for k in keys)
         assert body.count('": "') == strings * len(objects), "only id and label are strings; numbers are not quoted"
+        for obj in objects:
+            if "visible" in obj:  # a list of [first, last] number pairs
+                assert all(len(pair) == 2 for pair in obj["visible"]), obj["visible"]
+                obj["visible"] = ", ".join(f"[{a}, {b}]" for a, b in obj["visible"])
         return objects
     if fmt == "markdown_kv":
         objects = []
@@ -84,8 +104,8 @@ def parse_body(body, fmt, keys):
             m = TEXT_PATTERN.match(line)
             assert m, line
             obj = {k: v for k, v in m.groupdict().items() if v is not None}
-            if "first_frame" in obj:
-                obj["first_seen"] = obj.pop("first_frame")
+            if "visible" in obj:
+                obj["visible"] = parse_visibility(obj["visible"])
             objects.append(obj)
         return objects
     raise ValueError(fmt)
@@ -197,14 +217,15 @@ class Synthetic(unittest.TestCase):
         self.assertEqual([o["id"] for o in objects], ["chair_1", "coffee_table_1", "door_1", "door_2"])
         self.assertEqual(list(objects[0]), ss.fields("pipeline"))
         self.assertEqual(objects[0], {"id": "chair_1", "label": "chair", "x": "-0.500", "y": "0.250", "z": "0.000",
-                                      "size_x": "0.400", "size_y": "0.900", "size_z": "0.450", "first_seen": "0.5",
-                                      "num_frames": "1"})
+                                      "size_x": "0.400", "size_y": "0.900", "size_z": "0.450",
+                                      "visible": "[0.5, 0.5]"})
         self.assertEqual(objects[1]["label"], "coffee table")  # the id has underscores, the label doesn't
         self.assertEqual((objects[2]["x"], objects[3]["y"]), ("-1.236", "0.000"))  # never -0.000
-        self.assertEqual(objects[3]["first_seen"], "2.5")  # frame 3 is in the pair (2, 3)
+        self.assertEqual(objects[2]["visible"], "[0.5, 2.5], [4.5, 4.5]")  # frames 1-2 and 5: two missed, not bridged
+        self.assertEqual(objects[3]["visible"], "[2.5, 4.5]")  # frame 3 is in the pair (2, 3), frame 4 in (4, 5)
         gold = ss.load_objects(1, "gold", self.root, vggt_root=self.vggt)
         self.assertEqual([o["id"] for o in gold], ["armchair_1", "door_1"])
-        self.assertNotIn("first_seen", gold[0])
+        self.assertNotIn("visible", gold[0])
 
     def test_round_trip_and_equality(self):
         for q in (1, 2):
@@ -237,8 +258,15 @@ class Synthetic(unittest.TestCase):
                           "| armchair_1 | armchair | 2.000 | 3.000 | 1.000 | 0.800 | 0.800 | 0.900 |"])
         self.assertEqual(self.render(1, "pipeline", "text").splitlines()[2],
                          "coffee_table_1 is a coffee table centred at x=0.000, y=0.000, z=0.000, with extent 1.000 "
-                         "along x, 1.000 along y and 1.000 along z. It is first seen at 0.5 seconds and is visible in "
-                         "1 of the 16 frames.")
+                         "along x, 1.000 along y and 1.000 along z. It is visible at 0.5 seconds.")
+        self.assertIn("door_1 is a door centred at x=-1.236, y=0.100, z=0.500, with extent 0.310 along x, 2.000 along "
+                      "y and 0.120 along z. It is visible from 0.5 to 2.5 seconds and at 4.5 seconds.",
+                      self.render(1, "pipeline", "text"))
+        self.assertEqual(self.render(1, "pipeline", "csv").splitlines()[4],
+                         'door_1,door,-1.236,0.100,0.500,0.310,2.000,0.120,"[0.5, 2.5], [4.5, 4.5]"')
+        self.assertIn('"size_z": 0.120, "visible": [[0.5, 2.5], [4.5, 4.5]]}', self.render(1, "pipeline", "json"))
+        self.assertIn("visible: [0.5, 2.5], [4.5, 4.5]\n", self.render(1, "pipeline", "markdown_kv"))
+        self.assertIn("| 0.120 | [0.5, 2.5], [4.5, 4.5] |", self.render(1, "pipeline", "markdown_table"))
         self.assertIn("armchair_1 is an armchair", self.render(1, "gold", "text"))
 
     def test_timestamps_follow_the_processor(self):
@@ -286,8 +314,9 @@ class Synthetic(unittest.TestCase):
 
     def test_frames_time_unit(self):
         objects = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt, time_unit="frames")
-        self.assertEqual([(o["id"], o["first_seen"]) for o in objects],
-                         [("chair_1", "2"), ("coffee_table_1", "2"), ("door_1", "2"), ("door_2", "4")])
+        self.assertEqual([(o["id"], o["visible"]) for o in objects],
+                         [("chair_1", "[2, 2]"), ("coffee_table_1", "[2, 2]"), ("door_1", "[2, 3], [6, 6]"),
+                          ("door_2", "[4, 5]")])
         for q in (1, 2):
             for source in ss.SOURCES:
                 canonical = ss.load_objects(q, source, self.root, vggt_root=self.vggt, time_unit="frames")
@@ -295,16 +324,61 @@ class Synthetic(unittest.TestCase):
                     rendered = ss.render_sheet(q, source, fmt, self.root, vggt_root=self.vggt, time_unit="frames")
                     self.assertEqual(parse(rendered, source, fmt, time_unit="frames"), canonical, (q, source, fmt))
                     self.assertNotIn("second", rendered)
-        self.assertIn("It is first seen in frame 4 and is visible in 2 of the 16 frames.",
-                      ss.render_sheet(1, "pipeline", "text", self.root, vggt_root=self.vggt, time_unit="frames"))
-        # the seconds preamble is the one the 2026-11-18 experiment ran with
+        text = ss.render_sheet(1, "pipeline", "text", self.root, vggt_root=self.vggt, time_unit="frames")
+        self.assertIn("It is visible in frame 2.", text)
+        self.assertIn("It is visible in frames 2 to 3 and 6.", text)
+        self.assertIn("It is visible in frames 4 to 5.", text)
         self.assertEqual(ss.preamble("pipeline"), ss.PREAMBLES["pipeline"])
-        self.assertTrue(ss.PREAMBLES["pipeline"].endswith("first_seen is the video timestamp, in seconds, at which "
-                                                          "the object first appears, as the video's timestamps show "
-                                                          "it, and num_frames is how many of the 16 video frames it "
-                                                          "appears in."))
         with self.assertRaises(ValueError):
             ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt, time_unit="minutes")
+
+    # ---- visibility ranges ----
+
+    def test_visible_frames_and_runs(self):
+        self.assertEqual(ss.visible_frames([1, 3, 4, 7]), {1, 2, 3, 4, 7})  # one missed frame bridged, three not
+        self.assertEqual(ss.visible_frames([1, 3, 4, 7], "exact"), {1, 3, 4, 7})
+        self.assertEqual(ss.runs({1, 2, 3, 6}), [(1, 3), (6, 6)])
+        self.assertEqual(ss.ranges_of("[2.5, 4.5], [6.5, 6.5]"), [("2.5", "4.5"), ("6.5", "6.5")])
+        self.assertEqual(ss.visibility_phrase("[1, 1], [3, 4], [8, 8]", "frames"), "in frames 1, 3 to 4 and 8")
+        self.assertEqual(ss.visibility_phrase("[0.5, 2.5]"), "from 0.5 to 2.5 seconds")
+        with self.assertRaises(ValueError):
+            ss.visible_frames([1], "fuzzy")
+
+    def test_bridging(self):
+        """A lamp seen in frames 1, 3, 4 and 8 (0, 2, 3 and 7 from 0): bridged, frame 2 counts as seen."""
+        sheet = self.root / "s__1" / "subset-uniform16" / "sheets" / "chair+door"
+        with open(sheet / "objects.csv", "a", newline="") as f:
+            csv.writer(f).writerow([4, "lamp", 1, "0", "0", "1", "0.2", "0.5", "0.2", "0.02"] + flags(0, 2, 3, 7))
+        expected = {("frames", "bridged"): "[1, 4], [8, 8]", ("frames", "exact"): "[1, 1], [3, 4], [8, 8]",
+                    ("seconds", "bridged"): "[0.5, 2.5], [6.5, 6.5]",
+                    ("seconds", "exact"): "[0.5, 0.5], [2.5, 2.5], [6.5, 6.5]"}
+        for (time_unit, visibility), visible in expected.items():
+            objects = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt, time_unit=time_unit,
+                                      visibility=visibility)
+            lamp = next(o for o in objects if o["id"] == "lamp_1")
+            self.assertEqual(lamp["visible"], visible)
+            # sorted by where the first range starts: in seconds, frames 1 and 2 share 0.5, and chair < lamp
+            self.assertEqual(objects[0]["id"], "lamp_1" if time_unit == "frames" else "chair_1")
+            for fmt in ss.FORMATS:
+                rendered = ss.render_sheet(1, "pipeline", fmt, self.root, vggt_root=self.vggt, time_unit=time_unit,
+                                           visibility=visibility)
+                self.assertEqual(parse(rendered, "pipeline", fmt, time_unit=time_unit, visibility=visibility),
+                                 objects, (fmt, time_unit, visibility))
+                self.assertEqual(ss.BRIDGED_NOTE in rendered, visibility == "bridged")
+        text = ss.render_sheet(1, "pipeline", "text", self.root, vggt_root=self.vggt, time_unit="frames")
+        self.assertIn("lamp_1 is a lamp centred at x=0.000, y=0.000, z=1.000, with extent 0.200 along x, 0.500 along "
+                      "y and 0.200 along z. It is visible in frames 1 to 4 and 8.", text)
+        self.assertIn("It is visible from 0.5 to 2.5 seconds and at 6.5 seconds.", self.render(1, "pipeline", "text"))
+        # the narrative counts the same frames as seen
+        bridged = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt, time_unit="frames")
+        exact = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt, time_unit="frames",
+                                visibility="exact")
+        self.assertIn(ss.BRIDGED_NOTE, bridged.splitlines()[0])
+        self.assertNotIn(ss.BRIDGED_NOTE, exact.splitlines()[0])
+        self.assertIn("you still see lamp_1", bridged.splitlines()[2])  # frame 2
+        self.assertIn("lamp_1 is no longer in view", exact.splitlines()[2])
+        self.assertIn("you see lamp_1 again", exact.splitlines()[3])
+        self.assertIn("lamp_1 is no longer in view", bridged.splitlines()[5])  # frame 5, after frame 4
 
     # ---- the camera sheet ----
 
@@ -354,7 +428,8 @@ class Synthetic(unittest.TestCase):
     def test_narrative(self):
         rendered = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt, time_unit="frames")
         lines = rendered.splitlines()
-        self.assertEqual(lines[0], ss.NARRATIVE_PREAMBLE + " " + ss.LINE_LABELS["frames"])
+        self.assertEqual(lines[0], " ".join([ss.NARRATIVE_PREAMBLE, ss.NARRATIVE_STEPS["move-turn"],
+                                             ss.NARRATIVE_DETAILS]) + ss.BRIDGED_NOTE + " " + ss.LINE_LABELS["frames"])
         self.assertEqual(lines[1:], NARRATIVE)
         seconds = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt).splitlines()
         self.assertEqual(len(seconds), 9)
@@ -371,7 +446,88 @@ class Synthetic(unittest.TestCase):
         self.assertEqual(ss.view_side([0, 0, 1]), "in front of you")
         self.assertEqual(ss.view_side([0.3, 0, 1]), "ahead, slightly to your right")
         self.assertEqual(ss.view_side([-1, 0, 0.2]), "on your left")
-        self.assertEqual(ss.view_side([1, 0, -1]), "behind you on your right")
+        self.assertIsNone(ss.view_side([1, 0, -1]))  # behind the camera: no side
+
+    def test_floor_side(self):
+        """World axes as in the sheets (x right, y down, z forward); up is -y and the camera faces z along the floor."""
+        up, ahead = np.array([0.0, -1.0, 0.0]), np.array([0.0, 0.0, 1.0])
+        rug = np.array([0.8, 1.4, 0.5])  # 0.8 to the right, 1.4 below, 0.5 ahead: 58° right, 56° down
+        self.assertEqual(ss.floor_side(rug, ahead, up), "on your right and below")
+        # a camera looking 40° down sees it near the middle of its view: 32° right in its own axes, height ignored
+        p = math.radians(40)
+        down_40 = np.column_stack([[1, 0, 0], [0, math.cos(p), -math.sin(p)], [0, math.sin(p), math.cos(p)]])
+        self.assertEqual(ss.view_side(down_40.T @ rug), "ahead, slightly to your right")
+        self.assertEqual(ss.floor_side(np.array([0.0, 0.2, 2.0]), ahead, up), "in front of you")  # 6° down: level
+        self.assertEqual(ss.floor_side(np.array([0.0, -1.5, 1.0]), ahead, up), "in front of you and above")
+        self.assertEqual(ss.floor_side(np.array([0.1, 2.0, 0.1]), ahead, up), "below you")  # steeper than 70°
+        self.assertEqual(ss.floor_side(np.array([0.0, 1.5, -1.0]), ahead, up), "below you")  # behind, so no side
+        self.assertIsNone(ss.floor_side(np.array([0.0, 0.0, -2.0]), ahead, up))  # behind and level: nothing
+        self.assertEqual(ss.floor_side(np.array([0.0, 0.0, 1.0]), np.array([1.0, 0.0, 0.0]), up),
+                         "on your left")  # facing x, the point is 90° to the left
+        self.assertIsNone(ss.floor_side(np.array([-1.0, 0.0, 1.0]), np.array([1.0, 0.0, 0.0]), up))  # 135°: behind
+        with self.assertRaises(ValueError):
+            ss.object_side(rug, down_40, ahead, up, "image")
+
+    def test_object_directions_in_the_narrative(self):
+        """Frame 2 looks 40° down at a rug on the floor: along the floor it is on the right and below; in the camera's
+        tilted axes it is ahead, slightly to the right. The preamble is the same either way."""
+        sheet = self.root / "s__1" / "subset-uniform16" / "sheets" / "chair+door"
+        with open(sheet / "objects.csv", "a", newline="") as f:
+            csv.writer(f).writerow([4, "rug", 1, "0.8", "1.4", "-1.5", "1", "0.02", "1", "0.02"] + flags(1))
+        with open(sheet / "cameras.csv", newline="") as f:
+            rows = list(csv.reader(f))
+        a = math.radians(-20)  # a rotation of -40° about x: the camera looks 40° down
+        rows[2][5:12] = [math.cos(a), math.sin(a), 0, 0, 0, math.sin(math.radians(40)), math.cos(math.radians(40))]
+        with open(sheet / "cameras.csv", "w", newline="") as f:
+            csv.writer(f).writerows(rows)
+        floor, camera = (ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt,
+                                         time_unit="frames", object_directions=d).splitlines()
+                         for d in ("floor", "camera"))
+        rug = "you see rug_1 (a rug, 1.000 × 0.020 × 1.000 units) {}, 1.688 units away"
+        self.assertIn(rug.format("on your right and below"), floor[2])
+        self.assertIn(rug.format("ahead, slightly to your right"), camera[2])
+        self.assertTrue(floor[2].startswith("Frame 2: Move 1.000 units forward and turn 40° down; "), floor[2])
+        self.assertEqual(floor[0], camera[0])
+        self.assertEqual(floor[0], ss.narrative_preamble("frames"))
+
+    def test_object_behind_the_camera(self):
+        """A box seen in frames 7 and 8 whose centre is behind the camera both times: its distance, but no side."""
+        sheet = self.root / "s__1" / "subset-uniform16" / "sheets" / "chair+door"
+        with open(sheet / "objects.csv", "a", newline="") as f:
+            csv.writer(f).writerow([4, "box", 1, "2", "0", "-3", "0.5", "0.5", "0.5", "0.125"] + flags(6, 7))
+        lines = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt,
+                                time_unit="frames").splitlines()
+        self.assertEqual(lines[7:10], [
+            "Frame 7: Move 1.000 units to the right; you see box_1 (a box, 0.500 × 0.500 × 0.500 units), 2.000 units "
+            "away; door_1 is no longer in view.",
+            "Frame 8: Move 1.000 units to the right; you still see box_1, 2.236 units away.",
+            "Frame 9: Move 1.000 units to the right; box_1 is no longer in view."])
+        self.assertNotIn("behind you", "\n".join(lines[1:]))
+
+    def test_step_order(self):
+        """Turn first: the move is said relative to where the camera faces after turning, so in frame 3, after a 30°
+        turn to the right, the same step forward is 'forward and to the left'."""
+        lines = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt, time_unit="frames",
+                                step_order="turn-move").splitlines()
+        expected = list(NARRATIVE)
+        expected[2] = ("Frame 3: Turn 30° to the right and move 1.000 units forward and to the left; you still see "
+                       "door_1 on your left, 1.946 units away; chair_1 is no longer in view; coffee_table_1 is no "
+                       "longer in view.")
+        expected[4] = ("Frame 5: Turn 30° to the left without moving; you still see door_2 ahead, slightly to your "
+                       "right, 3.162 units away.")
+        self.assertEqual(lines[0], ss.narrative_preamble("frames", step_order="turn-move"))
+        self.assertIn(ss.NARRATIVE_STEPS["turn-move"], lines[0])
+        self.assertEqual(lines[1:], expected)
+        # the compass directions are the same either way; only the words' order changes
+        compass = ss.render_cameras(1, "text", self.root, self.vggt, "frames", "turn-move").splitlines()
+        self.assertEqual(compass[1:], DIRECTIONS[:2] + ["Frame 3: Turn 30° to the right and go 1.000 units north."]
+                         + DIRECTIONS[3:])
+        self.assertEqual(ss.narrative_step("move 1.000 units forward", "turn 23° to the right and 5° down",
+                                           "turn-move"),
+                         "turn 23° to the right and 5° down, and move 1.000 units forward")
+        self.assertEqual(ss.narrative_step(None, None, "turn-move"), "stay still")
+        with self.assertRaises(ValueError):
+            ss.render_cameras(1, "text", self.root, self.vggt, step_order="sideways")
 
     # ---- every combination of options ----
 
@@ -389,21 +545,27 @@ class Synthetic(unittest.TestCase):
     def test_every_combination(self):
         """Each combination of options gives a prompt, unless it is one of the contradictory ones, which raise."""
         from mvp.benchmarks import vsibench
-        for q, source, fmt, camera_fmt, time_unit, reasoning in itertools.product(
-                (1, 2), [None] + ss.SOURCES, [None] + ss.SHEET_FORMATS, [None] + ss.CAMERA_FORMATS, ss.TIME_UNITS,
-                vsibench.REASONING):
-            options = (q, source, fmt, camera_fmt, time_unit, reasoning)
+        for q, source, fmt, camera_fmt, time_unit, reasoning, visibility, step_order, object_directions in \
+                itertools.product((1, 2), [None] + ss.SOURCES, [None] + ss.SHEET_FORMATS, [None] + ss.CAMERA_FORMATS,
+                                  ss.TIME_UNITS, vsibench.REASONING, ss.VISIBILITY, ss.STEP_ORDERS,
+                                  ss.OBJECT_DIRECTIONS):
+            if object_directions != "floor" and fmt != ss.NARRATIVE:
+                continue  # only the narrative says where objects are
+            options = (q, source, fmt, camera_fmt, time_unit, reasoning, visibility, step_order, object_directions)
             contradictory = source is not None and (
                 fmt is None or (source == "gold" and (camera_fmt or fmt == ss.NARRATIVE))
                 or (fmt == ss.NARRATIVE and camera_fmt))
             if contradictory:
                 with self.assertRaises(ValueError, msg=options):
                     ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, camera_fmt=camera_fmt,
-                                          time_unit=time_unit, reasoning=reasoning)
+                                          time_unit=time_unit, reasoning=reasoning, visibility=visibility,
+                                          step_order=step_order, object_directions=object_directions)
                 continue
             prompt = ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, camera_fmt=camera_fmt,
-                                           time_unit=time_unit, reasoning=reasoning)
-            scene = ss.render_scene(q, source, fmt, camera_fmt, self.root, self.vggt, time_unit)
+                                           time_unit=time_unit, reasoning=reasoning, visibility=visibility,
+                                           step_order=step_order, object_directions=object_directions)
+            scene = ss.render_scene(q, source, fmt, camera_fmt, self.root, self.vggt, time_unit, visibility,
+                                    step_order, object_directions)
             text = prompt.split("<|vision_end|><|vision_end|>", 1)[1]  # after the video
             self.assertTrue(text.startswith("These are frames of a video.\n" + (scene + "\n" if scene else "")),
                             options)
@@ -416,6 +578,13 @@ class Synthetic(unittest.TestCase):
                                  time_unit == "seconds" and (source == "pipeline" or camera_fmt is not None), options)
                 self.assertEqual("Frame 1:" in scene, time_unit == "frames"
                                  and ((source and fmt == ss.NARRATIVE) or camera_fmt == "text"), options)
+                self.assertEqual(ss.BRIDGED_NOTE in scene, source == "pipeline" and visibility == "bridged", options)
+                self.assertNotIn("first_seen", scene, options)
+                self.assertNotIn("num_frames", scene, options)
+                self.assertNotIn("behind you", scene, options)
+                narrative = source == "pipeline" and fmt == ss.NARRATIVE  # frame 5 turns without moving
+                self.assertEqual("Don't move and turn" in scene, narrative and step_order == "move-turn", options)
+                self.assertEqual("without moving" in scene, narrative and step_order == "turn-move", options)
 
 
 class Prompt(unittest.TestCase):

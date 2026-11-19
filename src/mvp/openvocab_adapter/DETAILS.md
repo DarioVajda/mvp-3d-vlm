@@ -206,8 +206,8 @@ When a scene says `DIFFERS`, look here:
   the object errors that follow aren't circular. Errors are given as fractions of the scene's size.
 - **Tracks** are matched on their pixels, because both runs use the same masks. This needs no alignment.
 - **Scene-sheet rows** are paired through the same track matching, because a row's `track_id` is the track's id.
-  Sizes are not compared: they are extents along the world axes, and the two world frames are rotated relative to each
-  other.
+  Sizes are not compared: `size_x/y/z` are the sides of each object's box nearest the world axes, and the two world
+  frames are rotated relative to each other, so the same side can be filed under a different axis.
 - **The adapter checks the saved VGGT outputs before writing anything:**
   - the camera convention (rotations are proper rotations, and the world is frame 0's camera);
   - that every patch point projects into its own 14×14 patch;
@@ -399,7 +399,9 @@ downloaded to `data/raw/VSI-Bench/meta_info/` the first time). It needs no GPU:
 python src/mvp/openvocab_adapter/scene_sheet_creator.py --source gold --scene scannet/scene0025_01     --prompts "table,chair,fan" --size --out-dir out/gold_sheet
 ```
 
-The columns are the pipeline sheet's up to `size`, in metres and in the dataset's frame (z up). There are no per-frame
+The columns are the pipeline sheet's up to `size`, in metres and in the dataset's frame (z up). Sizes come from the
+labels' own turned boxes (`axesLengths` along `normalizedAxes`), not their axis-aligned `min`/`max`, with each side filed
+under the axis it is nearest, as for the pipeline. There are no per-frame
 columns and no `cameras.csv`, because the saved VGGT cameras can't be aligned to the gold labels; asking for them is
 an error. Pass `--no-frames --no-cameras` for a pipeline sheet with the same columns.
 

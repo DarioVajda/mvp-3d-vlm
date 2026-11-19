@@ -26,8 +26,8 @@ import pandas as pd
 
 from pathlib import Path
 
-from mvp.benchmarks.scene_sheet import (CAMERA_FORMATS, SHEET_FORMATS, TIME_UNITS, check_options, load_index,
-                                        render_scene, sheet_kind)
+from mvp.benchmarks.scene_sheet import (CAMERA_FORMATS, OBJECT_DIRECTIONS, SHEET_FORMATS, STEP_ORDERS, TIME_UNITS,
+                                        VISIBILITY, check_options, load_index, render_scene, sheet_kind)
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -40,7 +40,8 @@ def prompt_parts(d, args):
     """(text before the video, text after it) for question d: the scene information the options ask for, the
     layout and the reasoning instructions."""
     sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.camera_format, Path(args.sheets_root),
-                          Path(args.vggt_root), args.time_unit) if args.sheets else None)
+                          Path(args.vggt_root), args.time_unit, args.visibility, args.step_order,
+                          args.object_directions) if args.sheets else None)
     return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.camera_format))
 
 
@@ -106,6 +107,16 @@ def main():
     ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
                     help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
                          "1-16 (the video's own labels are always seconds)")
+    ap.add_argument("--visibility", default="bridged", choices=VISIBILITY,
+                    help="which frames a pipeline object counts as visible in (its 'visible' ranges, the narrative): "
+                         "bridged, one missed frame between two sightings counts as seen; exact, only detections")
+    ap.add_argument("--step-order", default="move-turn", choices=STEP_ORDERS,
+                    help="how --camera-format text and the narrative word each step between two frames: move then "
+                         "turn, or turn then move (the narrative's moves are relative to where the camera faces as it "
+                         "moves, so the order can change their words)")
+    ap.add_argument("--object-directions", default="floor", choices=OBJECT_DIRECTIONS,
+                    help="how the narrative says where an object is: along the floor from where the camera faces, plus "
+                         "above/below (as the moves are measured), or in the camera's own tilted axes")
     ap.add_argument("--sheets-root", default=str(SCENE_SHEETS), help="the scene sheets folder, with index.csv")
     ap.add_argument("--reasoning", default="direct", choices=REASONING,
                     help="direct: lmms-eval's 'answer directly'; cot: reason step by step, then end on 'Answer: X' "
@@ -136,7 +147,8 @@ def main():
     if args.sheet_source and args.sheet_format is None:
         args.sheet_format = "csv"
     try:
-        check_options(args.sheet_source, args.sheet_format, args.camera_format, args.time_unit)
+        check_options(args.sheet_source, args.sheet_format, args.camera_format, args.time_unit, args.visibility,
+                      args.step_order, args.object_directions)
     except ValueError as e:
         ap.error(str(e))
     args.sheets = bool(args.sheet_source or args.camera_format)
@@ -166,7 +178,10 @@ def main():
     if args.sheets:
         with_sheets = df["id"].isin(load_index(Path(args.sheets_root)))
         print(f"scene sheets (objects {args.sheet_source}, {args.sheet_format}; cameras {args.camera_format}; "
-              f"{args.time_unit}): {with_sheets.sum()} of {len(df)} questions have one; only those are evaluated",
+              f"{args.time_unit}; visibility {args.visibility}; steps {args.step_order}; object directions "
+              f"{args.object_directions}): {with_sheets.sum()} of "
+              f"{len(df)} questions have one; "
+              f"only those are evaluated",
               flush=True)
         df = df[with_sheets]
     if args.num_shards > 1:
@@ -250,6 +265,8 @@ def main():
                    "final_answer": args.final_answer, "reasoning": args.reasoning, "split": args.split,
                    "scene_sheet": {"source": args.sheet_source, "format": args.sheet_format,
                                    "camera_format": args.camera_format, "time_unit": args.time_unit,
+                                   "visibility": args.visibility, "step_order": args.step_order,
+                                   "object_directions": args.object_directions,
                                    "root": args.sheets_root}
                    if args.sheets else None, "n": len(res), **summary}, f, indent=1)
 

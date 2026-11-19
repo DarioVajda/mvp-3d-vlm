@@ -31,19 +31,23 @@ Conventions
   - Positions are per-axis medians of the object's 3D points, which is robust to the stray points
     that depth edges produce. Global: all frames, world coordinates. Per frame: that frame's
     points, in that camera's coordinates (where the object was seen, not the global position
-    re-expressed).
-  - Size: no metric size exists, so each object is approximated by the cuboid its points span
-    along the world axes: size_x/y/z = max - min of its points on each axis (or the --size-trim
-    and 100 - --size-trim percentiles, to ignore outliers), size = size_x * size_y * size_z.
+    re-expressed). Global positions and sizes use at most --max-frame-points of each frame's points.
+  - Size: no metric size exists, so each object is approximated by the smallest box around its
+    points, turned to fit the object (fit_box), so an object standing at an angle to the world axes
+    is not overestimated. A side's length is max - min of the points along it (or between the
+    --size-trim and 100 - --size-trim percentiles, to ignore outliers). size_x/y/z are the sides
+    nearest the world x, y and z axes, and size = size_x * size_y * size_z.
 
   --no-frames drops num_frames and the per-frame columns, and --no-cameras drops cameras.csv.
 
 Gold labels (--source gold): the sheet comes from VSI-Bench's ground-truth boxes (GOLD_REPO's data/meta_info/,
 downloaded to GOLD_DIR the first time) instead of SAM 3 and tracking. --scene is a VSI-Bench scene, e.g.
-scannet/scene0025_01. Columns as above up to size, with box centres and extents, in metres, in the dataset's frame
-(z up). Prompts match class names ignoring case and a plural "s" (plus GOLD_ALIASES); without --prompts every class
-is listed. There are no per-frame columns and no cameras.csv, and asking for them is an error: the metadata has
-nothing per frame, and the saved VGGT cameras are in a different frame and scale with nothing to align them by.
+scannet/scene0025_01. Columns as above up to size, with box centres and sides, in metres, in the dataset's frame
+(z up). The labels' boxes are turned to fit their objects too (axesLengths along normalizedAxes), and their sides are
+matched to x, y and z the same way. Prompts match class names ignoring case and a plural "s" (plus GOLD_ALIASES);
+without --prompts every class is listed. There are no per-frame columns and no cameras.csv, and asking for them is an
+error: the metadata has nothing per frame, and the saved VGGT cameras are in a different frame and scale with nothing
+to align them by.
 
 Usage (with the OpenVocab-4D environment; paths are relative to where you run it):
   python src/mvp/openvocab_adapter/scene_sheet_creator.py --scene out/test_scene --prompts "table,dog,chair"
@@ -59,6 +63,7 @@ question_scene_sheet.py, which picks the prompts, runs SAM 3 and calls the funct
 import argparse
 import csv
 import hashlib
+import itertools
 import json
 import subprocess
 import sys
@@ -269,6 +274,89 @@ def write_csv(path, header, rows):
         writer.writerows([fmt(v) for v in row] for row in rows)
 
 
+# ---------------------------------------------------------------------------
+# object sizes: the smallest box around an object's points, turned to fit it
+# ---------------------------------------------------------------------------
+BOX_SEARCH_POINTS = 5000  # points fit_box searches the orientation with; the sides are then measured on all of them
+TURN_GRIDS = [  # turns tried about one axis, each grid around the best of the one before
+    np.deg2rad(np.arange(-45.0, 45.0, 3.0)),  # a box is the same after a quarter turn, so this covers every turn
+    np.deg2rad(np.linspace(-3.0, 3.0, 21)),
+    np.deg2rad(np.linspace(-0.3, 0.3, 21)),
+]
+AXIS_ORDERS = list(itertools.permutations(range(3)))
+
+
+def spans(values, trim=0.0):
+    """Length of each row of values along its last axis: max - min, or between the trim and 100 - trim percentiles."""
+    if trim > 0:
+        lo, hi = np.percentile(values, [trim, 100 - trim], axis=-1)
+        return hi - lo
+    return values.max(axis=-1) - values.min(axis=-1)
+
+
+def match_world_axes(axes, sides):
+    """Reorder a box's axes (the columns of axes) and sides so that the i-th is the axis nearest world axis i, and
+    flip each axis to point along its world axis. "Nearest" is for all three together: the order with the largest
+    sum of |cos(angle)| between each axis and its world axis."""
+    order = list(max(AXIS_ORDERS, key=lambda o: sum(abs(axes[i, o[i]]) for i in range(3))))
+    axes = axes[:, order]
+    return axes * np.where(np.diag(axes) < 0, -1.0, 1.0), np.asarray(sides, float)[order]
+
+
+def turn_to_fit(points, axes, trim, eps, max_rounds=10):
+    """fit_box's search from one starting orientation: turn the box about each of its axes in turn, to the angle that
+    gives the smallest cross-section, until a round changes the volume by less than one part in 10^9.
+    Returns (axes, volume); volume counts eps on every side."""
+    axes = axes.copy()
+    proj = (points @ axes).T  # 3 x n: each point's coordinate along each box axis
+    sides = spans(proj, trim) + eps
+    for _ in range(max_rounds):
+        before = sides.prod()
+        for k in range(3):
+            i, j = (k + 1) % 3, (k + 2) % 3
+            angle, area = 0.0, sides[i] * sides[j]
+            for turns in TURN_GRIDS:
+                candidates = angle + turns
+                c, s = np.cos(candidates)[:, None], np.sin(candidates)[:, None]
+                areas = (spans(c * proj[i] + s * proj[j], trim) + eps) * (spans(c * proj[j] - s * proj[i], trim) + eps)
+                if areas.min() < area:
+                    angle, area = candidates[np.argmin(areas)], areas.min()
+            if angle == 0.0:
+                continue
+            c, s = np.cos(angle), np.sin(angle)
+            axes[:, [i, j]] = axes[:, [i, j]] @ np.array([[c, -s], [s, c]])
+            proj[[i, j]] = [c * proj[i] + s * proj[j], c * proj[j] - s * proj[i]]
+            sides = spans(proj, trim) + eps
+        if sides.prod() > before * (1 - 1e-9):
+            break
+    return axes, sides.prod()
+
+
+def fit_box(points, trim=0.0, max_points=BOX_SEARCH_POINTS, seed=0):
+    """The smallest-volume box around points (n x 3), in any orientation. Returns (axes, sides): the box's unit axes as
+    the columns of a 3x3 matrix, ordered and signed by match_world_axes, and its side along each, measured by spans
+    with trim (so trim also keeps outliers from turning the box).
+
+    The orientation is a local search (turn_to_fit) from two starts, the world axes and the principal axes of the
+    points. The search uses at most max_points of the points, a fixed random choice; the two boxes it finds and the
+    axis-aligned box are then measured on all of them, and the smallest is kept, so the box is never bigger than the
+    axis-aligned one.
+    """
+    centred = np.asarray(points, float) - np.median(points, axis=0)
+    search = centred
+    if len(search) > max_points:
+        search = search[np.random.default_rng(seed).choice(len(search), max_points, replace=False)]
+    candidates = [np.eye(3)]
+    scale = spans(search.T, trim).max()
+    eps = 1e-6 * scale  # a flat object's box would otherwise have no volume whichever way it was turned
+    if len(search) >= 4 and np.isfinite(scale) and scale > 0:
+        candidates += [turn_to_fit(search, start, trim, eps)[0]
+                       for start in (np.eye(3), np.linalg.eigh(np.cov(search.T))[1])]
+    measured = [spans((centred @ axes).T, trim) for axes in candidates]
+    best = min(range(len(candidates)), key=lambda c: np.prod(measured[c] + eps))  # ties: the axis-aligned box
+    return match_world_axes(candidates[best], measured[best])
+
+
 def collect_objects(
     scene,
     prompts,
@@ -319,18 +407,8 @@ def collect_objects(
                 world = (
                     cam - tvec
                 ) @ R  # x_cam = R x_world + t  ->  x_world = R^T (x_cam - t)
-                obj = objects.setdefault(
-                    (pi, int(tid)),
-                    {
-                        "frames": {},
-                        "sample": [],
-                        "lo": np.full(3, np.inf),
-                        "hi": np.full(3, -np.inf),
-                    },
-                )
+                obj = objects.setdefault((pi, int(tid)), {"frames": {}, "sample": []})
                 obj["frames"][t] = np.median(cam, axis=0)
-                obj["lo"] = np.minimum(obj["lo"], world.min(axis=0))
-                obj["hi"] = np.maximum(obj["hi"], world.max(axis=0))
                 if len(world) > max_frame_points:
                     world = world[
                         rng.choice(len(world), max_frame_points, replace=False)
@@ -402,12 +480,8 @@ def build_scene_sheet(
         sample = np.concatenate(obj["sample"])
         row = [len(rows), prompts[pi], tid, *np.median(sample, axis=0)]
         if include_size:
-            if size_trim > 0:
-                lo, hi = np.percentile(sample, [size_trim, 100 - size_trim], axis=0)
-            else:
-                lo, hi = obj["lo"], obj["hi"]
-            extent = hi - lo
-            row += [*extent, float(np.prod(extent))]
+            _, sides = fit_box(sample, size_trim)
+            row += [*sides, float(np.prod(sides))]
         if frame_columns:
             row.append(len(obj["frames"]))
             for t in range(S):
@@ -540,9 +614,10 @@ def build_gold_scene_sheet(
         listed.add(matched[prompt])
         for instance, box in enumerate(info["object_bbox"][matched[prompt]], start=1):
             row = [len(rows), prompt, instance, *np.asarray(box["centroid"], float)]
-            if include_size:
-                extent = np.asarray(box["max"], float) - np.asarray(box["min"], float)
-                row += [*extent, float(np.prod(extent))]
+            if include_size:  # normalizedAxes is row-major with one box axis per row; min/max is the axis-aligned box
+                axes = np.asarray(box["normalizedAxes"], float).reshape(3, 3).T
+                _, sides = match_world_axes(axes, box["axesLengths"])
+                row += [*sides, float(np.prod(sides))]
             rows.append(row)
     objects_csv = out_dir / "objects.csv"
     write_csv(objects_csv, header, rows)
@@ -620,13 +695,13 @@ def main(argv=None):
         help="per-frame camera-frame positions instead of 0/1 appearance flags",
     )
     p.add_argument(
-        "--size", action="store_true", help="add the cuboid size of each object"
+        "--size", action="store_true", help="add the sides and volume of each object's box, turned to fit it"
     )
     p.add_argument(
         "--size-trim",
         type=float,
         default=0.02,
-        help="percent of points ignored at each end of every axis when measuring size "
+        help="percent of points ignored at each end of every box side when measuring size "
         "(0 = farthest points)",
     )
     p.add_argument(
@@ -646,7 +721,7 @@ def main(argv=None):
         "--max-frame-points",
         type=int,
         default=5000,
-        help="points per object per frame used for the global median",
+        help="points per object per frame used for the global median and the size",
     )
     # passed to the pipeline when it has to build the geometry
     p.add_argument(
