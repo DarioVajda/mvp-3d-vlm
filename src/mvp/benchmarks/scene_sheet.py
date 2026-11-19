@@ -7,9 +7,10 @@ hold exactly the same information: one canonical object list per question (load_
 (load_cameras), the same preamble per source, and renderers that differ only in layout. cameras.csv's image column is
 never written. Nothing here writes to the sheets folder.
 
-  render_sheet(question_id, source, fmt)      the objects. source: pipeline | gold; fmt: one of SHEET_FORMATS, where
-                                              "narrative" is objects and cameras told as one walk through the frames
-                                              (pipeline only)
+  render_sheet(question_id, source, fmt)      the objects. source: pipeline | gold | gold_relations (the gold sheet,
+                                              then the relations between the objects the question names: relations);
+                                              fmt: one of SHEET_FORMATS, where "narrative" is objects and cameras told
+                                              as one walk through the frames (pipeline only)
   render_cameras(question_id, fmt)            the pipeline's cameras. fmt: one of FORMATS, where "text" is the compass
                                               directions of camera_sheet_format_converter.py, frame by frame
   render_scene(question_id, source, fmt, cameras)   what the prompt carries: the objects, then with cameras=True the
@@ -36,6 +37,7 @@ combinations of options are contradictory.
 import argparse
 import csv
 import io
+import itertools
 import json
 import math
 import re
@@ -49,7 +51,9 @@ from mvp.benchmarks.vsibench import REASONING, build_prompt_parts
 from mvp.openvocab_adapter import camera_sheet_format_converter as directions
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
 
-SOURCES = ["pipeline", "gold"]
+SOURCES = ["pipeline", "gold"]  # the two kinds of sheet folder
+RELATIONS_SOURCE = "gold_relations"  # the gold sheet, then the relations between the objects the question names
+SHEET_SOURCES = SOURCES + [RELATIONS_SOURCE]  # what render_sheet and the eval's --sheet-source take
 FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]  # the object sheet's layouts, both sources
 NARRATIVE = "narrative"  # objects and cameras as one walk through the frames: pipeline only
 SHEET_FORMATS = FORMATS + [NARRATIVE]  # cameras are written in the objects' format, so in one of FORMATS
@@ -206,9 +210,10 @@ def load_index(root=SCENE_SHEETS):
 
 
 def sheet_folders(question_id, source, root=SCENE_SHEETS):
-    """The sheet folders index.csv lists for this question and source (one in every row of the 75-scene index)."""
+    """The sheet folders index.csv lists for this question and source (one in every row of the 75-scene index);
+    gold_relations' objects are the gold sheet's."""
     row = load_index(root)[int(question_id)]
-    return [Path(root) / row[f"{source}_sheet"]]
+    return [Path(root) / row["gold_sheet" if source == RELATIONS_SOURCE else f"{source}_sheet"]]
 
 
 def camera_folder(question_id, root=SCENE_SHEETS):
@@ -649,6 +654,54 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
     return head + "\n" + "\n".join(lines)
 
 
+# ---- relations between the objects a question names (gold_relations) ----
+
+CONTEXT_TYPES = {"object_counting", "room_size_estimation"}  # their `room` prompt is context, not a named object
+
+
+def box_gap(a, b):
+    """Distance between the closest points of two axis-aligned boxes (centre, extent), 0 if they touch or overlap."""
+    return float(np.linalg.norm(np.maximum(0, np.abs(a[0] - b[0]) - (a[1] + b[1]) / 2)))
+
+
+def relations(question_id, root=SCENE_SHEETS):
+    """The relations gold_relations adds after the gold sheet, or "" when the gold sheet has fewer than two of the
+    classes the question names: distances in metres between the closest points of the objects' boxes, as VSI-Bench
+    measures distance ("Measuring from the closest point of each object"), as a csv over every two objects of different
+    named classes (ids as the sheet writes them); for absolute-distance questions the two classes' smallest distance;
+    for relative-distance questions each candidate's distance to the nearest target and the closest candidate. The
+    named classes are the question's prompts, without `room` in counting and room-size questions. The same text as the
+    format experiment's explore notebook (explore_sheets.relations, mode "closest"; condition gold_relations_v2)."""
+    row = load_index(root)[int(question_id)]
+    names = [p.strip() for p in row["prompts"].split(",")
+             if p.strip() != "room" or row["question_type"] not in CONTEXT_TYPES]
+    with open(Path(root) / row["gold_sheet"] / "objects.csv", newline="") as f:
+        objs = [(object_id(r), r["concept"], (np.array([float(r[k]) for k in POSITION]),
+                                             np.array([float(r[k]) for k in EXTENT])))
+                for r in csv.DictReader(f) if r["concept"] in names]
+    have = {c for _, c, _ in objs}
+    if len(have) < 2:
+        return ""
+    lines = ["Relations between the objects the question names, from the sheet above (distance between the closest "
+             "points of their boxes, in metres):", "object_a,object_b,distance"]
+    lines += [f"{a},{b},{box_gap(pa, pb):.3f}" for (a, ca, pa), (b, cb, pb) in itertools.combinations(objs, 2)
+              if ca != cb]
+
+    def nearest(c, target):
+        return min(box_gap(p, t) for _, cc, p in objs if cc == c for _, ct, t in objs if ct == target)
+    if row["question_type"] == "object_abs_distance" and len(names) >= 2 and set(names[:2]) <= have:
+        a, b = names[:2]
+        lines.append(f"Closest-point distance between the {a} and the {b}: {nearest(a, b):.3f} m.")
+    if row["question_type"] == "object_rel_distance":
+        *candidates, target = names
+        d = {c: nearest(c, target) for c in candidates if c in have} if target in have else {}
+        if d:
+            parts = [f"{c} {d[c]:.3f}" if c in d else f"{c} not in the sheet" for c in candidates]
+            lines.append(f"Distance from each candidate to the nearest {target} (closest points, metres): "
+                         f"{'; '.join(parts)}. Closest to the {target}: {min(d, key=d.get)}.")
+    return "\n".join(lines)
+
+
 # ---- one question's scene information ----
 
 def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="bridged", step_order="move-turn",
@@ -660,8 +713,8 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
       - gold objects, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and the only
         cameras are VGGT's, in another frame and scale, with nothing to align the two by
       - the narrative: it already tells the cameras"""
-    if source is not None and source not in SOURCES:
-        raise ValueError(f"source must be one of {SOURCES} or None, not {source!r}")
+    if source is not None and source not in SHEET_SOURCES:
+        raise ValueError(f"source must be one of {SHEET_SOURCES} or None, not {source!r}")
     if source is not None and fmt not in SHEET_FORMATS:
         raise ValueError(f"the sheet format must be one of {SHEET_FORMATS}, not {fmt!r}")
     check_time_unit(time_unit)
@@ -670,7 +723,7 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
     check_object_directions(object_directions)
     if cameras and source is None:
         raise ValueError("the cameras only come with the pipeline's objects: give the pipeline sheet as the source")
-    if source == "gold" and (cameras or fmt == NARRATIVE):
+    if source in ("gold", RELATIONS_SOURCE) and (cameras or fmt == NARRATIVE):
         raise ValueError("gold sheets have no cameras: they are in metres in the dataset's frame, and the only cameras "
                          "are VGGT's, in another frame and scale (so no cameras, and no narrative)")
     if fmt == NARRATIVE and cameras:
@@ -679,11 +732,18 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
 
 def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds",
                  visibility="bridged", step_order="move-turn", object_directions="floor"):
-    """One question's objects as prompt text. source: pipeline | gold; fmt: one of SHEET_FORMATS ("narrative":
-    pipeline only, with its cameras). vggt_root holds each video's meta.json (its fps, for timestamps)."""
-    if source not in SOURCES or fmt not in SHEET_FORMATS:
-        raise ValueError(f"source must be one of {SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, {fmt!r}")
+    """One question's objects as prompt text. source: pipeline | gold | gold_relations (the gold sheet, then
+    relations()); fmt: one of SHEET_FORMATS ("narrative": pipeline only, with its cameras). vggt_root holds each video's
+    meta.json (its fps, for timestamps)."""
+    if source not in SHEET_SOURCES or fmt not in SHEET_FORMATS:
+        raise ValueError(f"source must be one of {SHEET_SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, "
+                         f"{fmt!r}")
     check_options(source, fmt, False, time_unit, visibility, step_order, object_directions)
+    if source == RELATIONS_SOURCE:
+        text = render_sheet(question_id, "gold", fmt, root, volume, vggt_root, time_unit, visibility, step_order,
+                            object_directions)
+        rel = relations(question_id, root)
+        return text + "\n" + rel if rel else text
     if fmt == NARRATIVE:
         return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions)
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
@@ -798,7 +858,8 @@ def main():
     ap.add_argument("--question", type=int, default=706)
     ap.add_argument("--tokens", metavar="MODEL", help="print the token table with this model's tokenizer")
     ap.add_argument("--prompt", action="store_true", help="print --question's whole prompt (build_sheet_prompt)")
-    ap.add_argument("--source", choices=SOURCES + ["none"], default="pipeline", help="for --prompt; none: no objects")
+    ap.add_argument("--source", choices=SHEET_SOURCES + ["none"], default="pipeline",
+                    help="for --prompt; none: no objects")
     ap.add_argument("--format", choices=SHEET_FORMATS, default="csv", help="for --prompt")
     ap.add_argument("--cameras", action="store_true",
                     help="for --prompt: add the pipeline's cameras, in the objects' format")

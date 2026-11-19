@@ -57,7 +57,7 @@ CURATED = [  # (label, how it differs from BASELINE)
 ]
 # the command line's option lists: (flag, config key, values); WORDS gives the values that aren't strings
 OPTION_LISTS = [
-    ("--source", "source", ss.SOURCES + ["none"]),
+    ("--source", "source", ss.SHEET_SOURCES + ["none"]),
     ("--format", "fmt", ss.SHEET_FORMATS),
     ("--cameras", "cameras", ["off", "on"]),
     ("--time-unit", "time_unit", ss.TIME_UNITS),

@@ -547,14 +547,14 @@ class Synthetic(unittest.TestCase):
         """Each combination of options gives a prompt, unless it is one of the contradictory ones, which raise."""
         from mvp.benchmarks import vsibench
         for q, source, fmt, cameras, time_unit, reasoning, visibility, step_order, object_directions in \
-                itertools.product((1, 2), [None] + ss.SOURCES, [None] + ss.SHEET_FORMATS, [False, True],
+                itertools.product((1, 2), [None] + ss.SHEET_SOURCES, [None] + ss.SHEET_FORMATS, [False, True],
                                   ss.TIME_UNITS, vsibench.REASONING, ss.VISIBILITY, ss.STEP_ORDERS,
                                   ss.OBJECT_DIRECTIONS):
             if object_directions != "floor" and fmt != ss.NARRATIVE:
                 continue  # only the narrative says where objects are
             options = (q, source, fmt, cameras, time_unit, reasoning, visibility, step_order, object_directions)
             contradictory = (cameras and source != "pipeline") or source is not None and (
-                fmt is None or (source == "gold" and fmt == ss.NARRATIVE) or (fmt == ss.NARRATIVE and cameras))
+                fmt is None or (source != "pipeline" and fmt == ss.NARRATIVE) or (fmt == ss.NARRATIVE and cameras))
             if contradictory:
                 with self.assertRaises(ValueError, msg=options):
                     ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, cameras=cameras,
@@ -586,6 +586,91 @@ class Synthetic(unittest.TestCase):
                 narrative = source == "pipeline" and fmt == ss.NARRATIVE  # frame 5 turns without moving
                 self.assertEqual("Don't move and turn" in scene, narrative and step_order == "move-turn", options)
                 self.assertEqual("without moving" in scene, narrative and step_order == "turn-move", options)
+
+
+class Relations(unittest.TestCase):
+    """gold_relations: the gold sheet, then closest-point distances between the objects the question names."""
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = root = Path(self.tmp.name) / "sheets"
+        self.vggt = Path(self.tmp.name) / "vggt"
+        # boxes in metres: the table spans x 0..2, the door x 3..3.2 (1 m from the table along x), the tv's box is
+        # 2 m above the table's and 0.5 m beside it along y, the chairs overlap the table's corner or stand 4 m away
+        write_sheet(root / "s__1" / "gold" / "sheets" / "all", [
+            [0, "table", 1, "1", "0", "0.5", "2", "1", "1", "2"],
+            [1, "door", 1, "3.1", "0", "1", "0.2", "1", "2", "0.4"],
+            [2, "tv", 1, "1", "1.5", "3.5", "1", "1", "1", "1"],
+            [3, "chair", 1, "2", "0.5", "0.5", "1", "1", "1", "1"],
+            [4, "chair", 2, "-4.5", "0", "0.5", "1", "1", "1", "1"],
+        ])
+        pipe = root / "s__1" / "subset-uniform16"
+        write_sheet(pipe / "sheets" / "all", [], scene="s/1")
+        (pipe / "scene").mkdir()
+        (pipe / "scene" / "adapter_report.json").write_text(json.dumps({
+            "selected_frames": [0, 8, 16, 25, 33, 42, 50, 59, 67, 76, 84, 93, 101, 110, 118, 127],
+            "source_video_frames": [30 * t for t in range(16)]}))
+        (self.vggt / "s" / "1").mkdir(parents=True)
+        (self.vggt / "s" / "1" / "meta.json").write_text(json.dumps({"video_fps": 30.0}))
+        rows = [(1, "object_abs_distance", "What is the distance between the table and the door?", "", "1",
+                 "table, door"),
+                (2, "object_rel_distance", "Which of these (door, tv, sofa, chair) is closest to the table?",
+                 "A. door | B. tv | C. sofa | D. chair", "D", "door, tv, sofa, chair, table"),
+                (3, "object_counting", "How many chair(s) are in this room?", "", "2", "chair, room"),
+                (4, "object_abs_distance", "What is the distance between the sofa and the door?", "", "2",
+                 "sofa, door")]
+        with open(root / "index.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["id", "scene", "question_type", "question", "options", "ground_truth", "prompts",
+                        "pipeline_sheet", "gold_sheet", "pipeline_ok", "gold_ok"])
+            w.writerows([[i, "s/1", t, q, o, g, p, "s__1/subset-uniform16/sheets/all", "s__1/gold/sheets/all",
+                          True, True] for i, t, q, o, g, p in rows])
+        ss.load_index.cache_clear()
+
+    def tearDown(self):
+        ss.load_index.cache_clear()
+        self.tmp.cleanup()
+
+    def test_closest_point_distances(self):
+        self.assertEqual(ss.relations(1, self.root), "\n".join([
+            "Relations between the objects the question names, from the sheet above (distance between the closest "
+            "points of their boxes, in metres):", "object_a,object_b,distance", "table_1,door_1,1.000",
+            "Closest-point distance between the table and the door: 1.000 m."]))
+        text = ss.relations(2, self.root)
+        self.assertIn("table_1,tv_1,2.062\n", text)  # 0.5 m along y and 2 m along z: sqrt(4.25)
+        self.assertIn("table_1,chair_1,0.000\n", text)  # overlapping boxes
+        self.assertIn("table_1,chair_2,4.000\n", text)
+        self.assertNotIn("chair_1,chair_2", text)  # only objects of different classes
+        self.assertTrue(text.endswith("Distance from each candidate to the nearest table (closest points, metres): "
+                                      "door 1.000; tv 2.062; sofa not in the sheet; chair 0.000. Closest to the "
+                                      "table: chair."))
+
+    def test_sheet_source(self):
+        gold = ss.render_sheet(1, "gold", "csv", self.root, vggt_root=self.vggt)
+        self.assertEqual(ss.render_sheet(1, "gold_relations", "csv", self.root, vggt_root=self.vggt),
+                         gold + "\n" + ss.relations(1, self.root))
+        # one named class (counting: `room` is context) or a named object missing: the gold sheet alone
+        for q in (3, 4):
+            self.assertEqual(ss.relations(q, self.root), "")
+            self.assertEqual(ss.render_sheet(q, "gold_relations", "csv", self.root, vggt_root=self.vggt),
+                             ss.render_sheet(q, "gold", "csv", self.root, vggt_root=self.vggt))
+        for fmt in ss.FORMATS:  # the relations follow the gold sheet in any table format
+            self.assertTrue(ss.render_sheet(2, "gold_relations", fmt, self.root, vggt_root=self.vggt).endswith(
+                ss.relations(2, self.root)))
+        with self.assertRaises(ValueError):
+            ss.render_sheet(1, "gold_relations", "narrative", self.root, vggt_root=self.vggt)
+        with self.assertRaises(ValueError):
+            ss.check_options("gold_relations", "csv", cameras=True)
+        self.assertEqual(ss.load_objects(2, "gold_relations", self.root), ss.load_objects(2, "gold", self.root))
+
+    def test_prompt_and_eval(self):
+        prompt = ss.build_sheet_prompt(1, "gold_relations", "csv", self.root, self.vggt, reasoning="cot")
+        self.assertIn(ss.relations(1, self.root), prompt)
+        self.assertIn("in the scene information above", prompt)
+        self.assertNotIn("computed automatically", prompt)  # the pipeline's warning is not for gold sheets
+        from mvp.eval import vsibench as ev
+        import inspect
+        self.assertIn("SHEET_SOURCES", inspect.getsource(ev.main))  # --sheet-source takes gold_relations
+        self.assertIn("gold_relations", ss.SHEET_SOURCES)
 
 
 class Prompt(unittest.TestCase):

@@ -10,6 +10,7 @@
       --sheet-format json ...  # + scene sheet (mvp.benchmarks.scene_sheet); Qwen3.5 runs with thinking off
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format markdown_table --cameras  # + its cameras
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format narrative --time-unit frames
+  python -m mvp.eval.vsibench ... --sheet-source gold_relations   # gold sheet + closest-point relations (csv)
   python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
   python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
   python -m mvp.eval.vsibench ... --reasoning cot      # ask it to reason step by step (implies --final-answer)
@@ -25,8 +26,8 @@ import pandas as pd
 
 from pathlib import Path
 
-from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, STEP_ORDERS, TIME_UNITS, VISIBILITY,
-                                        check_options, load_index, render_scene)
+from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, SHEET_SOURCES, STEP_ORDERS, TIME_UNITS,
+                                        VISIBILITY, check_options, load_index, render_scene)
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -94,7 +95,7 @@ def main():
     ap.add_argument("--echo-system", action="store_true", help="system prompt that mentions the repeated question")
     ap.add_argument("--vggt-root", default=str(VGGT_DIR),
                     help="VGGT outputs used by --sampling sa (data/vggt_portrait_rotated for Spatial-MLLM's rotated portrait frames)")
-    ap.add_argument("--sheet-source", choices=["pipeline", "gold"],
+    ap.add_argument("--sheet-source", choices=SHEET_SOURCES,
                     help="add each question's scene sheet between the video and the question (mvp.benchmarks.scene_sheet); "
                          "only questions in the sheets' index.csv are evaluated")
     ap.add_argument("--sheet-format", choices=SHEET_FORMATS,
