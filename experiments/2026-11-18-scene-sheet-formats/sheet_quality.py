@@ -3,12 +3,16 @@ compare, which pipeline sheets are empty. Writes sheet_quality.md (next to this 
 
   PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/sheet_quality.py \
       [--root data/scene_sheets_75] [--vggt-root data/vggt] [--out experiments/2026-11-18-scene-sheet-formats/sheet_quality.md]
+  PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/sheet_quality.py --v2   # section 6 only, printed
 
---vggt-root is only needed for the example sheets' first_seen (each video's meta.json).
+--vggt-root is only needed for the example sheets' first_seen (each video's meta.json). Section 6 compares explore.ipynb's
+pipeline_v2 (explore_sheets.py: fragments removed, split objects merged, in metres with the ORACLE per-scene scale)
+with gold, and chooses its merge threshold.
 """
 import argparse
 import csv
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -249,6 +253,145 @@ def examples(Q, C, root, vggt_root):
     return "\n\n".join(out)
 
 
+# ---- section 6: pipeline_v2 against gold ----
+
+THRESHOLDS = [0.0, 0.3, 0.5, 1.0, 1.5, 2.0, 3.0]  # merge thresholds tried, metres between centres
+RULE_TYPES = ["object_counting", "object_size_estimation", "object_abs_distance", "object_rel_distance"]
+MRA_THRESHOLDS = np.arange(0.5, 1.0, 0.05)
+
+
+def mra(pred, gt):
+    """VSI-Bench's mean relative accuracy."""
+    return float(np.mean([abs(pred - gt) / gt < 1 - t for t in MRA_THRESHOLDS]))
+
+
+def box_gap(a, b):
+    return float(np.linalg.norm(np.maximum(0, np.maximum(a["lo"] - b["hi"], b["lo"] - a["hi"]))))
+
+
+def rule_score(q, boxes):
+    """A fixed rule's score on the question, reading only the sheet (0 when it lacks the objects): counting counts
+    the class's rows, object size takes the longest side of its largest box (cm), absolute distance the smallest gap
+    between the two classes' boxes, relative distance the candidate whose boxes come closest to the target."""
+    names = [p.strip() for p in q["prompts"].split(",") if p.strip() != "room"]
+    of = lambda c: [b for b in boxes if b["concept"] == c]
+    t, gt = q["question_type"], q["ground_truth"]
+    if t == "object_counting":
+        return mra(len(of(names[0])), float(gt)) if of(names[0]) else 0.0
+    if t == "object_size_estimation":
+        b = of(names[0])
+        return mra(max(float((x["hi"] - x["lo"]).max()) for x in b) * 100, float(gt)) if b else 0.0
+    if t == "object_abs_distance":
+        d = [box_gap(a, b) for a in of(names[0]) for b in of(names[1])] if len(names) > 1 else []
+        return mra(min(d), float(gt)) if d and min(d) > 0 else 0.0
+    *candidates, target = names
+    g = [min([box_gap(a, b) for a in of(c) for b in of(target)], default=np.inf) for c in candidates]
+    return float(np.isfinite(min(g)) and "ABCD"[int(np.argmin(g))] == gt)
+
+
+def v2_numbers(root, explore_ids=HERE / "explore_ids.txt"):
+    """Count match, size error and fixed-rule scores for the pipeline sheet in metres (oracle scale), with fragments
+    removed, and pipeline_v2; the merge threshold is the one with the best mean fixed-rule score on the scenes outside
+    explore_ids.txt."""
+    sys.path.insert(0, str(HERE))
+    import explore_sheets as es
+    index = es.index_rows(root)
+    scales = es.oracle_scales(root, sorted({r["scene"] for r in index}))
+    explore = {int(x) for x in Path(explore_ids).read_text().split()} if Path(explore_ids).exists() else set()
+    held = {r["scene"] for r in index if int(r["id"]) in explore}
+    by_folder, raw, gold, cache = es.folder_questions(root), {}, {}, {}
+
+    def boxes(folder, scene, variant):
+        if (folder, variant) not in cache:
+            if folder not in raw:
+                raw[folder] = es.read_csv(root / folder / "objects.csv")[0]
+            k, qs = scales[scene]["scale"], by_folder[folder]
+            if variant == "oracle":
+                cache[(folder, variant)] = [es.as_box(r, k) for r in raw[folder]]
+            elif variant == "filtered":
+                cache[(folder, variant)] = [es.as_box(r, k) for r in raw[folder] if es.keep_row(r["concept"], qs)]
+            else:
+                cache[(folder, variant)] = es.v2_boxes(raw[folder], qs, k, *variant)
+        return cache[(folder, variant)]
+
+    def evaluate(variant, scene_set):
+        match, n, size_err, rows, rules = 0, 0, [], 0, {t: [] for t in RULE_TYPES}
+        for q in index:
+            if q["scene"] not in scene_set or q["scene"] not in scales or q["question_type"] == "room_size_estimation":
+                continue
+            if q["gold_sheet"] not in gold:
+                gold[q["gold_sheet"]] = es.read_csv(root / q["gold_sheet"] / "objects.csv")[0]
+            b = boxes(q["pipeline_sheet"], q["scene"], variant)
+            rows += len(b)
+            if q["question_type"] in rules:
+                rules[q["question_type"]].append(rule_score(q, b))
+            for c in [p.strip() for p in q["prompts"].split(",") if p.strip() != "room"]:
+                g = [r for r in gold[q["gold_sheet"]] if r["concept"] == c]
+                p = [x for x in b if x["concept"] == c]
+                if not g:
+                    continue
+                n += 1
+                match += len(p) == len(g)
+                if len(g) == 1 and p:
+                    gl = max(float(g[0][k]) for k in ("size_x", "size_y", "size_z"))
+                    size_err.append(abs(max(float((x["hi"] - x["lo"]).max()) for x in p) / gl - 1))
+        e = np.array(size_err)
+        rules = {t: 100 * float(np.mean(v)) for t, v in rules.items()}
+        return dict(match=match / n, pairs=n, size_median=float(np.median(e)), size_25=float((e < 0.25).mean()),
+                    size_n=len(e), rows=rows, rules=rules, rule_mean=float(np.mean(list(rules.values()))))
+
+    tune = [s for s in scales if s not in held]
+    grid = {(th, dj): evaluate((th, dj), tune) for th in THRESHOLDS for dj in (True, False)}
+    best = max(grid, key=lambda v: (round(grid[v]["rule_mean"], 3), v[1], -v[0]))
+    rows = {"pipeline (oracle scale)": evaluate("oracle", list(scales)),
+            "fragments removed": evaluate("filtered", list(scales)),
+            "pipeline_v2": evaluate(best, list(scales))}
+    explore_rows = {name: evaluate(v, sorted(held & set(scales)))
+                    for name, v in [("pipeline (oracle scale)", "oracle"), ("pipeline_v2", best)]}
+    return dict(scales=scales, held=held, tune=tune, grid=grid, best=best, rows=rows, explore=explore_rows,
+                current=(es.MERGE_THRESHOLD, True))
+
+
+def v2_section(root):
+    v = v2_numbers(root)
+    methods = pd.Series([s["method"] for s in v["scales"].values()]).value_counts()
+    short = {"object_counting": "count", "object_size_estimation": "size", "object_abs_distance": "abs. dist.",
+             "object_rel_distance": "rel. dist."}
+    lines = ["## 6. pipeline_v2 against gold", "",
+             "`pipeline_v2` (explore.ipynb, `explore_sheets.py`) is the pipeline sheet with room/wall/floor/ceiling "
+             "fragments removed (kept where a question other than counting or room size names them) and split "
+             "objects merged, in metres with the **oracle** per-scene scale fitted to gold. Pairs are (question, named "
+             f"class) with the class in the gold sheet, as in section 3, over the {len(v['scales'])} scenes with an "
+             f"oracle scale ({', '.join(f'{n} by {m}' for m, n in methods.items())}). Size error: |pipeline / gold − 1| "
+             "of the longest side where gold has one object of the class. Rule: the score of a fixed rule reading only "
+             "the sheet, against VSI-Bench's answers (×100; `rule_score`).", "",
+             f"**Merge threshold**, chosen on the {len(v['tune'])} scenes outside `explore_ids.txt` by the mean rule "
+             "score. Count match alone keeps rising as rows are joined, because most classes have one gold object; the "
+             "rules fall once different objects are joined.", "",
+             "| Threshold (m) | Rows | Count = gold | Rule: " + " / ".join(short.values()) + " | Rule mean |",
+             "|---|---|---:|---:|---:|"]
+    for dj in (True, False):
+        for th in THRESHOLDS:
+            a = v["grid"][(th, dj)]
+            lines.append(f"| {th} | {'never seen together' if dj else 'any'} | {pct(a['match'])} | "
+                         + " / ".join(f"{a['rules'][t]:.1f}" for t in short) + f" | {a['rule_mean']:.1f} |")
+    chosen = f"{v['best'][0]} m, {'rows never seen in the same frame' if v['best'][1] else 'any rows'}"
+    lines += ["", f"Chosen: {chosen} (`explore_sheets.MERGE_THRESHOLD`: {v['current'][0]} m, never seen together"
+              f"{'' if v['current'] == v['best'] else ' - DIFFERENT, update it'}).", "",
+              "| Sheet | Pairs | Rows | Count = gold | Size error (median) | Size within 25% | Rule: "
+              + " / ".join(short.values()) + " |", "|---|---:|---:|---:|---:|---:|---:|"]
+    for name, r in v["rows"].items():
+        lines.append(f"| {name} | {num(r['pairs'])} | {num(r['rows'])} | {pct(r['match'])} | {pct(r['size_median'])} | "
+                     f"{pct(r['size_25'])} ({num(r['size_n'])}) | " + " / ".join(f"{r['rules'][t]:.1f}" for t in short) + " |")
+    lines += ["", f"On the explore questions' {len(v['held'])} scenes:", "",
+              "| Sheet | Pairs | Count = gold | Size error (median) | Rule: " + " / ".join(short.values()) + " |",
+              "|---|---:|---:|---:|---:|"]
+    for name, r in v["explore"].items():
+        lines.append(f"| {name} | {r['pairs']} | {pct(r['match'])} | {pct(r['size_median'])} | "
+                     + " / ".join(f"{r['rules'][t]:.1f}" for t in short) + " |")
+    return "\n".join(lines) + "\n", v
+
+
 def report(root, vggt_root):
     Q, C = load(root)
     cov, emp, cnt, sz = coverage(Q, C), empties(Q), counts(Q, C), sizes(C)
@@ -260,6 +403,7 @@ def report(root, vggt_root):
     count_room = cnt["room_rows"] / cnt["count_rows"]
     by_type = ", ".join(f"{TYPES[t].lower()} {pct(v, 0)}" for t, v in m["by_type"].items() if t != "route_planning")
 
+    v2_text, _ = v2_section(root)
     return f"""# Pipeline vs gold scene sheets
 
 <!-- Written by sheet_quality.py in this folder; edit that, not this file. -->
@@ -414,7 +558,8 @@ Pipeline rows are in VGGT units with the camera axes; gold rows are in metres, z
   - appearance order: {pct(order_missing, 0)} of questions are missing at least one object;
   - counting: the right count in only {pct(cnt['count_exact'] / cnt['count_n'], 0)}, and {pct(count_room, 0)} of rows
     are `room` noise.
-"""
+
+{v2_text}"""
 
 
 def main():
@@ -422,7 +567,11 @@ def main():
     ap.add_argument("--root", default=str(SCENE_SHEETS))
     ap.add_argument("--vggt-root", default=str(VGGT_DIR))
     ap.add_argument("--out", default=str(HERE / "sheet_quality.md"))
+    ap.add_argument("--v2", action="store_true", help="print section 6 (pipeline_v2 against gold) only")
     args = ap.parse_args()
+    if args.v2:
+        print(v2_section(Path(args.root))[0])
+        return
     text = report(Path(args.root), Path(args.vggt_root))
     Path(args.out).write_text(text)
     print(f"wrote {args.out}")
