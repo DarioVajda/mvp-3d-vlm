@@ -10,9 +10,10 @@ never written. Nothing here writes to the sheets folder.
   render_sheet(question_id, source, fmt)      the objects. source: pipeline | gold; fmt: one of SHEET_FORMATS, where
                                               "narrative" is objects and cameras told as one walk through the frames
                                               (pipeline only)
-  render_cameras(question_id, camera_fmt)     the pipeline's cameras. camera_fmt: one of CAMERA_FORMATS, where "text" is
-                                              the compass directions of camera_sheet_format_converter.py, frame by frame
-  render_scene(question_id, source, fmt, camera_fmt)   what the prompt carries: objects, then cameras (None: neither)
+  render_cameras(question_id, fmt)            the pipeline's cameras. fmt: one of FORMATS, where "text" is the compass
+                                              directions of camera_sheet_format_converter.py, frame by frame
+  render_scene(question_id, source, fmt, cameras)   what the prompt carries: the objects, then with cameras=True the
+                                              cameras in the same format (pipeline only; None: no objects)
   build_sheet_prompt(question_id, source, fmt)  the whole text input the eval sends with that sheet
 
 time_unit, for all of them: "seconds" (the default) writes a frame as the video timestamp the model's video input shows
@@ -51,8 +52,7 @@ from mvp.paths import SCENE_SHEETS, VGGT_DIR
 SOURCES = ["pipeline", "gold"]
 FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]  # the object sheet's layouts, both sources
 NARRATIVE = "narrative"  # objects and cameras as one walk through the frames: pipeline only
-SHEET_FORMATS = FORMATS + [NARRATIVE]
-CAMERA_FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]
+SHEET_FORMATS = FORMATS + [NARRATIVE]  # cameras are written in the objects' format, so in one of FORMATS
 TIME_UNITS = ["seconds", "frames"]
 VISIBILITY = ["bridged", "exact"]  # bridged: a gap of up to MAX_GAP missed frames between two sightings counts as seen
 MAX_GAP = 1
@@ -465,11 +465,11 @@ def label_lines(sentences, labels, time_unit="seconds"):
 
 def render_cameras(question_id, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds",
                    step_order="move-turn"):
-    """The question's camera sheet as prompt text: a table format of CAMERA_FORMATS (the canonical camera list), or
-    "text", the compass directions of camera_sheet_format_converter.py with each move's length, one line per frame,
-    each step said in step_order."""
-    if fmt not in CAMERA_FORMATS:
-        raise ValueError(f"camera format must be one of {CAMERA_FORMATS}, not {fmt!r}")
+    """The question's camera sheet as prompt text: a table format of FORMATS (the canonical camera list), or "text",
+    the compass directions of camera_sheet_format_converter.py with each move's length, one line per frame, each step
+    said in step_order."""
+    if fmt not in FORMATS:
+        raise ValueError(f"the cameras' format must be one of {FORMATS}, not {fmt!r}")
     check_time_unit(time_unit)
     check_step_order(step_order)
     if fmt == "text":
@@ -651,29 +651,30 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
 
 # ---- one question's scene information ----
 
-def check_options(source, fmt, camera_fmt=None, time_unit="seconds", visibility="bridged", step_order="move-turn",
+def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="bridged", step_order="move-turn",
                   object_directions="floor"):
     """ValueError if these sheet options are unknown or contradict each other. fmt is ignored without a source,
     visibility without pipeline objects, step_order without the camera text or the narrative, and object_directions
-    without the narrative.
-      - gold objects with cameras, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and
-        the only cameras are VGGT's, in another frame and scale, with nothing to align the two by
-      - the narrative with a camera format: the narrative already tells the cameras"""
+    without the narrative. cameras (in fmt, the objects' format) contradict:
+      - no objects: cameras only come with the pipeline's objects
+      - gold objects, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and the only
+        cameras are VGGT's, in another frame and scale, with nothing to align the two by
+      - the narrative: it already tells the cameras"""
     if source is not None and source not in SOURCES:
         raise ValueError(f"source must be one of {SOURCES} or None, not {source!r}")
     if source is not None and fmt not in SHEET_FORMATS:
         raise ValueError(f"the sheet format must be one of {SHEET_FORMATS}, not {fmt!r}")
-    if camera_fmt is not None and camera_fmt not in CAMERA_FORMATS:
-        raise ValueError(f"the camera format must be one of {CAMERA_FORMATS} or None, not {camera_fmt!r}")
     check_time_unit(time_unit)
     check_visibility(visibility)
     check_step_order(step_order)
     check_object_directions(object_directions)
-    if source == "gold" and (camera_fmt or fmt == NARRATIVE):
+    if cameras and source is None:
+        raise ValueError("the cameras only come with the pipeline's objects: give the pipeline sheet as the source")
+    if source == "gold" and (cameras or fmt == NARRATIVE):
         raise ValueError("gold sheets have no cameras: they are in metres in the dataset's frame, and the only cameras "
-                         "are VGGT's, in another frame and scale (so no camera format, and no narrative)")
-    if source == "pipeline" and fmt == NARRATIVE and camera_fmt:
-        raise ValueError("the narrative already tells where the camera goes: give no camera format with it")
+                         "are VGGT's, in another frame and scale (so no cameras, and no narrative)")
+    if fmt == NARRATIVE and cameras:
+        raise ValueError("the narrative already tells where the camera goes: don't ask for the cameras with it")
 
 
 def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds",
@@ -682,7 +683,7 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
     pipeline only, with its cameras). vggt_root holds each video's meta.json (its fps, for timestamps)."""
     if source not in SOURCES or fmt not in SHEET_FORMATS:
         raise ValueError(f"source must be one of {SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, {fmt!r}")
-    check_options(source, fmt, None, time_unit, visibility, step_order, object_directions)
+    check_options(source, fmt, False, time_unit, visibility, step_order, object_directions)
     if fmt == NARRATIVE:
         return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions)
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
@@ -690,23 +691,18 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
     return render_objects(objects, source, fmt, volume, time_unit, visibility)
 
 
-def render_scene(question_id, source=None, fmt=None, camera_fmt=None, root=SCENE_SHEETS, vggt_root=VGGT_DIR,
+def render_scene(question_id, source=None, fmt=None, cameras=False, root=SCENE_SHEETS, vggt_root=VGGT_DIR,
                  time_unit="seconds", visibility="bridged", step_order="move-turn", object_directions="floor"):
-    """What the prompt carries about the scene: the objects (source and fmt), then the cameras (camera_fmt), or
-    either alone. None when there is neither. Contradictory options raise ValueError (check_options)."""
-    check_options(source, fmt, camera_fmt, time_unit, visibility, step_order, object_directions)
-    parts = ([render_sheet(question_id, source, fmt, root, vggt_root=vggt_root, time_unit=time_unit,
-                           visibility=visibility, step_order=step_order, object_directions=object_directions)]
-             if source else [])
-    if camera_fmt:
-        parts.append(render_cameras(question_id, camera_fmt, root, vggt_root, time_unit, step_order))
-    return "\n".join(parts) if parts else None
-
-
-def sheet_kind(source, camera_fmt=None):
-    """Where the scene information comes from, for the chain-of-thought instructions (vsibench.cot_prompt): 'gold'
-    (labels, in metres), 'pipeline' (computed from the video, in relative units; cameras are always this) or None."""
-    return source or ("pipeline" if camera_fmt else None)
+    """What the prompt carries about the scene: the objects (source and fmt), then, with cameras, the pipeline's
+    cameras in the same format. None without a source. Contradictory options raise ValueError (check_options)."""
+    check_options(source, fmt, cameras, time_unit, visibility, step_order, object_directions)
+    if source is None:
+        return None
+    parts = [render_sheet(question_id, source, fmt, root, vggt_root=vggt_root, time_unit=time_unit,
+                          visibility=visibility, step_order=step_order, object_directions=object_directions)]
+    if cameras:
+        parts.append(render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order))
+    return "\n".join(parts)
 
 
 # ---- the whole prompt ----
@@ -723,13 +719,13 @@ VIDEO_PAD = "<|video_pad|>"
 
 
 def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None,
-                       camera_fmt=None, time_unit="seconds", reasoning="direct", visibility="bridged",
+                       cameras=False, time_unit="seconds", reasoning="direct", visibility="bridged",
                        step_order="move-turn", object_directions="floor"):
     """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
     question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the scene
-    information (render_scene) after "These are frames of a video." and the question. source None and camera_fmt None
-    give the video-only prompt (condition A). reasoning: one of vsibench.REASONING ("cot": think step by step, end on
-    "Answer: X").
+    information (render_scene: the objects, and with cameras the cameras in the same format) after "These are frames
+    of a video." and the question. source None gives the video-only prompt (condition A). reasoning: one of
+    vsibench.REASONING ("cot": think step by step, end on "Answer: X").
 
     Each frame pair's video tokens are written as one <|video_pad|>, or as "<|video_pad|> x frame_tokens", which is
     how QwenVL.render_prompt (--print-prompt) writes them, so the two can be compared. The question comes from
@@ -737,9 +733,9 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
     row = load_index(root)[int(question_id)]
     doc = {"question_type": row["question_type"], "question": row["question"],
            "options": row["options"].split(" | ") if row["options"] else None}
-    sheet = render_scene(question_id, source, fmt, camera_fmt, root, vggt_root, time_unit, visibility, step_order,
+    sheet = render_scene(question_id, source, fmt, cameras, root, vggt_root, time_unit, visibility, step_order,
                          object_directions)
-    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, sheet_kind(source, camera_fmt))
+    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, source)
     # the video's labels are the pipeline frames' timestamps, whichever sheet goes in, and always in seconds
     times = frame_timestamps((Path(root) / row["pipeline_sheet"]).parents[1] / "scene", row["scene"], Path(vggt_root))
     pad = VIDEO_PAD if frame_tokens is None else f"{VIDEO_PAD} x {frame_tokens}"
@@ -764,7 +760,7 @@ def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, 
                                              object_directions=object_directions)
              for source in SOURCES for fmt in SHEET_FORMATS if source == "pipeline" or fmt != NARRATIVE}
     texts.update({f"cameras_{fmt}": render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order)
-                  for fmt in CAMERA_FORMATS})
+                  for fmt in FORMATS})
     defaults = {"seconds", "bridged", "move-turn", "floor"}
     suffix = "".join(f"_{option}" for option in (time_unit, visibility, step_order, object_directions)
                      if option not in defaults)
@@ -784,7 +780,7 @@ def token_table(count, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds
                                                                      object_directions=object_directions))
                for source in SOURCES for fmt in (SHEET_FORMATS if source == "pipeline" else FORMATS)]
     renders += [("cameras", fmt, lambda q, f=fmt: render_cameras(q, f, root, vggt_root, time_unit, step_order))
-                for fmt in CAMERA_FORMATS]
+                for fmt in FORMATS]
     lines = ["| source | format | mean | median | max | question with max |", "|---|---|---|---|---|---|"]
     for source, fmt, render in renders:
         counts = {q: count(render(q)) for q in ids}
@@ -804,7 +800,8 @@ def main():
     ap.add_argument("--prompt", action="store_true", help="print --question's whole prompt (build_sheet_prompt)")
     ap.add_argument("--source", choices=SOURCES + ["none"], default="pipeline", help="for --prompt; none: no objects")
     ap.add_argument("--format", choices=SHEET_FORMATS, default="csv", help="for --prompt")
-    ap.add_argument("--camera-format", choices=CAMERA_FORMATS, help="for --prompt: add the cameras in this format")
+    ap.add_argument("--cameras", action="store_true",
+                    help="for --prompt: add the pipeline's cameras, in the objects' format")
     ap.add_argument("--reasoning", choices=REASONING, default="direct", help="for --prompt")
     ap.add_argument("--time-unit", choices=TIME_UNITS, default="seconds", help="how the sheets write frames")
     ap.add_argument("--visibility", choices=VISIBILITY, default="bridged",
@@ -818,7 +815,7 @@ def main():
     root, vggt_root = Path(args.root), Path(args.vggt_root)
     if args.prompt:
         source = None if args.source == "none" else args.source
-        print(build_sheet_prompt(args.question, source, args.format, root, vggt_root, camera_fmt=args.camera_format,
+        print(build_sheet_prompt(args.question, source, args.format, root, vggt_root, cameras=args.cameras,
                                  time_unit=args.time_unit, reasoning=args.reasoning, visibility=args.visibility,
                                  step_order=args.step_order, object_directions=args.object_directions))
         return

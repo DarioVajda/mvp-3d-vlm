@@ -8,8 +8,7 @@
   python -m mvp.eval.vsibench --fusion-ckpt results/train/2B_xattn/final.pt --nframes 32 ...  # a trained arm (images)
   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source pipeline \
       --sheet-format json ...  # + scene sheet (mvp.benchmarks.scene_sheet); Qwen3.5 runs with thinking off
-  python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format csv --camera-format markdown_table
-  python -m mvp.eval.vsibench ... --camera-format text            # cameras only (compass directions), no objects
+  python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format markdown_table --cameras  # + its cameras
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format narrative --time-unit frames
   python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
   python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
@@ -26,8 +25,8 @@ import pandas as pd
 
 from pathlib import Path
 
-from mvp.benchmarks.scene_sheet import (CAMERA_FORMATS, OBJECT_DIRECTIONS, SHEET_FORMATS, STEP_ORDERS, TIME_UNITS,
-                                        VISIBILITY, check_options, load_index, render_scene, sheet_kind)
+from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, STEP_ORDERS, TIME_UNITS, VISIBILITY,
+                                        check_options, load_index, render_scene)
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -39,10 +38,10 @@ MIN_COT_TOKENS = 256  # fewer leaves no room to reason
 def prompt_parts(d, args):
     """(text before the video, text after it) for question d: the scene information the options ask for, the
     layout and the reasoning instructions."""
-    sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.camera_format, Path(args.sheets_root),
+    sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.cameras, Path(args.sheets_root),
                           Path(args.vggt_root), args.time_unit, args.visibility, args.step_order,
                           args.object_directions) if args.sheets else None)
-    return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.camera_format))
+    return build_prompt_parts(d, args.layout, sheet, args.reasoning, args.sheet_source)
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -99,11 +98,12 @@ def main():
                     help="add each question's scene sheet between the video and the question (mvp.benchmarks.scene_sheet); "
                          "only questions in the sheets' index.csv are evaluated")
     ap.add_argument("--sheet-format", choices=SHEET_FORMATS,
-                    help="how the scene sheet's objects are written (default csv); narrative: objects and cameras as "
+                    help="how the scene sheet is written, its objects and with --cameras its cameras (default csv; "
+                         "text: the cameras as compass directions, frame by frame); narrative: objects and cameras as "
                          "one walk through the frames (pipeline only)")
-    ap.add_argument("--camera-format", choices=CAMERA_FORMATS,
-                    help="add the pipeline sheet's cameras, written this way (text: compass directions, frame by "
-                         "frame); with or without --sheet-source pipeline, not with gold sheets or the narrative")
+    ap.add_argument("--cameras", action="store_true",
+                    help="add the pipeline sheet's cameras after its objects, in --sheet-format; needs --sheet-source "
+                         "pipeline and a format other than narrative, which has them already")
     ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
                     help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
                          "1-16 (the video's own labels are always seconds)")
@@ -111,7 +111,7 @@ def main():
                     help="which frames a pipeline object counts as visible in (its 'visible' ranges, the narrative): "
                          "bridged, one missed frame between two sightings counts as seen; exact, only detections")
     ap.add_argument("--step-order", default="move-turn", choices=STEP_ORDERS,
-                    help="how --camera-format text and the narrative word each step between two frames: move then "
+                    help="how the cameras as text and the narrative word each step between two frames: move then "
                          "turn, or turn then move (the narrative's moves are relative to where the camera faces as it "
                          "moves, so the order can change their words)")
     ap.add_argument("--object-directions", default="floor", choices=OBJECT_DIRECTIONS,
@@ -147,11 +147,11 @@ def main():
     if args.sheet_source and args.sheet_format is None:
         args.sheet_format = "csv"
     try:
-        check_options(args.sheet_source, args.sheet_format, args.camera_format, args.time_unit, args.visibility,
+        check_options(args.sheet_source, args.sheet_format, args.cameras, args.time_unit, args.visibility,
                       args.step_order, args.object_directions)
     except ValueError as e:
         ap.error(str(e))
-    args.sheets = bool(args.sheet_source or args.camera_format)
+    args.sheets = bool(args.sheet_source)
     if args.reasoning == "cot":
         args.final_answer = True
         if args.max_new_tokens is None:
@@ -177,7 +177,7 @@ def main():
         df = df[df["id"].isin([int(l) for l in open(args.ids) if l.strip()])]
     if args.sheets:
         with_sheets = df["id"].isin(load_index(Path(args.sheets_root)))
-        print(f"scene sheets (objects {args.sheet_source}, {args.sheet_format}; cameras {args.camera_format}; "
+        print(f"scene sheets (objects {args.sheet_source}, {args.sheet_format}; cameras {args.cameras}; "
               f"{args.time_unit}; visibility {args.visibility}; steps {args.step_order}; object directions "
               f"{args.object_directions}): {with_sheets.sum()} of "
               f"{len(df)} questions have one; "
@@ -264,7 +264,7 @@ def main():
                    "layout": args.layout, "system": system, "fps": args.fps, "max_new_tokens": args.max_new_tokens,
                    "final_answer": args.final_answer, "reasoning": args.reasoning, "split": args.split,
                    "scene_sheet": {"source": args.sheet_source, "format": args.sheet_format,
-                                   "camera_format": args.camera_format, "time_unit": args.time_unit,
+                                   "cameras": args.cameras, "time_unit": args.time_unit,
                                    "visibility": args.visibility, "step_order": args.step_order,
                                    "object_directions": args.object_directions,
                                    "root": args.sheets_root}

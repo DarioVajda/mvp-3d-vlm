@@ -56,8 +56,8 @@ def task_of(question_type):
 def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None):
     """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question.
     reasoning: "direct" (lmms-eval's prompt: answer at once) or "cot" (reason step by step first, then end on
-    "Answer: X", which score_final reads; cot_prompt). sheet_kind: where the sheet comes from (scene_sheet.sheet_kind),
-    for cot's instructions."""
+    "Answer: X", which score_final reads; cot_prompt). sheet_kind: where the sheet comes from, its source ('pipeline'
+    or 'gold'), for cot's instructions."""
     pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
     if reasoning not in REASONING:
         raise ValueError(f"reasoning must be one of {REASONING}, not {reasoning!r}")

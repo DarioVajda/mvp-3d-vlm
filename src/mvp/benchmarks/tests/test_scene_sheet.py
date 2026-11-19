@@ -387,7 +387,7 @@ class Synthetic(unittest.TestCase):
             canonical = ss.load_cameras(1, self.root, self.vggt, time_unit)
             self.assertEqual(len(canonical), 16)
             self.assertEqual(list(canonical[0]), ss.camera_fields(time_unit))
-            for fmt in ss.CAMERA_FORMATS:
+            for fmt in ss.FORMATS:
                 rendered = ss.render_cameras(1, fmt, self.root, self.vggt, time_unit)
                 self.assertNotIn("image", rendered)
                 self.assertNotIn(".jpg", rendered)
@@ -532,39 +532,39 @@ class Synthetic(unittest.TestCase):
     # ---- every combination of options ----
 
     def test_scene_combines_objects_and_cameras(self):
-        both = ss.render_scene(1, "pipeline", "csv", "json", self.root, self.vggt)
-        self.assertEqual(both, self.render(1, "pipeline", "csv") + "\n"
-                         + ss.render_cameras(1, "json", self.root, self.vggt))
-        self.assertEqual(ss.render_scene(1, None, None, "text", self.root, self.vggt),
-                         ss.render_cameras(1, "text", self.root, self.vggt))
-        self.assertIsNone(ss.render_scene(1, None, None, None, self.root, self.vggt))
-        self.assertEqual(ss.sheet_kind(None, "csv"), "pipeline")
-        self.assertEqual(ss.sheet_kind("gold"), "gold")
-        self.assertIsNone(ss.sheet_kind(None))
+        """The cameras come after the objects, in the objects' format; never alone, with gold or with the narrative."""
+        for fmt in ss.FORMATS:
+            self.assertEqual(ss.render_scene(1, "pipeline", fmt, True, self.root, self.vggt),
+                             self.render(1, "pipeline", fmt) + "\n" + ss.render_cameras(1, fmt, self.root, self.vggt))
+        self.assertEqual(ss.render_scene(1, "pipeline", "csv", False, self.root, self.vggt),
+                         self.render(1, "pipeline", "csv"))
+        self.assertIsNone(ss.render_scene(1, None, None, False, self.root, self.vggt))
+        for source, fmt in [(None, "csv"), ("gold", "csv"), ("pipeline", ss.NARRATIVE)]:
+            with self.assertRaises(ValueError):
+                ss.render_scene(1, source, fmt, True, self.root, self.vggt)
 
     def test_every_combination(self):
         """Each combination of options gives a prompt, unless it is one of the contradictory ones, which raise."""
         from mvp.benchmarks import vsibench
-        for q, source, fmt, camera_fmt, time_unit, reasoning, visibility, step_order, object_directions in \
-                itertools.product((1, 2), [None] + ss.SOURCES, [None] + ss.SHEET_FORMATS, [None] + ss.CAMERA_FORMATS,
+        for q, source, fmt, cameras, time_unit, reasoning, visibility, step_order, object_directions in \
+                itertools.product((1, 2), [None] + ss.SOURCES, [None] + ss.SHEET_FORMATS, [False, True],
                                   ss.TIME_UNITS, vsibench.REASONING, ss.VISIBILITY, ss.STEP_ORDERS,
                                   ss.OBJECT_DIRECTIONS):
             if object_directions != "floor" and fmt != ss.NARRATIVE:
                 continue  # only the narrative says where objects are
-            options = (q, source, fmt, camera_fmt, time_unit, reasoning, visibility, step_order, object_directions)
-            contradictory = source is not None and (
-                fmt is None or (source == "gold" and (camera_fmt or fmt == ss.NARRATIVE))
-                or (fmt == ss.NARRATIVE and camera_fmt))
+            options = (q, source, fmt, cameras, time_unit, reasoning, visibility, step_order, object_directions)
+            contradictory = (cameras and source != "pipeline") or source is not None and (
+                fmt is None or (source == "gold" and fmt == ss.NARRATIVE) or (fmt == ss.NARRATIVE and cameras))
             if contradictory:
                 with self.assertRaises(ValueError, msg=options):
-                    ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, camera_fmt=camera_fmt,
+                    ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, cameras=cameras,
                                           time_unit=time_unit, reasoning=reasoning, visibility=visibility,
                                           step_order=step_order, object_directions=object_directions)
                 continue
-            prompt = ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, camera_fmt=camera_fmt,
+            prompt = ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, cameras=cameras,
                                            time_unit=time_unit, reasoning=reasoning, visibility=visibility,
                                            step_order=step_order, object_directions=object_directions)
-            scene = ss.render_scene(q, source, fmt, camera_fmt, self.root, self.vggt, time_unit, visibility,
+            scene = ss.render_scene(q, source, fmt, cameras, self.root, self.vggt, time_unit, visibility,
                                     step_order, object_directions)
             text = prompt.split("<|vision_end|><|vision_end|>", 1)[1]  # after the video
             self.assertTrue(text.startswith("These are frames of a video.\n" + (scene + "\n" if scene else "")),
@@ -574,10 +574,11 @@ class Synthetic(unittest.TestCase):
             self.assertEqual('"Answer: X"' in text, reasoning == "cot", options)
             self.assertEqual("scene information" in text, reasoning == "cot" and scene is not None, options)
             if scene is not None:
-                self.assertEqual("second" in scene,
-                                 time_unit == "seconds" and (source == "pipeline" or camera_fmt is not None), options)
+                self.assertEqual("second" in scene, time_unit == "seconds" and source == "pipeline", options)
                 self.assertEqual("Frame 1:" in scene, time_unit == "frames"
-                                 and ((source and fmt == ss.NARRATIVE) or camera_fmt == "text"), options)
+                                 and (fmt == ss.NARRATIVE or (cameras and fmt == "text")), options)
+                self.assertEqual("Camera sheet" in scene, cameras and fmt != "text", options)  # the camera tables
+                self.assertEqual("Camera path" in scene, cameras and fmt == "text", options)  # the compass text
                 self.assertEqual(ss.BRIDGED_NOTE in scene, source == "pipeline" and visibility == "bridged", options)
                 self.assertNotIn("first_seen", scene, options)
                 self.assertNotIn("num_frames", scene, options)
