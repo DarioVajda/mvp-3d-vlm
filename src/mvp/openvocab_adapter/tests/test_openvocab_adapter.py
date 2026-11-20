@@ -34,6 +34,7 @@ import camera_sheet_format_converter  # noqa: E402
 import common  # noqa: E402
 import compare  # noqa: E402
 import question_scene_sheet  # noqa: E402
+import reconstruct_pipeline  # noqa: E402
 import scene_sheet_creator  # noqa: E402
 import scene_sheet_report  # noqa: E402
 
@@ -1531,6 +1532,138 @@ class SceneSheetReport(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
             scene_sheet_report.main(base)
         self.assertIn("spacy", err.getvalue())
+
+
+def make_sheet_run(root, questions):
+    """A finished sheet run in the layout of data/scene_sheets_75/: index.csv and one scene, scannet/s1, with its
+    saved geometry and tracks (chair and table, each seen in all 3 frames), SAM 3's masks, and a pipeline and a gold
+    sheet folder per question, each holding its question.json and a stale file. Returns the scene folder."""
+    scene_dir = root / "scannet__s1"
+    work = scene_dir / "subset-uniform16"
+    scene_out = work / "scene"
+    (scene_out / "tracks").mkdir(parents=True)
+    (work / "masks" / "chair").mkdir(parents=True)
+    (work / "masks" / "chair" / "manifest.json").write_text("{}")
+    frames, h, w = 3, 12, 16
+    np.savez(scene_out / "cameras.npz", extrinsic=np.tile(np.eye(3, 4), (frames, 1, 1)),
+             intrinsic=np.tile([[20.0, 0, w / 2], [0, 20.0, h / 2], [0, 0, 1]], (frames, 1, 1)),
+             image_paths=np.array([f"/cluster/frames/{t:03d}.jpg" for t in range(frames)]))
+    depth = 2 + 0.1 * np.random.default_rng(0).random((frames, h, w))
+    np.savez_compressed(scene_out / "depth.npz", depth=depth.astype(np.float16), conf=np.ones((frames, h, w), np.float16))
+    (scene_out / "adapter_report.json").write_text(json.dumps(
+        {"scene": "scannet/s1", "selected_frames": [0, 4, 7], "depth_source": "dense", "image_hw": [h, w]}))
+    for prompt, pixels in {"chair": np.s_[:, :6, :6], "table": np.s_[:, 6:, 8:]}.items():
+        labels = np.zeros((frames, h, w), np.int32)
+        labels[pixels] = 1  # 36 and 48 pixels a frame: seen, under question.json's min_points of 20
+        np.savez(scene_out / "tracks" / f"{prompt}.npz", labels=labels)
+    settings = {"subset-uniform16": {"tracking": {"conf_percentile": 55.0, "min_points": 20}, "size": True,
+                                     "relative_positions": False, "size_trim": 0.02, "depth": "dense"},
+                "gold": {"source": "gold"}}
+    with open(root / "index.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "scene", "question_type", "question", "options", "ground_truth", "prompts",
+                         "pipeline_sheet", "gold_sheet", "pipeline_ok", "gold_ok"])
+        for i, (question, prompts) in enumerate(questions.items()):
+            name = question_scene_sheet.folder_name(prompts)
+            for label, extra in settings.items():
+                out = scene_dir / label / "sheets" / name
+                out.mkdir(parents=True)
+                (out / "question.json").write_text(json.dumps(
+                    {"scene": "scannet/s1", "question": question, "prompts": prompts, "prompt_mode": "full", **extra},
+                    indent=1))
+                (out / "stale.txt").write_text("a file of an older sheet format")
+            writer.writerow([i, "scannet/s1", "test", question, "", "", ", ".join(prompts),
+                             f"scannet__s1/subset-uniform16/sheets/{name}", f"scannet__s1/gold/sheets/{name}", True, True])
+    return scene_dir
+
+
+class ReconstructPipeline(unittest.TestCase):
+    """reconstruct_pipeline.py on a small sheet run: every sheets/ folder made again from scratch, and kept as it was
+    when a sheet fails."""
+
+    QUESTIONS = {"Is the chair near the table?": ["chair", "table"], "How many chairs are there?": ["chair"]}
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.gold = self.root / "meta_info"
+        self.gold.mkdir()
+        labels = {"s1": {"object_bbox": {"chair": [gold_box([1, 2, 0.5], [0.5, 0.6, 1]), gold_box([3, 1, 0.5], [0.5, 0.5, 1])],
+                                          "table": [gold_box([2, 2, 0.4], [2, 1, 0.8])]}}}
+        for dataset, (name, _) in scene_sheet_creator.GOLD_FILES.items():
+            (self.gold / name).write_text(json.dumps(labels if dataset == "scannet" else {}))
+        self.run_dir = self.root / "scene_sheets_75"
+        self.scene_dir = make_sheet_run(self.run_dir, self.QUESTIONS)
+        self.pipeline = self.scene_dir / "subset-uniform16" / "sheets"
+        self.gold_sheets = self.scene_dir / "gold" / "sheets"
+
+    def reconstruct(self, *extra):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = reconstruct_pipeline.main([str(self.run_dir), "--workers", "1", "--gold-dir", str(self.gold), *extra])
+        return code, out.getvalue()
+
+    def assert_no_leftovers(self):
+        self.assertEqual(sorted(p.name for p in self.pipeline.parent.iterdir()), ["masks", "scene", "sheets"])
+        self.assertEqual(sorted(p.name for p in self.gold_sheets.parent.iterdir()), ["sheets"])
+
+    def test_every_sheet_folder_is_made_again_from_scratch(self):
+        records = {path: path.read_bytes() for path in self.scene_dir.rglob("question.json")}
+        masks = tree_digest(self.pipeline.parent / "masks")
+        code, out = self.reconstruct()
+        self.assertEqual(code, 0, out)
+        self.assertIn("pipeline 2/2 sheets OK, gold 2/2 sheets OK", out)
+        self.assertEqual({path: path.read_bytes() for path in records}, records)  # copied as they were
+        for name in ("chair", "chair+table"):  # the stale files are gone
+            self.assertEqual(sorted(p.name for p in (self.pipeline / name).iterdir()),
+                             ["cameras.csv", "objects.csv", "question.json"])
+            self.assertEqual(sorted(p.name for p in (self.gold_sheets / name).iterdir()),
+                             ["objects.csv", "question.json", "sheet.json"])
+        # num_frames 3 for both: made with question.json's min_points (20), not the default 300
+        self.assertEqual([(r["concept"], r["num_frames"]) for r in read_csv(self.pipeline / "chair+table/objects.csv")],
+                         [("chair", "3"), ("table", "3")])
+        self.assertEqual([r["concept"] for r in read_csv(self.gold_sheets / "chair+table/objects.csv")],
+                         ["chair", "chair", "table"])
+        self.assertEqual(tree_digest(self.pipeline.parent / "masks"), masks)
+        self.assert_no_leftovers()
+
+    def test_a_sheet_that_fails_keeps_the_old_sheets(self):
+        (self.scene_dir / "subset-uniform16/scene/tracks/table.npz").unlink()
+        before = tree_digest(self.pipeline)
+        code, out = self.reconstruct()
+        self.assertEqual(code, 1)
+        self.assertIn("no saved tracks for ['table'] (needs SAM 3)", out)
+        self.assertIn("old sheets kept for ['scannet__s1 pipeline']", out)
+        self.assertEqual(tree_digest(self.pipeline), before)
+        self.assertFalse((self.gold_sheets / "chair/stale.txt").exists())  # the gold sheets were still made again
+        self.assert_no_leftovers()
+
+    def test_an_interrupted_run_is_put_right(self):
+        self.pipeline.rename(self.pipeline.with_name("sheets.old"))  # stopped between the swap's two renames
+        (self.pipeline.with_name("sheets.new") / "chair").mkdir(parents=True)
+        (self.gold_sheets.with_name("sheets.new") / "chair").mkdir(parents=True)  # stopped while making them
+        code, out = self.reconstruct()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(sorted(p.name for p in self.pipeline.iterdir()), ["chair", "chair+table"])
+        self.assertFalse((self.pipeline / "chair/stale.txt").exists())
+        self.assert_no_leftovers()
+
+    def test_every_sheet_the_index_names_must_be_there(self):
+        shutil.rmtree(self.gold_sheets / "chair")
+        code, out = self.reconstruct()
+        self.assertEqual(code, 1)
+        self.assertIn("index.csv names gold sheets that", out)
+        self.assertEqual(sorted(p.name for p in self.gold_sheets.iterdir()), ["chair+table"])
+        self.assertTrue((self.gold_sheets / "chair+table/stale.txt").exists())  # left as it was
+
+    def test_command_line_errors(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.reconstruct("--scenes", "scannet__s9")
+        self.assertEqual(caught.exception.code, 2)
+        shutil.rmtree(self.scene_dir)  # a scene folder index.csv names
+        with self.assertRaises(SystemExit) as caught:
+            self.reconstruct()
+        self.assertEqual(caught.exception.code, 2)
 
 
 def camera_in_gravity(heading, pitch):

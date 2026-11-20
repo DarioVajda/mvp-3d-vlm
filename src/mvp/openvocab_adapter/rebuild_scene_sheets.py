@@ -109,6 +109,44 @@ def check_tracks(scene_out, shape):
         raise RuntimeError(f"tracks that don't match the depth {tuple(shape)}: {', '.join(wrong)}")
 
 
+def build_pipeline_sheet(out, scene_out):
+    """Write the pipeline sheet in out from the saved tracks in scene_out, with the prompts and settings of
+    out/question.json, and check it. Returns (problems, rows per prompt); a sheet not made has a "not rebuilt" problem.
+    Also used by reconstruct_pipeline.py."""
+    record = json.loads((out / "question.json").read_text())
+    prompts = record["prompts"]
+    tracking = record.get("tracking", {})
+    untracked = [p for p in prompts if not sheet.track_file(scene_out, p).is_file()]
+    if untracked:
+        return [f"not rebuilt: no saved tracks for {untracked} (needs SAM 3)"], {}
+    try:
+        with contextlib.redirect_stdout(sys.stderr):
+            objects_csv, cameras_csv = sheet.build_scene_sheet(
+                scene_out, prompts, record.get("relative_positions", False), record.get("size", True), out,
+                tracking.get("conf_percentile", 55.0), tracking.get("min_points", 300),
+                record.get("size_trim", 0.02))
+        if record.get("relative_positions"):  # the report's checks are for the 0/1 frame columns
+            return [], {}
+        return checks.check_pipeline_sheet(objects_csv, cameras_csv, prompts)
+    except SystemExit as error:  # scene_sheet_creator stops with sys.exit("[sheet] ...")
+        return [f"not rebuilt: {error.code}"], {}
+    except Exception as error:  # noqa: BLE001 - one sheet's failure must not stop the scene
+        return [f"not rebuilt: {type(error).__name__}: {error}"], {}
+
+
+def build_gold_sheet(out, scene, info, gold_dir=None):
+    """Write the gold sheet in out with the prompts of out/question.json, and check it against info (the scene's
+    gold labels). Returns (problems, rows per prompt). Also used by reconstruct_pipeline.py."""
+    prompts = json.loads((out / "question.json").read_text())["prompts"]
+    try:
+        with contextlib.redirect_stdout(sys.stderr):
+            objects_csv, _ = sheet.build_gold_scene_sheet(scene, prompts, include_size=True, out_dir=out,
+                                                          gold_dir=gold_dir)
+        return checks.check_gold_sheet(objects_csv, prompts, info)
+    except Exception as error:  # noqa: BLE001
+        return [f"not rebuilt: {type(error).__name__}: {error}"], {}
+
+
 def rebuild_pipeline(scene_dir, dense_root):
     """Rebuild every pipeline sheet of one scene folder. Returns (results, scene)."""
     work = scene_dir / PIPELINE_LABEL
@@ -120,30 +158,8 @@ def rebuild_pipeline(scene_dir, dense_root):
     check_tracks(scene_out, shape)
     results = []
     for out in folders:
-        record = json.loads((out / "question.json").read_text())
-        prompts = record["prompts"]
-        tracking = record.get("tracking", {})
-        result = {"sheet": str(out.relative_to(scene_dir.parent)), "problems": []}
-        untracked = [p for p in prompts if not sheet.track_file(scene_out, p).is_file()]
-        if untracked:
-            result["problems"] = [f"not rebuilt: no saved tracks for {untracked} (needs SAM 3)"]
-            results.append(result)
-            continue
-        try:
-            with contextlib.redirect_stdout(sys.stderr):
-                objects_csv, cameras_csv = sheet.build_scene_sheet(
-                    scene_out, prompts, record.get("relative_positions", False), record.get("size", True), out,
-                    tracking.get("conf_percentile", 55.0), tracking.get("min_points", 300),
-                    record.get("size_trim", 0.02))
-            if record.get("relative_positions"):  # the report's checks are for the 0/1 frame columns
-                result["counts"] = {}
-            else:
-                result["problems"], result["counts"] = checks.check_pipeline_sheet(objects_csv, cameras_csv, prompts)
-        except SystemExit as error:  # scene_sheet_creator stops with sys.exit("[sheet] ...")
-            result["problems"] = [f"not rebuilt: {error.code}"]
-        except Exception as error:  # noqa: BLE001 - one sheet's failure must not stop the scene
-            result["problems"] = [f"not rebuilt: {type(error).__name__}: {error}"]
-        results.append(result)
+        problems, counts = build_pipeline_sheet(out, scene_out)
+        results.append({"sheet": str(out.relative_to(scene_dir.parent)), "problems": problems, "counts": counts})
     return results, scene
 
 
@@ -157,16 +173,8 @@ def rebuild_gold(scene_dir, scene, gold_dir):
     info = sheet.load_gold_scene(scene, gold_dir)[1]
     results = []
     for out in folders:
-        prompts = json.loads((out / "question.json").read_text())["prompts"]
-        result = {"sheet": str(out.relative_to(scene_dir.parent)), "problems": []}
-        try:
-            with contextlib.redirect_stdout(sys.stderr):
-                objects_csv, _ = sheet.build_gold_scene_sheet(scene, prompts, include_size=True, out_dir=out,
-                                                              gold_dir=gold_dir)
-            result["problems"], result["counts"] = checks.check_gold_sheet(objects_csv, prompts, info)
-        except Exception as error:  # noqa: BLE001
-            result["problems"] = [f"not rebuilt: {type(error).__name__}: {error}"]
-        results.append(result)
+        problems, counts = build_gold_sheet(out, scene, info, gold_dir)
+        results.append({"sheet": str(out.relative_to(scene_dir.parent)), "problems": problems, "counts": counts})
     return results
 
 

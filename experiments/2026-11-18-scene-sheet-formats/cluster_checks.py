@@ -5,7 +5,7 @@
   python cluster_checks.py revision Qwen/Qwen3.5-2B OUT                       # the cached snapshot the runs load
 
 prompts: for each printed question, the video's "<t seconds>" labels must be exactly the sheet's frame timestamps
-(scene_sheet.frame_timestamps, one per pair of frames), every first_seen in the sheet must be one of them, the sheet
+(scene_sheet.frame_timestamps, one per pair of frames), every time in the sheet's visible ranges must be one of them, the sheet
 must appear in the prompt as render_sheet writes it, and the whole prompt must be build_sheet_prompt's.
 """
 import argparse
@@ -42,14 +42,15 @@ def check_prompts(text, sheets_root, vggt_root, source="pipeline", fmt="csv"):
         times = ss.frame_timestamps(folder.parents[1] / "scene", row["scene"], Path(vggt_root))
         expected = list(times[::ss.MERGE])
         objects = ss.load_objects(qid, source, sheets_root, vggt_root=vggt_root)
-        seen = sorted({o["first_seen"] for o in objects if "first_seen" in o}, key=float)
+        seen = sorted({t for o in objects if "visible" in o for pair in ss.ranges_of(o["visible"]) for t in pair},
+                      key=float)
         fps = json.loads((Path(vggt_root) / row["scene"] / "meta.json").read_text())["video_fps"]
-        print(f"question {qid}: prompt labels {labels}; sheet timestamps {expected}; first_seen {seen}; "
+        print(f"question {qid}: prompt labels {labels}; sheet timestamps {expected}; visible times {seen}; "
               f"fps {head.group(4)} (meta.json {fps})")
         if labels != expected:
             problems.append(f"question {qid}: the prompt's labels {labels} are not the sheet's {expected}")
         if not set(seen) <= set(labels):
-            problems.append(f"question {qid}: first_seen {sorted(set(seen) - set(labels))} not among the labels")
+            problems.append(f"question {qid}: visible times {sorted(set(seen) - set(labels))} not among the labels")
         if ss.render_sheet(qid, source, fmt, sheets_root, vggt_root=vggt_root) not in block:
             problems.append(f"question {qid}: the rendered sheet is not in the prompt")
         tokens = FRAME_TOKENS.search(block)

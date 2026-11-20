@@ -413,6 +413,8 @@ an error. Pass `--no-frames --no-cameras` for a pipeline sheet with the same col
 | `scene_sheet_creator.py` | Writes the scene sheet (`objects.csv`, `cameras.csv`) of a scene that has tracks, or from VSI-Bench's ground truth (`--source gold`) |
 | `camera_sheet_format_converter.py` | Turns a `cameras.csv` into one sentence per frame ("Go north-east and turn 23° to the right and 5° down."), with a compass and up direction it estimates |
 | `scene_sheet_report.py` | Makes and checks the sheet of every question of a scene (pipeline or gold), and prints it all for checking by eye |
+| `reconstruct_pipeline.py` | Deletes and makes again every pipeline and gold `sheets/` folder of a finished sheet run (`data/scene_sheets_75/`) from its saved tracks, on a CPU |
+| `rebuild_scene_sheets.py` | Writes the sheets' files of a finished sheet run again in place, from its saved tracks, on a CPU |
 | `prompt_object_extractor.py` | Picks the SAM 3 prompts from a question |
 | `prompt_extractor_report.py` | Prints the extractor's decisions on the questions of a few exported scenes, for checking it by eye |
 | `hpc/start.sh` | The one command: checks the inputs, then submits the setup, every scene and the summary |

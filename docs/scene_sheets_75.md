@@ -124,3 +124,11 @@ slurm/submit.sh -J sheets -t 02:00:00 --gres gpu:1 -c 48 --mem 256G -- bash src/
 The script skips finished scenes, writes `index.csv`, prints the counting check, and copies this file into the
 output folder. The per-scene depth maps (`scene/depth.npz`) are left out of the zip, because they are the shared
 VGGT depth, cut to the 16 frames.
+
+After a change to how sheets are computed or written, every `sheets/` folder can be deleted and made again from the
+saved tracks, without SAM 3, in about a quarter of an hour on 8 CPU cores. Each `question.json` is kept, and a scene's old sheets stay
+in place unless every new one passes its checks:
+
+```bash
+.venv/bin/python src/mvp/openvocab_adapter/reconstruct_pipeline.py data/scene_sheets_75
+```

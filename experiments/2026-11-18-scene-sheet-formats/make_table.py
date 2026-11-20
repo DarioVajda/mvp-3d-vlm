@@ -1,7 +1,7 @@
 """The experiment's results, once the 11 runs (A–K) have finished: README's Results table, results.csv and the two LaTeX
 tables (pipeline, gold), all in this folder.
 
-  PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/make_table.py \
+  PYTHONPATH=src python experiments/modified_2026-11-18-scene-sheet-formats/make_table.py \
       [--results results/zeroshot/vsibench/scene_sheet_formats] [--sheets-root tasks/openvocab_adapter/out] \
       [--vggt-root data/vggt] [--tokenizer Qwen/Qwen3.5-2B]
 

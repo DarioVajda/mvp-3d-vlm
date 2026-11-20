@@ -1,6 +1,6 @@
 """Checks of make_table.py on fake prediction files, and of cluster_checks.py's prompt check on a synthetic sheet.
 
-  PYTHONPATH=src python -m unittest discover -s experiments/2026-11-18-scene-sheet-formats -v
+  PYTHONPATH=src python -m unittest discover -s experiments/modified_2026-11-18-scene-sheet-formats -v
 """
 import json
 import tempfile
@@ -142,7 +142,7 @@ class PromptCheck(unittest.TestCase):
         self.assertEqual(cluster_checks.check_prompts(self.prompt(), self.root, self.vggt), [])
         bad = ["0.5", "2.4"] + [f"{2 * k + 0.5:.1f}" for k in range(2, 8)]
         problems = cluster_checks.check_prompts(self.prompt(bad), self.root, self.vggt)
-        # the labels differ, door_2's first_seen 2.5 isn't among them, and the prompt isn't build_sheet_prompt's
+        # the labels differ, door_2's visible time 2.5 isn't among them, and the prompt isn't build_sheet_prompt's
         self.assertEqual(len(problems), 3)
         self.assertIn("not the sheet's", problems[0])
         self.assertIn("2.5", problems[1])
