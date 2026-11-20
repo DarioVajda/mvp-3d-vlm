@@ -65,16 +65,20 @@ class QwenVL:
         return [{"role": "system", "content": [{"type": "text", "text": system}]},
                 {"role": "user", "content": content}]
 
-    @torch.inference_mode()
-    def generate_video(self, video, meta, video_kwargs, prompts, max_new_tokens=16, pres=None, system=SYSTEM_PROMPT):
-        """Answer several prompts about the same video in one batch. `pres`: optional text placed before the video."""
+    def video_inputs(self, video, meta, video_kwargs, prompts, pres=None, system=SYSTEM_PROMPT):
+        """The batch generate_video sends to the model: each prompt's chat template (`pres`: text before the video),
+        left-padded, with the video once per prompt. Needs only the processor (weights=False)."""
         pres = pres or [""] * len(prompts)
         texts = [self.processor.apply_chat_template(self._messages(p, "video", pre=q, system=system), tokenize=False,
                                                     add_generation_prompt=True, **self.template_kwargs)
                  for p, q in zip(prompts, pres)]
-        inputs = self.processor(text=texts, videos=[video] * len(texts), video_metadata=[meta] * len(texts),
-                                do_resize=False, padding=True, return_tensors="pt", **video_kwargs)
-        return self._generate(inputs, max_new_tokens)
+        return self.processor(text=texts, videos=[video] * len(texts), video_metadata=[meta] * len(texts),
+                              do_resize=False, padding=True, return_tensors="pt", **video_kwargs)
+
+    @torch.inference_mode()
+    def generate_video(self, video, meta, video_kwargs, prompts, max_new_tokens=16, pres=None, system=SYSTEM_PROMPT):
+        """Answer several prompts about the same video in one batch. `pres`: optional text placed before the video."""
+        return self._generate(self.video_inputs(video, meta, video_kwargs, prompts, pres, system), max_new_tokens)
 
     def render_prompt(self, video, meta, video_kwargs, prompt, pre="", system=SYSTEM_PROMPT):
         """The full input of generate_video for one prompt, as text: the chat template with the processor's
@@ -96,9 +100,25 @@ class QwenVL:
         return self._generate(inputs, max_new_tokens)
 
     def _generate(self, inputs, max_new_tokens):
+        """(replies, padded input length). Also sets last_new_tokens, one (tokens, hit_limit) per reply
+        (new_token_counts)."""
         inputs = inputs.to(self.model.device)
+        stops = stop_tokens(self.processor.tokenizer)
         out = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False,
-                                  temperature=None, top_p=None, top_k=None, **stop_tokens(self.processor.tokenizer))
+                                  temperature=None, top_p=None, top_k=None, **stops)
         out = out[:, inputs["input_ids"].shape[1]:]
+        self.last_new_tokens = new_token_counts(out, stops["eos_token_id"])
         return [s.strip() for s in self.processor.batch_decode(out, skip_special_tokens=True)], \
             int(inputs["input_ids"].shape[1])
+
+
+def new_token_counts(generated, stop_ids):
+    """For each generated row (prompt removed): (tokens before its first stop token, whether it has none). Generation
+    ends when every row has stopped or at max_new_tokens, and stopped rows are padded after their stop token, so a row
+    without one was cut off by max_new_tokens."""
+    is_stop = torch.isin(generated, torch.tensor(stop_ids, device=generated.device))
+    counts = []
+    for row in is_stop:
+        hits = row.nonzero()
+        counts.append((int(hits[0]), False) if len(hits) else (int(row.numel()), True))
+    return counts

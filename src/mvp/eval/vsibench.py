@@ -238,7 +238,8 @@ def main():
                     preds, n_tok = model.generate_video(video, meta, vkw, [p for _, p in parts],
                                                         pres=[q for q, _ in parts], system=system,
                                                         max_new_tokens=args.max_new_tokens)
-                for d, p in zip(batch, preds):
+                new_tokens = getattr(model, "last_new_tokens", None)  # QwenVL: (tokens, hit_limit) per reply
+                for j, (d, p) in enumerate(zip(batch, preds)):
                     rec = {"id": int(d["id"]), "dataset": d["dataset"], "scene_name": d["scene_name"],
                            "question_type": d["question_type"], "task": task_of(d["question_type"]),
                            "question": d["question"], "options": d["options"] if isinstance(d["options"], list) else None,
@@ -248,6 +249,8 @@ def main():
                            "frame_indices": list(meta["frames_indices"])}
                     if args.final_answer:
                         rec["score_first"] = score(d, p)
+                    if new_tokens is not None and not args.images:
+                        rec["n_new_tokens"], rec["hit_token_limit"] = new_tokens[j]  # reply length; cut off?
                     fout.write(json.dumps(rec) + "\n")
                 fout.flush()
                 n += len(batch)
