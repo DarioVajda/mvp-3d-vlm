@@ -95,7 +95,6 @@ decoding, the final answer scored by one rule (`score_final`), the same question
 | C | Video + gold sheet, direct | direct | gold | positions and sizes | control | |
 | D | Video + gold sheet, structured CoT | cot | gold | positions and sizes | treatment | |
 | E | Video + gold sheet + relations, direct | direct | gold_relations | + closest-point relations | upper bound | |
-| F (optional) | Video + gold sheet, Qwen3.5's thinking on | thinking | gold | positions and sizes | treatment | |
 
 - **Structured CoT:** list the relevant objects → read their coordinates → compute → answer. It runs as the eval's
   `--reasoning cot` (`cot_prompt.md`), whose steps are these four: say which objects the question is about and find
@@ -106,9 +105,9 @@ decoding, the final answer scored by one rule (`score_final`), the same question
   candidate's distance to the target for relative-distance questions: `--sheet-source gold_relations`
   (`src/mvp/benchmarks/scene_sheet.py`, `relations`), which writes the same text as `gold_relations_v2` in the explore
   notebook for all 2,728 questions.
-- **F** needs Qwen3.5's thinking mode, which the code turns off everywhere (`src/mvp/models/qwen_vl.py`:
-  `enable_thinking: False`). It runs only if that is made an option (TODO 5); otherwise it is dropped and the Log says
-  so.
+- **Qwen3.5's thinking mode** is not a condition for now: the code turns it off everywhere
+  (`src/mvp/models/qwen_vl.py`: `enable_thinking: False`), and structured CoT through the prompt answers the question
+  without it (Log, 2026-11-20).
 
 ### Comparisons
 
@@ -118,7 +117,7 @@ decoding, the final answer scored by one rule (`score_final`), the same question
 - **B − A: does CoT help without a sheet?**
 - **E − D: do precomputed relations beat computing them in writing?**
 - Descriptive: E − C (what relations give with direct answers; the pilot's gap), and (D − C) − (B − A) (does the sheet
-  change what CoT does). If F runs: F − D (thinking against our prompt).
+  change what CoT does).
 - Every comparison also without counting, since the gold sheet contains the counting answer, and on the computing
   tasks alone (absolute distance, relative distance, object size).
 
@@ -128,7 +127,7 @@ decoding, the final answer scored by one rule (`score_final`), the same question
 
 | Decision | Choice | Why |
 |---|---|---|
-| CoT prompt | The eval's `--reasoning cot` (`50fe543`), unchanged | It already has the four steps and an "Answer: X" line that `score_final` reads; a second prompt would duplicate it. If an explicit "copy the objects' rows from the sheet" step is wanted, it becomes an option of `cot_prompt` (TODO 4) |
+| CoT prompt | The eval's `--reasoning cot` (`50fe543`), unchanged | It already has the four steps and an "Answer: X" line that `score_final` reads; a second prompt would duplicate it. An explicit "copy the objects' rows from the sheet" step is considered only if the reasoning check shows D ignoring the sheet, and then as an option of `cot_prompt` (TODO 4) |
 | Sheet | Gold only | The pilot shows the direct model does not compute from correct coordinates; gold isolates the reasoning from detection errors. The pipeline sheet is the follow-up if CoT helps |
 | Format | csv | Among the best and the shortest in the format experiment |
 | Relations | Closest-point distances (`gold_relations_v2`) | VSI-Bench measures distance between closest points ("Measuring from the closest point of each object", all 428 absolute- and 379 relative-distance questions); centre distances were 0.5–1.6 m off on the pilot's 5 absolute-distance questions |
@@ -161,13 +160,13 @@ visual:                        # what the VLM sees of the video
   resolution: default
 
 scene_sheet:
-  source: varies               # none (A, B) | gold (C, D, F) | gold_relations (E)
+  source: varies               # none (A, B) | gold (C, D) | gold_relations (E)
   geometry: ground truth (source)  # gold sheets: VSI-Bench's labelled boxes
   frames: n/a                  # gold sheets are not built from frames
   sam3_prompts: ground truth   # gold sheets: the question's prompts matched to the dataset's classes
   sam3: n/a
   tracking: n/a
-  content: varies              # positions and sizes (C, D, F) | + closest-point relations (E)
+  content: varies              # positions and sizes (C, D) | + closest-point relations (E)
   units: metres                # gold
   format: csv
   renderer: src/mvp/benchmarks/scene_sheet.py:render_scene (relations: scene_sheet.relations)
@@ -176,8 +175,8 @@ scene_sheet:
 prompt:
   system: You are a helpful assistant.
   template: lmms-eval          # build_prompt in src/mvp/benchmarks/vsibench.py
-  reasoning: varies            # direct (A, C, E) | structured, cot_prompt.md (B, D) | thinking (F)
-  thinking: varies             # off (A–E) | on (F, if supported)
+  reasoning: varies            # direct (A, C, E) | structured, cot_prompt.md (B, D)
+  thinking: off                # enable_thinking=False in every condition
   max_new_tokens: 2048         # every condition (Decisions); raised for CoT if the smoke test truncates
   decoding: greedy
   answer_extraction: score_final  # the last "Answer: X", else the last lone letter / the last number
@@ -217,7 +216,7 @@ training: none
 | The gold sheet contains the counting answer | Counting near 98% in C, D, E (format experiment) | Read every comparison without counting too |
 | The relations state the answer to most distance questions | E near 100 on absolute and relative distance | E is an upper bound for "uses the relations it is given", not a test of spatial reasoning |
 | The CoT prompt's per-task hints differ from task to task | Large gains on one task only | Report per task; one wording is a caveat, not a condition |
-| Structured CoT's last step asks to check against the video, which may pull the model away from the sheet | D's reasoning ignores the sheet (reasoning check) | Stated; a sheet-only wording only if this is common |
+| Structured CoT's last step asks to check against the video, which may pull the model away from the sheet | D's reasoning ignores the sheet (reasoning check) | Stated; if this is common, consider a "copy the rows" step (TODO 4) |
 | The pilot's numbers come from an older commit and 40 questions | — | They motivate the design only; no run is reused (Decisions) |
 
 ## Runs and cost
@@ -227,9 +226,6 @@ environment.txt. -->
 
 All commands run from the repository root on the cluster, on `scene_sheet_formats` at a commit with this folder, in
 the project's environment. The sheets of `run_sheets.sh` are in `tasks/openvocab_adapter/out/`.
-
-**Code needed before the runs:** only for the optional F, a `--thinking` option that turns Qwen3.5's thinking on and
-scores the text after `</think>` (TODO 5).
 
 **Checklist, before the runs:**
 
@@ -283,8 +279,7 @@ python -m mvp.eval.vsibench $COMMON --reasoning cot --sheet-source gold         
 python -m mvp.eval.vsibench $COMMON                 --sheet-source gold_relations --sheet-format csv --sheets-root $SHEETS --out $OUT/qwen3_5_2B_E_direct_gold_relations.jsonl
 ```
 
-F (optional) has no command until the thinking option exists (TODO 5). Record the commit each run was made at
-(`git rev-parse HEAD`) in the Log.
+Record the commit each run was made at (`git rev-parse HEAD`) in the Log.
 
 | Run | Conditions | Task or command | Output | Commit |
 |---|---|---|---|---|
@@ -293,7 +288,6 @@ F (optional) has no command until the thinking option exists (TODO 5). Record th
 | C | C | the third | `.../qwen3_5_2B_C_direct_gold.jsonl` | |
 | D | D | the fourth | `.../qwen3_5_2B_D_cot_gold.jsonl` | |
 | E | E | the fifth | `.../qwen3_5_2B_E_direct_gold_relations.jsonl` | |
-| F | F (optional) | none yet (TODO 5) | | |
 
 **Cost:** not known until the smoke test. Direct runs took about 3 minutes each on a B200 in the format experiment
 (eleven runs in 31 minutes); CoT runs depend on reply length. The limit of 4 GPU hours for the CoT runs decides
@@ -334,6 +328,10 @@ Not run yet.
   the pilot's for all 2,728 questions, so the TODO to port the relations is closed and the Runs section gives the exact
   command for each condition. The prompt and smoke checks use the broad-exploration folder's `cluster_checks.py`,
   which checks the sheets' current `visible` field.
+- 2026-11-20: condition F (Qwen3.5's thinking mode) is dropped for now. The eval turns thinking off everywhere, adding
+  it would need code (an option that turns it on and scores the text after `</think>`), and the question is answered
+  by structured CoT through the prompt (B, D) without it. The CoT prompt stays as `cot_prompt` writes it; a "copy the
+  objects' rows from the sheet" step is decided only if the reasoning check shows D ignoring the sheet.
 
 ## TODO
 
@@ -341,12 +339,11 @@ Not run yet.
 2. Add Kojima et al. 2022 (NeurIPS) to `papers/` with page and verbatim quote.
 3. Add Yang et al. 2025 (CVPR, "Thinking in Space") to `papers/` with page and verbatim quotes for linguistic
    prompting not helping and the cognitive map helping.
-4. Decide whether structured CoT needs an explicit "copy the objects' rows from the sheet" step; if so, add it as an
-   option of `cot_prompt` rather than a second prompt, and regenerate `cot_prompt.md`.
-5. Optional F: a thinking-mode option in the eval (`qwen_vl.py` turns thinking off); otherwise drop F and say so in the
-   Log.
-6. Copy the pilot's summary (`MyDrive/mvp/ssf_explore_results/`) into the repository, and record the commit it ran at.
-7. Smoke test: reply lengths, truncation, parse rate and time per question for B and D; then the question set and, if
+4. After the runs: if the reasoning check shows D ignoring the sheet, decide on an explicit "copy the objects' rows
+   from the sheet" step, added as an option of `cot_prompt` (not a second prompt), with `cot_prompt.md` regenerated.
+   Until then `cot_prompt` stays unchanged.
+5. Copy the pilot's summary (`MyDrive/mvp/ssf_explore_results/`) into the repository, and record the commit it ran at.
+6. Smoke test: reply lengths, truncation, parse rate and time per question for B and D; then the question set and, if
    needed, a higher token limit.
-8. Record the model revision (smoke test).
-9. Fill in the Runs table's commits when the runs are made.
+7. Record the model revision (smoke test).
+8. Fill in the Runs table's commits when the runs are made.
