@@ -1,0 +1,62 @@
+{
+ "video_cot": {
+  "gpu": "NVIDIA L4",
+  "max_new_tokens": 2048,
+  "batch_size": 8,
+  "questions": [
+   43,
+   266,
+   573,
+   1273,
+   4997
+  ],
+  "batch_s": 108.0,
+  "wall_s": 120.9,
+  "reply_tokens": [
+   2048,
+   2048,
+   390,
+   784,
+   361
+  ],
+  "hit_token_limit": [
+   true,
+   true,
+   false,
+   false,
+   false
+  ],
+  "batches": 1,
+  "steps": 2048
+ },
+ "gold_cot": {
+  "gpu": "NVIDIA L4",
+  "max_new_tokens": 2048,
+  "batch_size": 8,
+  "questions": [
+   43,
+   266,
+   573,
+   1273,
+   4997
+  ],
+  "batch_s": 108.0,
+  "wall_s": 121.4,
+  "reply_tokens": [
+   172,
+   485,
+   499,
+   893,
+   2048
+  ],
+  "hit_token_limit": [
+   false,
+   false,
+   false,
+   false,
+   true
+  ],
+  "batches": 1,
+  "steps": 2048
+ }
+}

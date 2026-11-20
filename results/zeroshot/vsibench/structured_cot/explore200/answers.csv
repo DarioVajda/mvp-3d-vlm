@@ -1,0 +1,6 @@
+,replies,parsed %,'Answer:' line %,hit 2048 tokens,of them before answering,"of those, read anyway",rule not the 'Answer:' line,median tokens,90th pct tokens,mean score,"score, cut-off replies wrong"
+A_video,200,100.0,0.0,0,0,0,0,1.0,3.0,48.65,48.65
+gold_csv,200,100.0,0.0,0,0,0,0,1.0,4.0,52.1,52.1
+gold_relations,200,100.0,0.0,0,0,0,0,1.0,5.0,62.74999999999999,62.74999999999999
+video_cot,200,88.5,72.0,56,56,34,0,444.5,2048.0,35.2,33.1
+gold_cot,200,93.5,88.5,23,23,10,0,521.0,2048.0,48.8,47.8

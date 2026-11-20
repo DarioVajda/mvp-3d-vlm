@@ -66,6 +66,11 @@ paper backs as an assumption. -->
   them from the coordinates it is given. **40 questions is noisy**: one question moves a task's score by 20 points and
   the overall by about 2.5. TODO: copy the pilot's summary into the repository, so this is checkable without the
   Drive.
+- **The 200-question CoT pilot** (`explore_cot.md`, from `explore_cot.ipynb`; predictions in
+  `results/zeroshot/vsibench/structured_cot/explore200/`): all five conditions on explore200's questions, one commit.
+  D − C −3.3 (Holm p = 0.27), B − A −13.3 (Holm p = 0.004), E − D +13.9 (Holm p = 0.0002). With the sheet, the model
+  computes centre-to-centre distances, with correct arithmetic, where VSI-Bench measures between closest points. 12%
+  of D's and 28% of B's replies loop until the 2,048-token limit. The gold sheet also contains the object-size answers.
 - **Format experiment** (`experiments/2026-11-18-scene-sheet-formats/README.md`, Results): on 2,728 questions with
   direct answers, every reply was a bare letter or number, and the gold sheet's gain over video only came from
   counting alone. Gold coordinates in metres did not help on absolute or relative distance or relative direction.
@@ -332,6 +337,23 @@ Not run yet.
   it would need code (an option that turns it on and scores the text after `</think>`), and the question is answered
   by structured CoT through the prompt (B, D) without it. The CoT prompt stays as `cot_prompt` writes it; a "copy the
   objects' rows from the sheet" step is decided only if the reasoning check shows D ignoring the sheet.
+- 2026-11-20, the pilot: `explore_cot.ipynb` ran A–E on explore200's 200 questions on Colab (one L4). The code was
+  commit `7d39234`: `abde60f` plus `metric_scale=None` in the notebook, which the eval's `--metric-scale` option
+  needs. All five conditions ran at that commit; none of explore200's predictions was reused. The predictions are in
+  `results/zeroshot/vsibench/structured_cot/explore200/` and the write-up is `explore_cot.md`. Its tables come from
+  `make_table.py --explore`, which now also takes the reply lengths the eval records, adds a table of what fixed
+  rules on the gold sheet answer, and counts the cut-off replies that loop. The reasoning check's 20 labels
+  (`explore_cot_reasoning_labels.csv`) were assigned by Claude, reading each reply; no second labeller. For the
+  plan:
+  - Two Threats rows are triggered: replies cut off in B (28%) and D (12%), and parse rates (88.5%, 93.5%) under
+    95%. Their planned responses don't fit. The cut-off replies are loops (frame-by-frame narration or repetition,
+    51 of 56 in B and 20 of 23 in D), and they are the parse failures. A higher limit would not end them, and a lower
+    one would cut off correct long replies.
+  - The reasoning check does not show D ignoring the sheet (TODO 4). It shows D computing centre distances for
+    closest-point questions (11 of 20 wrong answers) and the loops.
+  - The prompt for the full run is an open decision (`explore_cot.md`, Conclusion).
+  - At the pilot's decoding steps per batch, B and D would take at least about 17 hours on an L4 for all 2,728
+    questions, and about 7 hours for `subset_100_per_type.txt`.
 
 ## TODO
 
@@ -344,6 +366,7 @@ Not run yet.
    Until then `cot_prompt` stays unchanged.
 5. Copy the pilot's summary (`MyDrive/mvp/ssf_explore_results/`) into the repository, and record the commit it ran at.
 6. Smoke test: reply lengths, truncation, parse rate and time per question for B and D; then the question set and, if
-   needed, a higher token limit.
+   needed, a higher token limit. The pilot measured all four on 200 questions (`explore_cot.md`); what remains is the
+   decision on the prompt and the question set.
 7. Record the model revision (smoke test).
 8. Fill in the Runs table's commits when the runs are made.

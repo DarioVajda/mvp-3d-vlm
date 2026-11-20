@@ -16,18 +16,31 @@ choice vs numeric, dataset.
 
 Reasoning check (README, Metrics): the share of D's replies that name a sheet row (an id such as chair_2) or copy one
 of its numbers (a number with two or more decimals that equals a sheet value rounded to as many); and 20 wrong D answers
-on the computing tasks (score below 0.5), drawn with seed 0, written to reasoning_check.md for labelling by hand. The
-labels go in reasoning_labels.csv (id,label,note); once it exists, their counts are added to the Results block.
+on the computing tasks (score below 0.5), drawn with seed 0, written to reasoning_check.md for labelling by reading
+them. The labels go in reasoning_labels.csv (id,label,note); once it exists, their counts are added to the Results block.
+
+Sheet rules: what a fixed rule reading the gold sheet alone scores (rows of the asked class, the object's longest side,
+the centre or closest-point distance, the nearest candidate), and how often each condition's answer is the rule's.
+Cut-off replies: how many narrate the video frame by frame or repeat themselves until the limit.
+
+  ... make_table.py --explore   # the pilot of explore_cot.ipynb: explore200's 200 questions, files A_video.jsonl, ...,
+                                # written to explore_cot.md (between its markers), explore_cot_results.csv and
+                                # explore_cot_reasoning_check.md, with labels from explore_cot_reasoning_labels.csv
 """
 import argparse
+import itertools
 import json
 import re
+import zlib
 from pathlib import Path
+
+import numpy as np
 
 import pandas as pd
 
 from mvp.benchmarks import scene_sheet as ss
-from mvp.benchmarks.vsibench import MCA_QUESTION_TYPES, TASKS, final_letter, final_number, summarize
+from mvp.benchmarks.vsibench import (MCA_QUESTION_TYPES, TASKS, final_letter, final_number, mean_relative_accuracy,
+                                     summarize)
 from mvp.paths import SCENE_SHEETS
 from mvp.reporting.compare_runs import holm, paired, parse_rate, sign_test
 
@@ -39,6 +52,12 @@ CONDITIONS = [("A", "video, direct", "qwen3_5_2B_A_direct_video"),
               ("C", "+ gold sheet, direct", "qwen3_5_2B_C_direct_gold"),
               ("D", "+ gold sheet, CoT", "qwen3_5_2B_D_cot_gold"),
               ("E", "+ gold sheet + relations, direct", "qwen3_5_2B_E_direct_gold_relations")]
+STEMS = {cond: stem for cond, _, stem in CONDITIONS}
+EXPLORE = {  # --explore: explore_cot.ipynb's pilot, its file names and where its tables go
+    "stems": {"A": "A_video", "B": "video_cot", "C": "gold_csv", "D": "gold_cot", "E": "gold_relations"},
+    "results": str(RESULTS / "explore200"), "ids": "experiments/2026-11-18-scene-sheet-formats/explore200_ids.txt",
+    "readme": str(HERE / "explore_cot.md"), "csv": str(HERE / "explore_cot_results.csv"),
+    "sample": str(HERE / "explore_cot_reasoning_check.md"), "labels": str(HERE / "explore_cot_reasoning_labels.csv")}
 COMPUTING = ["object_abs_distance", "object_rel_distance", "object_size_estimation"]
 TASK_NAMES = {"object_counting": "Count", "object_abs_distance": "Abs. dist.", "object_size_estimation": "Obj. size",
               "room_size_estimation": "Room size", "object_rel_distance": "Rel. dist.",
@@ -47,15 +66,20 @@ LABELS = ["wrong row", "coordinates misread", "arithmetic wrong", "sheet ignored
 LIMIT_MARGIN = 8  # a reply within this many tokens of --max-new-tokens counts as cut off (re-tokenising can differ)
 WRONG = 0.5  # a computing-task answer scoring below this is wrong, for the reasoning check
 N_SAMPLE = 20
+MATCH = 0.05  # a numeric answer within 5% of a sheet rule's value is that rule's answer
+FRAME_TIME = re.compile(r"(?<![\d:])\d{1,2}:\d{2}(?![\d:])")  # mm:ss; the video's labels are "<12.3 seconds>"
+NARRATES = 10  # a reply with this many mm:ss times narrates the video frame by frame
+REPEATS = 0.25  # a reply whose last 2,000 characters compress (zlib) below this ratio repeats itself
 START, END = "<!-- make_table:start -->", "<!-- make_table:end -->"
 DECIMAL = re.compile(r"-?\d+\.(\d{2,})")
 
 
-def load_runs(results, ids):
+def load_runs(results, ids, stems=STEMS):
     """{condition: predictions indexed by id}, each checked to answer exactly `ids`, once each; and each run's
     --max-new-tokens (from its _summary.json, default 2048)."""
     runs, limits, problems = {}, {}, []
-    for cond, _, stem in CONDITIONS:
+    for cond, _, _ in CONDITIONS:
+        stem = stems[cond]
         path = Path(results) / f"{stem}.jsonl"
         if not path.exists():
             problems.append(f"{cond}: {path} is missing")
@@ -99,22 +123,112 @@ def compare(runs, ref, other):
 
 
 def reply_tokens(runs, count):
-    return {c: r["prediction"].map(count) for c, r in runs.items()}
+    """Each reply's length in tokens: the eval's n_new_tokens where every record has it, else counted again."""
+    return {c: r["n_new_tokens"].astype(int) if "n_new_tokens" in r and r["n_new_tokens"].notna().all()
+            else r["prediction"].map(count) for c, r in runs.items()}
 
 
-def table(runs, limits, lengths):
+def cut_off(runs, lengths, limits):
+    """Whether each reply stopped at --max-new-tokens: the eval's hit_token_limit where every record has it, else a
+    length within LIMIT_MARGIN of the limit (counting again can differ by a few tokens)."""
+    return {c: r["hit_token_limit"].astype(bool) if "hit_token_limit" in r and r["hit_token_limit"].notna().all()
+            else lengths[c] >= limits[c] - LIMIT_MARGIN for c, r in runs.items()}
+
+
+def table(runs, limits, lengths, cut, stems=STEMS):
     rows = []
-    for cond, name, stem in CONDITIONS:
+    for cond, name, _ in CONDITIONS:
         run = runs[cond].reset_index()
         summary = summarize(run)
         per_type = (100 * run.groupby("question_type")["score"].mean()).add_prefix("type:")
         n = lengths[cond]
-        rows.append({"condition": cond, "name": name, "file": f"{stem}.jsonl", "n": len(run), **scores(runs[cond]),
+        rows.append({"condition": cond, "name": name, "file": f"{stems[cond]}.jsonl", "n": len(run), **scores(runs[cond]),
                      **{t: summary.get(t) for t in TASKS}, **per_type.to_dict(),
                      "parse_rate": 100 * parse_rate(run), "input_tokens": run["n_input_tokens"].mean(),
                      "reply_median": n.median(), "reply_p90": n.quantile(0.9), "max_new_tokens": limits[cond],
-                     "at_limit": 100 * (n >= limits[cond] - LIMIT_MARGIN).mean()})
+                     "at_limit": 100 * cut[cond].mean()})
     return pd.DataFrame(rows).set_index("condition")
+
+
+# ---- what the gold sheet alone answers, and the cut-off replies ----
+
+def named(row):
+    """The classes the question names (index.csv's prompts), without `room` where it is only context."""
+    return [p.strip() for p in row["prompts"].split(",")
+            if p.strip() != "room" or row["question_type"] not in ss.CONTEXT_TYPES]
+
+
+def boxes(question_id, root):
+    """{class: [(centre, extent)]} of the gold sheet, as the prompt writes it (3 decimals)."""
+    out = {}
+    for o in ss.load_objects(question_id, "gold", root):
+        out.setdefault(o["label"], []).append((np.array([float(o[k]) for k in ss.POSITION]),
+                                               np.array([float(o[k]) for k in ss.EXTENT])))
+    return out
+
+
+def rule_answers(question_id, row, root):
+    """{rule: answer} of the fixed rules that apply to this question, read off its gold sheet."""
+    names, b = named(row), boxes(question_id, root)
+    qtype = row["question_type"]
+    centre = lambda x, y: min(np.linalg.norm(p[0] - q[0]) for p in b[x] for q in b[y])
+    closest = lambda x, y: min(ss.box_gap(p, q) for p in b[x] for q in b[y])
+    if qtype == "object_counting" and names:
+        return {"rows of the asked class": float(len(b.get(names[0], [])))}
+    if qtype == "object_size_estimation" and names and names[0] in b:
+        return {"longest side of the object, in cm": 100 * max(e.max() for _, e in b[names[0]])}
+    if qtype == "object_abs_distance" and len(names) >= 2 and set(names[:2]) <= set(b):
+        return {"distance between the centres": centre(*names[:2]),
+                "distance between the closest points": closest(*names[:2])}
+    if qtype == "object_rel_distance" and len(names) >= 2 and set(names) <= set(b):
+        *cands, target = names
+        letters = {o.split(".", 1)[1].strip(): o.split(".", 1)[0].strip() for o in row["options"].split(" | ")}
+        return {"nearest candidate by centres": letters.get(min(cands, key=lambda c: centre(c, target))),
+                "nearest candidate by closest points": letters.get(min(cands, key=lambda c: closest(c, target)))}
+    return {}
+
+
+def sheet_rules(runs, root):
+    """Per rule: its task, the questions it applies to, its score, and per condition the share of answers that are
+    the rule's (the same letter; a number within MATCH of the rule's)."""
+    index = ss.load_index(root)
+    ref = runs["A"]
+    found = {}
+    for q in ref.index:
+        for rule, value in rule_answers(q, index[q], root).items():
+            found.setdefault(rule, []).append((q, value))
+    rows = []
+    for rule, pairs in found.items():
+        task = ref.loc[pairs[0][0], "task"]
+        mc = ref.loc[pairs[0][0], "question_type"] in MCA_QUESTION_TYPES
+        pairs = [(q, v) for q, v in pairs if v is not None]
+        truth = [ref.loc[q, "ground_truth"] for q, _ in pairs]
+        score = [float(v == t) if mc else mean_relative_accuracy(v, float(t)) for (_, v), t in zip(pairs, truth)]
+        rec = {"rule": rule, "task": task, "n": len(pairs), "score": 100 * float(np.mean(score))}
+        for c, run in runs.items():
+            read = [(final_letter if mc else final_number)(run.loc[q, "prediction"]) for q, _ in pairs]
+            rec[c] = 100 * float(np.mean([a is not None and (a == v if mc else abs(a - v) <= MATCH * max(abs(v), 1e-9))
+                                          for a, (_, v) in zip(read, pairs)]))
+        rows.append(rec)
+    return pd.DataFrame(rows)
+
+
+def loops(runs, cut):
+    """Per CoT run: replies cut off at the limit, how many of them narrate the video by mm:ss times or repeat
+    themselves, and how many the final-answer rule still reads an answer from."""
+    rows = []
+    for c in "BD":
+        run, m = runs[c], cut[c]
+        text = run["prediction"][m]
+        tail = text.map(lambda p: len(zlib.compress(p[-2000:].encode())) / max(1, len(p[-2000:].encode())))
+        narrates = text.map(lambda p: len(FRAME_TIME.findall(p)) >= NARRATES)
+        read = [(final_letter if run.loc[q, "question_type"] in MCA_QUESTION_TYPES else final_number)(p) is not None
+                for q, p in text.items()]
+        rows.append({"run": c, "replies": len(run), "cut": int(m.sum()), "narrate": int(narrates.sum()),
+                     "repeat": int((tail < REPEATS).sum()), "either": int((narrates | (tail < REPEATS)).sum()),
+                     "read": int(sum(read)),
+                     "all_narrate": int(run["prediction"].map(lambda p: len(FRAME_TIME.findall(p)) >= NARRATES).sum())})
+    return rows
 
 
 # ---- the reasoning check on D ----
@@ -155,10 +269,11 @@ def wrong_sample(run):
     return wrong.sample(min(N_SAMPLE, len(wrong)), random_state=0).sort_index(), len(wrong)
 
 
-def write_sample(sample, n_wrong, root, path):
+def write_sample(sample, n_wrong, root, path, labels_path="reasoning_labels.csv"):
     lines = [f"# Reasoning check: {len(sample)} wrong D answers on the computing tasks", "",
              f"Drawn with seed 0 from the {n_wrong} D answers on absolute distance, relative distance and object size "
-             f"that score below {WRONG} (make_table.py). Each is labelled by hand in reasoning_labels.csv with one of: "
+             f"that score below {WRONG} (make_table.py). Each is labelled, by reading it, in {Path(labels_path).name} "
+             "with one of: "
              + "; ".join(LABELS) + ".", ""]
     for q, r in sample.iterrows():
         answer = final_letter(r["prediction"]) if r["question_type"] in MCA_QUESTION_TYPES else final_number(r["prediction"])
@@ -177,9 +292,10 @@ def fmt(v, spec=".1f"):
     return "–" if v is None or pd.isna(v) else format(v, spec)
 
 
-def markdown(df, family, descriptive, runs, lengths, limits, check, labels, sample_ids, n_wrong, ids):
+def markdown(df, family, descriptive, runs, lengths, limits, cut, rules, loop_rows, check, labels, sample_ids, n_wrong,
+             ids, sample_path="reasoning_check.md", labels_path="reasoning_labels.csv", written_by="`make_table.py`"):
     tasks = [t for t in TASKS if t in df.columns and df[t].notna().any()]
-    L = [f"Written by `make_table.py` ({len(ids):,} questions per condition; scores ×100; overall: the mean over the "
+    L = [f"Written by {written_by} ({len(ids):,} questions per condition; scores ×100; overall: the mean over the "
          f"{len(tasks)} tasks present; computing: the mean of absolute distance, relative distance and object size).",
          "", "| ID | Condition | Overall | Without counting | Computing | " + " | ".join(TASK_NAMES[t] for t in tasks)
          + " | Parsed | Input tokens | Reply tokens, median / p90 | At the limit |",
@@ -219,16 +335,30 @@ def markdown(df, family, descriptive, runs, lengths, limits, check, labels, samp
     for name, m in groups:
         L.append(f"| {name} | {int(m.sum())} | " + " | ".join(f"{100 * runs[c]['score'][m].mean():.1f}" for c in df.index)
                  + " |")
-    L += ["", "Reply length per task, CoT runs (tokens; at the limit: within "
-          f"{LIMIT_MARGIN} tokens of --max-new-tokens):", "",
+    L += ["", "Reply length per task, CoT runs (tokens; at the limit: stopped by --max-new-tokens, "
+          f"{limits['B']:,} in B and {limits['D']:,} in D):", "",
           "| Task | n | B median | B at the limit | D median | D at the limit |", "|---|---:|---:|---:|---:|---:|"]
     for t in [t for t in TASKS if t in set(task)]:
         m = task == t
         cells = []
         for c in "BD":
-            n = lengths[c][m]
-            cells += [f"{n.median():.0f}", f"{100 * (n >= limits[c] - LIMIT_MARGIN).mean():.0f}%"]
+            cells += [f"{lengths[c][m].median():.0f}", f"{100 * cut[c][m].mean():.0f}%"]
         L.append(f"| {TASK_NAMES[t]} | {int(m.sum())} | " + " | ".join(cells) + " |")
+    L += ["", f"Replies cut off at the limit (narrate: {NARRATES} or more mm:ss times, which the video's \"<t seconds>\" "
+          f"labels never use; repeat: the last 2,000 characters compress below {REPEATS:.0%}; read anyway: the "
+          "final-answer rule still reads a letter or number from the unfinished reply):", "",
+          "| Run | Replies | Cut off | Narrate frames | Repeat | Either | Read anyway | Narrate frames, all replies |",
+          "|---|---:|---:|---:|---:|---:|---:|---:|"]
+    for r in loop_rows:
+        L.append(f"| {r['run']} | {r['replies']} | {r['cut']} | {r['narrate']} | {r['repeat']} | {r['either']} | "
+                 f"{r['read']} | {r['all_narrate']} |")
+    L += ["", "What the gold sheet alone answers: a fixed rule's score on the questions it applies to (every named class "
+          f"in the sheet), and the share of each condition's answers that are the rule's (the same letter, or a number "
+          f"within {MATCH:.0%}):", "", "| Rule on the gold sheet | Task | n | Rule's score | "
+          + " | ".join(df.index) + " |", "|---|---|---:|---:|" + "---:|" * len(df.index)]
+    for _, r in rules.iterrows():
+        L.append(f"| {r['rule']} | {TASK_NAMES[r['task']]} | {r['n']} | {r['score']:.1f} | "
+                 + " | ".join(f"{r[c]:.0f}%" for c in df.index) + " |")
     comp = check["task"].isin(COMPUTING)
     L += ["", "Reasoning check, D's replies:", "", "| Replies | n | Name a sheet row | Copy a sheet number | "
           "Have an \"Answer:\" line |", "|---|---:|---:|---:|---:|"]
@@ -239,12 +369,13 @@ def markdown(df, family, descriptive, runs, lengths, limits, check, labels, samp
     if labels is not None:
         counts = labels["label"].value_counts()
         L += ["", f"Why D got it wrong: {len(labels)} of its {n_wrong} wrong answers on the computing tasks (score below "
-              f"{WRONG}), drawn with seed 0 and labelled by hand (reasoning_check.md, reasoning_labels.csv):", "",
+              f"{WRONG}), drawn with seed 0 and labelled by reading each reply ({Path(sample_path).name}, "
+              f"{Path(labels_path).name}):", "",
               "| Reason | Answers |", "|---|---:|"]
         L += [f"| {lab} | {counts.get(lab, 0)} |" for lab in LABELS + sorted(set(counts.index) - set(LABELS))]
     else:
-        L += ["", f"The {len(sample_ids)} wrong D answers of the reasoning check are in reasoning_check.md; their labels "
-              "are not in yet (reasoning_labels.csv)."]
+        L += ["", f"The {len(sample_ids)} wrong D answers of the reasoning check are in {Path(sample_path).name}; their "
+              f"labels are not in yet ({Path(labels_path).name})."]
     return "\n".join(L)
 
 
@@ -258,23 +389,34 @@ def write_readme(readme, block):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", default=str(RESULTS))
-    ap.add_argument("--ids", default=str(HERE / "question_ids.txt"))
+    ap.add_argument("--explore", action="store_true", help="explore_cot.ipynb's pilot: its file names, questions and "
+                    "output files (EXPLORE) are the defaults")
+    ap.add_argument("--results")
+    ap.add_argument("--ids")
     ap.add_argument("--sheets-root", default=str(SCENE_SHEETS))
     ap.add_argument("--tokenizer", default="Qwen/Qwen3.5-2B")
-    ap.add_argument("--readme", default=str(HERE / "README.md"))
-    ap.add_argument("--csv", default=str(HERE / "results.csv"))
-    ap.add_argument("--sample", default=str(HERE / "reasoning_check.md"))
-    ap.add_argument("--labels", default=str(HERE / "reasoning_labels.csv"))
+    ap.add_argument("--readme")
+    ap.add_argument("--csv")
+    ap.add_argument("--sample")
+    ap.add_argument("--labels")
     args = ap.parse_args()
+    defaults = EXPLORE if args.explore else {
+        "results": str(RESULTS), "ids": str(HERE / "question_ids.txt"), "readme": str(HERE / "README.md"),
+        "csv": str(HERE / "results.csv"), "sample": str(HERE / "reasoning_check.md"),
+        "labels": str(HERE / "reasoning_labels.csv")}
+    for key in ("results", "ids", "readme", "csv", "sample", "labels"):
+        if getattr(args, key) is None:
+            setattr(args, key, defaults[key])
+    stems = EXPLORE["stems"] if args.explore else STEMS
     ids = [int(line) for line in open(args.ids) if line.strip()]
     root = Path(args.sheets_root)
-    runs, limits = load_runs(args.results, ids)
+    runs, limits = load_runs(args.results, ids, stems)
 
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     lengths = reply_tokens(runs, lambda text: len(tokenizer(text)["input_ids"]))
-    df = table(runs, limits, lengths)
+    cut = cut_off(runs, lengths, limits)
+    df = table(runs, limits, lengths, cut, stems)
 
     family = [compare(runs, "C", "D"), compare(runs, "A", "B"), compare(runs, "D", "E")]
     for c, h in zip(family, holm([c["p"] for c in family])):
@@ -286,7 +428,7 @@ def main():
 
     check = reasoning_check(runs["D"], root)
     sample, n_wrong = wrong_sample(runs["D"])
-    write_sample(sample, n_wrong, root, args.sample)
+    write_sample(sample, n_wrong, root, args.sample, args.labels)
     labels = None
     if Path(args.labels).exists():
         labels = pd.read_csv(args.labels).set_index("id")
@@ -297,7 +439,9 @@ def main():
             print(f"note: labels outside {LABELS}: {sorted(unknown)}")
 
     df.to_csv(args.csv, float_format="%.4g")
-    block = markdown(df, family, descriptive, runs, lengths, limits, check, labels, list(sample.index), n_wrong, ids)
+    block = markdown(df, family, descriptive, runs, lengths, limits, cut, sheet_rules(runs, root), loops(runs, cut),
+                     check, labels, list(sample.index), n_wrong, ids, args.sample, args.labels,
+                     f"`make_table.py{' --explore' if args.explore else ''}` from `{args.results}`")
     write_readme(args.readme, block)
     print(block)
     print(f"\nwrote the Results block of {args.readme}, {args.csv} and {args.sample}")

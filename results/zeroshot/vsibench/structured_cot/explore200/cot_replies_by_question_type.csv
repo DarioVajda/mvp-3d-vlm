@@ -1,0 +1,13 @@
+,video_cot,video_cot,video_cot,video_cot,gold_cot,gold_cot,gold_cot,gold_cot
+,median tokens,hit 2048,parsed %,n,median tokens,hit 2048,parsed %,n
+question_type,,,,,,,,
+obj_appearance_order,320.0,8,68.0,25,275.0,5,80.0,25
+object_abs_distance,396.0,5,96.0,25,526.0,0,100.0,25
+object_counting,2048.0,14,100.0,25,259.0,6,100.0,25
+object_rel_direction_easy,554.5,1,87.5,8,465.5,0,100.0,8
+object_rel_direction_hard,639.0,3,66.66666666666666,9,600.0,0,100.0,9
+object_rel_direction_medium,488.5,1,87.5,8,512.0,1,87.5,8
+object_rel_distance,311.0,4,84.0,25,1087.0,1,96.0,25
+object_size_estimation,482.0,11,100.0,25,423.0,2,100.0,25
+room_size_estimation,516.0,4,100.0,25,618.0,2,100.0,25
+route_planning,421.0,5,80.0,25,626.0,6,76.0,25

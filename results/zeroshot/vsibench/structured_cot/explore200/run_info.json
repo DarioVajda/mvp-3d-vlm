@@ -1,0 +1,108 @@
+{
+ "code_zip": "/content/drive/MyDrive/mvp/mvp-3d-vlm-cot.zip",
+ "code_commit": "7d392348e4ffda59af6ff0a44ee87e59244e7b40",
+ "gpu": "NVIDIA L4",
+ "model": "Qwen/Qwen3.5-2B",
+ "common": [
+  "--model",
+  "Qwen/Qwen3.5-2B",
+  "--nframes",
+  "16",
+  "--sampling",
+  "uniform128",
+  "--max-new-tokens",
+  "2048",
+  "--final-answer",
+  "--batch-size",
+  "8",
+  "--token-budget",
+  "120000"
+ ],
+ "conditions": {
+  "A_video": [
+   null,
+   "direct"
+  ],
+  "gold_csv": [
+   "gold",
+   "direct"
+  ],
+  "gold_relations": [
+   "gold_relations",
+   "direct"
+  ],
+  "video_cot": [
+   null,
+   "cot"
+  ],
+  "gold_cot": [
+   "gold",
+   "cot"
+  ]
+ },
+ "subset": "all",
+ "questions": 200,
+ "reused": {},
+ "timing": {
+  "video_cot": {
+   "gpu": "NVIDIA L4",
+   "max_new_tokens": 2048,
+   "batch_size": 8,
+   "questions": [
+    43,
+    266,
+    573,
+    1273,
+    4997
+   ],
+   "batch_s": 108.0,
+   "wall_s": 120.9,
+   "reply_tokens": [
+    2048,
+    2048,
+    390,
+    784,
+    361
+   ],
+   "hit_token_limit": [
+    true,
+    true,
+    false,
+    false,
+    false
+   ],
+   "batches": 1,
+   "steps": 2048
+  },
+  "gold_cot": {
+   "gpu": "NVIDIA L4",
+   "max_new_tokens": 2048,
+   "batch_size": 8,
+   "questions": [
+    43,
+    266,
+    573,
+    1273,
+    4997
+   ],
+   "batch_s": 108.0,
+   "wall_s": 121.4,
+   "reply_tokens": [
+    172,
+    485,
+    499,
+    893,
+    2048
+   ],
+   "hit_token_limit": [
+    false,
+    false,
+    false,
+    false,
+    true
+   ],
+   "batches": 1,
+   "steps": 2048
+  }
+ }
+}

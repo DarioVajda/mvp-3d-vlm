@@ -1,0 +1,201 @@
+id,scene,type,truth,A_video,gold_csv,gold_relations,video_cot,gold_cot
+43,arkitscenes/42897688,object_counting,2,1 (0.10),2 (1.00),2 (1.00),0 (0.00) ✂,2 (1.00)
+61,arkitscenes/42899696,object_counting,2,1 (0.10),2 (1.00),2 (1.00),38 (0.00) ✂,2 (1.00)
+101,arkitscenes/47204552,object_counting,7,4 (0.20),7 (1.00),7 (1.00),5 (0.50),7 (1.00)
+117,arkitscenes/47331970,object_counting,5,4 (0.60),5 (1.00),5 (1.00),5 (1.00) ✂,5 (1.00)
+118,arkitscenes/47331970,object_counting,4,1 (0.00),4 (1.00),4 (1.00),1 (0.00),4 (1.00)
+266,arkitscenes/42897688,object_size_estimation,98,100 (1.00),75.3 (0.60),75.3 (0.60),4 (0.00) ✂,97.7 (1.00)
+289,arkitscenes/42899461,object_size_estimation,237,190 (0.70),980 (0.00),980 (0.00),25 (0.00) ✂,589.5 (0.00)
+368,arkitscenes/45663164,object_size_estimation,108,100 (0.90),52.4 (0.00),52.4 (0.00),4 (0.00) ✂,107.7 (1.00)
+371,arkitscenes/45663164,object_size_estimation,63,60 (1.00),63.4 (1.00),63.4 (1.00),76 (0.60),63.4 (1.00)
+381,arkitscenes/47204552,object_size_estimation,124,100 (0.70),42.1 (0.00),42.1 (0.00),80 (0.30) ✂,1.245 (0.00)
+382,arkitscenes/47204552,object_size_estimation,186,200 (0.90),186 (1.00),186 (1.00),200 (0.90),186 (1.00)
+448,arkitscenes/47333457,object_size_estimation,70,100 (0.20),42 (0.30),42 (0.30),55 (0.60),70 (1.00)
+453,arkitscenes/47333457,object_size_estimation,79,90 (0.80),79.3 (1.00),79.3 (1.00),80 (1.00),79.3 (1.00)
+552,arkitscenes/42445429,room_size_estimation,16.2,25 (0.00),20 (0.60),20 (0.60),12 (0.50),12 (0.50)
+562,arkitscenes/42446529,room_size_estimation,20.0,15 (0.60),14.4 (0.50),14.5 (0.50),12 (0.30),8 (0.00)
+573,arkitscenes/42897688,room_size_estimation,31.2,20 (0.30),20 (0.30),15.5 (0.00),12.5 (0.00),22 (0.50)
+583,arkitscenes/42899461,room_size_estimation,38.4,100 (0.00),30 (0.60),40 (1.00),33 (0.80),27 (0.50)
+587,arkitscenes/42899696,room_size_estimation,30.6,20 (0.40),15.5 (0.10),15.5 (0.10),7.5 (0.00),11.25 (0.00)
+620,arkitscenes/45663164,room_size_estimation,22.4,30 (0.40),24 (0.90),24 (0.90),25 (0.80),7 (0.00)
+625,arkitscenes/47204552,room_size_estimation,35.1,40 (0.80),40 (0.80),40 (0.80),30 (0.80),15 (0.00)
+639,arkitscenes/47331970,room_size_estimation,47.8,100 (0.00),10.5 (0.00),10.5 (0.00),38 (0.60),37.75 (0.60)
+644,arkitscenes/47332899,room_size_estimation,15.8,20 (0.50),15.5 (1.00),15 (0.90),12 (0.60),12.6 (0.60)
+650,arkitscenes/47333457,room_size_estimation,20.8,15 (0.50),15 (0.50),15 (0.50),4 (0.00) ✂,16 (0.60)
+678,arkitscenes/47430468,room_size_estimation,38.0,30 (0.60),25 (0.40),25 (0.40),1 (0.00) ✂,14 (0.00)
+783,arkitscenes/42899696,object_abs_distance,1.3,2 (0.00),1.457 (0.80),1.174 (0.90),2 (0.00),0.755 (0.20)
+826,arkitscenes/45663164,object_abs_distance,2.2,2 (0.90),1.01 (0.00),2.25 (1.00),6.5 (0.00),3.012 (0.30)
+829,arkitscenes/45663164,object_abs_distance,1.0,2.1 (0.00),0.695 (0.40),0.949 (0.90),0 (0.00),1.72 (0.00)
+837,arkitscenes/47204552,object_abs_distance,1.9,3.1 (0.00),2.83 (0.10),1.817 (1.00),3.5 (0.00),3.358 (0.00)
+838,arkitscenes/47204552,object_abs_distance,2.2,2.1 (1.00),2.09 (0.90),2.208 (1.00),1.8 (0.70),3.15 (0.20)
+842,arkitscenes/47204552,object_abs_distance,2.6,2 (0.60),1.433 (0.20),2.65 (1.00),1 (0.00),3.693 (0.20)
+878,arkitscenes/47332899,object_abs_distance,1.7,2 (0.70),1.883 (0.80),1.676 (1.00),3.5 (0.00),2.18 (0.50)
+954,arkitscenes/47430468,object_abs_distance,1.9,1.2 (0.30),1.44 (0.60),1.858 (1.00),2.5 (0.40),2.4 (0.50)
+974,arkitscenes/42445429,object_rel_direction_hard,A,A ✓,B ✗,B ✗,None ✗ ✂,B ✗
+1007,arkitscenes/42899461,object_rel_direction_hard,C,B ✗,B ✗,B ✗,None ✗ ✂,B ✗
+1034,arkitscenes/47204552,object_rel_direction_hard,D,A ✗,A ✗,A ✗,A ✗,B ✗
+1049,arkitscenes/47331970,object_rel_direction_hard,C,C ✓,C ✓,C ✓,C ✓,C ✓
+1053,arkitscenes/47332899,object_rel_direction_hard,B,B ✓,B ✓,B ✓,B ✓,B ✓
+1055,arkitscenes/47333457,object_rel_direction_hard,D,D ✓,D ✓,D ✓,None ✗ ✂,D ✓
+1179,arkitscenes/47204552,object_rel_direction_medium,B,A ✗,B ✓,B ✓,B ✓,C ✗
+1265,arkitscenes/42446529,object_rel_direction_easy,A,A ✓,A ✓,B ✗,None ✗ ✂,A ✓
+1273,arkitscenes/42897688,object_rel_direction_easy,A,A ✓,B ✗,B ✗,A ✓,B ✗
+1276,arkitscenes/42899461,object_rel_direction_easy,A,B ✗,B ✗,B ✗,B ✗,B ✗
+1294,arkitscenes/47332899,object_rel_direction_easy,B,A ✗,B ✓,B ✓,A ✗,A ✗
+1298,arkitscenes/47333457,object_rel_direction_easy,A,A ✓,B ✗,B ✗,A ✓,B ✗
+1382,arkitscenes/42899461,object_rel_distance,B,B ✓,C ✗,B ✓,B ✓,B ✓
+1383,arkitscenes/42899461,object_rel_distance,A,A ✓,A ✓,A ✓,C ✗,A ✓
+1386,arkitscenes/42899461,object_rel_distance,A,A ✓,A ✓,A ✓,A ✓,C ✗
+1388,arkitscenes/42899461,object_rel_distance,C,C ✓,D ✗,C ✓,D ✗,C ✓
+1425,arkitscenes/47204552,object_rel_distance,B,C ✗,B ✓,B ✓,D ✗,B ✓
+1447,arkitscenes/47333457,object_rel_distance,C,C ✓,C ✓,C ✓,C ✓,D ✗
+1452,arkitscenes/47333457,object_rel_distance,A,A ✓,A ✓,A ✓,B ✗,C ✗
+1454,arkitscenes/47333457,object_rel_distance,A,A ✓,A ✓,A ✓,A ✓,A ✓
+1498,arkitscenes/47430468,object_rel_distance,D,B ✗,B ✗,D ✓,A ✗,D ✓
+1499,arkitscenes/47430468,object_rel_distance,C,C ✓,C ✓,C ✓,C ✓,C ✓
+1500,arkitscenes/47430468,object_rel_distance,B,B ✓,B ✓,B ✓,B ✓,None ✗ ✂
+1530,scannetpp/5eb31827b7,object_rel_direction_medium,B,C ✗,C ✗,C ✗,B ✓,B ✓
+1578,scannetpp/25f3b7a318,object_rel_direction_medium,C,A ✗,A ✗,C ✓,C ✓,A ✗
+1586,scannetpp/3db0a1c8f3,object_rel_direction_medium,C,A ✗,B ✗,B ✗,A ✗,A ✗
+1616,scannetpp/cc5237fd77,object_abs_distance,1.9,2.5 (0.40),1.24 (0.40),1.871 (1.00),3 (0.00),1.277 (0.40)
+1643,scannetpp/5eb31827b7,object_abs_distance,3.1,2.1 (0.40),1.321 (0.00),3.096 (1.00),2.4 (0.60),3.41 (0.90)
+1644,scannetpp/5eb31827b7,object_abs_distance,4.1,3.1 (0.60),2.01 (0.00),4.011 (1.00),4.5 (0.90),4.72 (0.70)
+1731,scannetpp/25f3b7a318,object_abs_distance,4.0,2.5 (0.30),1.412 (0.00),4.043 (1.00),4.3 (0.90),4.645 (0.70)
+1757,scannetpp/3db0a1c8f3,object_abs_distance,3.1,3.2 (1.00),1.9 (0.30),2.868 (0.90),0.5 (0.00),3.685 (0.70)
+1760,scannetpp/3db0a1c8f3,object_abs_distance,5.8,2.1 (0.00),1.4 (0.00),5.852 (1.00),? (0.00),0.698 (0.00)
+1789,scannetpp/6115eddb86,object_abs_distance,1.0,1.2 (0.70),0.163 (0.00),1.138 (0.80),5 (0.00),1.87 (0.00)
+1791,scannetpp/6115eddb86,object_abs_distance,0.5,1.2 (0.00),1.3 (0.00),0.405 (0.70),3.5 (0.00),2.255 (0.00)
+1800,scannetpp/c49a8c6cff,object_abs_distance,1.4,2.1 (0.00),0.958 (0.40),1.314 (0.90),4 (0.00) ✂,2.13 (0.00)
+1838,scannetpp/5eb31827b7,object_rel_direction_hard,B,B ✓,B ✓,B ✓,B ✓,B ✓
+1899,scannetpp/6115eddb86,object_rel_direction_hard,B,B ✓,B ✓,B ✓,A ✗,A ✗
+1903,scannetpp/c49a8c6cff,object_rel_direction_hard,C,D ✗,D ✗,D ✗,D ✗,D ✗
+1933,scannetpp/cc5237fd77,object_rel_distance,B,B ✓,B ✓,B ✓,None ✗ ✂,B ✓
+1962,scannetpp/5eb31827b7,object_rel_distance,C,C ✓,C ✓,C ✓,None ✗ ✂,D ✗
+2043,scannetpp/25f3b7a318,object_rel_distance,D,B ✗,B ✗,D ✓,B ✗,B ✗
+2044,scannetpp/25f3b7a318,object_rel_distance,B,B ✓,B ✓,A ✗,B ✓,B ✓
+2051,scannetpp/25f3b7a318,object_rel_distance,D,D ✓,C ✗,D ✓,D ✓,D ✓
+2191,scannetpp/c49a8c6cff,object_rel_distance,A,A ✓,A ✓,A ✓,A ✓,A ✓
+2207,scannetpp/cc5237fd77,object_size_estimation,42,40 (1.00),12.5 (0.00),12.5 (0.00),19 (0.00) ✂,99.8 (0.00)
+2227,scannetpp/5eb31827b7,object_size_estimation,73,100 (0.30),58.2 (0.60),58.2 (0.60),0 (0.00) ✂,11 (0.00) ✂
+2317,scannetpp/25f3b7a318,object_size_estimation,88,100 (0.80),88 (1.00),88.4 (1.00),35 (0.00),88.4 (1.00)
+2322,scannetpp/25f3b7a318,object_size_estimation,216,200 (0.90),215.9 (1.00),215.9 (1.00),200 (0.90),215.9 (1.00)
+2323,scannetpp/25f3b7a318,object_size_estimation,57,100 (0.00),56.7 (1.00),56.7 (1.00),41 (0.50) ✂,56.7 (1.00)
+2353,scannetpp/3db0a1c8f3,object_size_estimation,223,180 (0.70),223.2 (1.00),223.2 (1.00),36 (0.00) ✂,223 (1.00)
+2357,scannetpp/3db0a1c8f3,object_size_estimation,49,30 (0.30),47.2 (1.00),47.2 (1.00),35 (0.50),93 (0.00)
+2360,scannetpp/3db0a1c8f3,object_size_estimation,45,30 (0.40),28.8 (0.30),28.8 (0.30),40 (0.80),45 (1.00)
+2361,scannetpp/3db0a1c8f3,object_size_estimation,41,100 (0.00),25.8 (0.30),25.8 (0.30),40 (1.00),40.6 (1.00)
+2398,scannetpp/6115eddb86,object_size_estimation,69,50 (0.50),144 (0.00),154 (0.00),140 (0.00),69.2 (1.00)
+2481,scannetpp/6115eddb86,object_rel_direction_easy,B,B ✓,B ✓,B ✓,A ✗,B ✓
+2499,scannetpp/cc5237fd77,object_counting,2,2 (1.00),2 (1.00),2 (1.00),2 (1.00),2 (1.00)
+2502,scannetpp/cc5237fd77,object_counting,2,2 (1.00),2 (1.00),2 (1.00),24 (0.00) ✂,2 (1.00)
+2529,scannetpp/5eb31827b7,object_counting,2,1 (0.10),2 (1.00),2 (1.00),3 (0.10) ✂,55 (0.00) ✂
+2530,scannetpp/5eb31827b7,object_counting,3,2 (0.40),3 (1.00),3 (1.00),59 (0.00) ✂,4 (0.40) ✂
+2531,scannetpp/5eb31827b7,object_counting,2,1 (0.10),2 (1.00),2 (1.00),1 (0.10),1 (0.10) ✂
+2593,scannetpp/25f3b7a318,object_counting,2,2 (1.00),2 (1.00),2 (1.00),2 (1.00),2 (1.00)
+2605,scannetpp/3db0a1c8f3,object_counting,5,2 (0.00),5 (1.00),5 (1.00),0 (0.00) ✂,5 (1.00)
+2607,scannetpp/3db0a1c8f3,object_counting,2,2 (1.00),2 (1.00),2 (1.00),3 (0.10),2 (1.00)
+2652,scannetpp/6115eddb86,object_counting,2,1 (0.10),2 (1.00),2 (1.00),3 (0.10),2 (1.00)
+2659,scannetpp/c49a8c6cff,object_counting,2,2 (1.00),2 (1.00),2 (1.00),18 (0.00) ✂,3 (0.10) ✂
+2661,scannetpp/c49a8c6cff,object_counting,2,2 (1.00),2 (1.00),2 (1.00),50 (0.00) ✂,0 (0.00)
+2665,scannetpp/cc5237fd77,room_size_estimation,11.4,20 (0.00),20 (0.00),20 (0.00),6.25 (0.10),28 (0.00)
+2670,scannetpp/5eb31827b7,room_size_estimation,14.2,15 (0.90),15 (0.90),15 (0.90),20 (0.20),10.75 (0.60)
+2697,scannetpp/25f3b7a318,room_size_estimation,16.9,15 (0.80),13.5 (0.60),14.5 (0.80),15 (0.80),12 (0.50)
+2701,scannetpp/3db0a1c8f3,room_size_estimation,57.6,25 (0.00),20.5 (0.00),20 (0.00),14 (0.00) ✂,45 (0.60)
+2710,scannetpp/6115eddb86,room_size_estimation,22.8,25 (0.90),20 (0.80),20 (0.80),20.42 (0.80),30.74 (0.40)
+2712,scannetpp/c49a8c6cff,room_size_estimation,10.5,15 (0.20),14.5 (0.30),15.5 (0.10),12 (0.80),9 (0.80)
+2748,scannetpp/25f3b7a318,obj_appearance_order,A,A ✓,A ✓,B ✗,A ✓,A ✓
+2759,scannetpp/25f3b7a318,obj_appearance_order,B,B ✓,A ✗,C ✗,B ✓,None ✗ ✂
+2788,scannetpp/3db0a1c8f3,obj_appearance_order,C,C ✓,C ✓,C ✓,C ✓,D ✗
+2798,scannetpp/3db0a1c8f3,obj_appearance_order,B,D ✗,B ✓,B ✓,D ✗,B ✓
+2799,scannetpp/3db0a1c8f3,obj_appearance_order,A,A ✓,A ✓,B ✗,A ✓,A ✓
+2800,scannetpp/3db0a1c8f3,obj_appearance_order,C,A ✗,A ✗,A ✗,None ✗ ✂,C ✓
+2802,scannetpp/3db0a1c8f3,obj_appearance_order,C,C ✓,C ✓,C ✓,None ✗ ✂,C ✓
+2803,scannetpp/3db0a1c8f3,obj_appearance_order,B,B ✓,B ✓,B ✓,D ✗,D ✗
+2956,scannet/scene0307_02,object_rel_distance,A,B ✗,A ✓,A ✓,A ✓,C ✗
+2984,scannet/scene0426_00,object_rel_distance,C,C ✓,C ✓,C ✓,None ✗ ✂,D ✗
+3020,scannet/scene0648_00,object_rel_distance,D,D ✓,A ✗,D ✓,A ✗,D ✓
+3070,scannet/scene0697_01,object_rel_distance,A,A ✓,D ✗,A ✓,A ✓,A ✓
+3124,scannet/scene0593_00,object_rel_distance,A,A ✓,A ✓,A ✓,A ✓,A ✓
+3125,scannet/scene0593_00,object_rel_distance,D,A ✗,A ✗,D ✓,A ✗,D ✓
+3163,scannet/scene0149_00,object_rel_distance,A,A ✓,A ✓,A ✓,None ✗ ✂,A ✓
+3170,scannet/scene0207_02,object_rel_distance,A,B ✗,B ✗,A ✓,B ✗,A ✓
+3218,scannet/scene0307_02,object_size_estimation,114,100 (0.80),196 (0.00),196 (0.00),110 (1.00),114.1 (1.00)
+3258,scannet/scene0426_00,object_size_estimation,200,200 (1.00),163.6 (0.70),163.6 (0.70),200 (1.00),200.1 (1.00)
+3331,scannet/scene0695_00,object_size_estimation,224,200 (0.80),224.1 (1.00),224.1 (1.00),5 (0.00) ✂,224.1 (1.00)
+3339,scannet/scene0695_00,object_size_estimation,39,40 (1.00),38.5 (1.00),38.5 (1.00),53 (0.30) ✂,39 (1.00)
+3530,scannet/scene0207_02,object_size_estimation,94,100 (0.90),59.7 (0.30),59.7 (0.30),54 (0.20) ✂,1 (0.00) ✂
+3533,scannet/scene0207_02,object_size_estimation,151,170 (0.80),95.2 (0.30),95.2 (0.30),90 (0.20),150.7 (1.00)
+3540,scannet/scene0207_02,object_size_estimation,113,100 (0.80),151 (0.40),151 (0.40),30 (0.00),112.7 (1.00)
+3713,scannet/scene0426_00,object_rel_direction_easy,B,B ✓,B ✓,B ✓,A ✗,B ✓
+3750,scannet/scene0149_00,object_rel_direction_easy,B,A ✗,B ✓,B ✓,B ✓,A ✗
+3764,scannet/scene0307_02,room_size_estimation,29.4,15 (0.10),15 (0.10),15 (0.10),12.75 (0.00),25 (0.80) ✂
+3774,scannet/scene0426_00,room_size_estimation,12.8,15 (0.70),15 (0.70),15 (0.70),13.5 (0.90),8.1 (0.30)
+3782,scannet/scene0648_00,room_size_estimation,11.2,15 (0.40),14.5 (0.50),14.5 (0.50),12 (0.90),15.75 (0.20)
+3794,scannet/scene0695_00,room_size_estimation,10.0,15 (0.10),14 (0.30),13.5 (0.40),15 (0.10),4.5 (0.00)
+3796,scannet/scene0697_01,room_size_estimation,16.0,20 (0.60),15 (0.90),15.5 (1.00),11.25 (0.50),8.75 (0.10)
+3821,scannet/scene0593_00,room_size_estimation,20.7,20 (1.00),20.5 (1.00),20.5 (1.00),12 (0.20),12 (0.20) ✂
+3836,scannet/scene0149_00,room_size_estimation,10.6,20 (0.00),20.5 (0.00),20 (0.00),9 (0.70),8.75 (0.70)
+3843,scannet/scene0207_02,room_size_estimation,30.2,15 (0.00),14.5 (0.00),14.5 (0.00),3 (0.00) ✂,23.25 (0.60)
+3887,scannet/scene0426_00,obj_appearance_order,B,B ✓,B ✓,B ✓,None ✗ ✂,None ✗ ✂
+3899,scannet/scene0426_00,obj_appearance_order,B,D ✗,D ✗,D ✗,None ✗ ✂,D ✗
+3901,scannet/scene0426_00,obj_appearance_order,D,B ✗,B ✗,B ✗,D ✓,None ✗ ✂
+4004,scannet/scene0695_00,obj_appearance_order,D,D ✓,C ✗,C ✗,D ✓,B ✗
+4012,scannet/scene0695_00,obj_appearance_order,B,A ✗,A ✗,B ✓,B ✓,B ✓
+4016,scannet/scene0695_00,obj_appearance_order,C,C ✓,A ✗,B ✗,C ✓,None ✗ ✂
+4024,scannet/scene0697_01,obj_appearance_order,B,A ✗,A ✗,A ✗,B ✓,A ✗
+4029,scannet/scene0697_01,obj_appearance_order,A,A ✓,A ✓,A ✓,None ✗ ✂,A ✓
+4111,scannet/scene0593_00,obj_appearance_order,A,B ✗,B ✗,B ✗,A ✓,A ✓
+4118,scannet/scene0593_00,obj_appearance_order,A,A ✓,B ✗,B ✗,D ✗,A ✓
+4194,scannet/scene0207_02,obj_appearance_order,A,B ✗,A ✓,B ✗,D ✗,D ✗
+4199,scannet/scene0207_02,obj_appearance_order,B,A ✗,A ✗,C ✗,None ✗ ✂,C ✗
+4202,scannet/scene0207_02,obj_appearance_order,A,D ✗,B ✗,B ✗,D ✗,D ✗
+4206,scannet/scene0207_02,obj_appearance_order,B,D ✗,A ✗,B ✓,D ✗,None ✗ ✂
+4209,scannet/scene0207_02,obj_appearance_order,D,B ✗,B ✗,B ✗,None ✗ ✂,B ✗
+4215,scannet/scene0207_02,obj_appearance_order,D,A ✗,B ✗,B ✗,D ✓,B ✗
+4216,scannet/scene0207_02,obj_appearance_order,C,A ✗,A ✗,D ✗,None ✗ ✂,D ✗
+4242,scannet/scene0307_02,object_rel_direction_medium,A,A ✓,A ✓,C ✗,B ✗,None ✗ ✂
+4246,scannet/scene0307_02,object_rel_direction_medium,B,C ✗,B ✓,C ✗,B ✓,B ✓
+4298,scannet/scene0697_01,object_rel_direction_medium,B,A ✗,B ✓,B ✓,None ✗ ✂,B ✓
+4371,scannet/scene0207_02,object_rel_direction_medium,A,B ✗,B ✗,B ✗,B ✗,C ✗
+4410,scannet/scene0426_00,object_counting,3,1 (0.00),3 (1.00),3 (1.00),3 (1.00) ✂,54 (0.00) ✂
+4411,scannet/scene0426_00,object_counting,3,2 (0.40),3 (1.00),3 (1.00),2 (0.40),4 (0.40) ✂
+4439,scannet/scene0648_00,object_counting,2,2 (1.00),2 (1.00),2 (1.00),31 (0.00) ✂,2 (1.00)
+4442,scannet/scene0648_00,object_counting,2,2 (1.00),2 (1.00),2 (1.00),55 (0.00) ✂,2 (1.00)
+4474,scannet/scene0697_01,object_counting,2,1 (0.10),2 (1.00),2 (1.00),39 (0.00) ✂,2 (1.00)
+4537,scannet/scene0593_00,object_counting,2,2 (1.00),2 (1.00),2 (1.00),0 (0.00) ✂,2 (1.00)
+4569,scannet/scene0149_00,object_counting,2,2 (1.00),2 (1.00),2 (1.00),2 (1.00),2 (1.00)
+4582,scannet/scene0207_02,object_counting,2,1 (0.10),2 (1.00),2 (1.00),0 (0.00),2 (1.00)
+4583,scannet/scene0207_02,object_counting,2,1 (0.10),2 (1.00),2 (1.00),0 (0.00),2 (1.00)
+4671,scannet/scene0426_00,object_abs_distance,3.8,2 (0.10),1.914 (0.10),3.815 (1.00),0 (0.00) ✂,4.13 (0.90)
+4673,scannet/scene0426_00,object_abs_distance,0.4,1.2 (0.00),1.157 (0.00),0.361 (0.90),57 (0.00) ✂,1.92 (0.00)
+4738,scannet/scene0695_00,object_abs_distance,1.8,2.1 (0.70),0.788 (0.00),1.855 (1.00),56 (0.00) ✂,2.586 (0.20)
+4742,scannet/scene0695_00,object_abs_distance,1.6,2.1 (0.40),1.495 (0.90),1.711 (0.90),100 (0.00),2.5 (0.00)
+4755,scannet/scene0697_01,object_abs_distance,1.3,1.2 (0.90),1.497 (0.70),1.173 (0.90),1.5 (0.70),2.07 (0.00)
+4839,scannet/scene0593_00,object_abs_distance,2.6,2.1 (0.70),1.21 (0.00),2.686 (1.00),3.5 (0.40),3.33 (0.50)
+4843,scannet/scene0593_00,object_abs_distance,3.4,2 (0.20),1.522 (0.00),3.444 (1.00),3 (0.80) ✂,4.127 (0.60)
+4931,scannet/scene0207_02,object_abs_distance,3.5,1.1 (0.00),1.027 (0.00),3.712 (0.90),2.5 (0.50),1.268 (0.00)
+4960,arkitscenes/42899696,route_planning,B,B ✓,B ✓,B ✓,D ✗,B ✓
+4964,arkitscenes/42899461,route_planning,A,C ✗,C ✗,C ✗,C ✗,A ✓
+4965,scannetpp/c49a8c6cff,route_planning,C,C ✓,C ✓,C ✓,None ✗ ✂,A ✗
+4968,scannetpp/3db0a1c8f3,route_planning,D,D ✓,D ✓,D ✓,D ✓,D ✓
+4972,arkitscenes/42445429,route_planning,B,B ✓,B ✓,B ✓,B ✓,B ✓
+4976,arkitscenes/47332899,route_planning,B,A ✗,A ✗,A ✗,B ✓,A ✗
+4978,scannetpp/cc5237fd77,route_planning,C,B ✗,B ✗,B ✗,A ✗,A ✗
+4981,arkitscenes/47331970,route_planning,A,B ✗,B ✗,B ✗,C ✗,C ✗
+4995,scannetpp/6115eddb86,route_planning,A,B ✗,C ✗,C ✗,B ✗,C ✗
+4996,arkitscenes/45663164,route_planning,C,B ✗,B ✗,B ✗,C ✓,A ✗
+4997,arkitscenes/42897688,route_planning,C,A ✗,C ✓,B ✗,B ✗,None ✗ ✂
+5003,scannetpp/25f3b7a318,route_planning,B,B ✓,C ✗,C ✗,C ✗,None ✗ ✂
+5011,arkitscenes/47333457,route_planning,C,A ✗,B ✗,B ✗,None ✗ ✂,None ✗ ✂
+5033,scannet/scene0593_00,route_planning,B,A ✗,B ✓,B ✓,C ✗,None ✗ ✂
+5037,scannet/scene0149_00,route_planning,A,B ✗,B ✗,B ✗,B ✗,C ✗
+5039,scannet/scene0648_00,route_planning,D,A ✗,A ✗,A ✗,C ✗,A ✗
+5046,scannet/scene0695_00,route_planning,B,A ✗,A ✗,A ✗,A ✗,C ✗
+5053,scannet/scene0207_02,route_planning,D,A ✗,B ✗,B ✗,None ✗ ✂,A ✗
+5054,scannet/scene0697_01,route_planning,B,A ✗,A ✗,D ✗,C ✗,D ✗
+5061,scannet/scene0426_00,route_planning,B,A ✗,A ✗,D ✗,C ✗,B ✓
+5078,arkitscenes/47204552,route_planning,C,A ✗,C ✓,C ✓,A ✗,C ✓
+5088,scannet/scene0307_02,route_planning,A,A ✓,A ✓,A ✓,None ✗ ✂,None ✗ ✂
+5107,arkitscenes/47430468,route_planning,D,C ✗,C ✗,C ✗,B ✗,None ✗ ✂
+5124,scannetpp/5eb31827b7,route_planning,D,A ✗,A ✗,A ✗,None ✗ ✂,D ✓
+5155,arkitscenes/42446529,route_planning,A,C ✗,C ✗,C ✗,A ✓,C ✗

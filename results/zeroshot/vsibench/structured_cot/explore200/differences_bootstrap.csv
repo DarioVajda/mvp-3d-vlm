@@ -1,0 +1,37 @@
+comparison,rows,difference,95% low,95% high
+gold_cot - gold_csv,overall (8 tasks),-3.3254629629629635,-10.679722222222225,4.058530092592592
+gold_cot - gold_csv,overall without counting,-0.37195767195767276,-8.567195767195765,7.718518518518519
+gold_cot - gold_csv,object_counting,-24.0,-40.400000000000006,-9.600000000000009
+gold_cot - gold_csv,object_abs_distance,3.599999999999998,-15.200000000000003,22.400000000000002
+gold_cot - gold_csv,object_size_estimation,20.799999999999997,1.200000000000001,39.6
+gold_cot - gold_csv,room_size_estimation,-10.800000000000004,-29.600000000000005,8.799999999999986
+gold_cot - gold_csv,object_rel_distance,4.0000000000000036,-27.999999999999993,32.00000000000001
+gold_cot - gold_csv,object_rel_direction_easy,-25.0,-62.5,0.0
+gold_cot - gold_csv,object_rel_direction_medium,-12.5,-50.0,25.0
+gold_cot - gold_csv,object_rel_direction_hard,-11.111111111111116,-33.333333333333336,0.0
+gold_cot - gold_csv,route_planning,-3.9999999999999982,-24.000000000000004,16.0
+gold_cot - gold_csv,obj_appearance_order,0.0,-24.0,24.0
+video_cot - A_video,overall (8 tasks),-13.318055555555558,-20.502268518518516,-5.8386921296296315
+video_cot - A_video,overall without counting,-11.734920634920636,-19.62068783068783,-3.806838624338627
+video_cot - A_video,object_counting,-24.399999999999995,-44.8,-3.9999999999999925
+video_cot - A_video,object_abs_distance,-15.999999999999995,-33.199999999999996,0.8000000000000063
+video_cot - A_video,object_size_estimation,-29.60000000000002,-50.40000000000001,-8.400000000000007
+video_cot - A_video,room_size_estimation,2.399999999999997,-14.400000000000007,19.6
+video_cot - A_video,object_rel_distance,-28.000000000000004,-48.00000000000001,-7.9999999999999964
+video_cot - A_video,object_rel_direction_easy,-25.0,-75.0,25.0
+video_cot - A_video,object_rel_direction_medium,37.5,-12.5,87.5
+video_cot - A_video,object_rel_direction_hard,-33.33333333333333,-66.66666666666666,0.0
+video_cot - A_video,route_planning,-3.9999999999999982,-24.0,16.000000000000004
+video_cot - A_video,obj_appearance_order,0.0,-24.0,24.0
+gold_relations - gold_cot,overall (8 tasks),13.933796296296297,7.058333333333334,20.78018518518518
+gold_relations - gold_cot,overall without counting,12.495767195767195,5.010039682539682,20.02003968253968
+gold_relations - gold_cot,object_counting,24.0,9.600000000000009,40.400000000000006
+gold_relations - gold_cot,object_abs_distance,64.8,53.6,75.19999999999996
+gold_relations - gold_cot,object_size_estimation,-20.799999999999997,-39.6,-1.200000000000001
+gold_relations - gold_cot,room_size_estimation,11.6,-8.810000000000008,31.600000000000016
+gold_relations - gold_cot,object_rel_distance,27.999999999999993,7.9999999999999964,48.0
+gold_relations - gold_cot,object_rel_direction_easy,12.5,-25.0,50.0
+gold_relations - gold_cot,object_rel_direction_medium,0.0,-50.0,50.0
+gold_relations - gold_cot,object_rel_direction_hard,11.111111111111116,0.0,33.333333333333336
+gold_relations - gold_cot,route_planning,0.0,-20.0,20.0
+gold_relations - gold_cot,obj_appearance_order,-3.9999999999999982,-28.000000000000004,20.0
