@@ -11,6 +11,7 @@
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format markdown_table --cameras  # + its cameras
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format narrative --time-unit frames
   python -m mvp.eval.vsibench ... --sheet-source gold_relations   # gold sheet + closest-point relations (csv)
+  python -m mvp.eval.vsibench ... --sheet-source pipeline --metric-scale priors   # pipeline sheet in estimated metres
   python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
   python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
   python -m mvp.eval.vsibench ... --reasoning cot      # ask it to reason step by step (implies --final-answer)
@@ -27,7 +28,7 @@ import pandas as pd
 from pathlib import Path
 
 from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, SHEET_SOURCES, STEP_ORDERS, TIME_UNITS,
-                                        VISIBILITY, check_options, load_index, render_scene)
+                                        VISIBILITY, check_options, load_index, render_scene, sheet_kind)
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -41,8 +42,8 @@ def prompt_parts(d, args):
     layout and the reasoning instructions."""
     sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.cameras, Path(args.sheets_root),
                           Path(args.vggt_root), args.time_unit, args.visibility, args.step_order,
-                          args.object_directions) if args.sheets else None)
-    return build_prompt_parts(d, args.layout, sheet, args.reasoning, args.sheet_source)
+                          args.object_directions, args.metric_scale) if args.sheets else None)
+    return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.metric_scale))
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -105,6 +106,9 @@ def main():
     ap.add_argument("--cameras", action="store_true",
                     help="add the pipeline sheet's cameras after its objects, in --sheet-format; needs --sheet-source "
                          "pipeline and a format other than narrative, which has them already")
+    ap.add_argument("--metric-scale", default="none", choices=["none", "priors"],
+                    help="priors: the pipeline sheet's objects approximately in metres, the scale estimated per "
+                         "question from typical object sizes (mvp.benchmarks.scene_scale); tables only")
     ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
                     help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
                          "1-16 (the video's own labels are always seconds)")
@@ -147,9 +151,10 @@ def main():
         ap.error("--sheet-format needs --sheet-source")
     if args.sheet_source and args.sheet_format is None:
         args.sheet_format = "csv"
+    args.metric_scale = None if args.metric_scale == "none" else args.metric_scale
     try:
         check_options(args.sheet_source, args.sheet_format, args.cameras, args.time_unit, args.visibility,
-                      args.step_order, args.object_directions)
+                      args.step_order, args.object_directions, args.metric_scale)
     except ValueError as e:
         ap.error(str(e))
     args.sheets = bool(args.sheet_source)
@@ -180,7 +185,7 @@ def main():
         with_sheets = df["id"].isin(load_index(Path(args.sheets_root)))
         print(f"scene sheets (objects {args.sheet_source}, {args.sheet_format}; cameras {args.cameras}; "
               f"{args.time_unit}; visibility {args.visibility}; steps {args.step_order}; object directions "
-              f"{args.object_directions}): {with_sheets.sum()} of "
+              f"{args.object_directions}; metric scale {args.metric_scale}): {with_sheets.sum()} of "
               f"{len(df)} questions have one; "
               f"only those are evaluated",
               flush=True)
@@ -271,7 +276,7 @@ def main():
                                    "cameras": args.cameras, "time_unit": args.time_unit,
                                    "visibility": args.visibility, "step_order": args.step_order,
                                    "object_directions": args.object_directions,
-                                   "root": args.sheets_root}
+                                   "metric_scale": args.metric_scale, "root": args.sheets_root}
                    if args.sheets else None, "n": len(res), **summary}, f, indent=1)
 
 

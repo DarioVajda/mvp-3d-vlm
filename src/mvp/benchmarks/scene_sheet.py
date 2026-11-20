@@ -13,6 +13,8 @@ never written. Nothing here writes to the sheets folder.
                                               as one walk through the frames (pipeline only)
   render_cameras(question_id, fmt)            the pipeline's cameras. fmt: one of FORMATS, where "text" is the compass
                                               directions of camera_sheet_format_converter.py, frame by frame
+  render_sheet(..., metric_scale="priors")    pipeline objects approximately in metres, the scale estimated from
+                                              typical object sizes (mvp.benchmarks.scene_scale); tables only
   render_scene(question_id, source, fmt, cameras)   what the prompt carries: the objects, then with cameras=True the
                                               cameras in the same format (pipeline only; None: no objects)
   build_sheet_prompt(question_id, source, fmt)  the whole text input the eval sends with that sheet
@@ -47,6 +49,7 @@ from pathlib import Path
 
 import numpy as np
 
+from mvp.benchmarks import scene_scale
 from mvp.benchmarks.vsibench import REASONING, build_prompt_parts
 from mvp.openvocab_adapter import camera_sheet_format_converter as directions
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -58,6 +61,7 @@ FORMATS = ["csv", "json", "markdown_kv", "markdown_table", "text"]  # the object
 NARRATIVE = "narrative"  # objects and cameras as one walk through the frames: pipeline only
 SHEET_FORMATS = FORMATS + [NARRATIVE]  # cameras are written in the objects' format, so in one of FORMATS
 TIME_UNITS = ["seconds", "frames"]
+METRIC_SCALES = [None, "priors"]  # pipeline objects as they are, or approximately in metres (scene_scale)
 VISIBILITY = ["bridged", "exact"]  # bridged: a gap of up to MAX_GAP missed frames between two sightings counts as seen
 MAX_GAP = 1
 STEP_ORDERS = ["move-turn", "turn-move"]  # how the camera text and the narrative word each step between two frames
@@ -96,6 +100,10 @@ def camera_fields(time_unit="seconds"):
 PIPELINE_AXES = ("Positions x, y, z are object centres in the 3D reconstruction's relative units, not metres. The "
                  "origin is the camera of the first video frame: x points right, y down and z forward as seen from that "
                  "camera. size_x, size_y and size_z are each object's extent along x, y and z, in the same units.")
+PIPELINE_AXES_PRIORS = ("Positions x, y, z are object centres, approximately in metres, estimated from typical object "
+                        "sizes. The origin is the camera of the first video frame: x points right, y down and z forward "
+                        "as seen from that camera. size_x, size_y and size_z are each object's extent along x, y and z, "
+                        "approximately in metres.")
 FRAME_NUMBERS = ("The 16 video frames are numbered 1 to 16 in the order the video shows them. The video shows them in "
                  "pairs under one label each: frames 1 and 2 under its first label, frames 3 and 4 under the next one, "
                  "and so on.")
@@ -180,10 +188,11 @@ def bridged_note(visibility):
     return BRIDGED_NOTE if visibility == "bridged" else ""
 
 
-def preamble(source, volume=False, time_unit="seconds", visibility="bridged"):
+def preamble(source, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None):
     check_time_unit(time_unit)
     if source == "pipeline":
-        text = "Scene sheet. " + PIPELINE_AXES + " " + VISIBLE[time_unit] + bridged_note(visibility)
+        axes = PIPELINE_AXES_PRIORS if metric_scale == "priors" else PIPELINE_AXES
+        text = "Scene sheet. " + axes + " " + VISIBLE[time_unit] + bridged_note(visibility)
     else:
         text = PREAMBLES[source]
     return text + (VOLUME_NOTE if volume else "")
@@ -291,8 +300,10 @@ def ranges_of(visible):
     return RANGE.findall(visible)
 
 
-def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged"):
-    """One sheet folder's objects.csv as canonical objects: dicts of formatted strings in the order of fields()."""
+def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged",
+                 scale=1.0):
+    """One sheet folder's objects.csv as canonical objects: dicts of formatted strings in the order of fields().
+    scale multiplies positions and extents (and size, the volume, by its cube) before they are written."""
     folder = Path(folder)
     with open(folder / "objects.csv", newline="") as f:
         rows = list(csv.DictReader(f))
@@ -302,7 +313,7 @@ def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="se
     for row in rows:
         obj = {"id": object_id(row), "label": row["concept"]}
         for key in POSITION + EXTENT + (["size"] if volume else []):
-            obj[key] = fmt_float(row[key])
+            obj[key] = fmt_float(float(row[key]) * (scale ** 3 if key == "size" else scale))
         if source == "pipeline":
             seen = seen_in(row)
             if not seen or len(seen) != int(row["num_frames"]):
@@ -334,12 +345,12 @@ def sort_key(obj):
 
 
 def load_objects(question_id, source, root=SCENE_SHEETS, volume=False, stats=None, vggt_root=VGGT_DIR,
-                 time_unit="seconds", visibility="bridged"):
+                 time_unit="seconds", visibility="bridged", scale=1.0):
     """The question's canonical object list: every sheet folder of this source merged, sorted by the frame it is first
     seen in, label and track_id (gold: label and track_id). stats, a dict, counts merged folders and dropped
     duplicates."""
     folders = sheet_folders(question_id, source, root)
-    objects, dropped = merge([read_objects(folder, source, volume, vggt_root, time_unit, visibility)
+    objects, dropped = merge([read_objects(folder, source, volume, vggt_root, time_unit, visibility, scale)
                               for folder in folders])
     if stats is not None:
         stats["merged_questions"] = stats.get("merged_questions", 0) + (len(folders) > 1)
@@ -443,7 +454,7 @@ RENDERERS = {"csv": render_csv, "json": render_json, "markdown_kv": render_markd
              "markdown_table": render_markdown_table, "text": render_text}
 
 
-def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visibility="bridged"):
+def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None):
     """Preamble, then the objects in this format, or EMPTY (the same line in every format) if there are none."""
     if not objects:
         body = EMPTY
@@ -451,7 +462,7 @@ def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visi
         body = render_text(objects, fields(source, volume), time_unit)
     else:
         body = RENDERERS[fmt](objects, fields(source, volume))
-    return preamble(source, volume, time_unit, visibility) + "\n" + body
+    return preamble(source, volume, time_unit, visibility, metric_scale) + "\n" + body
 
 
 def label_lines(sentences, labels, time_unit="seconds"):
@@ -705,14 +716,16 @@ def relations(question_id, root=SCENE_SHEETS):
 # ---- one question's scene information ----
 
 def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="bridged", step_order="move-turn",
-                  object_directions="floor"):
+                  object_directions="floor", metric_scale=None):
     """ValueError if these sheet options are unknown or contradict each other. fmt is ignored without a source,
     visibility without pipeline objects, step_order without the camera text or the narrative, and object_directions
     without the narrative. cameras (in fmt, the objects' format) contradict:
       - no objects: cameras only come with the pipeline's objects
       - gold objects, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and the only
         cameras are VGGT's, in another frame and scale, with nothing to align the two by
-      - the narrative: it already tells the cameras"""
+      - the narrative: it already tells the cameras
+    metric_scale "priors" is for the pipeline's objects as tables only: the cameras, the camera text and the narrative
+    give distances in the reconstruction's units, which it does not convert."""
     if source is not None and source not in SHEET_SOURCES:
         raise ValueError(f"source must be one of {SHEET_SOURCES} or None, not {source!r}")
     if source is not None and fmt not in SHEET_FORMATS:
@@ -728,17 +741,23 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
                          "are VGGT's, in another frame and scale (so no cameras, and no narrative)")
     if fmt == NARRATIVE and cameras:
         raise ValueError("the narrative already tells where the camera goes: don't ask for the cameras with it")
+    if metric_scale not in METRIC_SCALES:
+        raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
+    if metric_scale == "priors" and (source != "pipeline" or fmt == NARRATIVE or cameras):
+        raise ValueError("metric_scale 'priors' converts the pipeline's objects as tables only (no gold sheet, no "
+                         "narrative, no cameras, which stay in the reconstruction's units)")
 
 
 def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds",
-                 visibility="bridged", step_order="move-turn", object_directions="floor"):
+                 visibility="bridged", step_order="move-turn", object_directions="floor", metric_scale=None):
     """One question's objects as prompt text. source: pipeline | gold | gold_relations (the gold sheet, then
     relations()); fmt: one of SHEET_FORMATS ("narrative": pipeline only, with its cameras). vggt_root holds each video's
-    meta.json (its fps, for timestamps)."""
+    meta.json (its fps, for timestamps). metric_scale "priors": pipeline objects approximately in metres, scaled by
+    scene_scale.question_scale (typical object sizes; an object-size question's own class left out)."""
     if source not in SHEET_SOURCES or fmt not in SHEET_FORMATS:
         raise ValueError(f"source must be one of {SHEET_SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, "
                          f"{fmt!r}")
-    check_options(source, fmt, False, time_unit, visibility, step_order, object_directions)
+    check_options(source, fmt, False, time_unit, visibility, step_order, object_directions, metric_scale)
     if source == RELATIONS_SOURCE:
         text = render_sheet(question_id, "gold", fmt, root, volume, vggt_root, time_unit, visibility, step_order,
                             object_directions)
@@ -746,26 +765,35 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
         return text + "\n" + rel if rel else text
     if fmt == NARRATIVE:
         return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions)
+    scale = scene_scale.question_scale(question_id, str(root))["k"] if metric_scale == "priors" else 1.0
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
-                           visibility=visibility)
-    return render_objects(objects, source, fmt, volume, time_unit, visibility)
+                           visibility=visibility, scale=scale)
+    return render_objects(objects, source, fmt, volume, time_unit, visibility, metric_scale)
 
 
 def render_scene(question_id, source=None, fmt=None, cameras=False, root=SCENE_SHEETS, vggt_root=VGGT_DIR,
-                 time_unit="seconds", visibility="bridged", step_order="move-turn", object_directions="floor"):
+                 time_unit="seconds", visibility="bridged", step_order="move-turn", object_directions="floor",
+                 metric_scale=None):
     """What the prompt carries about the scene: the objects (source and fmt), then, with cameras, the pipeline's
     cameras in the same format. None without a source. Contradictory options raise ValueError (check_options)."""
-    check_options(source, fmt, cameras, time_unit, visibility, step_order, object_directions)
+    check_options(source, fmt, cameras, time_unit, visibility, step_order, object_directions, metric_scale)
     if source is None:
         return None
     parts = [render_sheet(question_id, source, fmt, root, vggt_root=vggt_root, time_unit=time_unit,
-                          visibility=visibility, step_order=step_order, object_directions=object_directions)]
+                          visibility=visibility, step_order=step_order, object_directions=object_directions,
+                          metric_scale=metric_scale)]
     if cameras:
         parts.append(render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order))
     return "\n".join(parts)
 
 
 # ---- the whole prompt ----
+
+def sheet_kind(source, metric_scale=None):
+    """What the chain-of-thought instructions are told about the sheet (vsibench.cot_prompt): its source, and
+    "pipeline_priors" for pipeline objects in estimated metres."""
+    return "pipeline_priors" if source == "pipeline" and metric_scale == "priors" else source
+
 
 # Qwen3.5's chat template with thinking off (enable_thinking=False), as QwenVL.generate_video applies it, with
 # mvp.models.qwen_vl.SYSTEM_PROMPT. The template writes the video as <|vision_start|><|video_pad|><|vision_end|>; the
@@ -780,7 +808,7 @@ VIDEO_PAD = "<|video_pad|>"
 
 def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None,
                        cameras=False, time_unit="seconds", reasoning="direct", visibility="bridged",
-                       step_order="move-turn", object_directions="floor"):
+                       step_order="move-turn", object_directions="floor", metric_scale=None):
     """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
     question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the scene
     information (render_scene: the objects, and with cameras the cameras in the same format) after "These are frames
@@ -794,8 +822,8 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
     doc = {"question_type": row["question_type"], "question": row["question"],
            "options": row["options"].split(" | ") if row["options"] else None}
     sheet = render_scene(question_id, source, fmt, cameras, root, vggt_root, time_unit, visibility, step_order,
-                         object_directions)
-    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, source)
+                         object_directions, metric_scale)
+    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, sheet_kind(source, metric_scale))
     # the video's labels are the pipeline frames' timestamps, whichever sheet goes in, and always in seconds
     times = frame_timestamps((Path(root) / row["pipeline_sheet"]).parents[1] / "scene", row["scene"], Path(vggt_root))
     pad = VIDEO_PAD if frame_tokens is None else f"{VIDEO_PAD} x {frame_tokens}"
@@ -865,6 +893,8 @@ def main():
                     help="for --prompt: add the pipeline's cameras, in the objects' format")
     ap.add_argument("--reasoning", choices=REASONING, default="direct", help="for --prompt")
     ap.add_argument("--time-unit", choices=TIME_UNITS, default="seconds", help="how the sheets write frames")
+    ap.add_argument("--metric-scale", choices=["none", "priors"], default="none",
+                    help="for --prompt: pipeline objects approximately in metres from typical object sizes")
     ap.add_argument("--visibility", choices=VISIBILITY, default="bridged",
                     help="bridged: one missed frame between two sightings counts as seen; exact: only detections")
     ap.add_argument("--step-order", choices=STEP_ORDERS, default="move-turn",
@@ -878,7 +908,8 @@ def main():
         source = None if args.source == "none" else args.source
         print(build_sheet_prompt(args.question, source, args.format, root, vggt_root, cameras=args.cameras,
                                  time_unit=args.time_unit, reasoning=args.reasoning, visibility=args.visibility,
-                                 step_order=args.step_order, object_directions=args.object_directions))
+                                 step_order=args.step_order, object_directions=args.object_directions,
+                                 metric_scale=None if args.metric_scale == "none" else args.metric_scale))
         return
     if args.examples:
         write_examples(args.examples, args.question, root, vggt_root, args.time_unit, args.visibility,

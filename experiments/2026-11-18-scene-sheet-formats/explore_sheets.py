@@ -15,6 +15,8 @@
                          place of first_seen and num_frames, as scene_sheet.py writes them since 980cf00.
   gold_csv_shuffled      the gold sheet with its rows in a random order fixed per question (render_shuffled), instead
                          of sorted by label.
+  pipeline_v2_priors     pipeline_v2 with the scale estimated from typical object sizes (mvp.benchmarks.scene_scale,
+                         no gold) instead of the oracle's; pipeline_relations_priors adds the closest-point relations.
 
 As the eval's entry point, `python explore_sheets.py <mvp.eval.vsibench arguments>` runs mvp.eval.vsibench with the
 pipeline preamble replaced by EXPLORE_PREAMBLE (if set) and, with EXPLORE_RELATIONS=1, the relations appended to every
@@ -166,6 +168,30 @@ def oracle_scales(root, scenes):
     return out
 
 
+def priors_preamble(pipeline_preamble):
+    """The pipeline preamble with the units changed to metres estimated from typical object sizes, worded as
+    scene_sheet.PIPELINE_AXES_PRIORS; nothing else."""
+    text = pipeline_preamble
+    for old, new in [("object centres in the 3D reconstruction's relative units, not metres",
+                      "object centres, approximately in metres, estimated from typical object sizes"),
+                     ("in the same units", "approximately in metres")]:
+        assert old in text, old
+        text = text.replace(old, new)
+    return text
+
+
+def priors_scale(root):
+    """For write_sheets: a pipeline sheet folder's scale from typical object sizes (scene_scale.question_scale), the
+    same for every question that uses the folder (an object-size question leaves its class out)."""
+    from mvp.benchmarks import scene_scale
+
+    def scale_of(folder, questions):
+        ks = {scene_scale.question_scale(int(q["id"]), str(root))["k"] for q in questions}
+        assert len(ks) == 1, f"{folder}: its questions need different scales {sorted(ks)}"
+        return ks.pop()
+    return scale_of
+
+
 def oracle_preamble(pipeline_preamble):
     """The pipeline preamble with the units changed to metres; nothing else."""
     text = pipeline_preamble
@@ -261,8 +287,10 @@ def scale_cameras(src, dest, scale):
 
 def write_sheets(root, out_root, scales, variant, threshold=MERGE_THRESHOLD):
     """A copy of the sheets folder at out_root with every pipeline sheet of the scaled scenes rewritten: variant
-    "oracle" multiplies positions and extents by the scene's scale (size by its cube); "v2" also removes fragments
-    and merges split objects. Gold sheets are copied unchanged. Returns the number of pipeline sheets rewritten."""
+    "oracle" multiplies positions and extents by the scale (size by its cube); "v2" also removes fragments and merges
+    split objects. scales: {scene: scale} (oracle_scales), or a function (folder, its questions) -> scale
+    (priors_scale), for every scene of index.csv whose folders are present. Gold sheets are copied unchanged. Returns
+    the number of pipeline sheets rewritten."""
     root, out_root = Path(root), Path(out_root)
     if out_root.exists():
         shutil.rmtree(out_root)
@@ -270,9 +298,14 @@ def write_sheets(root, out_root, scales, variant, threshold=MERGE_THRESHOLD):
     by_folder, n = folder_questions(root), 0
     for folder, questions in by_folder.items():
         scene = questions[0]["scene"]
-        if scene not in scales:
+        if callable(scales):
+            if not (root / folder / "objects.csv").exists():
+                continue
+            k = scales(folder, questions)
+        elif scene not in scales:
             continue
-        k = scales[scene]["scale"] if isinstance(scales[scene], dict) else scales[scene]
+        else:
+            k = scales[scene]["scale"] if isinstance(scales[scene], dict) else scales[scene]
         rows, fields = read_csv(root / folder / "objects.csv")
         if variant == "oracle":
             for r in rows:

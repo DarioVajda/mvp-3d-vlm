@@ -588,6 +588,82 @@ class Synthetic(unittest.TestCase):
                 self.assertEqual("without moving" in scene, narrative and step_order == "turn-move", options)
 
 
+class MetricScale(unittest.TestCase):
+    """metric_scale "priors": the pipeline's objects approximately in metres, the scale from typical object sizes
+    (mvp.benchmarks.scene_scale). The synthetic scene's largest rows: door 2.0 units, chair 0.9, coffee table 1.0 (no
+    prior)."""
+    def setUp(self):
+        Synthetic.setUp(self)  # its fixture, without running its tests again
+        from mvp.benchmarks import scene_scale
+        self.sc = scene_scale
+        with open(self.root / "index.csv", "a", newline="") as f:
+            w = csv.writer(f)
+            w.writerow([3, "s/1", "object_size_estimation", "How long is the door?", "", "200", "door",
+                        "s__1/subset-uniform16/sheets/chair+door", "s__1/gold/sheets/chair+door", True, True])
+            w.writerow([4, "s/1", "object_size_estimation", "How long is the coffee table?", "", "100", "coffee table",
+                        "s__1/subset-uniform16/sheets/chair+door", "s__1/gold/sheets/chair+door", True, True])
+        self.clear()
+
+    def clear(self):
+        for f in (ss.load_index, self.sc.scene_longest, self.sc.question_scale):
+            f.cache_clear()
+
+    def tearDown(self):
+        self.clear()
+        self.tmp.cleanup()
+
+    def k(self, q):
+        return self.sc.question_scale(q, str(self.root))
+
+    def test_scale(self):
+        both = self.sc.CALIBRATION * float(np.median([2.0 / 2.0, 0.85 / 0.9]))
+        self.assertAlmostEqual(self.k(1)["k"], both)  # counting: door and chair
+        self.assertEqual(self.k(1)["classes"], ["chair", "door"])
+        door = self.k(3)  # an object-size question about the door: the door is left out
+        self.assertEqual((door["classes"], door["left_out"]), (["chair"], ["door"]))
+        self.assertAlmostEqual(door["k"], self.sc.CALIBRATION * 0.85 / 0.9)
+        self.assertAlmostEqual(self.k(4)["k"], both)  # the coffee table has no prior: nothing to leave out
+        rows = list(csv.DictReader(open(self.root / "s__1/subset-uniform16/sheets/chair+door/objects.csv")))
+        with open(self.root / "s__1/subset-uniform16/sheets/chair+door/objects.csv", "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(r for r in rows if r["concept"] != "chair")
+        self.clear()
+        only_door = self.k(3)  # no prior class left: the fallback
+        self.assertEqual((only_door["k"], only_door["fallback"]), (self.sc.FALLBACK, True))
+
+    def test_render(self):
+        plain = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt)
+        text = ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt, metric_scale="priors")
+        self.assertTrue(text.startswith("Scene sheet. Positions x, y, z are object centres, approximately in metres, "
+                                        "estimated from typical object sizes."))
+        self.assertIn("approximately in metres.", text.split("\n", 1)[0])
+        self.assertNotIn("relative units", text.split("\n", 1)[0])
+        rows = {r["id"]: r for r in csv.DictReader(text.split("\n", 1)[1].splitlines())}
+        k = self.k(1)["k"]
+        for o in plain:
+            for key in ss.POSITION + ss.EXTENT:
+                self.assertAlmostEqual(float(rows[o["id"]][key]), float(o[key]) * k, delta=0.002)
+            self.assertEqual(rows[o["id"]]["visible"], o["visible"])
+        # without the option, nothing changes
+        self.assertEqual(ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt),
+                         ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt, metric_scale=None))
+
+    def test_options_and_prompt(self):
+        for source, fmt, cameras in [("gold", "csv", False), ("pipeline", "narrative", False),
+                                     ("pipeline", "csv", True), ("gold_relations", "csv", False)]:
+            with self.assertRaises(ValueError, msg=(source, fmt, cameras)):
+                ss.check_options(source, fmt, cameras, metric_scale="priors")
+        with self.assertRaises(ValueError):
+            ss.check_options("pipeline", "csv", metric_scale="metres")
+        prompt = ss.build_sheet_prompt(3, "pipeline", "csv", self.root, self.vggt, reasoning="cot",
+                                       metric_scale="priors")
+        self.assertIn("computed automatically from the video and can be wrong", prompt)  # the pipeline's warning
+        self.assertNotIn("not metres: to answer", prompt)  # but not "work out the scale yourself"
+        unscaled = ss.build_sheet_prompt(3, "pipeline", "csv", self.root, self.vggt, reasoning="cot")
+        self.assertIn("relative units", unscaled)
+
+
 class Relations(unittest.TestCase):
     """gold_relations: the gold sheet, then closest-point distances between the objects the question names."""
     def setUp(self):

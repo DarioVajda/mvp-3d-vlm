@@ -524,3 +524,13 @@ every run: the 2,048-token limit changed nothing here.
   timestamps matched, and the smoke test answered and parsed 20 of 20 for A and B (mean input 2,599 and 3,076
   tokens). The eleven runs ran side by side on the one GPU, then `make_table.py` wrote the Results. Results,
   conclusion and the measured cost were written up the same day.
+- 2026-11-20, a metric scale without gold (`metric_scale.md`, written by `metric_scale.py`): on the 34 scenes with a
+  reliable oracle fit, one sheet unit is 2.34 m (median; IQR 1.91–2.74, range 0.62–5.12) and differs by dataset
+  (ARKitScenes 2.88, ScanNet 2.03, ScanNet++ 2.34; Kruskal–Wallis p = 0.005). In 5-fold cross-validation by scene, a
+  scale from typical object sizes times one calibration constant puts it within 30% of the true one in 82% of scenes
+  (median error 16%; one constant: 68%), with centre distances 20% off against the oracle's 14% and no conversion's
+  57%. With 34 scenes the gold-free conversions' intervals overlap; the clear gap is between any of them and no
+  conversion. That conversion is now `--metric-scale priors` for pipeline sheets (`src/mvp/benchmarks/scene_scale.py`,
+  applied at render time; tables only). Its calibration constant (0.8417) and fallback (2.293 m per unit) are fitted
+  on the 24 reliable scenes outside `explore200_ids.txt`'s scenes (`metric_scale.py --fit`), and an object-size
+  question leaves its own class out of the scale, so its answer does not come from the prior.
