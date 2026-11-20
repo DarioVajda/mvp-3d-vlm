@@ -146,12 +146,12 @@ COT_ANSWER = {
 
 def cot_prompt(doc, has_sheet=False, sheet_kind=None):
     """The chain-of-thought instructions that end the prompt. has_sheet: the prompt carries scene information;
-    sheet_kind: where it comes from ('pipeline': computed from the video, in relative units; 'gold': labels, in
-    metres; None: not said)."""
+    sheet_kind: where it comes from ('pipeline': computed from the video, in relative units; 'pipeline_priors': the
+    same, approximately in metres; 'gold': labels, in metres; None: not said)."""
     task = task_of(doc["question_type"])
     text = COT_STEPS.format(where=" and in the scene information above" if has_sheet else "") + " " + COT_HINTS[task]
-    if has_sheet and sheet_kind == "pipeline":
-        text += " " + COT_PIPELINE + (" " + COT_SCALE if task in METRIC_TASKS else "")
+    if has_sheet and sheet_kind in ("pipeline", "pipeline_priors"):
+        text += " " + COT_PIPELINE + (" " + COT_SCALE if task in METRIC_TASKS and sheet_kind == "pipeline" else "")
     return text + "\n" + COT_ANSWER["na" if doc["question_type"] in NA_QUESTION_TYPES else "mca"]
 
 
