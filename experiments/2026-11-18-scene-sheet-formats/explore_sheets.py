@@ -11,16 +11,23 @@
   gold_relations_v2      the same with closest-point (box-to-box) distances, as VSI-Bench's distance questions measure
                          them, and the two classes' distance for absolute-distance questions.
   pipeline_relations     pipeline_v2 (ORACLE scale) plus gold_relations_v2's relations, computed from its own rows.
+  pipeline_v2_intervals  pipeline_v2 (ORACLE scale) with each object's visible time intervals (render_intervals) in
+                         place of first_seen and num_frames, as scene_sheet.py writes them since 980cf00.
+  gold_csv_shuffled      the gold sheet with its rows in a random order fixed per question (render_shuffled), instead
+                         of sorted by label.
 
 As the eval's entry point, `python explore_sheets.py <mvp.eval.vsibench arguments>` runs mvp.eval.vsibench with the
 pipeline preamble replaced by EXPLORE_PREAMBLE (if set) and, with EXPLORE_RELATIONS=1, the relations appended to every
-rendered sheet (EXPLORE_RELATIONS=closest: closest-point distances). Nothing else in the eval changes.
+rendered sheet (EXPLORE_RELATIONS=closest: closest-point distances); EXPLORE_INTERVALS=1 writes pipeline sheets with
+visible intervals and EXPLORE_SHUFFLE=1 shuffles gold sheets' rows. Nothing else in the eval changes.
 
   PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/explore_sheets.py  # see sheet_quality.py --v2
 """
 import csv
 import itertools
+import json
 import os
+import random
 import shutil
 from pathlib import Path
 
@@ -331,15 +338,101 @@ def relations(question, root, source="gold", mode="centre"):
     return "\n".join(lines)
 
 
-def render(question_id, source, fmt, root, vggt_root, preamble=None, relations_mode=None):
+# ---- pipeline_v2_intervals: visible intervals instead of first_seen and num_frames ----
+
+# The wording and rules of scene_sheet.py since 980cf00 (VISIBLE["seconds"], BRIDGED_NOTE, visible_frames with
+# visibility "bridged" and MAX_GAP 1, runs), which the explore notebooks' code (b381205) predates.
+FIRST_SEEN_SENTENCE = ("first_seen is the video timestamp, in seconds, at which the object first appears, as the video's "
+                       "timestamps show it, and num_frames is how many of the 16 video frames it appears in.")
+VISIBLE_SENTENCES = ("visible gives the stretches of consecutive video frames in which the object is seen, each from its "
+                     "first frame to its last, written as the video's timestamps for them, in seconds. The video shows "
+                     "one timestamp per pair of frames, so a stretch within one pair starts and ends at the same time. "
+                     "The detector sometimes misses an object for a single frame, so one missed frame between two "
+                     "sightings is counted as seen.")
+MAX_GAP = 1
+
+
+def intervals_preamble(pipeline_preamble):
+    """A pipeline preamble with the first_seen / num_frames sentence replaced by the visible one; nothing else."""
+    assert FIRST_SEEN_SENTENCE in pipeline_preamble
+    return pipeline_preamble.replace(FIRST_SEEN_SENTENCE, VISIBLE_SENTENCES)
+
+
+def visible_frames(seen):
+    """The frames seen, plus every gap of up to MAX_GAP frames between two of them (visibility "bridged")."""
+    seen = sorted(set(seen))
+    frames = set(seen)
+    for a, b in zip(seen, seen[1:]):
+        if b - a - 1 <= MAX_GAP:
+            frames.update(range(a + 1, b))
+    return frames
+
+
+def runs(frames):
+    """Consecutive frames as (first, last) pairs: {1, 2, 3, 6} -> [(1, 3), (6, 6)]."""
+    out = []
+    for t in sorted(frames):
+        if out and t == out[-1][1] + 1:
+            out[-1][1] = t
+        else:
+            out.append([t, t])
+    return [tuple(r) for r in out]
+
+
+def render_intervals(question_id, root, vggt_root, preamble):
+    """The question's pipeline sheet (in root) as csv with id, label, the position and extent, and visible: the
+    stretches of frames the object is seen in, as the video's timestamps. Rows sorted by the first visible time, label
+    and track id, as both renderers sort them."""
+    from mvp.benchmarks import scene_sheet as ss
+    row = ss.load_index(Path(root))[int(question_id)]
+    folder = Path(root) / row["pipeline_sheet"]
+    rows = read_csv(folder / "objects.csv")[0]
+    if not rows:
+        return preamble + "\n" + ss.EMPTY
+    scene = json.loads((folder / "question.json").read_text())["scene"]
+    labels = ss.frame_timestamps(folder.parents[1] / "scene", scene, Path(vggt_root))
+    objects = []
+    for r in rows:
+        seen = [t for t in range(N_FRAMES) if r[f"frame_{t:03d}"] == "1"]
+        spans = runs(visible_frames(seen))
+        objects.append((float(labels[spans[0][0]]), r["concept"], int(r["track_id"]),
+                        [f"{r['concept'].replace(' ', '_')}_{r['track_id']}", r["concept"]]
+                        + [ss.fmt_float(r[k]) for k in POS + EXT]
+                        + [", ".join(f"[{labels[a]}, {labels[b]}]" for a, b in spans)]))
+    keys = ["id", "label"] + POS + EXT + ["visible"]
+    return preamble + "\n" + ss.render_csv([dict(zip(keys, o[3])) for o in sorted(objects)], keys)
+
+
+# ---- gold_csv_shuffled: the gold sheet's rows in a random order ----
+
+SHUFFLE_SEED = 0
+
+
+def render_shuffled(question_id, root, vggt_root, seed=SHUFFLE_SEED):
+    """The gold sheet as csv with its rows in a random order fixed by the seed and the question, instead of by label."""
+    from mvp.benchmarks import scene_sheet as ss
+    objects = ss.load_objects(question_id, "gold", Path(root), vggt_root=Path(vggt_root))
+    random.Random(f"{seed}:{int(question_id)}").shuffle(objects)
+    return ss.render_objects(objects, "gold", "csv")
+
+
+def render(question_id, source, fmt, root, vggt_root, preamble=None, relations_mode=None, intervals=False,
+           shuffle=False):
     """The sheet as the eval will render it for an explore condition: scene_sheet.render_sheet, with the pipeline
-    preamble replaced by `preamble` and, with relations_mode ("centre" or "closest"), the relations appended."""
+    preamble replaced by `preamble`; with intervals, the pipeline sheet with visible intervals (render_intervals, csv,
+    `preamble` as given); with shuffle, the gold sheet's rows shuffled (render_shuffled, csv); and with relations_mode
+    ("centre" or "closest"), the relations appended."""
     from mvp.benchmarks import scene_sheet as ss
     saved = ss.PREAMBLES["pipeline"]
     if preamble:
         ss.PREAMBLES["pipeline"] = preamble
     try:
-        text = ss.render_sheet(question_id, source, fmt, Path(root), vggt_root=Path(vggt_root))
+        if intervals and source == "pipeline":
+            text = render_intervals(question_id, root, vggt_root, ss.PREAMBLES["pipeline"])
+        elif shuffle and source == "gold":
+            text = render_shuffled(question_id, root, vggt_root)
+        else:
+            text = ss.render_sheet(question_id, source, fmt, Path(root), vggt_root=Path(vggt_root))
     finally:
         ss.PREAMBLES["pipeline"] = saved
     if relations_mode:
@@ -356,13 +449,20 @@ def main():
         ss.PREAMBLES["pipeline"] = os.environ["EXPLORE_PREAMBLE"]
     from mvp.eval import vsibench
     mode = {"1": "centre", "centre": "centre", "closest": "closest"}.get(os.environ.get("EXPLORE_RELATIONS", ""))
-    if mode:
+    intervals, shuffle = os.environ.get("EXPLORE_INTERVALS") == "1", os.environ.get("EXPLORE_SHUFFLE") == "1"
+    if mode or intervals or shuffle:
         plain = vsibench.render_sheet
 
-        def with_relations(question_id, source, fmt, root, **kw):
-            rel = relations(ss.load_index(Path(root))[int(question_id)], root, source, mode)
-            return plain(question_id, source, fmt, root, **kw) + ("\n" + rel if rel else "")
-        vsibench.render_sheet = with_relations
+        def explore_sheet(question_id, source, fmt, root, vggt_root=None, **kw):
+            if intervals and source == "pipeline":
+                text = render_intervals(question_id, root, vggt_root, ss.PREAMBLES["pipeline"])
+            elif shuffle and source == "gold":
+                text = render_shuffled(question_id, root, vggt_root)
+            else:
+                text = plain(question_id, source, fmt, root, vggt_root=vggt_root, **kw)
+            rel = relations(ss.load_index(Path(root))[int(question_id)], root, source, mode) if mode else ""
+            return text + ("\n" + rel if rel else "")
+        vsibench.render_sheet = explore_sheet
     vsibench.main()
 
 
