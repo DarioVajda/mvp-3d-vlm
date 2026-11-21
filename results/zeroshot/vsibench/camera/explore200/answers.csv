@@ -1,0 +1,16 @@
+,family,replies,parsed %,median tokens,longest,over 16 tokens,hit 256,"input tokens, mean",mean score
+video,video only,200,100.0,1.0,10,0,0,2567.515,48.65
+obj_csv,objects only,200,100.0,1.0,5,0,0,3172.695,39.3
+cam_csv,camera table,200,100.0,1.0,5,0,0,4398.405,38.55
+obj_text,objects only,200,100.0,1.0,5,0,0,3298.175,37.3
+cam_text,camera text,200,100.0,1.0,4,0,0,3899.055,38.35
+narrative,narrative,200,100.0,1.0,5,0,0,3797.775,33.95
+obj_markdown_table,objects only,200,100.0,1.0,5,0,0,3257.23,41.15
+cam_markdown_table,camera table,200,100.0,1.0,4,0,0,4721.94,38.650000000000006
+cam_csv_frames,camera table,200,100.0,1.0,5,0,0,4368.965,38.7
+cam_text_turn_move,camera text,200,100.0,1.0,4,0,0,3910.655,36.3
+cam_text_frames,camera text,200,100.0,1.0,5,0,0,3952.1,36.349999999999994
+narrative_turn_move,narrative,200,100.0,1.0,5,0,0,3809.775,31.799999999999994
+narrative_camera_dirs,narrative,200,100.0,1.0,5,0,0,3791.665,34.7
+narrative_frames,narrative,200,100.0,1.0,5,0,0,3849.42,34.3
+narrative_exact,narrative,200,100.0,1.0,5,0,0,3772.425,33.45

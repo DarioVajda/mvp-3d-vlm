@@ -1,0 +1,352 @@
+comparison,rows,difference,95% low,95% high
+cam_csv − obj_csv,overall,-0.7337962962962938,-5.196423611111111,3.8000810185185165
+cam_csv − obj_csv,direction and route,-3.935185185185184,-14.25,6.48148148148148
+cam_csv − obj_csv,without metric tasks,-2.4540740740740725,-8.92827777777778,4.0720370370370365
+cam_csv − obj_csv,object_counting,3.600000000000003,0.0,10.800000000000006
+cam_csv − obj_csv,object_abs_distance,-3.599999999999998,-10.799999999999995,3.999999999999995
+cam_csv − obj_csv,object_size_estimation,2.400000000000002,-7.600000000000001,13.200000000000006
+cam_csv − obj_csv,room_size_estimation,7.600000000000007,1.5999999999999959,14.400000000000007
+cam_csv − obj_csv,object_rel_distance,-7.9999999999999964,-20.0,0.0
+cam_csv − obj_csv,object_rel_direction_easy,-25.0,-75.0,25.0
+cam_csv − obj_csv,object_rel_direction_medium,12.5,0.0,37.5
+cam_csv − obj_csv,object_rel_direction_hard,-11.111111111111105,-33.333333333333336,0.0
+cam_csv − obj_csv,route_planning,0.0,-12.0,12.0
+cam_csv − obj_csv,obj_appearance_order,0.0,-20.000000000000007,20.000000000000007
+cam_markdown_table − obj_markdown_table,overall,-2.483796296296294,-6.9625115740740755,2.0502083333333316
+cam_markdown_table − obj_markdown_table,direction and route,0.06481481481481532,-12.185185185185183,12.25
+cam_markdown_table − obj_markdown_table,without metric tasks,-0.054074074074072255,-6.760000000000002,6.606444444444438
+cam_markdown_table − obj_markdown_table,object_counting,15.600000000000009,3.599999999999992,30.0
+cam_markdown_table − obj_markdown_table,object_abs_distance,-11.2,-20.799999999999997,-2.799999999999997
+cam_markdown_table − obj_markdown_table,object_size_estimation,-7.599999999999999,-18.4,0.8000000000000007
+cam_markdown_table − obj_markdown_table,room_size_estimation,-0.7999999999999952,-5.200000000000005,3.600000000000003
+cam_markdown_table − obj_markdown_table,object_rel_distance,0.0,0.0,0.0
+cam_markdown_table − obj_markdown_table,object_rel_direction_easy,-12.5,-50.0,25.0
+cam_markdown_table − obj_markdown_table,object_rel_direction_medium,0.0,-37.5,37.5
+cam_markdown_table − obj_markdown_table,object_rel_direction_hard,-11.111111111111116,-33.333333333333336,0.0
+cam_markdown_table − obj_markdown_table,route_planning,8.000000000000002,-7.9999999999999964,24.0
+cam_markdown_table − obj_markdown_table,obj_appearance_order,-15.999999999999998,-36.0,0.0
+cam_text − obj_text,overall,1.0500000000000007,-3.9999999999999973,6.25
+cam_text − obj_text,direction and route,1.9999999999999991,0.0,6.0
+cam_text − obj_text,without metric tasks,0.8000000000000003,-6.3199999999999985,8.160000000000002
+cam_text − obj_text,object_counting,0.0,-16.800000000000015,16.800000000000015
+cam_text − obj_text,object_abs_distance,-2.399999999999997,-15.999999999999998,10.8
+cam_text − obj_text,object_size_estimation,0.40000000000000036,-10.799999999999999,9.600000000000003
+cam_text − obj_text,room_size_estimation,6.4,0.3999999999999948,13.599999999999996
+cam_text − obj_text,object_rel_distance,24.0,3.9999999999999982,44.0
+cam_text − obj_text,object_rel_direction_easy,0.0,0.0,0.0
+cam_text − obj_text,object_rel_direction_medium,0.0,0.0,0.0
+cam_text − obj_text,object_rel_direction_hard,0.0,0.0,0.0
+cam_text − obj_text,route_planning,3.9999999999999982,0.0,12.0
+cam_text − obj_text,obj_appearance_order,-24.0,-48.0,0.0
+narrative − cam_text,overall,-4.379166666666665,-9.5,0.721354166666662
+narrative − cam_text,direction and route,-1.9166666666666679,-10.0,6.166666666666668
+narrative − cam_text,without metric tasks,-2.846666666666666,-10.08,4.306666666666665
+narrative − cam_text,object_counting,-2.399999999999997,-19.199999999999996,13.99999999999999
+narrative − cam_text,object_abs_distance,-1.9999999999999962,-13.599999999999996,9.200000000000003
+narrative − cam_text,object_size_estimation,-9.999999999999998,-21.6,0.8000000000000007
+narrative − cam_text,room_size_estimation,-8.799999999999999,-20.400000000000002,1.200000000000001
+narrative − cam_text,object_rel_distance,-24.0,-44.0,-3.9999999999999982
+narrative − cam_text,object_rel_direction_easy,0.0,0.0,0.0
+narrative − cam_text,object_rel_direction_medium,12.5,0.0,37.5
+narrative − cam_text,object_rel_direction_hard,0.0,0.0,0.0
+narrative − cam_text,route_planning,-8.000000000000002,-24.0,7.9999999999999964
+narrative − cam_text,obj_appearance_order,16.000000000000004,0.0,36.0
+narrative − obj_text,overall,-3.3291666666666653,-7.829166666666667,1.1333333333333326
+narrative − obj_text,direction and route,0.08333333333333126,-7.999999999999999,8.083333333333336
+narrative − obj_text,without metric tasks,-2.0466666666666664,-7.6000000000000005,3.54
+narrative − obj_text,object_counting,-2.399999999999997,-12.0,5.600000000000022
+narrative − obj_text,object_abs_distance,-4.399999999999993,-18.8,10.000000000000004
+narrative − obj_text,object_size_estimation,-9.599999999999998,-22.400000000000006,2.0099999999998612
+narrative − obj_text,room_size_estimation,-2.3999999999999995,-15.599999999999998,8.409999999999862
+narrative − obj_text,object_rel_distance,0.0,-12.0,12.0
+narrative − obj_text,object_rel_direction_easy,0.0,0.0,0.0
+narrative − obj_text,object_rel_direction_medium,12.5,0.0,37.5
+narrative − obj_text,object_rel_direction_hard,0.0,0.0,0.0
+narrative − obj_text,route_planning,-4.0000000000000036,-16.000000000000004,8.000000000000002
+narrative − obj_text,obj_appearance_order,-7.9999999999999964,-27.999999999999996,12.0
+narrative − obj_csv,overall,-5.3337962962962955,-11.304178240740741,0.7501041666666636
+narrative − obj_csv,direction and route,-3.935185185185184,-16.500462962962963,8.611574074074067
+narrative − obj_csv,without metric tasks,-5.574074074074074,-14.061814814814815,2.9392777777777765
+narrative − obj_csv,object_counting,4.0000000000000036,-15.199999999999998,22.799999999999994
+narrative − obj_csv,object_abs_distance,-2.7999999999999914,-14.399999999999991,10.400000000000004
+narrative − obj_csv,object_size_estimation,-5.200000000000005,-18.400000000000002,7.600000000000001
+narrative − obj_csv,room_size_estimation,-6.799999999999992,-22.000000000000004,8.000000000000002
+narrative − obj_csv,object_rel_distance,-28.000000000000004,-48.0,-12.0
+narrative − obj_csv,object_rel_direction_easy,-25.0,-75.0,25.0
+narrative − obj_csv,object_rel_direction_medium,12.5,-25.0,50.0
+narrative − obj_csv,object_rel_direction_hard,-11.111111111111105,-33.333333333333336,0.0
+narrative − obj_csv,route_planning,0.0,-15.999999999999998,15.999999999999998
+narrative − obj_csv,obj_appearance_order,4.0000000000000036,-16.000000000000004,24.0
+cam_csv_frames − cam_csv,overall,0.12916666666666665,-3.1213541666666695,3.45
+cam_csv_frames − cam_csv,direction and route,-0.08333333333333126,-6.25,6.0
+cam_csv_frames − cam_csv,without metric tasks,0.20666666666666772,-4.5933333333333355,4.846666666666668
+cam_csv_frames − cam_csv,object_counting,9.200000000000003,-4.400000000000004,24.0
+cam_csv_frames − cam_csv,object_abs_distance,3.200000000000003,-2.8,11.600000000000005
+cam_csv_frames − cam_csv,object_size_estimation,-1.6000000000000014,-10.000000000000004,6.800000000000001
+cam_csv_frames − cam_csv,room_size_estimation,-1.600000000000007,-4.400000000000015,1.5999999999999959
+cam_csv_frames − cam_csv,object_rel_distance,-12.000000000000005,-24.000000000000004,0.0
+cam_csv_frames − cam_csv,object_rel_direction_easy,0.0,0.0,0.0
+cam_csv_frames − cam_csv,object_rel_direction_medium,-12.5,-37.5,0.0
+cam_csv_frames − cam_csv,object_rel_direction_hard,0.0,0.0,0.0
+cam_csv_frames − cam_csv,route_planning,4.0000000000000036,0.0,12.0
+cam_csv_frames − cam_csv,obj_appearance_order,4.0000000000000036,0.0,12.0
+cam_text_turn_move − cam_text,overall,-2.0500000000000007,-4.349999999999999,0.050000000000000044
+cam_text_turn_move − cam_text,direction and route,0.0,0.0,0.0
+cam_text_turn_move − cam_text,without metric tasks,-2.4800000000000004,-5.6800000000000015,0.6400000000000006
+cam_text_turn_move − cam_text,object_counting,-0.40000000000000036,-12.0,10.799999999999999
+cam_text_turn_move − cam_text,object_abs_distance,0.40000000000000036,0.0,1.2000000000000037
+cam_text_turn_move − cam_text,object_size_estimation,0.0,0.0,0.0
+cam_text_turn_move − cam_text,room_size_estimation,-4.400000000000004,-10.799999999999999,0.4000000000000059
+cam_text_turn_move − cam_text,object_rel_distance,-12.0,-24.000000000000004,0.0
+cam_text_turn_move − cam_text,object_rel_direction_easy,0.0,0.0,0.0
+cam_text_turn_move − cam_text,object_rel_direction_medium,0.0,0.0,0.0
+cam_text_turn_move − cam_text,object_rel_direction_hard,0.0,0.0,0.0
+cam_text_turn_move − cam_text,route_planning,0.0,0.0,0.0
+cam_text_turn_move − cam_text,obj_appearance_order,0.0,0.0,0.0
+cam_text_frames − cam_text,overall,-2.0,-6.15,2.100000000000001
+cam_text_frames − cam_text,direction and route,-1.9999999999999991,-6.0,0.0
+cam_text_frames − cam_text,without metric tasks,-3.1199999999999983,-9.120000000000001,3.040000000000001
+cam_text_frames − cam_text,object_counting,0.4000000000000059,-13.599999999999996,14.400000000000002
+cam_text_frames − cam_text,object_abs_distance,2.399999999999997,-5.600000000000005,11.999999999999991
+cam_text_frames − cam_text,object_size_estimation,-4.399999999999999,-11.6,0.0
+cam_text_frames − cam_text,room_size_estimation,1.5999999999999959,-5.600000000000005,9.600000000000003
+cam_text_frames − cam_text,object_rel_distance,-24.0,-44.00000000000001,-3.9999999999999982
+cam_text_frames − cam_text,object_rel_direction_easy,0.0,0.0,0.0
+cam_text_frames − cam_text,object_rel_direction_medium,0.0,0.0,0.0
+cam_text_frames − cam_text,object_rel_direction_hard,0.0,0.0,0.0
+cam_text_frames − cam_text,route_planning,-3.9999999999999982,-12.0,0.0
+cam_text_frames − cam_text,obj_appearance_order,12.0,-4.0000000000000036,28.000000000000004
+narrative_turn_move − narrative,overall,-2.1500000000000012,-4.85,0.40000000000000013
+narrative_turn_move − narrative,direction and route,4.000000000000001,0.0,10.0
+narrative_turn_move − narrative,without metric tasks,-4.44089209850063e-17,-3.2,3.1999999999999997
+narrative_turn_move − narrative,object_counting,0.0,0.0,0.0
+narrative_turn_move − narrative,object_abs_distance,-5.551115123125783e-15,-2.0000000000000018,1.600000000000004
+narrative_turn_move − narrative,object_size_estimation,-4.400000000000001,-13.200000000000003,4.800000000000002
+narrative_turn_move − narrative,room_size_estimation,-12.800000000000002,-25.6,-2.800000000000001
+narrative_turn_move − narrative,object_rel_distance,-3.9999999999999982,-12.0,0.0
+narrative_turn_move − narrative,object_rel_direction_easy,0.0,0.0,0.0
+narrative_turn_move − narrative,object_rel_direction_medium,0.0,0.0,0.0
+narrative_turn_move − narrative,object_rel_direction_hard,0.0,0.0,0.0
+narrative_turn_move − narrative,route_planning,8.000000000000002,0.0,20.0
+narrative_turn_move − narrative,obj_appearance_order,-4.0000000000000036,-12.0,0.0
+narrative_camera_dirs − narrative,overall,0.75,-0.29999999999999993,2.1500000000000004
+narrative_camera_dirs − narrative,direction and route,2.0000000000000018,0.0,6.0
+narrative_camera_dirs − narrative,without metric tasks,0.8000000000000007,0.0,2.4000000000000004
+narrative_camera_dirs − narrative,object_counting,0.0,0.0,0.0
+narrative_camera_dirs − narrative,object_abs_distance,0.3999999999999976,-1.600000000000004,2.3999999999999995
+narrative_camera_dirs − narrative,object_size_estimation,2.400000000000002,0.0,7.200000000000006
+narrative_camera_dirs − narrative,room_size_estimation,-0.8000000000000035,-4.400000000000001,2.3999999999999986
+narrative_camera_dirs − narrative,object_rel_distance,0.0,0.0,0.0
+narrative_camera_dirs − narrative,object_rel_direction_easy,0.0,0.0,0.0
+narrative_camera_dirs − narrative,object_rel_direction_medium,0.0,0.0,0.0
+narrative_camera_dirs − narrative,object_rel_direction_hard,0.0,0.0,0.0
+narrative_camera_dirs − narrative,route_planning,4.0000000000000036,0.0,12.0
+narrative_camera_dirs − narrative,obj_appearance_order,0.0,0.0,0.0
+narrative_frames − narrative,overall,0.3291666666666657,-3.6916666666666664,4.349999999999998
+narrative_frames − narrative,direction and route,-4.083333333333332,-12.166666666666666,3.916666666666667
+narrative_frames − narrative,without metric tasks,0.04666666666666643,-5.267000000000001,5.440000000000002
+narrative_frames − narrative,object_counting,0.3999999999999948,-10.399999999999999,10.800000000000015
+narrative_frames − narrative,object_abs_distance,1.1999999999999955,-10.399999999999993,12.8
+narrative_frames − narrative,object_size_estimation,0.40000000000000036,-7.999999999999999,9.599999999999998
+narrative_frames − narrative,room_size_estimation,0.7999999999999979,-10.4,12.8
+narrative_frames − narrative,object_rel_distance,8.000000000000002,0.0,20.0
+narrative_frames − narrative,object_rel_direction_easy,0.0,0.0,0.0
+narrative_frames − narrative,object_rel_direction_medium,-12.5,-37.5,0.0
+narrative_frames − narrative,object_rel_direction_hard,0.0,0.0,0.0
+narrative_frames − narrative,route_planning,-3.9999999999999982,-16.000000000000004,8.000000000000002
+narrative_frames − narrative,obj_appearance_order,0.0,-16.000000000000004,16.000000000000004
+narrative_exact − narrative,overall,-0.4999999999999998,-2.8,1.7
+narrative_exact − narrative,direction and route,-1.9999999999999991,-6.0,0.0
+narrative_exact − narrative,without metric tasks,0.08000000000000115,-3.120000000000001,3.200000000000001
+narrative_exact − narrative,object_counting,0.4000000000000059,0.0,1.200000000000001
+narrative_exact − narrative,object_abs_distance,-4.0000000000000036,-12.0,1.9999999999999962
+narrative_exact − narrative,object_size_estimation,0.40000000000000036,-6.0,7.200000000000001
+narrative_exact − narrative,room_size_estimation,-0.8000000000000007,-2.8000000000000025,0.8000000000000007
+narrative_exact − narrative,object_rel_distance,0.0,0.0,0.0
+narrative_exact − narrative,object_rel_direction_easy,0.0,0.0,0.0
+narrative_exact − narrative,object_rel_direction_medium,0.0,0.0,0.0
+narrative_exact − narrative,object_rel_direction_hard,0.0,0.0,0.0
+narrative_exact − narrative,route_planning,-3.9999999999999982,-12.0,0.0
+narrative_exact − narrative,obj_appearance_order,3.9999999999999982,-8.000000000000002,16.000000000000004
+obj_csv − video,overall,-9.266666666666667,-15.712974537037038,-2.8776273148148173
+obj_csv − video,direction and route,14.333333333333332,1.9351851851851865,28.12083333333333
+obj_csv − video,without metric tasks,0.21333333333333368,-7.86161111111111,8.393351851851854
+obj_csv − video,object_counting,-7.599999999999996,-28.000000000000007,14.000000000000007
+obj_csv − video,object_abs_distance,-19.6,-39.599999999999994,1.5999999999999988
+obj_csv − video,object_size_estimation,-42.40000000000001,-58.4,-26.400000000000016
+obj_csv − video,room_size_estimation,-13.200000000000001,-29.600000000000005,2.3999999999999853
+obj_csv − video,object_rel_distance,-12.0,-28.000000000000004,4.0000000000000036
+obj_csv − video,object_rel_direction_easy,12.5,0.0,37.5
+obj_csv − video,object_rel_direction_medium,37.5,12.5,75.0
+obj_csv − video,object_rel_direction_hard,0.0,-33.33333333333333,33.33333333333333
+obj_csv − video,route_planning,12.0,-8.000000000000002,32.0
+obj_csv − video,obj_appearance_order,-8.000000000000002,-24.0,7.9999999999999964
+cam_csv − video,overall,-10.000462962962962,-17.256076388888893,-2.5851388888888907
+cam_csv − video,direction and route,10.398148148148149,-5.5375,26.435185185185183
+cam_csv − video,without metric tasks,-2.2407407407407383,-12.02618518518519,7.733518518518517
+cam_csv − video,object_counting,-3.9999999999999925,-23.600000000000005,16.800000000000004
+cam_csv − video,object_abs_distance,-23.2,-43.2,-1.600000000000007
+cam_csv − video,object_size_estimation,-40.00000000000001,-56.399999999999984,-23.200000000000003
+cam_csv − video,room_size_estimation,-5.599999999999994,-21.60000000000001,10.000000000000009
+cam_csv − video,object_rel_distance,-19.999999999999996,-40.0,0.0
+cam_csv − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_csv − video,object_rel_direction_medium,50.0,12.5,87.5
+cam_csv − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+cam_csv − video,route_planning,12.0,-8.000000000000002,32.0
+cam_csv − video,obj_appearance_order,-8.000000000000002,-32.0,16.000000000000004
+obj_text − video,overall,-11.271296296296297,-18.888460648148143,-3.7000231481481523
+obj_text − video,direction and route,10.314814814814818,-7.324074074074074,27.028240740740735
+obj_text − video,without metric tasks,-3.3140740740740737,-13.574925925925923,7.215129629629626
+obj_text − video,object_counting,-1.1999999999999955,-24.399999999999995,22.800000000000008
+obj_text − video,object_abs_distance,-18.0,-36.0,0.7999999999999952
+obj_text − video,object_size_estimation,-38.000000000000014,-54.0,-22.400000000000002
+obj_text − video,room_size_estimation,-17.599999999999994,-36.0,1.5999999999999959
+obj_text − video,object_rel_distance,-40.0,-60.0,-20.000000000000007
+obj_text − video,object_rel_direction_easy,-12.5,-62.5,37.5
+obj_text − video,object_rel_direction_medium,37.5,-12.5,87.5
+obj_text − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+obj_text − video,route_planning,16.000000000000004,-4.0000000000000036,36.00000000000001
+obj_text − video,obj_appearance_order,3.9999999999999982,-20.0,27.999999999999996
+cam_text − video,overall,-10.221296296296295,-17.1975,-3.0214236111111163
+cam_text − video,direction and route,12.314814814814817,-5.344212962962961,29.953703703703702
+cam_text − video,without metric tasks,-2.514074074074074,-12.05025925925926,6.933333333333334
+cam_text − video,object_counting,-1.1999999999999955,-19.59999999999999,17.599999999999998
+cam_text − video,object_abs_distance,-20.399999999999995,-38.79999999999999,-1.5999999999999959
+cam_text − video,object_size_estimation,-37.600000000000016,-53.600000000000016,-22.000000000000025
+cam_text − video,room_size_estimation,-11.199999999999994,-30.000000000000004,7.9999999999999964
+cam_text − video,object_rel_distance,-16.000000000000004,-36.0,0.0
+cam_text − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_text − video,object_rel_direction_medium,37.5,-12.5,87.5
+cam_text − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+cam_text − video,route_planning,20.0,-3.9999999999999982,40.0
+cam_text − video,obj_appearance_order,-20.0,-40.0,-3.9000000000014476
+narrative − video,overall,-14.60046296296296,-22.196956018518524,-6.8594675925925985
+narrative − video,direction and route,10.398148148148149,-6.148611111111111,26.814814814814817
+narrative − video,without metric tasks,-5.36074074074074,-15.680925925925926,5.458129629629625
+narrative − video,object_counting,-3.599999999999992,-26.799999999999997,20.400000000000013
+narrative − video,object_abs_distance,-22.39999999999999,-40.800000000000004,-3.590000000000138
+narrative − video,object_size_estimation,-47.600000000000016,-62.81000000000002,-32.000000000000014
+narrative − video,room_size_estimation,-19.999999999999993,-39.20000000000001,0.40000000000000036
+narrative − video,object_rel_distance,-40.0,-60.0,-20.0
+narrative − video,object_rel_direction_easy,-12.5,-62.5,37.5
+narrative − video,object_rel_direction_medium,50.0,0.0,87.5
+narrative − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+narrative − video,route_planning,12.0,-8.000000000000002,32.0
+narrative − video,obj_appearance_order,-3.9999999999999982,-28.000000000000004,20.000000000000007
+obj_markdown_table − video,overall,-7.400462962962962,-13.910254629629627,-0.7710879629629657
+obj_markdown_table − video,direction and route,8.398148148148149,-5.453703703703702,22.351851851851848
+obj_markdown_table − video,without metric tasks,-1.2007407407407407,-9.582555555555556,7.493388888888891
+obj_markdown_table − video,object_counting,-10.799999999999999,-30.400000000000006,9.599999999999998
+obj_markdown_table − video,object_abs_distance,-8.399999999999997,-27.599999999999998,11.199999999999989
+obj_markdown_table − video,object_size_estimation,-43.600000000000016,-60.399999999999984,-26.800000000000008
+obj_markdown_table − video,room_size_estimation,-1.1999999999999955,-15.599999999999985,12.800000000000006
+obj_markdown_table − video,object_rel_distance,-16.000000000000004,-36.0,0.0
+obj_markdown_table − video,object_rel_direction_easy,0.0,-37.5,37.5
+obj_markdown_table − video,object_rel_direction_medium,37.5,12.5,75.0
+obj_markdown_table − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+obj_markdown_table − video,route_planning,8.000000000000002,-12.0,27.999999999999996
+obj_markdown_table − video,obj_appearance_order,3.9999999999999982,-12.000000000000005,20.000000000000007
+cam_markdown_table − video,overall,-9.884259259259258,-16.89675925925926,-2.7091782407407456
+cam_markdown_table − video,direction and route,8.462962962962965,-7.806712962962961,24.750694444444434
+cam_markdown_table − video,without metric tasks,-1.254814814814813,-10.895703703703704,8.523925925925921
+cam_markdown_table − video,object_counting,4.80000000000001,-15.199999999999998,25.599999999999994
+cam_markdown_table − video,object_abs_distance,-19.599999999999994,-39.599999999999994,1.19999999999999
+cam_markdown_table − video,object_size_estimation,-51.20000000000001,-66.39999999999999,-35.60000000000002
+cam_markdown_table − video,room_size_estimation,-1.9999999999999907,-16.000000000000004,11.999999999999995
+cam_markdown_table − video,object_rel_distance,-16.000000000000004,-36.0,0.0
+cam_markdown_table − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_markdown_table − video,object_rel_direction_medium,37.5,-12.5,87.5
+cam_markdown_table − video,object_rel_direction_hard,-22.22222222222222,-55.55555555555556,0.0
+cam_markdown_table − video,route_planning,16.000000000000004,-4.0000000000000036,36.00000000000001
+cam_markdown_table − video,obj_appearance_order,-12.0,-36.0,12.0
+cam_csv_frames − video,overall,-9.871296296296295,-17.175474537037037,-2.428969907407411
+cam_csv_frames − video,direction and route,10.314814814814818,-5.953703703703702,26.5
+cam_csv_frames − video,without metric tasks,-2.034074074074071,-11.893870370370372,7.973351851851852
+cam_csv_frames − video,object_counting,5.20000000000001,-14.400000000000013,25.6
+cam_csv_frames − video,object_abs_distance,-19.999999999999996,-42.8,4.399999999999999
+cam_csv_frames − video,object_size_estimation,-41.60000000000001,-58.8,-24.390000000000136
+cam_csv_frames − video,room_size_estimation,-7.200000000000001,-22.40000000000001,7.600000000000012
+cam_csv_frames − video,object_rel_distance,-32.0,-52.0,-15.999999999999993
+cam_csv_frames − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_csv_frames − video,object_rel_direction_medium,37.5,-12.5,87.5
+cam_csv_frames − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+cam_csv_frames − video,route_planning,16.000000000000004,0.0,36.0
+cam_csv_frames − video,obj_appearance_order,-3.9999999999999982,-28.000000000000004,20.000000000000007
+cam_text_turn_move − video,overall,-12.271296296296295,-19.346944444444443,-5.122881944444449
+cam_text_turn_move − video,direction and route,12.314814814814817,-5.344212962962961,29.953703703703702
+cam_text_turn_move − video,without metric tasks,-4.994074074074073,-14.3815,4.594944444444444
+cam_text_turn_move − video,object_counting,-1.5999999999999959,-16.800000000000004,14.000000000000002
+cam_text_turn_move − video,object_abs_distance,-19.999999999999996,-38.39999999999999,-0.8000000000000063
+cam_text_turn_move − video,object_size_estimation,-37.600000000000016,-53.600000000000016,-22.000000000000025
+cam_text_turn_move − video,room_size_estimation,-15.599999999999998,-33.60000000000001,2.7999999999999914
+cam_text_turn_move − video,object_rel_distance,-28.000000000000004,-48.00000000000001,-7.9999999999999964
+cam_text_turn_move − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_text_turn_move − video,object_rel_direction_medium,37.5,-12.5,87.5
+cam_text_turn_move − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+cam_text_turn_move − video,route_planning,20.0,-3.9999999999999982,40.0
+cam_text_turn_move − video,obj_appearance_order,-20.0,-40.0,-3.9000000000014476
+cam_text_frames − video,overall,-12.221296296296297,-19.20835648148148,-5.278680555555554
+cam_text_frames − video,direction and route,10.314814814814818,-7.62037037037037,28.26851851851852
+cam_text_frames − video,without metric tasks,-5.634074074074072,-15.169203703703705,4.128277777777777
+cam_text_frames − video,object_counting,-0.7999999999999896,-12.799999999999995,11.2
+cam_text_frames − video,object_abs_distance,-18.0,-35.59999999999999,0.39999999999998925
+cam_text_frames − video,object_size_estimation,-42.000000000000014,-58.39999999999998,-26.00000000000001
+cam_text_frames − video,room_size_estimation,-9.599999999999998,-24.400000000000006,5.600000000000005
+cam_text_frames − video,object_rel_distance,-40.0,-60.0,-20.0
+cam_text_frames − video,object_rel_direction_easy,-12.5,-62.5,37.5
+cam_text_frames − video,object_rel_direction_medium,37.5,-12.5,87.5
+cam_text_frames − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+cam_text_frames − video,route_planning,16.000000000000004,-8.000000000000002,40.0
+cam_text_frames − video,obj_appearance_order,-8.000000000000002,-28.000000000000004,12.0
+narrative_turn_move − video,overall,-16.750462962962963,-24.33725694444444,-9.054120370370372
+narrative_turn_move − video,direction and route,14.398148148148149,-3.4722222222222214,31.973842592592568
+narrative_turn_move − video,without metric tasks,-5.3607407407407415,-15.895,5.479999999999999
+narrative_turn_move − video,object_counting,-3.599999999999992,-26.799999999999997,20.400000000000013
+narrative_turn_move − video,object_abs_distance,-22.4,-41.19999999999999,-3.200000000000003
+narrative_turn_move − video,object_size_estimation,-52.000000000000014,-65.99999999999999,-37.60000000000002
+narrative_turn_move − video,room_size_estimation,-32.8,-49.6,-14.400000000000004
+narrative_turn_move − video,object_rel_distance,-44.0,-64.0,-24.0
+narrative_turn_move − video,object_rel_direction_easy,-12.5,-62.5,37.5
+narrative_turn_move − video,object_rel_direction_medium,50.0,0.0,87.5
+narrative_turn_move − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+narrative_turn_move − video,route_planning,20.0,-3.9999999999999982,40.0
+narrative_turn_move − video,obj_appearance_order,-8.000000000000002,-32.0,16.000000000000004
+narrative_camera_dirs − video,overall,-13.85046296296296,-21.56309027777778,-5.950219907407412
+narrative_camera_dirs − video,direction and route,12.39814814814815,-5.259722222222224,29.129629629629626
+narrative_camera_dirs − video,without metric tasks,-4.560740740740739,-14.943092592592592,6.40974074074074
+narrative_camera_dirs − video,object_counting,-3.599999999999992,-26.799999999999997,20.400000000000013
+narrative_camera_dirs − video,object_abs_distance,-21.999999999999993,-41.19999999999999,-2.000000000000007
+narrative_camera_dirs − video,object_size_estimation,-45.20000000000001,-62.000000000000014,-27.200000000000017
+narrative_camera_dirs − video,room_size_estimation,-20.799999999999997,-40.400000000000006,1.3877787807612508e-16
+narrative_camera_dirs − video,object_rel_distance,-40.0,-60.0,-20.0
+narrative_camera_dirs − video,object_rel_direction_easy,-12.5,-62.5,37.5
+narrative_camera_dirs − video,object_rel_direction_medium,50.0,0.0,87.5
+narrative_camera_dirs − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+narrative_camera_dirs − video,route_planning,16.000000000000004,-4.0000000000000036,36.00000000000001
+narrative_camera_dirs − video,obj_appearance_order,-3.9999999999999982,-28.000000000000004,20.000000000000007
+narrative_frames − video,overall,-14.271296296296297,-21.914733796296296,-6.396284722222225
+narrative_frames − video,direction and route,6.314814814814817,-11.009722222222225,23.953703703703702
+narrative_frames − video,without metric tasks,-5.314074074074073,-15.834981481481481,5.384444444444446
+narrative_frames − video,object_counting,-3.1999999999999975,-26.400000000000002,19.999999999999996
+narrative_frames − video,object_abs_distance,-21.199999999999996,-41.59999999999997,-0.3999999999999975
+narrative_frames − video,object_size_estimation,-47.20000000000002,-63.2,-31.20000000000002
+narrative_frames − video,room_size_estimation,-19.199999999999996,-38.0,0.4000000000000059
+narrative_frames − video,object_rel_distance,-32.0,-52.0,-15.999999999999993
+narrative_frames − video,object_rel_direction_easy,-12.5,-62.5,37.5
+narrative_frames − video,object_rel_direction_medium,37.5,-12.5,87.5
+narrative_frames − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+narrative_frames − video,route_planning,8.000000000000002,-12.099999999999914,28.000000000000004
+narrative_frames − video,obj_appearance_order,-3.9999999999999982,-28.000000000000004,20.000000000000007
+narrative_exact − video,overall,-15.100462962962961,-22.74910879629629,-7.291655092592595
+narrative_exact − video,direction and route,8.398148148148149,-9.472222222222221,26.03912037037034
+narrative_exact − video,without metric tasks,-5.280740740740738,-15.768333333333334,5.64864814814814
+narrative_exact − video,object_counting,-3.199999999999986,-26.399999999999995,20.800000000000008
+narrative_exact − video,object_abs_distance,-26.399999999999995,-43.199999999999996,-9.2
+narrative_exact − video,object_size_estimation,-47.20000000000002,-63.2,-30.000000000000004
+narrative_exact − video,room_size_estimation,-20.799999999999994,-40.400000000000006,0.3999999999999948
+narrative_exact − video,object_rel_distance,-40.0,-60.0,-20.0
+narrative_exact − video,object_rel_direction_easy,-12.5,-62.5,37.5
+narrative_exact − video,object_rel_direction_medium,50.0,0.0,87.5
+narrative_exact − video,object_rel_direction_hard,-11.111111111111105,-44.44444444444445,22.222222222222225
+narrative_exact − video,route_planning,8.000000000000002,-15.999999999999998,28.000000000000004
+narrative_exact − video,obj_appearance_order,0.0,-24.000000000000004,24.0
