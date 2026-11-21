@@ -26,7 +26,8 @@ A finished trunk can be continued (longer training without rerunning it) from on
 with the trunk's arguments except a new --stable-steps and more --branch-steps (added to its own): it resumes the state
 at the stable lr, in the trunk's directory (log.jsonl and the W&B run go on; the old args.json and final.pt are kept as
 args_step<N>.json and final_step<N>.pt), so its branches and mvp.train.wsd_collect see one trunk.
---mix trains on a prebuilt mix (mvp.train.mix) instead; with --fit-epoch the wsd trunk lasts one epoch minus
+--mix trains on a prebuilt mix (mvp.train.mix) instead; --pack-tokens then packs questions about different media into
+one micro-batch, grouped by length (data.pack_plan; the token estimates come from the mix); with --fit-epoch the wsd trunk lasts one epoch minus
 --decay-steps, and --n-branches puts that many equally spaced branch states on it, the last at its end.
 --vsi590k adds VSI-590K's questions of the six VSI-Bench tasks on all its video sources (data.load_vsi590k); --cap
 then applies per task to the pooled VLM-3R + VSI-590K questions.
@@ -59,8 +60,9 @@ from torch.utils.data import DataLoader
 from mvp.fusion.inputs import TRAIN_PIXELS
 from mvp.fusion.model import ARMS, FusionVL, count_params
 from mvp.paths import ROOT
-from mvp.train.data import (MicroBatches, cap_per_task, epoch_plan, load_appearance, load_mix, load_vlm3r,
-                            load_vsi590k, rank_steps, score_answer, step_frames, to_device)
+from mvp.train.data import (MicroBatches, PackedMicroBatches, cap_per_task, epoch_plan, load_appearance, load_mix,
+                            load_vlm3r, load_vsi590k, pack_plan, packed_rank_steps, rank_steps, score_answer,
+                            step_frames, to_device)
 
 
 def is_slope(name):
@@ -151,6 +153,10 @@ def parse():
                     "VSI-590K; dev is unchanged (it needs --appearance for the appearance-order dev videos)")
     ap.add_argument("--fit-epoch", action="store_true", help="wsd trunk: --stable-steps such that warmup + stable + "
                     "--decay-steps is one epoch, so the last branch ends with every question seen exactly once")
+    ap.add_argument("--pack-tokens", type=int, default=None, help="--mix: pack questions about different media into "
+                    "one micro-batch (data.pack_plan): at most --max-q questions and this many tokens with padding, "
+                    "grouped by length; steps of micro-batches of similar cost")
+    ap.add_argument("--pack-window", type=int, default=8192, help="--pack-tokens: groups sorted by length per window")
     ap.add_argument("--n-branches", type=int, default=None, help="wsd trunk with --fit-epoch: branch states at n equally "
                     "spaced steps, the last at the end of the stable phase (replaces --branch-steps)")
     args = ap.parse_args()
@@ -254,11 +260,26 @@ def main():
         if rank == 0:
             print(f"mix {args.mix}: {len(samples)} questions on {len({s['video'] for s in samples})} media; "
                   + ", ".join(f"{k} {n}" for k, n in sorted(Counter(s['source'] for s in samples).items())), flush=True)
+    assert not args.pack_tokens or args.mix, "--pack-tokens needs --mix (its samples carry the token estimates)"
+
+    def plan(epoch):
+        """This rank's steps of an epoch [(micro-batches, questions in the step over all ranks)], the frame count of
+        each step (packed: the largest of the step) and the Dataset of the rank's micro-batches in order."""
+        if args.pack_tokens:
+            full = pack_plan(samples, epoch, init_seed, args.max_q, args.frame_mix or {args.nframes: 100},
+                             args.mb_per_step, args.pack_tokens, args.pack_window)
+            steps = packed_rank_steps(full, W, rank)
+            return steps, [max(k for mb in st for k, _ in mb) for st in full], \
+                lambda steps, frames: PackedMicroBatches([mb for mbs, _ in steps for mb in mbs], model.inputs)
+        steps = rank_steps(epoch_plan(samples, epoch, init_seed, args.max_q), args.mb_per_step, W, rank)
+        frames = step_frames(len(steps), args.frame_mix, init_seed, epoch) if args.frame_mix else [args.nframes] * len(steps)
+        return steps, frames, lambda steps, frames: MicroBatches([mb for mbs, _ in steps for mb in mbs], model.inputs,
+                                                                 [k for (mbs, _), k in zip(steps, frames) for _ in mbs])
     dev_mbs = epoch_plan(dev_set, 0, args.seed, args.max_q)[rank::W]  # fixed; each rank scores its share
     if rank == 0 and dev_set:
         (out / "dev_ids.txt").write_text("\n".join(str(s["id"]) for s in dev_set))
         print(f"dev: {len(dev_set)} questions on {len({s['video'] for s in dev_set})} held-out videos", flush=True)
-    steps_per_epoch = len(rank_steps(epoch_plan(samples, 0, init_seed, args.max_q), args.mb_per_step, W, rank))
+    steps_per_epoch = len(plan(0)[0])
     if args.fit_epoch and not args.branch_of and not args.continue_from:  # a trunk: its length from the data
         assert args.schedule == "wsd" and args.max_steps is None
         args.stable_steps = steps_per_epoch - args.warmup_steps - args.decay_steps
@@ -423,26 +444,24 @@ def main():
         log_dev(dev_eval(generate=True), 0)  # untrained reference
     start_epoch, offset = divmod(step, steps_per_epoch)  # a branch continues the trunk's data order from its step
     for epoch in range(start_epoch, math.ceil(total / steps_per_epoch) if wsd else args.epochs):
-        steps = rank_steps(epoch_plan(samples, epoch, init_seed, args.max_q), args.mb_per_step, W, rank)
-        frames = step_frames(len(steps), args.frame_mix, init_seed, epoch) if args.frame_mix else [args.nframes] * len(steps)
+        steps, frames, dataset = plan(epoch)
         if epoch == start_epoch:
             steps, frames = steps[offset:], frames[offset:]
-        flat = [mb for mbs, _ in steps for mb in mbs]
-        flat_frames = [k for (mbs, _), k in zip(steps, frames) for _ in mbs]
-        loader = iter(DataLoader(MicroBatches(flat, model.inputs, flat_frames), batch_size=None, shuffle=False,
+        loader = iter(DataLoader(dataset(steps, frames), batch_size=None, shuffle=False,
                                  num_workers=args.workers, pin_memory=True, prefetch_factor=2 if args.workers else None))
         for (_, n_q), n_frames in zip(steps, frames):
             if step >= total:
                 break
             t0 = time.time()
             torch.cuda.reset_peak_memory_stats(dev)
-            stats = torch.zeros(3, device=dev)  # loss sum, questions, tokens
+            stats = torch.zeros(4, device=dev)  # loss sum, questions, tokens, tokens with padding
             for j in range(accum):
                 batch = to_device(next(loader), dev)
                 with ddp.no_sync() if W > 1 and j < accum - 1 else nullcontext():
                     per_q = ddp(batch)
                     (per_q.sum() * W / n_q).backward()  # DDP averages over ranks, hence * W
-                stats += torch.tensor([per_q.detach().sum().item(), len(per_q), batch["attention_mask"].sum().item()], device=dev)
+                stats += torch.tensor([per_q.detach().sum().item(), len(per_q), batch["attention_mask"].sum().item(),
+                                       batch["attention_mask"].numel()], device=dev)
             gnorm = torch.nn.utils.clip_grad_norm_(params, args.clip)
             opt.step()
             sched.step()
@@ -454,6 +473,7 @@ def main():
                 rec = {"step": step, "epoch": epoch, "frames": n_frames, "loss": stats[0].item() / stats[1].item(),
                        "lr": sched.get_last_lr()[0],
                        "grad_norm": gnorm.item(), "questions": int(stats[1].item()), "tokens": int(stats[2].item()),
+                       "padding": 1 - stats[2].item() / stats[3].item(),
                        "step_time": time.time() - t0, "peak_mem_gb": torch.cuda.max_memory_allocated(dev) / 2**30,
                        "elapsed": time.time() - t_start, "gates": model.gates(), "inject": dict(model.stats)}
                 if model.bias_slopes():
@@ -472,7 +492,7 @@ def main():
                     gs += " inject " + " ".join(f"{i}:{v:.3f}" for i, v in rec["inject"].items()) if rec["inject"] else ""
                     gs += " bias " + " ".join(f"{i}:" + "/".join(f"{x:.2f}" for x in v.values()) for i, v in rec["bias"].items()) if "bias" in rec else ""
                     print(f"step {step}/{total} ep {epoch} f{n_frames} loss {rec['loss']:.4f} lr {rec['lr']:.2e} gnorm {rec['grad_norm']:.3f} "
-                          f"q {rec['questions']} tok {rec['tokens']} {rec['step_time']:.2f}s mem {rec['peak_mem_gb']:.1f}G{gs}", flush=True)
+                          f"q {rec['questions']} tok {rec['tokens']} pad {rec['padding']:.3f} {rec['step_time']:.2f}s mem {rec['peak_mem_gb']:.1f}G{gs}", flush=True)
             if wsd:
                 if step in args.branch_steps and decay_from is None:  # trunk: dev accuracy and a branch state
                     log_dev(dev_eval(generate=True), epoch, branch_state=f"state_step{step}.pt")

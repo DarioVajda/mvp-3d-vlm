@@ -4,6 +4,9 @@
   python -m mvp.train.mix check   # Slurm CPU job: decodes the media of every SFT sample not checked yet
 Run build, check, build, ... until check finds no new failures; build skips samples whose media failed.
 
+  python -m mvp.train.mix ext     # Slurm CPU job: the 450K extended mix (ext_450k.jsonl, see build_ext), with its
+                                  # own build / check rounds and the token estimates that data.pack_plan reads
+
 Budgets (questions): VSI-590K the rest (~188K), DK-VLM route (RC) data 50K, SPAR 50K, VLM-3R VSI-Bench-style all on ScanNet
 videos (~12K; its ScanNet++/ARKitScenes videos are gated), VLM-3R VSTI-Bench 50K, MindCube 6K, LLaVA-Hound 48K, PhysGame PhysInstruct 48K, Cambrian-S (short-clip sources) 48K.
 
@@ -235,11 +238,42 @@ def excluded_rooms():
     return out
 
 
+# The extended mix (2026-11-20): 250K VSI-Bench-style questions (the ablation's training set, run.py --vsi590k --cap
+# 50000 --appearance, plus VSI-590K's other video question types), all of MindCube, and DK-VLM's other datasets in
+# proportion to their table (SPAR 234K, VSTI 132K, Cambrian-S 430K, PhysGame 140K, LLaVA-Hound 64K, RC 150K: 16.5%
+# of each, 190K in all). No RL rooms; VSI-Bench and dev rooms are held out as in build.
+EXT_VSI = 250_000
+EXT_VSI_EXTRA = ("relative_size_object", "absolute_direction_object", "relative_count")
+EXT_BUDGET = {"rc": 24_783, "spar": 38_661, "vlm3r_vsti": 21_809, "mindcube": 10_000, "llava_hound": 10_574,
+              "physgame": 23_130, "cambrian": 71_043}
+
+
 def take(cands, n, bad, seed):
     """n candidates (seeded uniform order) whose media did not fail the check."""
     order = sorted(cands, key=lambda s: s["id"])
     random.Random(f"mix-{seed}").shuffle(order)
     return [s for s in order if s["video"].split("@")[0] not in bad][:n]
+
+
+def select(src, pool, n, bad):
+    """n questions of a source from its pool (all of it for n None), by the source's rule (module docstring)."""
+    if src == "rc":  # every video question, then SPAR tuples up to the budget
+        vid = [s for s in pool if isinstance(s["media"], str)]
+        got = take(vid, n, bad, "rc-video")
+        got += take([s for s in pool if isinstance(s["media"], list)], n - len(got), bad, "rc-spar")
+    elif src == "cambrian":  # as even as possible over the sources
+        by = defaultdict(list)
+        for s in pool:
+            by[s["task"]].append(s)
+        left, got = n, []
+        for i, t in enumerate(sorted(by, key=lambda t: len(by[t]))):
+            g = take(by[t], left // (len(by) - i), bad, f"cambrian-{t}")
+            got += g
+            left -= len(g)
+    else:
+        got = take(pool, len(pool) if n is None else n, bad, src)
+    assert n is None or len(got) == n, (src, len(got), n)
+    return got
 
 
 def build():
@@ -260,22 +294,7 @@ def build():
         rows = [s for s in rows if s["room"] not in excl]
         pool = [s for s in rows if not is_rl(s["room"])]
         rl_src = [s for s in rows if is_rl(s["room"])]
-        if src == "rc":  # every video question, then SPAR tuples up to the budget
-            vid = [s for s in pool if isinstance(s["media"], str)]
-            got = take(vid, n, bad, "rc-video")
-            got += take([s for s in pool if isinstance(s["media"], list)], n - len(got), bad, "rc-spar")
-        elif src == "cambrian":  # as even as possible over the sources
-            by = defaultdict(list)
-            for s in pool:
-                by[s["task"]].append(s)
-            left, got = n, []
-            for i, t in enumerate(sorted(by, key=lambda t: len(by[t]))):
-                g = take(by[t], left // (len(by) - i), bad, f"cambrian-{t}")
-                got += g
-                left -= len(g)
-        else:
-            got = take(pool, len(pool) if n is None else n, bad, src)
-        assert n is None or len(got) == n, (src, len(got), n)
+        got = select(src, pool, n, bad)
         sft += got
         rl += rl_src
         stats["sources"][src] = {
@@ -301,6 +320,98 @@ def build():
     print(json.dumps(stats, indent=1))
 
 
+def ablation_vsi():
+    """The ablation runs' training questions (run.py --appearance --vsi590k --cap 50000, data seed 0), as mix samples:
+    VLM-3R ScanNet (source vlm3r_vsi) and VSI-590K (vsi590k), the six VSI-Bench tasks capped at 50K each over both,
+    plus every appearance-order question off the dev videos."""
+    from mvp.train.data import cap_per_task, load_appearance, load_vlm3r, load_vsi590k
+    vlm3r, dev = load_vlm3r(10**9, 0, 60, 100)
+    dev_videos = {s["video"] for s in dev}
+    _, _, held = load_appearance(0, dev_videos, 40, 150, return_held=True)
+    samples = cap_per_task(vlm3r + load_vsi590k(held | dev_videos), 50_000, 0)
+    samples += load_appearance(0, dev_videos, 40, 150)[0]
+    return [{**s, "source": "vsi590k" if str(s["id"]).startswith("vsi590k-") else "vlm3r_vsi", "media": s["video"],
+             "room": room_of(s["video"])} for s in samples]
+
+
+def annotate(rows, checked):
+    """Token estimates for data.pack_plan: text_tokens (template, question, answer), frame_tokens (merged visual tokens
+    of one frame at the training pixel limits, from the first frame's size) and media_frames (frames or images there
+    are, up to 32). Returns the number of samples without a check record (left unannotated)."""
+    from PIL import Image
+    from transformers import AutoProcessor
+    from mvp.fusion.inputs import TRAIN_PIXELS, InputBuilder
+    proc = AutoProcessor.from_pretrained("Qwen/Qwen3.5-2B", **TRAIN_PIXELS)  # the same tokenizer and processor as 4B, 9B
+    merge = proc.image_processor.merge_size ** 2
+    frame_tokens = {}
+    base = len(proc.tokenizer(InputBuilder(proc).prompt_text("", 0), add_special_tokens=False).input_ids) + 1  # + <|im_end|>
+    tok = proc.tokenizer([s["question"] for s in rows], add_special_tokens=False).input_ids
+    ans = proc.tokenizer([s["answer"] for s in rows], add_special_tokens=False).input_ids
+    missing = 0
+    for s, q, a in zip(rows, tok, ans):
+        r = checked.get(s["video"].split("@")[0])
+        if r is None or not r["ok"]:
+            missing += 1
+            continue
+        hw = tuple(r["hw"])
+        if hw not in frame_tokens:
+            g = proc.image_processor(images=[Image.new("RGB", hw[::-1])], return_tensors="pt")["image_grid_thw"]
+            frame_tokens[hw] = int(g.prod()) // merge
+        s.update(text_tokens=base + len(q) + len(a), frame_tokens=frame_tokens[hw], media_frames=r["n"])
+    return missing
+
+
+def build_ext(annotated=False):
+    """data/mix/ext_450k.jsonl and ext_450k_stats.json (see EXT_BUDGET). annotated: every media must have been
+    checked; adds the token estimates. VSI-590K's videos (and the VLM-3R ScanNet copies) were checked by prep_vsi590k,
+    whose manifest also has their frame size and count."""
+    from mvp.train.prep_vsi590k import MANIFEST
+    checked = json.loads(CHECK.read_text()) if CHECK.exists() else {}
+    for k, r in json.loads(MANIFEST.read_text()).items():
+        checked.setdefault(k, {"ok": r["ok"], "n": min(32, r.get("frames", 0)), "hw": r.get("hw")})
+    bad = {k for k, r in checked.items() if not r["ok"]}
+    excl = excluded_rooms()
+    stats = {"excluded_rooms": dict(Counter(excl.values())), "sources": {}}
+    vsi = ablation_vsi()
+    n_abl = len(vsi)
+    vsi = [s for s in vsi if s["room"] not in excl and s["video"] not in bad]
+    stats["ablation_set"] = {"questions": n_abl, "dropped_on_held_out_rooms_or_failed_media": n_abl - len(vsi)}
+    extra = [s for s in vsi590k() if s["task"] in EXT_VSI_EXTRA and s["room"] not in excl]
+    vsi += take(extra, EXT_VSI - len(vsi), bad, "ext-vsi590k")
+    assert len(vsi) == EXT_VSI, len(vsi)
+    stats["sources"]["vsi"] = {"sft": len(vsi), "extra_pool": len(extra), "by_source": dict(Counter(s["source"] for s in vsi)),
+                               "sft_tasks": dict(Counter(s["task"] for s in vsi).most_common())}
+    cands = {"spar": spar(), "vlm3r_vsti": vlm3r_vsti(), "mindcube": mindcube(), "llava_hound": llava_hound(),
+             "physgame": physgame(), "cambrian": cambrian()}
+    rc_video, rc_spar = rc()
+    cands["rc"] = rc_video + rc_spar
+    sft = vsi
+    for src, n in EXT_BUDGET.items():
+        pool = [s for s in cands[src] if s["room"] not in excl]
+        got = select(src, pool, n, bad)
+        sft += got
+        stats["sources"][src] = {"candidates": len(cands[src]), "off_held_out_rooms": len(pool), "sft": len(got),
+                                 "sft_media": len({s["video"] for s in got}),
+                                 "sft_tasks": dict(Counter(s["task"] for s in got).most_common())}
+    assert len(sft) == EXT_VSI + sum(EXT_BUDGET.values()) and len({s["id"] for s in sft}) == len(sft)
+    assert not {s["room"] for s in sft} & set(excl)
+    for s in sft:  # as in build
+        n = s["question"].count("<image>")
+        assert n == 0 or (isinstance(s["media"], list) and n == len(s["media"])), (s["id"], s["question"][:100])
+    unchecked = {s["video"].split("@")[0] for s in sft} - set(checked)
+    stats.update(sft=len(sft), media=len({s["video"].split("@")[0] for s in sft}), media_unchecked=len(unchecked),
+                 media_failed_skipped=len(bad))
+    if annotated:
+        assert not unchecked, f"{len(unchecked)} media not checked"
+        assert annotate(sft, checked) == 0
+    random.Random("ext-order").shuffle(sft)
+    with open(OUT / "ext_450k.jsonl", "w") as f:
+        f.writelines(json.dumps(s) + "\n" for s in sft)
+    (OUT / "ext_450k_stats.json").write_text(json.dumps(stats, indent=1))
+    print(json.dumps({k: v for k, v in stats.items() if k != "sources"}), flush=True)
+    return unchecked
+
+
 def check_one(key):
     """Decode a media item as the trainer does, at 32 frames (the largest count it uses)."""
     from mvp.fusion.inputs import media_frames
@@ -313,11 +424,13 @@ def check_one(key):
         return key, {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
 
 
-def check(workers, exclude=()):
+def check(workers, exclude=(), keys=None):
+    """Decode check of the SFT mix's media not checked yet (VSI-590K's were checked by prep_vsi590k), or of `keys`."""
     from multiprocessing import Pool
     checked = json.loads(CHECK.read_text()) if CHECK.exists() else {}
-    keys = sorted({json.loads(l)["video"].split("@")[0] for l in open(OUT / "sft_500k.jsonl")
-                   if '"source": "vsi590k"' not in l} - set(checked))
+    if keys is None:
+        keys = {json.loads(l)["video"].split("@")[0] for l in open(OUT / "sft_500k.jsonl") if '"source": "vsi590k"' not in l}
+    keys = sorted(set(keys) - set(checked))
     keys = [k for k in keys if not k.lstrip('["').startswith(tuple(exclude))]  # e.g. media not downloaded yet
     print(f"{len(keys)} media to check, {len(checked)} checked before", flush=True)
     with Pool(workers) as pool:
@@ -329,14 +442,29 @@ def check(workers, exclude=()):
     CHECK.write_text(json.dumps(checked))
     fails = [(k, r["error"]) for k, r in checked.items() if not r["ok"] and k in set(keys)]
     print(f"new failures: {len(fails)}", *fails[:20], sep="\n")
+    return len(fails)
+
+
+def ext(workers):
+    """build_ext, then check its new media (the check also gives each media's frame size and count), rebuilding until
+    every media of the mix is checked and none fails; then the annotated build."""
+    for _ in range(5):
+        unchecked = build_ext()
+        if not unchecked:
+            build_ext(annotated=True)
+            return
+        check(workers, keys=unchecked)
+    sys.exit("media still unchecked after 5 rounds")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build", "check"])
+    ap.add_argument("cmd", choices=["build", "check", "ext"])
     ap.add_argument("--workers", type=int, default=32)
     ap.add_argument("--exclude", nargs="*", default=[], help="check: skip media under these prefixes (e.g. vlm3r/)")
     a = ap.parse_args()
+    if a.cmd == "ext":
+        return ext(a.workers)
     build() if a.cmd == "build" else check(a.workers, a.exclude)
 
 

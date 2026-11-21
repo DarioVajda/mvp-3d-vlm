@@ -135,7 +135,8 @@ class FusionVL(nn.Module):
         self._geo = None          # geometry of the current video per injection point: {k: latents [L, D] or merged tokens [N_visual, D]}
         self._visual_mask = None  # [B, T] visual-token positions of the current forward's input_ids
         self._valid = None        # [B, T] non-padding positions of the current forward (attention_mask), or None
-        self._kv = None           # text_queries, in generate(): {k: AlignedXAttn.keys of the video}, else None
+        self._rows = None         # packed micro-batch: questions per video (rows in order), else None (one video)
+        self._kv = None           # text_queries, in generate(): {(k, video): AlignedXAttn.keys of the video}, else None
         self.stats = {}           # {k: ||added||/||h|| of the last forward}, how far the injection point has opened
         if arm not in ("base", "lora"):
             layers = self.qwen.model.language_model.layers
@@ -176,23 +177,35 @@ class FusionVL(nn.Module):
             res[L] = [(tok[t, :ps], patches[t, :h, :w]) for t, (_, h, w) in enumerate(grid.tolist())]
         return res, scene
 
-    def set_geometry(self, batch):
-        per_layer, self._pts = self.vggt_frames(batch["vggt_images"], batch["image_grid_thw"])
-        self._geo = {}
+    def _geometry(self, images, grid):
+        """(geometry per injection point, positions, ScenePoints) of one video: see set_geometry."""
+        per_layer, pts = self.vggt_frames(images, grid)
+        geo = {}
         with torch.autocast("cuda", dtype=torch.bfloat16):
             for k, L in self.pairs.items():
                 frames = per_layer[L]
                 if self.arm == "xattn":
                     x = torch.cat([torch.cat([s, p.reshape(-1, p.shape[-1])]) if self.config["special_tokens"]
                                    else p.reshape(-1, p.shape[-1]) for s, p in frames])
-                    self._geo[str(k)] = self.resamplers[str(k)](x)
+                    geo[str(k)] = self.resamplers[str(k)](x)
                 elif self.arm == "hybrid":  # (tokens to add, key / value tokens)
                     add, xa = zip(*[self.mergers[str(k)](p) for _, p in frames])
-                    self._geo[str(k)] = (torch.cat(add), torch.cat(xa))
+                    geo[str(k)] = (torch.cat(add), torch.cat(xa))
                 else:
-                    self._geo[str(k)] = torch.cat([self.mergers[str(k)](p) for _, p in frames])
-        if self.arm in ALIGNED:
-            self._pos = AlignedXAttn.positions(batch["image_grid_thw"], self.inputs.merge)
+                    geo[str(k)] = torch.cat([self.mergers[str(k)](p) for _, p in frames])
+        pos = AlignedXAttn.positions(grid, self.inputs.merge) if self.arm in ALIGNED else None
+        return geo, pos, pts
+
+    def set_geometry(self, batch):
+        """One video (batch["vggt_images"] a tensor): self._geo, _pos, _pts of that video. A packed micro-batch
+        (InputBuilder.pack: a list of videos, batch["rows"] questions each): lists of them, one per video, and
+        self._rows, so the hooks give each row its own video's geometry."""
+        self._rows = batch.get("rows")
+        if self._rows is None:
+            self._geo, self._pos, self._pts = self._geometry(batch["vggt_images"], batch["image_grid_thw"])
+            return
+        grids = batch["image_grid_thw"].split(list(batch["n_images"]))
+        self._geo, self._pos, self._pts = map(list, zip(*[self._geometry(v, g) for v, g in zip(batch["vggt_images"], grids)]))
 
     def _capture_ids(self, module, args, kwargs):
         ids = kwargs.get("input_ids", args[0] if args else None)
@@ -201,74 +214,103 @@ class FusionVL(nn.Module):
         assert am is None or am.dim() == 2, "expects a 2D attention_mask"
         self._valid = None if am is None or ids is None else am[:, -ids.shape[1]:].bool()
 
+    def _inject(self, key, v, h, m, valid, geo, pos, pts):
+        """Layer k's output h [B, T, D] for B questions about one video (index v of a packed micro-batch) plus that
+        video's geometry: (new h, the reference for the opening statistic), or None if nothing is added."""
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            if self.arm == "xattn":
+                return self.blocks[key](h, geo).to(h.dtype), h
+            tq = None  # text queries: every non-visual, non-padding token
+            if self.text_queries:
+                tq = ~m if valid is None else ~m & valid
+            if not m.any() and (tq is None or not tq.any()):
+                return None  # decoding steps after the prefill: no visual tokens
+            add, geo = geo if self.arm == "hybrid" else (None, geo)
+            delta = torch.zeros_like(h)
+            kv = None
+            if self.arm in ALIGNED:  # keys / values of the video, once per forward (or per video, in generate)
+                kv = self._kv.get((key, v)) if self._kv is not None else None
+                if kv is None:
+                    kv = self.aligned[key].keys(geo, pos, pts)
+                    if self._kv is not None:
+                        self._kv[(key, v)] = kv
+            if m.any():
+                n = int(m[0].sum())
+                assert n == len(geo) and bool((m.sum(1) == n).all()), "visual tokens != VGGT windows"
+                if self.arm in ALIGNED:  # visual tokens attend over the geometry tokens of the video
+                    y = h[m].view(h.shape[0], n, -1)
+                    if self.collect_attn and not torch.is_grad_enabled() and v == 0:
+                        self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, pos, pts)
+                    delta[m] = self.aligned[key](y, geo, pos, pts, kv).reshape(-1, h.shape[-1]).to(h.dtype)
+                    if add is not None:  # hybrid: plus each token's own cell, unaveraged
+                        delta[m] += add.to(h.dtype).repeat(h.shape[0], 1)
+                else:
+                    delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
+            if tq is not None and tq.any():  # text tokens attend over the same keys, with no position
+                delta[tq] = self.aligned[key].text(h[tq], kv).to(h.dtype)
+            return h + delta, (h[m] if tq is None else h[m | tq])
+
     def _make_hook(self, key):
         def hook(module, args, out):
-            """Forward hook on decoder layer k: adds the geometry of this video to the layer's output."""
+            """Forward hook on decoder layer k: adds the geometry of each row's video to the layer's output."""
             if self._geo is None:
                 return None
             h = out[0] if isinstance(out, tuple) else out
-            geo = self._geo[key]
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                if self.arm == "xattn":
-                    new = self.blocks[key](h, geo).to(h.dtype)
-                    ref = h
-                else:
-                    m = self._visual_mask
-                    if self.text_queries:  # a decoding step must still see its token ids
-                        assert m is not None and m.shape == h.shape[:2], "text_queries needs input_ids in every forward"
-                    if m is None or m.shape != h.shape[:2]:
-                        return None
-                    tq = None  # text queries: every non-visual, non-padding token
-                    if self.text_queries:
-                        tq = ~m if self._valid is None else ~m & self._valid
-                    if not m.any() and (tq is None or not tq.any()):
-                        return None  # decoding steps after the prefill: no visual tokens
-                    add, geo = geo if self.arm == "hybrid" else (None, geo)
-                    delta = torch.zeros_like(h)
-                    kv = None
-                    if self.arm in ALIGNED:  # keys / values of the video, once per forward (or per video, in generate)
-                        kv = self._kv.get(key) if self._kv is not None else None
-                        if kv is None:
-                            kv = self.aligned[key].keys(geo, self._pos, self._pts)
-                            if self._kv is not None:
-                                self._kv[key] = kv
-                    if m.any():
-                        n = int(m[0].sum())
-                        assert n == len(geo) and bool((m.sum(1) == n).all()), "visual tokens != VGGT windows"
-                        if self.arm in ALIGNED:  # visual tokens attend over the geometry tokens of the video
-                            y = h[m].view(h.shape[0], n, -1)
-                            if self.collect_attn and not torch.is_grad_enabled():
-                                self.attn_stats[key] = self.aligned[key].attn_stats(y, geo, self._pos, self._pts)
-                            delta[m] = self.aligned[key](y, geo, self._pos, self._pts, kv).reshape(-1, h.shape[-1]).to(h.dtype)
-                            if add is not None:  # hybrid: plus each token's own cell, unaveraged
-                                delta[m] += add.to(h.dtype).repeat(h.shape[0], 1)
-                        else:
-                            delta[m] = geo.to(h.dtype).repeat(h.shape[0], 1)
-                    if tq is not None and tq.any():  # text tokens attend over the same keys, with no position
-                        delta[tq] = self.aligned[key].text(h[tq], kv).to(h.dtype)
-                    new = h + delta
-                    ref = h[m] if tq is None else h[m | tq]
-                if (torch.is_grad_enabled() or not self.training) and (self.arm == "xattn" or m.any()):  # not per decoded token
-                    self.stats[key] = ((new - h).norm() / ref.norm().clamp(min=1e-6)).item()
+            m, valid = self._visual_mask, self._valid
+            if self.arm != "xattn":
+                if self.text_queries:  # a decoding step must still see its token ids
+                    assert m is not None and m.shape == h.shape[:2], "text_queries needs input_ids in every forward"
+                if m is None or m.shape != h.shape[:2]:
+                    return None
+            if self._rows is None:  # one video
+                res = self._inject(key, 0, h, m, valid, self._geo[key], self._pos, self._pts)
+                if res is None:
+                    return None
+                new, ref = res
+            else:  # a packed micro-batch: the next self._rows[v] rows are about video v
+                news, refs, start = [], [], 0
+                for v, r in enumerate(self._rows):
+                    rows = slice(start, start + r)
+                    start += r
+                    res = self._inject(key, v, h[rows], None if m is None else m[rows],
+                                       None if valid is None else valid[rows], self._geo[v][key], self._pos[v], self._pts[v])
+                    news.append(h[rows] if res is None else res[0])
+                    refs.append(h[rows][m[rows]] if res is None else res[1].reshape(-1, h.shape[-1]))
+                assert start == len(h), (start, len(h))
+                new, ref = torch.cat(news), torch.cat(refs)
+            if (torch.is_grad_enabled() or not self.training) and (self.arm == "xattn" or m.any()):  # not per decoded token
+                self.stats[key] = ((new - h).norm() / ref.norm().clamp(min=1e-6)).item()
             return (new, *out[1:]) if isinstance(out, tuple) else new
         return hook
 
     # ---- LLM ----
     @torch.no_grad()
     def image_features(self, batch, B):
-        """Qwen vision encoder once per video; the merged tokens are repeated for the B questions about it."""
+        """Qwen vision encoder once per video; the merged tokens are repeated for the questions about it (all B, or
+        batch["rows"][v] for video v of a packed micro-batch)."""
         out = self.qwen.model.get_image_features(batch["pixel_values"], batch["image_grid_thw"], return_dict=True)
-        return {"image": BaseModelOutputWithPooling(pooler_output=tuple(out.pooler_output) * B)}
+        feats = tuple(out.pooler_output)
+        if batch.get("rows") is None:
+            feats = feats * B
+        else:
+            ends = torch.tensor(list(batch["n_images"])).cumsum(0).tolist()
+            feats = tuple(f for e, n, r in zip(ends, batch["n_images"], batch["rows"]) for _ in range(r) for f in feats[e - n:e])
+        return {"image": BaseModelOutputWithPooling(pooler_output=feats)}
 
     def llm_inputs(self, batch):
         B = batch["input_ids"].shape[0]
+        grid = batch["image_grid_thw"]
+        if batch.get("rows") is None:
+            grid = grid.repeat(B, 1)
+        else:
+            grid = torch.cat([g.repeat(r, 1) for g, r in zip(grid.split(list(batch["n_images"])), batch["rows"])])
         return dict(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"],
-                    mm_token_type_ids=batch["mm_token_type_ids"], image_grid_thw=batch["image_grid_thw"].repeat(B, 1),
+                    mm_token_type_ids=batch["mm_token_type_ids"], image_grid_thw=grid,
                     mm_encoder_outputs=self.image_features(batch, B))
 
     def forward(self, batch):
         """Mean answer-token loss of each question, [B]. Logits are only computed at supervised positions."""
-        self._geo = None
+        self._geo = self._rows = None
         if self.vggt is not None:
             self.set_geometry(batch)  # kept until the next forward: checkpointed layers re-read it in backward
         with torch.autocast("cuda", dtype=torch.bfloat16):
@@ -283,7 +325,7 @@ class FusionVL(nn.Module):
 
     @torch.no_grad()
     def generate(self, batch, max_new_tokens=16):
-        self._geo = None
+        self._geo = self._rows = None
         if self.vggt is not None:
             self.set_geometry(batch)
         self._kv = {} if self.text_queries else None  # filled in the prefill, read at every decoding step

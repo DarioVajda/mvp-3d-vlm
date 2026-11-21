@@ -217,22 +217,123 @@ class MicroBatches(Dataset):
 
     def __getitem__(self, i):
         mb = self.mbs[i]
-        media = mb[0].get("media", mb[0]["video"])
-        media = [TRAIN_MEDIA / p for p in media] if isinstance(media, list) else TRAIN_MEDIA / media
-        k = mb[0].get("frames") or self.nframes[i]
-        for attempt in range(6):  # decord occasionally fails to seek near the end of a video under load (EOF retry
-            try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises.
-                frames, idx = media_frames(media, k)  # 3 attempts 2 s apart once failed (v9 lora_s0)
-                break
-            except Exception as e:
-                if attempt == 5:
-                    raise RuntimeError(f"cannot decode {media} ({k} frames)") from e
-                time.sleep(5 * (attempt + 1))
+        frames, idx = decode(mb[0], self.nframes[i])
         batch = self.builder.build(frames, [s["question"] for s in mb], [s["answer"] for s in mb])
         batch["meta"] = {"video": mb[0]["video"], "ids": [s["id"] for s in mb], "tasks": [s["task"] for s in mb],
                          "frame_indices": idx}
         return batch
 
 
+def decode(sample, k):
+    """The frames of a sample's media (see MicroBatches) at k frames, or its own "frames" count."""
+    media = sample.get("media", sample["video"])
+    media = [TRAIN_MEDIA / p for p in media] if isinstance(media, list) else TRAIN_MEDIA / media
+    k = sample.get("frames") or k
+    for attempt in range(6):  # decord occasionally fails to seek near the end of a video under load (EOF retry
+        try:                  # limit) and succeeds on a fresh reader; a video that keeps failing still raises.
+            return media_frames(media, k)
+        except Exception as e:
+            if attempt == 5:
+                raise RuntimeError(f"cannot decode {media} ({k} frames)") from e
+            time.sleep(5 * (attempt + 1))
+
+
+class PackedMicroBatches(Dataset):
+    """Packed micro-batches (pack_plan): each a list of (frames, questions about one media), built into one batch by
+    InputBuilder.pack, so questions about different videos share a forward pass."""
+
+    def __init__(self, mbs, builder):
+        self.mbs, self.builder = mbs, builder
+
+    def __len__(self):
+        return len(self.mbs)
+
+    def __getitem__(self, i):
+        parts, idxs = [], []
+        for k, qs in self.mbs[i]:
+            frames, idx = decode(qs[0], k)
+            parts.append(self.builder.build(frames, [s["question"] for s in qs], [s["answer"] for s in qs]))
+            idxs.append(idx)
+        batch = self.builder.pack(parts)
+        qs = [s for _, g in self.mbs[i] for s in g]
+        batch["meta"] = {"video": [g[0]["video"] for _, g in self.mbs[i]], "ids": [s["id"] for s in qs],
+                         "tasks": [s["task"] for s in qs], "frame_indices": idxs}
+        return batch
+
+
+# Estimated tokens of a sample (mvp.train.mix annotates text_tokens, frame_tokens and media_frames): its frames, each
+# with its visual tokens and the two vision start/end tokens, plus its text (template, question, answer).
+def est_tokens(s, k):
+    return min(s.get("frames") or k, s["media_frames"]) * (s["frame_tokens"] + 2) + s["text_tokens"]
+
+
+def pack_plan(samples, epoch, seed, max_q, frame_mix, mb_per_step, budget, window=8192):
+    """One epoch of packed training steps: [[micro-batch per slot of the step]], each micro-batch a list of
+    (frames, questions about one media). The same plan for any world size (each rank takes its slice of a step).
+
+      * groups: each media's questions in ceil(n / max_q) near-equal chunks (as epoch_plan), re-drawn every epoch;
+      * frames: a group's own count (samples with "frames") or the frame mix, its exact shares over the other groups;
+      * micro-batches: groups of similar length together, at most max_q questions and at most `budget` tokens with
+        padding (rows x longest row); a seeded shuffle, then within windows of `window` groups sorted by estimated
+        length and cut greedily, so padding stays small and the windows keep the data order random;
+      * steps: mb_per_step micro-batches of similar cost (padded tokens plus the visual tokens encoded once per video:
+        Qwen's vision encoder and VGGT), so no GPU of a step waits long for another; then the steps are shuffled.
+    A partial last step is dropped."""
+    rng = random.Random(f"pack-{seed}-{epoch}")
+    by_video = defaultdict(list)
+    for s in samples:
+        by_video[s["video"]].append(s)
+    groups = []
+    for v in sorted(by_video):
+        qs = by_video[v][:]
+        rng.shuffle(qs)
+        k = math.ceil(len(qs) / max_q)
+        groups += [qs[i::k] for i in range(k)]
+    free = [i for i, g in enumerate(groups) if not g[0].get("frames")]
+    ks = sorted(frame_mix)
+    exact = [frame_mix[k] / 100 * len(free) for k in ks]
+    counts = [math.floor(x) for x in exact]
+    for i in sorted(range(len(ks)), key=lambda i: counts[i] - exact[i])[:len(free) - sum(counts)]:
+        counts[i] += 1
+    draw = [k for k, c in zip(ks, counts) for _ in range(c)]
+    rng.shuffle(draw)
+    frames = [g[0].get("frames") for g in groups]
+    for i, k in zip(free, draw):
+        frames[i] = k
+    items = [(max(est_tokens(s, k) for s in g), k, g) for g, k in zip(groups, frames)]
+    rng.shuffle(items)
+    mbs = []
+    for w in range(0, len(items), window):
+        cur, rows = [], 0
+        for L, k, g in sorted(items[w:w + window], key=lambda x: x[0]):  # ascending: L is the longest row so far
+            if cur and (rows + len(g) > max_q or (rows + len(g)) * L > budget):
+                mbs.append(cur)
+                cur, rows = [], 0
+            cur.append((L, k, g))
+            rows += len(g)
+        if cur:
+            mbs.append(cur)
+
+    def cost(mb):
+        vis = sum(min(g[0].get("frames") or k, g[0]["media_frames"]) * g[0]["frame_tokens"] for _, k, g in mb)
+        return sum(len(g) for _, _, g in mb) * max(L for L, _, _ in mb) + vis
+
+    rng.shuffle(mbs)
+    order = [mb for w in range(0, len(mbs), window) for mb in sorted(mbs[w:w + window], key=cost)]
+    steps = [[[(k, g) for _, k, g in mb] for mb in order[i:i + mb_per_step]]
+             for i in range(0, len(order) - mb_per_step + 1, mb_per_step)]
+    rng.shuffle(steps)
+    return steps
+
+
+def packed_rank_steps(steps, world_size, rank):
+    """[(micro-batches of this rank for step i, questions in step i over all ranks)], as rank_steps."""
+    accum = len(steps[0]) // world_size
+    assert accum * world_size == len(steps[0]), (len(steps[0]), world_size)
+    return [(st[rank * accum:(rank + 1) * accum], sum(len(g) for mb in st for _, g in mb)) for st in steps]
+
+
 def to_device(batch, device):
-    return {k: v.to(device, non_blocking=True) if torch.is_tensor(v) else v for k, v in batch.items()}
+    move = lambda v: v.to(device, non_blocking=True) if torch.is_tensor(v) else v
+    return {k: [move(x) for x in v] if isinstance(v, list) and v and torch.is_tensor(v[0]) else move(v)
+            for k, v in batch.items()}

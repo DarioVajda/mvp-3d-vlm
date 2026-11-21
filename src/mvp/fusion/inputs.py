@@ -146,3 +146,17 @@ class InputBuilder:
     def build(self, frames, questions, answers=None, padding_side="right"):
         vis = self.visual(frames)
         return {**vis, **self.text(questions, vis["image_grid_thw"], answers, padding_side)}
+
+    def pack(self, parts):
+        """One training micro-batch from several build() outputs (right-padded, each one video and its questions): the
+        rows in order, padded on the right to the longest; per video its images ("n_images", in image_grid_thw and
+        pixel_values in order), its VGGT input (a list) and its number of rows ("rows"), which FusionVL reads to give
+        each row its own video's visual tokens and geometry."""
+        L = max(p["input_ids"].shape[1] for p in parts)
+        pad = {"input_ids": self.tok.pad_token_id, "attention_mask": 0, "labels": -100, "mm_token_type_ids": 0}
+        out = {k: torch.cat([F.pad(p[k], (0, L - p[k].shape[1]), value=v) for p in parts]) for k, v in pad.items()}
+        out.update(pixel_values=torch.cat([p["pixel_values"] for p in parts]),
+                   image_grid_thw=torch.cat([p["image_grid_thw"] for p in parts]),
+                   vggt_images=[p["vggt_images"] for p in parts], rows=[len(p["input_ids"]) for p in parts],
+                   n_images=[len(p["image_grid_thw"]) for p in parts])
+        return out
