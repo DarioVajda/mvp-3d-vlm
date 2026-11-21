@@ -195,7 +195,7 @@ At 32-frame eval the input is 4× longer; the output is still 256 × D.
 | 8-train / 32-eval mismatch | 32-frame scores below 8-frame for arm 4 only | fine-tune 1 epoch at 32 frames, or sample 8–32 frames during training |
 | VGGT on 8 frames reconstructs poorly on dark ScanNet footage | low `depth_conf`; arm 4 loses on specific scenes | log confidence; try space-aware frame picks |
 | Additive arm grid misaligned | silent; arm 2 ≈ arm 1 | assert Qwen merged grid == VGGT window grid per frame |
-| Answer truncation | parse rate < 99% | 16 new tokens for VSI is enough for zero-shot Qwen3.5 (median 3 chars); recheck after training |
+| Answer truncation | parse rate < 99% | 16 new tokens is *not* enough for zero-shot Qwen3.5: it reasons before answering on about half of the multiple-choice questions, so its baseline uses `--max-new-tokens 2048 --final-answer` (2B, 32 frames: 36.6 → 45.7). Trained models answer with a bare letter or number (checked on all ablation runs), so 16 is enough for them |
 | Kernel fallback | step time 5× slower, transformers warning | ensure `flash-linear-attention` + `causal-conv1d` in the venv (slurm/install_linear_attn_kernels.sh) |
 | LoRA through Gated DeltaNet layers | NaNs or no learning in linear layers | gradients through the Triton kernels were benchmarked (README); verify on the smoke test |
 

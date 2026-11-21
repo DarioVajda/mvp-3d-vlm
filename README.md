@@ -117,6 +117,11 @@ from lmms-eval's `vsibench` task, and its prompt matches the one in the Qwen3-VL
   `max_pixels`=2048·32²). The videos are 640×480, so each frame is about 150 tokens after 2× temporal merging.
   With 32 frames the input is about 5k tokens.
 * **Decoding:** greedy, `max_new_tokens`=16.
+  Qwen3.5 often writes out its reasoning on the harder multiple-choice questions, even with thinking off, and 16 tokens
+  cut it off before the letter. `--max-new-tokens 2048 --final-answer` lets it finish and scores the answer the reply
+  ends on (`score_final` in `src/mvp/benchmarks/vsibench.py`). This lifts zero-shot Qwen3.5-2B (32 frames as images,
+  full set) from 36.6 to **45.7**. That is the zero-shot baseline for the ablation study. The trained models answer
+  with a bare letter or number, so both settings give them the same score.
 * **Multiple-choice scoring:** exact match on the first word of the answer.
 * **Numeric scoring:** Mean Relative Accuracy (MRA) over thresholds 0.50…0.95.
 * **Overall score:** macro average over the 8 task types, with rel_direction easy/medium/hard averaged into one, as in lmms-eval.
@@ -216,6 +221,9 @@ frame count:
 Qwen3.5 is 3.6–4.2 points below Qwen3-VL of the same size, mostly from counting (−10 / −16) and the
 measurement tasks. It is better at relative direction (+8 / +3) and, for 4B, relative distance (+6). The inputs are the
 same size (about 2.5k tokens, 640×480 frames), so the input is not the cause.
+
+These Qwen3.5 rows use the 16-token limit, so they understate Qwen3.5 on the multiple-choice tasks (see *Decoding*
+above). At 32 frames the limit cost the 2B 9 points.
 
 ### MMSI-Bench
 

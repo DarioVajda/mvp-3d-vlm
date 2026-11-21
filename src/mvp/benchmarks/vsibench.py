@@ -161,6 +161,39 @@ def score(doc, prediction):
     return float(mean_relative_accuracy(pred, float(doc["ground_truth"])))
 
 
+# ---- final-answer scoring, for replies that reason before answering (not part of lmms-eval) ----
+_ANSWER_PHRASE = re.compile(r"answer(?: is|:)?\s*(?:\*\*)?\s*\(?([A-D])\b(?![a-z])", re.I)
+_LONE_LETTER = re.compile(r"(?<![A-Za-z])\(?([A-D])\)?(?=[.):*]|\s*$)")
+
+
+def final_letter(text):
+    """The option letter a free-form reply ends on: the last "answer is X" / "Answer: X", else the last letter that
+    stands alone ("B", "(B)", "B.", "**B**") in the reply's last non-empty line. None if there is neither."""
+    m = list(_ANSWER_PHRASE.finditer(text))
+    if m:
+        return m[-1].group(1).upper()
+    lines = [l for l in text.strip().splitlines() if l.strip()]
+    m = list(_LONE_LETTER.finditer(lines[-1])) if lines else []
+    return m[-1].group(1) if m else None
+
+
+def final_number(text):
+    """The last number in a free-form reply (the first, for a bare-number reply)."""
+    nums = _NUM_RE.findall(str(text).replace(",", ""))
+    return float(nums[-1]) if nums else extract_number(text)
+
+
+def score_final(doc, prediction):
+    """Like score(), but reads the answer from the end of the reply instead of its first word."""
+    if doc["question_type"] in MCA_QUESTION_TYPES:
+        letter = final_letter(prediction)
+        return 0.0 if letter is None else exact_match(letter, doc["ground_truth"])
+    pred = final_number(prediction)
+    if pred is None:
+        return 0.0
+    return float(mean_relative_accuracy(pred, float(doc["ground_truth"])))
+
+
 def summarize(df):
     """df has columns question_type, score. Returns {task: score*100, 'overall': macro avg} like lmms-eval."""
     per_qtype = df.groupby("question_type")["score"].mean()

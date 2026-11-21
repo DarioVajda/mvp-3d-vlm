@@ -6,6 +6,7 @@
   python -m mvp.eval.vsibench ... --layout stit [--echo-system]  # prompt echoing (see mvp.benchmarks.vsibench.build_prompt_parts)
   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-4B --images --nframes 32 ...  # frames as images (SpatialStack protocol)
   python -m mvp.eval.vsibench --fusion-ckpt results/train/2B_xattn/final.pt --nframes 32 ...  # a trained arm (images)
+  python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
 
 Questions are grouped by video so each video is decoded once; resumes from an existing --out file.
 """
@@ -18,7 +19,8 @@ import pandas as pd
 
 from pathlib import Path
 
-from mvp.benchmarks.vsibench import ECHO_SYSTEM_PROMPT, LAYOUTS, build_prompt_parts, load_vsibench, score, summarize, task_of
+from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, build_prompt_parts, load_vsibench, score, score_final,
+                                     summarize, task_of)
 from mvp.paths import VGGT_DIR
 
 
@@ -61,6 +63,9 @@ def main():
     ap.add_argument("--token-budget", type=int, default=120000, help="max total input tokens per batch")
     ap.add_argument("--shard", type=int, default=0, help="process only videos with index %% num_shards == shard")
     ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--max-new-tokens", type=int, default=16, help="16 as in lmms-eval; raise it with --final-answer")
+    ap.add_argument("--final-answer", action="store_true", help="score the answer the reply ends on (score_final) "
+                    "instead of its first word; the lmms-eval score is kept as score_first")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     args.images = args.images or args.fusion_ckpt is not None
@@ -120,18 +125,22 @@ def main():
                 parts = [build_prompt_parts(d, args.layout) for d in batch]
                 if args.images:
                     batch_in = {**vis, **model.inputs.text([p for _, p in parts], vis["image_grid_thw"], padding_side="left")}
-                    preds = model.generate({k: v.cuda() for k, v in batch_in.items()})
+                    preds = model.generate({k: v.cuda() for k, v in batch_in.items()}, max_new_tokens=args.max_new_tokens)
                     n_tok = int(batch_in["input_ids"].shape[1])
                 else:
                     preds, n_tok = model.generate_video(video, meta, vkw, [p for _, p in parts],
-                                                        pres=[q for q, _ in parts], system=system)
+                                                        pres=[q for q, _ in parts], system=system,
+                                                        max_new_tokens=args.max_new_tokens)
                 for d, p in zip(batch, preds):
                     rec = {"id": int(d["id"]), "dataset": d["dataset"], "scene_name": d["scene_name"],
                            "question_type": d["question_type"], "task": task_of(d["question_type"]),
                            "question": d["question"], "options": d["options"] if isinstance(d["options"], list) else None,
-                           "ground_truth": d["ground_truth"], "prediction": p, "score": score(d, p),
+                           "ground_truth": d["ground_truth"], "prediction": p,
+                           "score": score_final(d, p) if args.final_answer else score(d, p),
                            "n_frames": n_frames, "frame_hw": frame_hw, "n_input_tokens": n_tok,
                            "frame_indices": list(meta["frames_indices"])}
+                    if args.final_answer:
+                        rec["score_first"] = score(d, p)
                     fout.write(json.dumps(rec) + "\n")
                 fout.flush()
                 n += len(batch)
@@ -146,7 +155,8 @@ def main():
     with open(args.out.replace(".jsonl", "_summary.json"), "w") as f:
         json.dump({"model": args.model, "protocol": "images" if args.images else "video", "fusion_ckpt": args.fusion_ckpt,
                    "arm": model.arm if args.images else None, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
-                   "layout": args.layout, "system": system, "fps": args.fps, "split": args.split, "n": len(res), **summary}, f, indent=1)
+                   "layout": args.layout, "system": system, "fps": args.fps, "max_new_tokens": args.max_new_tokens,
+                   "final_answer": args.final_answer, "split": args.split, "n": len(res), **summary}, f, indent=1)
 
 
 if __name__ == "__main__":
