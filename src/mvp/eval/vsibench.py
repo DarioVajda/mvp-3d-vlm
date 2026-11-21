@@ -107,8 +107,9 @@ def main():
                     help="add the pipeline sheet's cameras after its objects, in --sheet-format; needs --sheet-source "
                          "pipeline and a format other than narrative, which has them already")
     ap.add_argument("--metric-scale", default="none", choices=["none", "priors"],
-                    help="priors: the pipeline sheet's objects approximately in metres, the scale estimated per "
-                         "question from typical object sizes (mvp.benchmarks.scene_scale); tables only")
+                    help="priors: the pipeline sheet approximately in metres (its objects, and with --cameras or the "
+                         "narrative its cameras), the scale estimated per question from typical object sizes "
+                         "(mvp.benchmarks.scene_scale)")
     ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
                     help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
                          "1-16 (the video's own labels are always seconds)")

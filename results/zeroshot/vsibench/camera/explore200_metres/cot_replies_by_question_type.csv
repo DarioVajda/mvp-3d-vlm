@@ -1,0 +1,13 @@
+,cot_cam_markdown_table,cot_cam_markdown_table,cot_cam_markdown_table,cot_cam_markdown_table,cot_cam_text,cot_cam_text,cot_cam_text,cot_cam_text,cot_narrative,cot_narrative,cot_narrative,cot_narrative
+,median tokens,hit the limit,parsed %,n,median tokens,hit the limit,parsed %,n,median tokens,hit the limit,parsed %,n
+question_type,,,,,,,,,,,,
+obj_appearance_order,435.0,2,92.0,25,559.0,2,100.0,25,419.0,4,88.0,25
+object_abs_distance,914.0,7,100.0,25,2048.0,13,100.0,25,2048.0,19,100.0,25
+object_counting,432.0,4,100.0,25,549.0,1,100.0,25,425.0,4,100.0,25
+object_rel_direction_easy,682.0,0,100.0,8,682.5,0,100.0,8,528.0,1,87.5,8
+object_rel_direction_hard,629.0,0,100.0,9,716.0,2,77.77777777777779,9,520.0,1,88.88888888888889,9
+object_rel_direction_medium,786.5,1,100.0,8,791.5,1,87.5,8,752.0,1,87.5,8
+object_rel_distance,1064.0,3,88.0,25,1317.0,6,76.0,25,676.0,3,88.0,25
+object_size_estimation,510.0,2,100.0,25,439.0,2,100.0,25,548.0,8,100.0,25
+room_size_estimation,587.0,0,100.0,25,1389.0,4,100.0,25,980.0,2,100.0,25
+route_planning,741.0,3,88.0,25,2048.0,16,36.0,25,2048.0,14,44.0,25

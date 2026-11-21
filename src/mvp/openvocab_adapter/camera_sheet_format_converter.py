@@ -107,9 +107,10 @@ def bearing(vector, north, east):
     return math.degrees(math.atan2(vector @ east, vector @ north))
 
 
-def move_phrase(step, median_step, up, north, east, units=False):
+def move_phrase(step, median_step, up, north, east, units=False, scale=None):
     """'Go a little north-east and up', or None when the step is too short to mention. units=True gives the step's
-    length instead of "a little" / "far": 'Go 0.812 units north-east and up'."""
+    length instead of "a little" / "far": 'Go 0.812 units north-east and up', or with scale (metres per sheet unit)
+    the length in metres: 'Go 1.868 metres north-east and up'. Which steps are mentioned doesn't depend on scale."""
     length = float(np.linalg.norm(step))
     if median_step <= 0 or length < NO_MOVE * median_step:
         return None
@@ -124,6 +125,8 @@ def move_phrase(step, median_step, up, north, east, units=False):
         if climb > CLIMB_DEG:
             where += f" and {vertical}"
     if units:
+        if scale is not None:
+            return f"Go {length * scale:.{UNIT_DECIMALS}f} metres {where}"
         return f"Go {length:.{UNIT_DECIMALS}f} units {where}"
     ratio = length / median_step
     how_far = "a little " if ratio < A_LITTLE else "far " if ratio > FAR else ""
@@ -141,10 +144,11 @@ def turn_phrase(heading_change, pitch_change):
     return "turn " + " and ".join(parts) if parts else None
 
 
-def frame_instructions(path, units=False, turn_first=False):
+def frame_instructions(path, units=False, turn_first=False, scale=None):
     """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame.
-    units=True says how far each move goes, in the sheet's units, instead of "a little" / "far". turn_first=True says
-    the turn before the move ("Turn 30° to the right and go north."); compass directions don't depend on the order."""
+    units=True says how far each move goes, in the sheet's units, instead of "a little" / "far"; with scale (metres
+    per sheet unit) as well, in metres. turn_first=True says the turn before the move ("Turn 30° to the right and go
+    north."); compass directions don't depend on the order."""
     centres, rotations = read_cameras(path)
     if not len(centres):
         return []
@@ -160,7 +164,7 @@ def frame_instructions(path, units=False, turn_first=False):
     looking = "straight ahead" if pitch < MIN_TURN_DEG else f"{pitch}° {'up' if pitches[0] > 0 else 'down'}"
     sentences = [f"Start facing north, looking {looking}."]
     for t in range(1, len(centres)):
-        move = move_phrase(steps[t - 1], median_step, up, north, east, units)
+        move = move_phrase(steps[t - 1], median_step, up, north, east, units, scale)
         turn = turn_phrase(headings[t] - headings[t - 1], pitches[t] - pitches[t - 1])
         if move and turn and turn_first:
             # a comma keeps "Turn 23° to the right and 5° down, and go ..." readable

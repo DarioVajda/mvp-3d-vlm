@@ -649,11 +649,68 @@ class MetricScale(unittest.TestCase):
         self.assertEqual(ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt),
                          ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt, metric_scale=None))
 
+    def test_cameras_in_metres(self):
+        """The camera tables: positions times the objects' scale, orientations and view directions unchanged."""
+        k = self.k(1)["k"]
+        plain, metres = (ss.render_cameras(1, "csv", self.root, self.vggt, "frames", metric_scale=m).split("\n")
+                         for m in (None, "priors"))
+        self.assertEqual(metres[0], ss.camera_preamble("frames", "priors"))
+        self.assertIn("approximately in metres, estimated from typical object sizes", metres[0])
+        self.assertNotIn("relative units", metres[0])
+        self.assertNotEqual(ss.CAMERA_PREAMBLE_PRIORS, ss.CAMERA_PREAMBLE)
+        self.assertEqual(metres[1], plain[1])  # the header
+        for a, b in zip(plain[2:], metres[2:]):
+            a, b = a.split(","), b.split(",")
+            self.assertEqual(a[0], b[0])  # the frame
+            for x, y in zip(a[1:4], b[1:4]):  # x, y, z
+                self.assertAlmostEqual(float(y), float(x) * k, delta=0.002)
+            self.assertEqual(a[4:], b[4:])  # quaternion, forward
+        scene = ss.render_scene(1, "pipeline", "csv", True, self.root, self.vggt, "frames", metric_scale="priors")
+        self.assertEqual(scene, ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt,
+                                                time_unit="frames", metric_scale="priors") + "\n" + "\n".join(metres))
+
+    def assert_scaled_text(self, plain, metres, k):
+        """plain and metres the same text apart from 'units' -> 'metres' and every length (a number with three
+        decimals) times k; degrees and frame numbers unchanged."""
+        number = re.compile(r"\d+\.\d{3}")
+        self.assertNotIn(" units", metres)
+        self.assertEqual(number.sub("N", metres), number.sub("N", plain).replace(" units", " metres"))
+        a, b = number.findall(plain), number.findall(metres)
+        self.assertEqual(len(a), len(b))
+        self.assertTrue(a)
+        for x, y in zip(a, b):
+            self.assertAlmostEqual(float(y), float(x) * k, delta=0.01)
+
+    def test_camera_text_in_metres(self):
+        k = self.k(1)["k"]
+        plain, metres = (ss.render_cameras(1, "text", self.root, self.vggt, "frames", metric_scale=m).split("\n", 1)
+                         for m in (None, "priors"))
+        self.assertEqual(metres[0], ss.DIRECTIONS_PRIORS + " " + ss.LINE_LABELS["frames"])
+        self.assertNotEqual(ss.DIRECTIONS_PRIORS, ss.DIRECTIONS)
+        self.assert_scaled_text(plain[1], metres[1], k)
+        self.assertIn("Go ", metres[1])
+
+    def test_narrative_in_metres(self):
+        k = self.k(1)["k"]
+        for step_order in ss.STEP_ORDERS:
+            for object_directions in ss.OBJECT_DIRECTIONS:
+                plain, metres = (ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt,
+                                                 time_unit="frames", step_order=step_order,
+                                                 object_directions=object_directions, metric_scale=m).split("\n", 1)
+                                 for m in (None, "priors"))
+                self.assertEqual(metres[0], ss.narrative_preamble("frames", step_order=step_order,
+                                                                  metric_scale="priors"))
+                self.assertIn(ss.NARRATIVE_DETAILS_PRIORS, metres[0])
+                self.assertNotIn("relative units", metres[0])
+                self.assert_scaled_text(plain[1], metres[1], k)
+        self.assertNotEqual(ss.NARRATIVE_DETAILS_PRIORS, ss.NARRATIVE_DETAILS)
+
     def test_options_and_prompt(self):
-        for source, fmt, cameras in [("gold", "csv", False), ("pipeline", "narrative", False),
-                                     ("pipeline", "csv", True), ("gold_relations", "csv", False)]:
+        for source, fmt, cameras in [("gold", "csv", False), ("gold_relations", "csv", False)]:
             with self.assertRaises(ValueError, msg=(source, fmt, cameras)):
                 ss.check_options(source, fmt, cameras, metric_scale="priors")
+        for fmt, cameras in [("csv", True), ("text", True), ("markdown_table", True), (ss.NARRATIVE, False)]:
+            ss.check_options("pipeline", fmt, cameras, metric_scale="priors")  # the cameras and the narrative too
         with self.assertRaises(ValueError):
             ss.check_options("pipeline", "csv", metric_scale="metres")
         prompt = ss.build_sheet_prompt(3, "pipeline", "csv", self.root, self.vggt, reasoning="cot",

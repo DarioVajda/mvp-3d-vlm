@@ -14,7 +14,8 @@ never written. Nothing here writes to the sheets folder.
   render_cameras(question_id, fmt)            the pipeline's cameras. fmt: one of FORMATS, where "text" is the compass
                                               directions of camera_sheet_format_converter.py, frame by frame
   render_sheet(..., metric_scale="priors")    pipeline objects approximately in metres, the scale estimated from
-                                              typical object sizes (mvp.benchmarks.scene_scale); tables only
+                                              typical object sizes (mvp.benchmarks.scene_scale); render_cameras and
+                                              the narrative take the same option and the same scale
   render_scene(question_id, source, fmt, cameras)   what the prompt carries: the objects, then with cameras=True the
                                               cameras in the same format (pipeline only; None: no objects)
   build_sheet_prompt(question_id, source, fmt)  the whole text input the eval sends with that sheet
@@ -129,6 +130,10 @@ CAMERA_PREAMBLE = (
     "frame: x points right, y down and z forward as seen from that camera. qw, qx, qy, qz is the camera's orientation, "
     "the unit quaternion that turns the camera's own axes (x right, y down, z forward) into these axes, and forward_x, "
     "forward_y, forward_z is the direction the camera looks.")
+# metric_scale "priors": the same sheets in approximate metres (scene_scale), the scale the objects get
+CAMERA_PREAMBLE_PRIORS = CAMERA_PREAMBLE.replace(
+    "position in the 3D reconstruction's relative units, not metres.",
+    "position, approximately in metres, estimated from typical object sizes.")
 CAMERA_KEY = {
     "seconds": ("time is the frame's video timestamp, in seconds, as the video's timestamps show it. The video shows "
                 "one timestamp per pair of frames, so two entries share each time."),
@@ -140,6 +145,8 @@ DIRECTIONS = (
     "after the first says how the camera got to its frame from the frame before: how far it moved, in the 3D "
     "reconstruction's relative units (not metres), in which direction, and how many degrees it turned left or right "
     "and up or down.")
+DIRECTIONS_PRIORS = DIRECTIONS.replace("in the 3D reconstruction's relative units (not metres)",
+                                       "approximately in metres (estimated from typical object sizes)")
 NARRATIVE_PREAMBLE = (
     "Scene walkthrough: the camera's path through the 16 video frames, told from the camera's point of view, with the "
     "objects the detector found in each frame.")
@@ -156,6 +163,10 @@ NARRATIVE_DETAILS = (
     "large object is in view. Distances and sizes are in the 3D reconstruction's relative units, not metres: an "
     "object's distance is from the camera to the object's centre, and its size is its extent along three "
     "perpendicular axes.")
+NARRATIVE_DETAILS_PRIORS = NARRATIVE_DETAILS.replace(
+    "Distances and sizes are in the 3D reconstruction's relative units, not metres:",
+    "Distances and sizes are approximately in metres, estimated from typical object sizes:")
+UNIT_WORD = {None: "units", "priors": "metres"}  # how the narrative and the camera text say a length
 LINE_LABELS = {  # the line-per-frame texts: the camera directions and the narrative
     "seconds": ("Each line starts with a video timestamp, in seconds, as the video's timestamps show it, and holds the "
                 "sentences of the two frames shown under it."),
@@ -198,9 +209,16 @@ def preamble(source, volume=False, time_unit="seconds", visibility="bridged", me
     return text + (VOLUME_NOTE if volume else "")
 
 
-def camera_preamble(time_unit="seconds"):
+def camera_preamble(time_unit="seconds", metric_scale=None):
     check_time_unit(time_unit)
-    return CAMERA_PREAMBLE + " " + CAMERA_KEY[time_unit]
+    return (CAMERA_PREAMBLE_PRIORS if metric_scale == "priors" else CAMERA_PREAMBLE) + " " + CAMERA_KEY[time_unit]
+
+
+def scale_of(question_id, root, metric_scale):
+    """Metres per sheet unit for the question's pipeline sheet with metric_scale "priors" (scene_scale.question_scale:
+    typical object sizes, an object-size question's own class left out), else 1.0. The objects, the cameras, the camera
+    text and the narrative of one question all get this one scale."""
+    return scene_scale.question_scale(question_id, str(root))["k"] if metric_scale == "priors" else 1.0
 
 
 def fmt_float(value):
@@ -369,9 +387,10 @@ def frames_seen(question_id, root=SCENE_SHEETS, visibility="bridged"):
     return {key: visible_frames(frames, visibility) for key, frames in seen.items()}
 
 
-def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds"):
+def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", scale=1.0):
     """The question's canonical camera list: one dict of formatted strings per frame, in frame order, with the fields
-    of camera_fields(time_unit). cameras.csv's frame becomes the frame's label and its image column is dropped."""
+    of camera_fields(time_unit). cameras.csv's frame becomes the frame's label and its image column is dropped. scale
+    multiplies the positions (x, y, z), not the orientations or view directions."""
     folder = camera_folder(question_id, root)
     with open(folder / "cameras.csv", newline="") as f:
         rows = sorted(csv.DictReader(f), key=lambda r: int(r["frame"]))
@@ -379,7 +398,8 @@ def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="
         raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
     key = FRAME_KEY[time_unit]
     labels = frame_labels(folder, time_unit, vggt_root)
-    return [{key: label, **{c: fmt_float(row[c]) for c in CAMERA_COLUMNS}} for label, row in zip(labels, rows)]
+    return [{key: label, **{c: fmt_float(float(row[c]) * (scale if c in POSITION else 1.0)) for c in CAMERA_COLUMNS}}
+            for label, row in zip(labels, rows)]
 
 
 # ---- the renderers, each the body that follows the preamble ----
@@ -480,23 +500,29 @@ def label_lines(sentences, labels, time_unit="seconds"):
 
 
 def render_cameras(question_id, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds",
-                   step_order="move-turn"):
+                   step_order="move-turn", metric_scale=None):
     """The question's camera sheet as prompt text: a table format of FORMATS (the canonical camera list), or "text",
     the compass directions of camera_sheet_format_converter.py with each move's length, one line per frame, each step
-    said in step_order."""
+    said in step_order. metric_scale "priors": positions and move lengths approximately in metres, with the scale the
+    question's objects get (scale_of)."""
     if fmt not in FORMATS:
         raise ValueError(f"the cameras' format must be one of {FORMATS}, not {fmt!r}")
     check_time_unit(time_unit)
     check_step_order(step_order)
+    if metric_scale not in METRIC_SCALES:
+        raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
+    scale = scale_of(question_id, root, metric_scale)
     if fmt == "text":
         folder = camera_folder(question_id, root)
-        sentences = directions.frame_instructions(folder, units=True, turn_first=step_order == "turn-move")
+        sentences = directions.frame_instructions(folder, units=True, turn_first=step_order == "turn-move",
+                                                  scale=scale if metric_scale else None)
         if len(sentences) != N_FRAMES:
             raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
         lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
-        return DIRECTIONS + " " + LINE_LABELS[time_unit] + "\n" + "\n".join(lines)
-    cameras = load_cameras(question_id, root, vggt_root, time_unit)
-    return camera_preamble(time_unit) + "\n" + RENDERERS[fmt](cameras, camera_fields(time_unit))
+        head = DIRECTIONS_PRIORS if metric_scale == "priors" else DIRECTIONS
+        return head + " " + LINE_LABELS[time_unit] + "\n" + "\n".join(lines)
+    cameras = load_cameras(question_id, root, vggt_root, time_unit, scale)
+    return camera_preamble(time_unit, metric_scale) + "\n" + RENDERERS[fmt](cameras, camera_fields(time_unit))
 
 
 # ---- the narrative: objects and cameras as one walk through the frames ----
@@ -552,9 +578,10 @@ def object_side(offset, rotation, ahead, up, object_directions="floor"):
     return view_side(rotation.T @ offset)
 
 
-def walk_move(step, median_step, up, ahead):
+def walk_move(step, median_step, up, ahead, unit="units"):
     """'move 0.812 units forward and to the left', relative to where the camera faced before it moved, or None when
-    the step is too short to mention. The thresholds are camera_sheet_format_converter.py's."""
+    the step is too short to mention. The thresholds are camera_sheet_format_converter.py's (relative to the median
+    step, so they don't depend on the scale). unit: how the length is said ("metres" for metric_scale "priors")."""
     length = float(np.linalg.norm(step))
     if median_step <= 0 or length < directions.NO_MOVE * median_step:
         return None
@@ -568,27 +595,27 @@ def walk_move(step, median_step, up, ahead):
         where = MOVES[round(directions.bearing(flat, ahead, np.cross(ahead, up)) / 45) % 8]
         if climb > directions.CLIMB_DEG:
             where += f", going {vertical}"
-    return f"move {fmt_float(length)} units {where}"
+    return f"move {fmt_float(length)} {unit} {where}"
 
 
-def object_clauses(objects, seen, t, mentioned, centre, rotation, ahead, up, object_directions="floor"):
+def object_clauses(objects, seen, t, mentioned, centre, rotation, ahead, up, object_directions="floor", unit="units"):
     """What the camera sees in frame t, from its centre, rotation and facing along the floor: each object seen in it,
     then each one seen in the frame before but not in this one. Sizes are given the first time an object is seen; where
-    it is (object_side) is left out when there is nothing to say."""
+    it is (object_side) is left out when there is nothing to say. unit: how distances and sizes are said."""
     clauses = []
     for obj in objects:
         if t not in seen[obj["id"]]:
             continue
         offset = np.array([float(obj[k]) for k in POSITION]) - centre
         side = object_side(offset, rotation, ahead, up, object_directions)
-        where = (f" {side}," if side else ",") + f" {fmt_float(np.linalg.norm(offset))} units away"
+        where = (f" {side}," if side else ",") + f" {fmt_float(np.linalg.norm(offset))} {unit} away"
         if t - 1 in seen[obj["id"]]:
             clauses.append(f"you still see {obj['id']}{where}")
         elif obj["id"] in mentioned:
             clauses.append(f"you see {obj['id']} again{where}")
         else:
             size = " × ".join(obj[k] for k in EXTENT)
-            clauses.append(f"you see {obj['id']} ({article(obj['label'])} {obj['label']}, {size} units){where}")
+            clauses.append(f"you see {obj['id']} ({article(obj['label'])} {obj['label']}, {size} {unit}){where}")
             mentioned.add(obj["id"])
     clauses += [f"{obj['id']} is no longer in view" for obj in objects
                 if t - 1 in seen[obj["id"]] and t not in seen[obj["id"]]]
@@ -611,14 +638,15 @@ def narrative_step(move, turn, step_order="move-turn"):
     return move or f"don't move and {turn}"
 
 
-def narrative_preamble(time_unit="seconds", visibility="bridged", step_order="move-turn"):
+def narrative_preamble(time_unit="seconds", visibility="bridged", step_order="move-turn", metric_scale=None):
     check_step_order(step_order)
-    return (" ".join([NARRATIVE_PREAMBLE, NARRATIVE_STEPS[step_order], NARRATIVE_DETAILS]) + bridged_note(visibility)
+    details = NARRATIVE_DETAILS_PRIORS if metric_scale == "priors" else NARRATIVE_DETAILS
+    return (" ".join([NARRATIVE_PREAMBLE, NARRATIVE_STEPS[step_order], details]) + bridged_note(visibility)
             + " " + LINE_LABELS[time_unit])
 
 
 def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged",
-                     step_order="move-turn", object_directions="floor"):
+                     step_order="move-turn", object_directions="floor", metric_scale=None):
     """The pipeline sheet's objects and cameras as one walk, a sentence per frame: how the camera moved and turned
     since the frame before (forward, left... relative to where it faced), then what it sees: "Move 0.812 units forward
     and turn 30° to the right; you see table_1 (a table, 1.200 × 0.800 × 0.700 units) ahead, slightly to your left,
@@ -626,15 +654,20 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
     seen in the frames visible_frames(visibility) gives. step_order "turn-move" says the turn first, and the move
     relative to where the camera faces after it (the frame's own facing) instead of before it (the previous frame's).
     object_directions: where an object is, along the floor and above or below ("floor", like the moves) or in the
-    camera's own tilted axes ("camera")."""
+    camera's own tilted axes ("camera"). metric_scale "priors": moves, distances and sizes approximately in metres,
+    with the scale the question's objects get as tables (scale_of); directions and turns don't depend on it."""
     check_time_unit(time_unit)
     check_step_order(step_order)
     check_object_directions(object_directions)
+    if metric_scale not in METRIC_SCALES:
+        raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
+    scale, unit = scale_of(question_id, root, metric_scale), UNIT_WORD[metric_scale]
     folder = camera_folder(question_id, root)
     objects = load_objects(question_id, "pipeline", root, vggt_root=vggt_root, time_unit=time_unit,
-                           visibility=visibility)
+                           visibility=visibility, scale=scale)
     seen = frames_seen(question_id, root, visibility)
     centres, rotations = directions.read_cameras(folder)
+    centres = centres * scale
     if len(centres) != N_FRAMES:
         raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
     up = directions.estimate_up(rotations)
@@ -654,14 +687,14 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
             action = f"start facing forward, looking {looking}"
         else:
             ahead = facings[t] if step_order == "turn-move" else facings[t - 1]  # where the camera faces as it moves
-            move = walk_move(steps[t - 1], median_step, up, ahead)
+            move = walk_move(steps[t - 1], median_step, up, ahead, unit)
             turn = directions.turn_phrase(headings[t] - headings[t - 1], pitches[t] - pitches[t - 1])
             action = narrative_step(move, turn, step_order)
         clauses = object_clauses(objects, seen, t, mentioned, centres[t], rotations[t], facings[t], up,
-                                 object_directions)
+                                 object_directions, unit)
         sentences.append(action[0].upper() + action[1:] + "".join("; " + c for c in clauses) + ".")
     lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
-    head = narrative_preamble(time_unit, visibility, step_order) + ("" if objects else "\n" + EMPTY)
+    head = narrative_preamble(time_unit, visibility, step_order, metric_scale) + ("" if objects else "\n" + EMPTY)
     return head + "\n" + "\n".join(lines)
 
 
@@ -724,8 +757,8 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
       - gold objects, as tables or in the narrative: gold sheets are in metres in the dataset's frame, and the only
         cameras are VGGT's, in another frame and scale, with nothing to align the two by
       - the narrative: it already tells the cameras
-    metric_scale "priors" is for the pipeline's objects as tables only: the cameras, the camera text and the narrative
-    give distances in the reconstruction's units, which it does not convert."""
+    metric_scale "priors" is for the pipeline's sheet only (objects, cameras, camera text and narrative alike, with one
+    scale per question): gold sheets are in metres already."""
     if source is not None and source not in SHEET_SOURCES:
         raise ValueError(f"source must be one of {SHEET_SOURCES} or None, not {source!r}")
     if source is not None and fmt not in SHEET_FORMATS:
@@ -743,17 +776,17 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
         raise ValueError("the narrative already tells where the camera goes: don't ask for the cameras with it")
     if metric_scale not in METRIC_SCALES:
         raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
-    if metric_scale == "priors" and (source != "pipeline" or fmt == NARRATIVE or cameras):
-        raise ValueError("metric_scale 'priors' converts the pipeline's objects as tables only (no gold sheet, no "
-                         "narrative, no cameras, which stay in the reconstruction's units)")
+    if metric_scale == "priors" and source != "pipeline":
+        raise ValueError("metric_scale 'priors' converts the pipeline's sheet to metres; gold sheets are in metres "
+                         "already")
 
 
 def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds",
                  visibility="bridged", step_order="move-turn", object_directions="floor", metric_scale=None):
     """One question's objects as prompt text. source: pipeline | gold | gold_relations (the gold sheet, then
     relations()); fmt: one of SHEET_FORMATS ("narrative": pipeline only, with its cameras). vggt_root holds each video's
-    meta.json (its fps, for timestamps). metric_scale "priors": pipeline objects approximately in metres, scaled by
-    scene_scale.question_scale (typical object sizes; an object-size question's own class left out)."""
+    meta.json (its fps, for timestamps). metric_scale "priors": pipeline objects (and the narrative's moves) approximately
+    in metres, scaled by scale_of (typical object sizes; an object-size question's own class left out)."""
     if source not in SHEET_SOURCES or fmt not in SHEET_FORMATS:
         raise ValueError(f"source must be one of {SHEET_SOURCES} and fmt one of {SHEET_FORMATS}, not {source!r}, "
                          f"{fmt!r}")
@@ -764,8 +797,9 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
         rel = relations(question_id, root)
         return text + "\n" + rel if rel else text
     if fmt == NARRATIVE:
-        return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions)
-    scale = scene_scale.question_scale(question_id, str(root))["k"] if metric_scale == "priors" else 1.0
+        return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions,
+                                metric_scale)
+    scale = scale_of(question_id, root, metric_scale)
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
                            visibility=visibility, scale=scale)
     return render_objects(objects, source, fmt, volume, time_unit, visibility, metric_scale)
@@ -783,7 +817,7 @@ def render_scene(question_id, source=None, fmt=None, cameras=False, root=SCENE_S
                           visibility=visibility, step_order=step_order, object_directions=object_directions,
                           metric_scale=metric_scale)]
     if cameras:
-        parts.append(render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order))
+        parts.append(render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order, metric_scale))
     return "\n".join(parts)
 
 
@@ -894,7 +928,8 @@ def main():
     ap.add_argument("--reasoning", choices=REASONING, default="direct", help="for --prompt")
     ap.add_argument("--time-unit", choices=TIME_UNITS, default="seconds", help="how the sheets write frames")
     ap.add_argument("--metric-scale", choices=["none", "priors"], default="none",
-                    help="for --prompt: pipeline objects approximately in metres from typical object sizes")
+                    help="for --prompt: the pipeline sheet (and its cameras) approximately in metres from typical "
+                         "object sizes")
     ap.add_argument("--visibility", choices=VISIBILITY, default="bridged",
                     help="bridged: one missed frame between two sightings counts as seen; exact: only detections")
     ap.add_argument("--step-order", choices=STEP_ORDERS, default="move-turn",

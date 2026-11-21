@@ -1,0 +1,19 @@
+,family,replies,parsed %,'Answer:' line %,median tokens,90th pct tokens,hit the limit,of them before answering,"of those, read anyway",cut off and looping,"input tokens, mean",mean score,"score, cut-off replies wrong"
+video,video only,200,100.0,0.0,1.0,3.0,0,0,0,0,2567.515,48.65,48.65
+obj_csv,objects only,200,100.0,0.0,1.0,5.0,0,0,0,0,3169.71,40.05,40.05
+cam_csv,camera table,200,100.0,0.0,1.0,4.0,0,0,0,0,4393.42,38.39999999999999,38.39999999999999
+obj_text,objects only,200,100.0,0.0,1.0,4.0,0,0,0,0,3295.19,36.95,36.95
+cam_text,camera text,200,100.0,0.0,1.0,4.0,0,0,0,0,3893.07,39.75,39.75
+narrative,narrative,200,100.0,0.0,1.0,5.0,0,0,0,0,3794.775,37.8,37.8
+obj_markdown_table,objects only,200,100.0,0.0,1.0,4.0,0,0,0,0,3254.245,41.95,41.95
+cam_markdown_table,camera table,200,100.0,0.0,1.0,4.0,0,0,0,0,4716.955,44.650000000000006,44.650000000000006
+cam_csv_frames,camera table,200,100.0,0.0,1.0,4.0,0,0,0,0,4363.98,41.150000000000006,41.150000000000006
+cam_text_turn_move,camera text,200,100.0,0.0,1.0,4.0,0,0,0,0,3904.67,39.25,39.25
+cam_text_frames,camera text,200,100.0,0.0,1.0,4.0,0,0,0,0,3946.115,38.400000000000006,38.400000000000006
+narrative_turn_move,narrative,200,100.0,0.0,1.0,5.0,0,0,0,0,3806.775,35.55,35.55
+narrative_camera_dirs,narrative,200,100.0,0.0,1.0,5.0,1,1,1,0,3788.665,36.55,36.55
+narrative_frames,narrative,200,100.0,0.0,1.0,5.0,1,1,1,0,3846.42,37.3,37.3
+narrative_exact,narrative,200,100.0,0.0,1.0,5.0,1,1,1,0,3769.425,36.9,36.9
+cot_cam_markdown_table,"camera table, CoT",200,96.0,90.0,644.5,2048.0,22,20,12,13,4892.705,34.0,32.4
+cot_cam_text,"camera text, CoT",200,87.5,76.5,929.0,2048.0,47,47,22,23,4068.82,28.499999999999996,27.399999999999995
+cot_narrative,"narrative, CoT",200,88.5,71.5,785.0,2048.0,57,57,34,45,3970.525,27.299999999999997,25.900000000000002
