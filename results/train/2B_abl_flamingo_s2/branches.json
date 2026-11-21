@@ -1,0 +1,31 @@
+{
+ "branches": [
+  {
+   "trunk_step": 5750,
+   "decayed_to": 6500,
+   "dev_acc_before": 62.9,
+   "dev_acc": 64.43333333333334,
+   "dev_acc_all": 63.32380952380952,
+   "dev_loss": 0.650578974334287,
+   "vsi_n": 5130,
+   "vsi_overall": 66.0255852761928,
+   "vsi_debiased": 59.5291537267634,
+   "vsi/object_counting": 71.00884955752213,
+   "vsi/object_abs_distance": 48.72901678657074,
+   "vsi/object_size_estimation": 74.55403987408185,
+   "vsi/room_size_estimation": 67.22222222222221,
+   "vsi/object_rel_distance": 65.91549295774648,
+   "vsi/object_rel_direction": 77.5891935308465,
+   "vsi/route_planning": 39.69072164948454,
+   "vsi/obj_appearance_order": 83.49514563106796,
+   "dev/abs_distance": 51.30000000000002,
+   "dev/appearance_order": 56.666666666666664,
+   "dev/counting": 67.20000000000002,
+   "dev/obj_size": 65.1,
+   "dev/rel_direction": 78.0,
+   "dev/rel_distance": 61.0,
+   "dev/room_size": 63.999999999999986
+  }
+ ],
+ "missing": []
+}
