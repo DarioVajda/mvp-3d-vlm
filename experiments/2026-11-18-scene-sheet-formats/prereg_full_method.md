@@ -119,3 +119,16 @@ The notebook and what the sheets were made from:
 The sheets are reproducible from those files: `pipeline_v3.py --run <the pipeline_v3 run> --scenes
 explore200_scenes.txt` (with the sizing of `50fe543e72dfe5c13b8e472ff1dc418a17f0677c`) and then `dedup_sheets.py`
 rebuild every file of the registered sheets byte for byte, checked before this was written.
+
+## Addendum (2026-11-22, before any of the questions was run)
+
+`final_test.ipynb` was changed after the registration above, only to record which revision of Qwen/Qwen3.5-2B the runs
+use, since no revision is pinned: a cell before the runs writes the revision Hugging Face serves for the model to
+`model_revision.json` next to the predictions, and a cell after the runs adds the snapshots the runs loaded from the
+cache, saying so if they are not only that revision. The 43 cells of the registered notebook are all kept, unchanged and
+in the same order, so the inputs, the runs, the tests and the decision rule are as registered; the three new cells are a
+heading and the two cells described. The other files registered above are unchanged.
+
+| File | SHA-256 |
+|---|---|
+| `final_test.ipynb` (replaces `99c768114c099c3946bd4a59d3f0a8dff08698731dea996d434e664e29f0eb81` above) | `bbb1f1e01241ae9f180eeba2c56a32120b0130669b5252fa1ce5c0217374e1f6` |
