@@ -30,7 +30,9 @@ def check_scene(d):
     frames = sorted((d / "frames").glob("*.jpg"))
     assert len(frames) == T == len(ext) == len(pp["xyz"]), d
     assert pp["xyz"].shape == (T, gh, gw, 3) and np.isfinite(pp["xyz"]).all()
-    assert np.abs(cams["camera_center"][0]).max() < 1e-3, cams["camera_center"][0]
+    # VGGT predicts frame 0's pose too (it is not fixed to the identity): within 2e-3 units of the origin in all 150
+    # shared scenes, about 0.03 of a typical step between consecutive frames
+    assert np.abs(cams["camera_center"][0]).max() < 1e-2, cams["camera_center"][0]
     assert all(0 <= i < T for s in meta["frame_subsets"].values() for i in s)
     assert cloud["frame"].min() >= 0 and cloud["frame"].max() < T
 

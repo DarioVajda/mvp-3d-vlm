@@ -1,10 +1,11 @@
-# VGGT per-pixel depth for the 75 VSI-Bench scenes
+# VGGT per-pixel depth for the shared VSI-Bench scenes
 
-An add-on to `vggt_vsibench_75.zip`: the same 75 scenes, with VGGT's full-resolution depth map and depth confidence
-for each of the 128 frames. Unzip it next to `vggt_vsibench_75/`; the folder layout matches.
+An add-on to a main export zip (`vggt_vsibench_75.zip`, or `vggt_vsibench_batch2.zip` for the second set): the same
+75 scenes, with VGGT's full-resolution depth map and depth confidence for each of the 128 frames. Unzip it next to the
+main export's folder; the folder layout matches.
 
 ```
-depth_vsibench_75/
+depth_vsibench_75/ (or depth_vsibench_batch2/)
 ├── scenes.csv                         same as in the main export
 └── scenes/<dataset>/<scene>/depth.npz
         depth  float16 [128, H, W]     depth along the camera's optical axis (camera z)
@@ -18,7 +19,7 @@ depth_vsibench_75/
 
   ```python
   import numpy as np
-  d = np.load("scenes/scannet/scene0025_01/depth.npz")
+  d = np.load("scenes/scannet/scene0025_01/depth.npz")  # a scene of the first set
   cam = np.load("../vggt_vsibench_75/scenes/scannet/scene0025_01/cameras.npz")
   t, v, u = 40, 200, 300
   z = float(d["depth"][t, v, u])

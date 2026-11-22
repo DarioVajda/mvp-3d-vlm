@@ -14,6 +14,7 @@ Per scene, out/scenes/<dataset>/<scene>/:
   preview.jpg          check figure from mvp.reconstruction.show
 
   .venv/bin/python tasks/vggt_data/export.py [--scenes arkitscenes/41069025 ...] [--out tasks/vggt_data/out]
+  ... --exclude tasks/vggt_data/out/scenes.csv --out tasks/vggt_data/out_batch2  # the next 75 by the same ranking
 """
 import argparse
 import json
@@ -44,9 +45,11 @@ def scene_meta(dataset, scene):
     return json.loads((VGGT_DIR / dataset / scene / "meta.json").read_text())
 
 
-def select_scenes(df):
-    """Per dataset (and orientation), the scenes with the most question types, then the most questions."""
+def select_scenes(df, exclude=()):
+    """Per dataset (and orientation), the scenes with the most question types, then the most questions, leaving out
+    the <dataset>/<scene> names in exclude."""
     g = df.groupby(["dataset", "scene_name"]).agg(n=("id", "size"), types=("question_type", "nunique")).reset_index()
+    g = g[~(g.dataset + "/" + g.scene_name).isin(set(exclude))]
     g["portrait"] = [(lambda hw: hw[0] > hw[1])(scene_meta(d, s)["input_hw"]) for d, s in zip(g.dataset, g.scene_name)]
     picks = []
     for (dataset, portrait), k in QUOTA.items():
@@ -175,6 +178,8 @@ def export_scene(name, questions, out_root):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenes", nargs="*", help="<dataset>/<scene> (default: the selection from QUOTA)")
+    ap.add_argument("--exclude", nargs="*", default=[], help="scenes.csv of earlier exports, whose scenes the default "
+                    "selection leaves out")
     ap.add_argument("--out", default=str(Path(__file__).parent / "out"))
     args = ap.parse_args()
     out_root = Path(args.out)
@@ -183,7 +188,8 @@ def main():
     for col, path in PREDICTIONS.items():
         p = pd.read_json(path, lines=True).set_index("id")
         df[col] = [{"prediction": p.at[i, "prediction"], "score": float(p.at[i, "score"])} for i in df["id"]]
-    scenes = args.scenes or select_scenes(df)
+    exclude = [f"{r.dataset}/{r.scene}" for p in args.exclude for r in pd.read_csv(p, dtype={"scene": str}).itertuples()]
+    scenes = args.scenes or select_scenes(df, exclude)
 
     rows = []
     for k, name in enumerate(scenes):

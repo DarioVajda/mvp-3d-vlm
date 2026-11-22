@@ -1,3 +1,5 @@
 out/
 out_depth/
 *.zip
+out_batch2/
+out_depth_batch2/
