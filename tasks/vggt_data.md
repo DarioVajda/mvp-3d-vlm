@@ -14,6 +14,7 @@ Upload all of this to Google Drive.
 # VGGT reconstructions of 75 VSI-Bench scenes
 
 **Status:** data exported, checked and shared on Google Drive (2026-10-26). Per-pixel depth maps added as a second zip (2026-11-17).
+A second set of 75 scenes, in the same format, added on 2026-11-22: see [Batch 2](#batch-2-75-more-scenes-2026-11-22).
 
 This covers 75 indoor videos from [VSI-Bench](https://arxiv.org/abs/2412.14171), a video spatial-reasoning
 benchmark. For each video it gives:
@@ -82,6 +83,38 @@ See [`depth.npz`](#depthnpz-add-on) below for what it contains and how to use it
 
 The tree below starts at `vggt_vsibench_75/`, which is `out/` in this repo. The zip also has a `README.md`: a copy of
 this file from before the download section was added.
+
+## Batch 2: 75 more scenes (2026-11-22)
+
+Asked for by Tamara: 75 more VSI-Bench scenes, none of them in the first set, in exactly the same format. There are
+again two zips, a main one and a depth add-on. Everything above (file layout, coordinates, depth, checks, caveats)
+applies unchanged; only the zip and folder names differ (`vggt_vsibench_batch2/`, `depth_vsibench_batch2/`).
+
+| Zip | Size | Link (anyone with the link can view) | sha256 |
+|---|---|---|---|
+| `vggt_vsibench_batch2.zip` | 1.0 GB | <https://drive.google.com/open?id=1Tj4deiAVNfK6sFWsDaVoOcYQAfcQyRN6> | `330053dd20619f89cb4ccd905e6a983a3a2a37b09d414b39eafde52077a22dda` |
+| `depth_vsibench_batch2.zip` | 3.5 GB | <https://drive.google.com/open?id=1GafDISQMl9an4fAzGPTUFCUiuI1esl3o> | `6ef323addc2e2496bfbfdabadfa024bedf0d5fdce2dcbd65efd4dbb6f2668ffc` |
+
+```bash
+curl -L -o vggt_vsibench_batch2.zip \
+    "https://drive.usercontent.google.com/download?id=1Tj4deiAVNfK6sFWsDaVoOcYQAfcQyRN6&export=download&confirm=t"
+curl -L -o depth_vsibench_batch2.zip \
+    "https://drive.usercontent.google.com/download?id=1GafDISQMl9an4fAzGPTUFCUiuI1esl3o&export=download&confirm=t"
+# or: gdown 1Tj4deiAVNfK6sFWsDaVoOcYQAfcQyRN6 && gdown 1GafDISQMl9an4fAzGPTUFCUiuI1esl3o
+sha256sum vggt_vsibench_batch2.zip depth_vsibench_batch2.zip
+unzip -q vggt_vsibench_batch2.zip && unzip -q depth_vsibench_batch2.zip
+cd vggt_vsibench_batch2 && python load_example.py scenes/scannet/scene0435_02 --frame 40 --out example.png
+```
+
+The main zip has a short `README.md` about this batch and `FORMAT.md`, the first set's README with the full format.
+
+**Scenes.** Same groups and quota as the first set (ARKitScenes 25 landscape and 5 portrait, ScanNet 25, ScanNet++ 20)
+and the same ranking, taking the next 75 scenes after the first set's. They are therefore smaller: 1,447 questions,
+about 19 per scene against 36. All 10 question types appear, though `obj_appearance_order` is in only 8 scenes.
+`scenes.csv` lists them. Together the two sets cover 150 of the 288 VSI-Bench videos and 4,175 of the 5,130 questions.
+
+**Checks.** The same as for the first set, all passing: patch points land in their own patch in at least 99.9% of
+cases in every scene, cloud colour error 0.7–1.5/255, and the depth maps reproduce the patch points exactly.
 
 ## What's in it
 
@@ -277,7 +310,7 @@ u, v = uvw[:2] / uvw[2]                                  # ≈ centre of patch (
 
 `check.py` reads only the exported files and checks every scene. Results over all 75 scenes:
 
-- frame 0's camera is at the origin;
+- frame 0's camera is at the origin (within 2e-3 units; VGGT predicts frame 0's pose too);
 - every frame, subset and cloud index is in range;
 - the patch points of every 8th frame project back into their own 14×14 patch: 100% in every scene;
 - cloud points project onto their source frame's JPEG with matching colour, mean error 0.8–1.5/255 per scene. This shows the
@@ -313,4 +346,11 @@ scene list from there and checks every scene against `cameras.npz` and `patch_po
 .venv/bin/python tasks/vggt_data/export_depth.py     # numpy only; about 35 min for the 75 scenes on one CPU
 cp tasks/vggt_data/README_depth.md tasks/vggt_data/out_depth/README.md
 cd tasks/vggt_data && ln -s out_depth depth_vsibench_75 && zip -qr0 depth_vsibench_75.zip depth_vsibench_75/ && rm depth_vsibench_75
+```
+
+Batch 2 is one job, `tasks/vggt_data/export_batch2.sh` (export with `--exclude out/scenes.csv`, checks, depth, zips,
+upload; 26 min in all). It writes `out_batch2/` and `out_depth_batch2/` (gitignored):
+
+```bash
+LOGDIR=vggt_data slurm/submit.sh -J vggt_batch2 -t 03:00:00 --gres gpu:0 -c 8 --mem 32G -- bash tasks/vggt_data/export_batch2.sh
 ```
