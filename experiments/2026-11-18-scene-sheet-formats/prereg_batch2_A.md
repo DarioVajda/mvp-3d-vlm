@@ -169,3 +169,32 @@ come. No question is dropped.
 | `depth_vsibench_batch2.zip` | `6ef323addc2e2496bfbfdabadfa024bedf0d5fdce2dcbd65efd4dbb6f2668ffc` |
 
 `batch2_A_ids.txt` is every VSI-Bench question whose `<dataset>/<scene>` is in `batch2_A_scenes.txt`, sorted by id.
+
+## Addendum 1 (2026-11-22, before any question of batch 2 was run)
+
+**The adapter's frame-0 check, loosened.** Step 1 (`adapt_vggt.py`) refused one batch2_A scene,
+`arkitscenes/42897564`, at its check "world frame is frame 0's camera": VGGT predicts frame 0's pose too, and that
+scene's frame 0 is rotated 1.0 degree from the identity (largest deviation 0.017; its camera centre within 2e-3 of the
+origin), above the check's tolerance of 1e-2. The other 37 scenes are within 2e-3 (median 2e-4). The tolerance is now
+2e-2 (`src/mvp/openvocab_adapter/adapt_vggt.py`, `f4a09916…` before, `7342060c…` after); nothing else in the adapter
+changed, and the adapter copies the cameras unchanged, so no other scene's inputs differ. The scene and its 9 questions
+(3 distance, no relative direction) stay in the test; the questions, the method and the analysis are unchanged.
+
+**How step 1 and 2 are run.** `batch_inputs.py geometry` (locally, numpy only) unpacks each scene from Dario's two
+zips and runs `adapt_vggt.py` as for the first 75 scenes; all 38 scenes pass every check. `batch_inputs.py questions`
+(`batch2_A_inputs.ipynb`, on Colab's CPU, as step 2 above says) adds the prompts, each sheet folder's `question.json`
+and `index.csv`. SAM 3 and tracking run with `rerun_detection_batch2_A.ipynb`: `rerun_detection.ipynb` with only its
+settings cell changed (the inputs above, `SCENES_FILE = "batch2_A_scenes.txt"`, `RUNS = {"pipeline_v3": "all"}`, its
+own output folder) and step 5 left out (its checks compare with the dev scenes' saved masks).
+
+| File | SHA-256 |
+|---|---|
+| `src/mvp/openvocab_adapter/adapt_vggt.py` | `7342060cce42755e7b75effc9b576a8299ae724b0ff99370e5b1d8689f5b63ba` |
+| `batch_inputs.py` | `95a7a5f1e3d8e99f202ab20543c86363f7c5f88c09bc06d8dbf56123f55a527b` |
+| `rerun_inputs_batch2_A_geometry.zip` (step 1's output) | `8575eaa92141651301217c1d203b0ad30aafff29102056d521ec5d585ace53b7` |
+| `mvp-3d-vlm-rerun-batch2.zip` (the rerun's code: the earlier rerun zip plus `batch_inputs.py` and `batch2_A_scenes.txt`) | `7c2ae6a04286995eaa36d28136ecd79900420dc4945ce9ab06a7290bb7400c1f` |
+| `batch2_A_inputs.ipynb` | `f2f92c42dcd653a80ea1b122bf0ea0049c460b5caeaa346b278ea8b37899d022` |
+| `rerun_detection_batch2_A.ipynb` | `d5c0b48fcc6122632843b2100c0304bd76104aab2cbe6fe12057732e805e6a43` |
+
+The SHA-256 of the sheets zip (`scene_sheets_pipeline_v4_batch2_A.zip`) and of `final_test2.ipynb` follow in a second
+addendum, also before any question is run.
