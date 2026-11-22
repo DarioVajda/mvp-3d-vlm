@@ -198,3 +198,31 @@ own output folder) and step 5 left out (its checks compare with the dev scenes' 
 
 The SHA-256 of the sheets zip (`scene_sheets_pipeline_v4_batch2_A.zip`) and of `final_test2.ipynb` follow in a second
 addendum, also before any question is run.
+
+## Addendum 2 (2026-11-22, before any question of batch 2 was run)
+
+**Steps 2 and 3 done.** SAM 3 and tracking (`rerun_detection_batch2_A.ipynb`) finished all 38 scenes; the session
+disconnected once and resumed. The downloaded run (`runs/pipeline_v3/`, zip `832047fc0edf0c9da41d1156adcf8bc00075d28318acc8d4de3a5799eb7eb1c6`) was checked before use: no
+`.partial` folder; every scene has `DONE.json` (run pipeline_v3, its own scene), its cameras and adapter report, one
+masks folder with 16 mask files whose manifest lists the scene's prompts, and for every prompt its tracks, track scores
+(every track scored) and settings; every scene and every track ran with `rerun_detection.settings("pipeline_v3")`
+(tracking from score 0.4); its `scenes.txt` is `batch2_A_scenes.txt` and its `index.csv` has the 798 questions of
+`batch2_A_ids.txt`, each with its sheet folders' `question.json`.
+
+**Step 4 done**, with the registered files (hashes unchanged): `pipeline_v3.py` (761 of 761 pipeline sheets made),
+`dedup_sheets.py`, `trimmed_sheets.py` (all 761 sheets identical to pipeline_v3's but for the box sizes, every side no
+larger) and `relations_v4.py` (38 scenes scaled, 24 with a door row, none on the priors fallback). Relations are added
+to 150 questions: 80 of the 150 absolute-distance, 25 of the 159 relative-distance and 45 of the 110 relative-direction
+questions; the others get the sheet alone, as registered. No answer was read.
+
+`final_test2.ipynb` was made by the same generator as `final_test.ipynb` (variant final2) and checked without the model:
+its data, sheet and render cells give all 798 sheets, the 150 relations at the end of theirs and no relation elsewhere;
+its inputs check passes; its pre-registered test cell runs on made-up predictions.
+
+| File | SHA-256 |
+|---|---|
+| `scene_sheets_pipeline_v4_batch2_A.zip` | `1003f1d0691da771c7cd8232046551d04ee88cf0229654aff52e0913f799cf9f` |
+| `final_test2.ipynb` | `b613b632d0ac063437ac8146806009ffa9edfb2730310d71a9bf7720ae2288dc` |
+
+The notebook checks these before the runs, with `batch2_A_ids.txt`, `explore_sheets.py` and `scene_scale.py` (hashes
+above), and records the model revision.
