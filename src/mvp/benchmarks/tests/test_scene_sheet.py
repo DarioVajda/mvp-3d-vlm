@@ -305,6 +305,20 @@ class Synthetic(unittest.TestCase):
         with self.assertRaises(ValueError):
             ss.build_sheet_prompt(1, "pipeline", "yaml", self.root, self.vggt)
 
+    def test_build_sheet_prompt_without_video(self):
+        """--no-video: the sheet and the question, with neither the video nor its sentence."""
+        with_video = ss.build_sheet_prompt(1, "gold", "csv", self.root, self.vggt)
+        prompt = ss.build_sheet_prompt(1, "gold", "csv", self.root, self.vggt, video=False)
+        self.assertEqual(prompt, "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n"
+                         f"{self.render(1, 'gold', 'csv')}\nHow many?\n"
+                         "Please answer the question using a single word or phrase.<|im_end|>\n"
+                         "<|im_start|>assistant\n<think>\n\n</think>\n\n")
+        self.assertNotIn("vision", prompt)
+        self.assertIn(self.render(1, "gold", "csv") + "\nHow many?", with_video)  # the same text after the video
+        relations = ss.build_sheet_prompt(1, "gold_relations", "csv", self.root, self.vggt, video=False)
+        self.assertEqual(relations, prompt.replace(self.render(1, "gold", "csv"),
+                                                   self.render(1, "gold_relations", "csv")))
+
     def test_special_characters(self):
         self.assertEqual(ss.render_csv([{"id": "a,b_1", "label": "a,b"}], ["id", "label"]), 'id,label\n"a,b_1","a,b"')
         with self.assertRaises(ValueError):
@@ -861,6 +875,63 @@ class Prompt(unittest.TestCase):
             vsibench.build_prompt(mca, reasoning="think")
 
 
+class NoVideo(unittest.TestCase):
+    """mvp.eval.vsibench --no-video: the scene sheet and the question as text, without the video."""
+    NA = {"id": 1, "question_type": "object_counting", "question": "How many chairs?"}
+    MCA = {"id": 2, "question_type": "object_rel_distance", "question": "Which is closest?", "options": ["A. a", "B. b"]}
+
+    def test_prompt(self):
+        from mvp.benchmarks import vsibench
+        self.assertEqual(vsibench.build_prompt(self.NA, "SHEET", video=False),
+                         "SHEET\nHow many chairs?\nPlease answer the question using a single word or phrase.")
+        for doc in (self.NA, self.MCA):  # the prompt with the video, less its first line
+            self.assertEqual(vsibench.build_prompt(doc, "SHEET", video=False),
+                             vsibench.build_prompt(doc, "SHEET").split("\n", 1)[1])
+            self.assertEqual(vsibench.build_prompt_parts(doc, "sit", "SHEET", video=False),
+                             ("", vsibench.build_prompt(doc, "SHEET", video=False)))
+        with self.assertRaises(ValueError):
+            vsibench.build_prompt(self.MCA, "SHEET", "cot", "gold", video=False)
+        with self.assertRaises(ValueError):
+            vsibench.build_prompt_parts(self.MCA, "stit", video=False)
+
+    def test_eval_options(self):
+        import contextlib
+        import io
+        import sys
+        from unittest import mock
+        from mvp.eval import vsibench as ev
+        common = ["vsibench", "--model", "m", "--nframes", "16", "--sampling", "uniform128", "--out", "x.jsonl"]
+        for extra in (["--no-video"], ["--no-video", "--sheet-source", "gold", "--reasoning", "cot"],
+                      ["--no-video", "--sheet-source", "gold", "--images"]):
+            with mock.patch.object(sys, "argv", common + extra), contextlib.redirect_stderr(io.StringIO()) as err:
+                with self.assertRaises(SystemExit):
+                    ev.main()
+            self.assertIn("--no-video", err.getvalue())
+        args = mock.Mock(no_video=True, sheets=True, sheet_source="gold", sheet_format="csv", layout="sit",
+                         reasoning="direct", metric_scale=None, sheets_root="sheets", vggt_root="vggt")
+        with mock.patch.object(ev, "render_scene", return_value="SHEET"):
+            self.assertEqual(ev.prompt_parts(self.MCA, args),
+                             ("", "SHEET\nWhich is closest?\nOptions:\nA. a\nB. b\n"
+                                  "Answer with the option's letter from the given choices directly."))
+
+    def test_text_generation_sends_no_visuals(self):
+        try:
+            from mvp.models import qwen_vl
+        except Exception as e:  # no torch, transformers or decord here
+            self.skipTest(f"mvp.models.qwen_vl not importable: {e}")
+        from unittest import mock
+        model = qwen_vl.QwenVL.__new__(qwen_vl.QwenVL)
+        model.template_kwargs = {"enable_thinking": False}
+        model.processor = mock.Mock()
+        model.processor.apply_chat_template.side_effect = lambda messages, **kw: messages
+        model.text_inputs(["POST"], pres=["PRE"])
+        messages = model.processor.apply_chat_template.call_args.args[0]
+        self.assertEqual(messages[1]["content"], [{"type": "text", "text": "PRE"}, {"type": "text", "text": "POST"}])
+        call = model.processor.call_args
+        self.assertNotIn("videos", call.kwargs)
+        self.assertNotIn("images", call.kwargs)
+
+
 class PromptTemplate(unittest.TestCase):
     def test_system_prompt_is_the_models(self):
         tree = ast.parse(QWEN_VL.read_text())
@@ -881,6 +952,11 @@ class PromptTemplate(unittest.TestCase):
         text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True,
                                              enable_thinking=False)
         self.assertEqual(text, ss.CHAT.format(system=ss.SYSTEM_PROMPT, pre="", video=ss.VIDEO_PAD, post="POST"))
+        # without the video (--no-video), as QwenVL.render_text_prompt builds it
+        messages[1]["content"] = [{"type": "text", "text": "POST"}]
+        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True,
+                                             enable_thinking=False)
+        self.assertEqual(text, ss.TEXT_CHAT.format(system=ss.SYSTEM_PROMPT, text="POST"))
 
 
 @unittest.skipUnless((SCENE_SHEETS / "index.csv").exists() and VGGT_ROOT.exists(),

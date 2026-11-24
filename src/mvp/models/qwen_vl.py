@@ -92,6 +92,23 @@ class QwenVL:
         pad = self.processor.video_token
         return re.sub(f"(?:{re.escape(pad)})+", lambda m: f"{pad} x {len(m.group(0)) // len(pad)}", decoded)
 
+    def text_inputs(self, prompts, pres=None, system=SYSTEM_PROMPT):
+        """The batch generate_text sends to the model: each prompt's chat template with no video or image (`pres`:
+        text before the prompt), left-padded. Needs only the processor (weights=False)."""
+        pres = pres or [""] * len(prompts)
+        return self.processor(text=[self.render_text_prompt(p, q, system) for p, q in zip(prompts, pres)],
+                              padding=True, return_tensors="pt")
+
+    @torch.inference_mode()
+    def generate_text(self, prompts, max_new_tokens=16, pres=None, system=SYSTEM_PROMPT):
+        """Answer several prompts without any video or image (the eval's --no-video)."""
+        return self._generate(self.text_inputs(prompts, pres, system), max_new_tokens)
+
+    def render_text_prompt(self, prompt, pre="", system=SYSTEM_PROMPT):
+        """The full input of generate_text for one prompt, as text: the chat template with no visual parts."""
+        return self.processor.apply_chat_template(self._messages(prompt, None, 0, pre=pre, system=system),
+                                                  tokenize=False, add_generation_prompt=True, **self.template_kwargs)
+
     @torch.inference_mode()
     def generate_images(self, images, prompt, max_new_tokens=16):
         text = self.processor.apply_chat_template(self._messages(prompt, "image", len(images)), tokenize=False,

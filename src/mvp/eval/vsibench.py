@@ -12,6 +12,7 @@
   python -m mvp.eval.vsibench ... --sheet-source pipeline --sheet-format narrative --time-unit frames
   python -m mvp.eval.vsibench ... --sheet-source gold_relations   # gold sheet + closest-point relations (csv)
   python -m mvp.eval.vsibench ... --sheet-source pipeline --metric-scale priors   # pipeline sheet in estimated metres
+  python -m mvp.eval.vsibench ... --sheet-source gold --no-video   # the scene sheet and the question, no video
   python -m mvp.eval.vsibench ... --print-prompt 3     # print the first 3 full prompts and exit (no weights loaded)
   python -m mvp.eval.vsibench ... --max-new-tokens 2048 --final-answer  # let the model reason; score its final answer
   python -m mvp.eval.vsibench ... --reasoning cot      # ask it to reason step by step (implies --final-answer)
@@ -43,7 +44,8 @@ def prompt_parts(d, args):
     sheet = (render_scene(d["id"], args.sheet_source, args.sheet_format, args.cameras, Path(args.sheets_root),
                           Path(args.vggt_root), args.time_unit, args.visibility, args.step_order,
                           args.object_directions, args.metric_scale) if args.sheets else None)
-    return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.metric_scale))
+    return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.metric_scale),
+                              video=not args.no_video)
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -68,6 +70,12 @@ def print_prompts(df, args):
     model = QwenVL(args.model, weights=False)
     system = ECHO_SYSTEM_PROMPT if args.echo_system else SYSTEM_PROMPT
     docs = df.head(args.print_prompt)
+    if args.no_video:
+        for d in docs.to_dict("records"):
+            pre, post = prompt_parts(d, args)
+            print(f"===== question {d['id']} ({d['question_type']}), no video")
+            print(model.render_text_prompt(post, pre=pre, system=system), flush=True)
+        return
     for path, group in docs.groupby("video_path", sort=False):
         if args.sampling == "qwen":
             video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
@@ -86,6 +94,10 @@ def main():
     ap.add_argument("--images", action="store_true", help="frames as separate images through mvp.fusion (SpatialStack's "
                     "protocol: np.linspace frames, VGGT on the same frames), instead of a Qwen video")
     ap.add_argument("--fusion-ckpt", help="trained arm from mvp.train.run (implies --images)")
+    ap.add_argument("--no-video", action="store_true",
+                    help="no video: the scene sheet (--sheet-source, required) and the question as text only, without "
+                         "the video sentence; direct reasoning. The sheets' frame and time references still follow "
+                         "--sampling uniform128 --nframes 16")
     ap.add_argument("--nframes", type=int, default=32)
     ap.add_argument("--fps", type=float, default=None, help="sample at this fps instead of a fixed --nframes")
     ap.add_argument("--sampling", default="qwen", choices=["qwen", "uniform128", "sa"],
@@ -167,6 +179,11 @@ def main():
             ap.error(f"--reasoning cot needs room to reason: --max-new-tokens of at least {MIN_COT_TOKENS}")
     elif args.max_new_tokens is None:
         args.max_new_tokens = 16
+    if args.no_video:
+        if not args.sheets:
+            ap.error("--no-video needs --sheet-source: the sheet is the only scene information")
+        if args.images or args.reasoning != "direct":
+            ap.error("--no-video: not with --images or --fusion-ckpt, and direct reasoning only")
     if args.images:
         assert args.sampling == "qwen" and args.fps is None and args.layout == "sit", "images mode: uniform frames, sit layout"
     if args.sheets:
@@ -218,7 +235,9 @@ def main():
     t0, n = time.time(), 0
     with open(args.out, "a") as fout:
         for vi, (path, group) in enumerate(todo.groupby("video_path", sort=False)):
-            if args.images:
+            if args.no_video:
+                meta = {"frames_indices": []}
+            elif args.images:
                 frames, idx = uniform_frames(path, args.nframes)
                 vis = model.inputs.visual(frames)
                 meta = {"frames_indices": idx}
@@ -229,14 +248,19 @@ def main():
             else:
                 video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
             docs = group.to_dict("records")
-            if not args.images:
+            if args.no_video:
+                n_vis, n_frames, frame_hw = 0, 0, None
+            elif not args.images:
                 n_vis = video.shape[0] * video.shape[2] * video.shape[3] // (2 * 32 * 32)  # visual tokens
                 n_frames, frame_hw = int(video.shape[0]), list(video.shape[-2:])
             bs = max(1, min(args.batch_size, args.token_budget // (n_vis + 200)))
             for i in range(0, len(docs), bs):
                 batch = docs[i:i + bs]
                 parts = [prompt_parts(d, args) for d in batch]
-                if args.images:
+                if args.no_video:
+                    preds, n_tok = model.generate_text([p for _, p in parts], pres=[q for q, _ in parts],
+                                                       system=system, max_new_tokens=args.max_new_tokens)
+                elif args.images:
                     batch_in = {**vis, **model.inputs.text([p for _, p in parts], vis["image_grid_thw"], padding_side="left")}
                     preds = model.generate({k: v.cuda() for k, v in batch_in.items()}, max_new_tokens=args.max_new_tokens)
                     n_tok = int(batch_in["input_ids"].shape[1])
@@ -269,7 +293,7 @@ def main():
     summary = summarize(res)
     print(json.dumps({k: round(v, 1) for k, v in summary.items()}, indent=1))
     with open(args.out.replace(".jsonl", "_summary.json"), "w") as f:
-        json.dump({"model": args.model, "protocol": "images" if args.images else "video", "fusion_ckpt": args.fusion_ckpt,
+        json.dump({"model": args.model, "protocol": "images" if args.images else "text" if args.no_video else "video", "fusion_ckpt": args.fusion_ckpt,
                    "arm": model.arm if args.images else None, "nframes": args.nframes, "sampling": args.sampling, "vggt_root": args.vggt_root,
                    "layout": args.layout, "system": system, "fps": args.fps, "max_new_tokens": args.max_new_tokens,
                    "final_answer": args.final_answer, "reasoning": args.reasoning, "split": args.split,
