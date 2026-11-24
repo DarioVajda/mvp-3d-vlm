@@ -12,6 +12,9 @@ output has the same layout, with these differences:
 - `all/` in place of `subset-uniform16/`
 - frame columns `frame_000` … `frame_127`, where frame `t` is exported frame `t`
 - 128 rows in `cameras.csv`
+- an upright frame: z up from the fitted floor, which is at z = 0; the origin below the first camera; y the way it
+  faces. The objects and `cameras.csv` are both in it. It is kept in `scene/upright.json`, and each sheet's
+  `question.json` says `"axes": "upright"`. A scene where no floor plane was found has a WARNING in its report.
 
 `mvp.benchmarks.scene_sheet` maps those frames onto the VLM's 16 when it writes a prompt.
 

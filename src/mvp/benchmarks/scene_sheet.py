@@ -110,6 +110,10 @@ def camera_fields(time_unit="seconds"):
 #    frame 0, and its row in cameras.csv is the origin with the identity rotation in all 75 scenes (largest deviation
 #    2.4e-3). Which way is up in the room can't be read from the sheet: y is down only as seen from that first camera,
 #    which is often tilted (camera_sheet_format_converter.py estimates up from the camera path instead).
+#    That is a sheet in "camera0" axes, every sheet before 2026-11-24. Since then the default is "upright"
+#    (question.json "axes"; sheet_axes): z up from the fitted floor (openvocab_adapter/upright.py), the floor at z = 0,
+#    the origin below the first camera, y the way it faces; its texts say so (UPRIGHT_AXES, upright_text), and the
+#    camera text and the narrative take up as z.
 #  - gold: the dataset's frame in metres, z up (sheet.json; scene_sheet_creator.py). Doors and refrigerators are
 #    tallest along z in 962 of their 1,021 gold rows.
 PIPELINE_AXES = ("Positions x, y, z are object centres in the 3D reconstruction's relative units, not metres. The "
@@ -119,6 +123,27 @@ PIPELINE_AXES_PRIORS = ("Positions x, y, z are object centres, approximately in 
                         "sizes. The origin is the camera of the first video frame: x points right, y down and z forward "
                         "as seen from that camera. size_x, size_y and size_z are each object's extent along x, y and z, "
                         "approximately in metres.")
+# Upright sheets (scene_sheet_creator.py --axes upright, the default since 2026-11-24; question.json says "axes":
+# "upright"): z up from the fitted floor, the floor at z = 0, the origin below the first camera, y the way it faces
+# (src/mvp/openvocab_adapter/upright.py). The sentence that replaces the first camera's axes in each text.
+CAMERA0_AXES = "The origin is the camera of the first video frame: x points right, y down and z forward as seen from that camera."
+UPRIGHT_AXES = ("z points up and the floor is at z = 0. The origin is on the floor below the camera of the first video "
+                "frame: y points the way that camera faces, along the floor, and x to its right.")
+AXES = ["camera0", "upright"]
+UP = np.array([0.0, 0.0, 1.0])  # up in an upright sheet
+
+
+def upright_text(text):
+    """A text about camera-0 axes, said for an upright sheet."""
+    replacements = [(CAMERA0_AXES, UPRIGHT_AXES), ("up is estimated from the camera's path", "up is perpendicular to the floor"),
+                    ("up and down are estimated from the camera's path", "up and down are perpendicular to the floor")]
+    out = text
+    for old, new in replacements:
+        out = out.replace(old, new)
+    assert out != text, text
+    return out
+
+
 FRAME_NUMBERS = ("The 16 video frames are numbered 1 to 16 in the order the video shows them. The video shows them in "
                  "pairs under one label each: frames 1 and 2 under its first label, frames 3 and 4 under the next one, "
                  "and so on.")
@@ -219,19 +244,43 @@ def bridged_note(visibility):
     return {"bridged": BRIDGED_NOTE, "nearby": NEARBY_NOTE}.get(visibility, "")
 
 
-def preamble(source, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None):
+def preamble(source, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None, axes="camera0"):
     check_time_unit(time_unit)
+    check_axes(axes)
     if source == "pipeline":
-        axes = PIPELINE_AXES_PRIORS if metric_scale == "priors" else PIPELINE_AXES
-        text = "Scene sheet. " + axes + " " + VISIBLE[time_unit] + bridged_note(visibility)
+        text = PIPELINE_AXES_PRIORS if metric_scale == "priors" else PIPELINE_AXES
+        text = "Scene sheet. " + (upright_text(text) if axes == "upright" else text) + " " + VISIBLE[time_unit] \
+            + bridged_note(visibility)
     else:
         text = PREAMBLES[source]
     return text + (VOLUME_NOTE if volume else "")
 
 
-def camera_preamble(time_unit="seconds", metric_scale=None):
+def camera_preamble(time_unit="seconds", metric_scale=None, axes="camera0"):
     check_time_unit(time_unit)
-    return (CAMERA_PREAMBLE_PRIORS if metric_scale == "priors" else CAMERA_PREAMBLE) + " " + CAMERA_KEY[time_unit]
+    check_axes(axes)
+    text = CAMERA_PREAMBLE_PRIORS if metric_scale == "priors" else CAMERA_PREAMBLE
+    return (upright_text(text) if axes == "upright" else text) + " " + CAMERA_KEY[time_unit]
+
+
+def check_axes(axes):
+    if axes not in AXES:
+        raise ValueError(f"axes must be one of {AXES}, not {axes!r}")
+
+
+@lru_cache(maxsize=None)
+def sheet_axes(folder):
+    """The axes a pipeline sheet folder was written in: question.json's "axes", camera0 when it names none (every
+    sheet before 2026-11-24)."""
+    path = Path(folder) / "question.json"
+    axes = json.loads(path.read_text()).get("axes", "camera0") if path.is_file() else "camera0"
+    check_axes(axes)
+    return axes
+
+
+def question_axes(question_id, root=SCENE_SHEETS):
+    """The axes of the question's pipeline sheet (its objects and its cameras)."""
+    return sheet_axes(camera_folder(question_id, root))
 
 
 def scale_of(question_id, root, metric_scale):
@@ -592,7 +641,8 @@ RENDERERS = {"csv": render_csv, "json": render_json, "markdown_kv": render_markd
              "markdown_table": render_markdown_table, "text": render_text}
 
 
-def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None):
+def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None,
+                   axes="camera0"):
     """Preamble, then the objects in this format, or EMPTY (the same line in every format) if there are none."""
     if not objects:
         body = EMPTY
@@ -600,7 +650,7 @@ def render_objects(objects, source, fmt, volume=False, time_unit="seconds", visi
         body = render_text(objects, fields(source, volume), time_unit)
     else:
         body = RENDERERS[fmt](objects, fields(source, volume))
-    return preamble(source, volume, time_unit, visibility, metric_scale) + "\n" + body
+    return preamble(source, volume, time_unit, visibility, metric_scale, axes) + "\n" + body
 
 
 def label_lines(sentences, labels, time_unit="seconds"):
@@ -630,17 +680,20 @@ def render_cameras(question_id, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time
     if metric_scale not in METRIC_SCALES:
         raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
     scale = scale_of(question_id, root, metric_scale)
+    axes = question_axes(question_id, root)
     if fmt == "text":
         folder = camera_folder(question_id, root)
         sentences = directions.frame_instructions(folder, units=True, turn_first=step_order == "turn-move",
-                                                  scale=scale if metric_scale else None, frames=camera_rows(folder))
+                                                  scale=scale if metric_scale else None, frames=camera_rows(folder),
+                                                  up=UP if axes == "upright" else None)
         if len(sentences) != N_FRAMES:
             raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
         lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
         head = DIRECTIONS_PRIORS if metric_scale == "priors" else DIRECTIONS
+        head = upright_text(head) if axes == "upright" else head
         return head + " " + LINE_LABELS[time_unit] + "\n" + "\n".join(lines)
     cameras = load_cameras(question_id, root, vggt_root, time_unit, scale)
-    return camera_preamble(time_unit, metric_scale) + "\n" + RENDERERS[fmt](cameras, camera_fields(time_unit))
+    return camera_preamble(time_unit, metric_scale, axes) + "\n" + RENDERERS[fmt](cameras, camera_fields(time_unit))
 
 
 # ---- the narrative: objects and cameras as one walk through the frames ----
@@ -756,10 +809,13 @@ def narrative_step(move, turn, step_order="move-turn"):
     return move or f"don't move and {turn}"
 
 
-def narrative_preamble(time_unit="seconds", visibility="bridged", step_order="move-turn", metric_scale=None):
-    """The narrative's preamble; visibility resolved (not "auto")."""
+def narrative_preamble(time_unit="seconds", visibility="bridged", step_order="move-turn", metric_scale=None,
+                       axes="camera0"):
+    """The narrative's preamble; visibility resolved (not "auto"). On an upright sheet, up is the floor's."""
     check_step_order(step_order)
+    check_axes(axes)
     details = NARRATIVE_DETAILS_PRIORS if metric_scale == "priors" else NARRATIVE_DETAILS
+    details = upright_text(details) if axes == "upright" else details
     return (" ".join([NARRATIVE_PREAMBLE, NARRATIVE_STEPS[step_order], details]) + bridged_note(visibility)
             + " " + LINE_LABELS[time_unit])
 
@@ -790,7 +846,8 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
     centres = centres * scale
     if len(centres) != N_FRAMES:
         raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
-    up = directions.estimate_up(rotations)
+    axes = question_axes(question_id, root)
+    up = UP if axes == "upright" else directions.estimate_up(rotations)
     facings = [directions.facing(r, up) for r in rotations]
     north, east = facings[0], np.cross(facings[0], up)
     headings = [directions.bearing(f, north, east) for f in facings]
@@ -814,7 +871,7 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
                                  object_directions, unit)
         sentences.append(action[0].upper() + action[1:] + "".join("; " + c for c in clauses) + ".")
     lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
-    head = narrative_preamble(time_unit, visibility, step_order, metric_scale) + ("" if objects else "\n" + EMPTY)
+    head = narrative_preamble(time_unit, visibility, step_order, metric_scale, axes) + ("" if objects else "\n" + EMPTY)
     return head + "\n" + "\n".join(lines)
 
 
@@ -924,7 +981,8 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
         visibility = question_visibility(question_id, root, visibility)
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
                            visibility=visibility, scale=scale)
-    return render_objects(objects, source, fmt, volume, time_unit, visibility, metric_scale)
+    axes = question_axes(question_id, root) if source == "pipeline" else "camera0"
+    return render_objects(objects, source, fmt, volume, time_unit, visibility, metric_scale, axes)
 
 
 def render_scene(question_id, source=None, fmt=None, cameras=False, root=SCENE_SHEETS, vggt_root=VGGT_DIR,

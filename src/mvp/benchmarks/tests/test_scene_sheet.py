@@ -753,6 +753,92 @@ class Dense(unittest.TestCase):
             eval_vsibench.check_sheet_frames([{"id": 1}], [30 * j + 1 for j in range(16)], args)
 
 
+# the first camera's axes (x right, y down, z forward) to an upright frame's (x right, y forward, z up)
+TO_UPRIGHT = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]])
+
+
+def quaternion(R):
+    """A rotation matrix as a unit quaternion (w, x, y, z), w >= 0."""
+    w = math.sqrt(max(0.0, 1 + R[0, 0] + R[1, 1] + R[2, 2])) / 2
+    x = math.copysign(math.sqrt(max(0.0, 1 + R[0, 0] - R[1, 1] - R[2, 2])) / 2, R[2, 1] - R[1, 2])
+    y = math.copysign(math.sqrt(max(0.0, 1 - R[0, 0] + R[1, 1] - R[2, 2])) / 2, R[0, 2] - R[2, 0])
+    z = math.copysign(math.sqrt(max(0.0, 1 - R[0, 0] - R[1, 1] + R[2, 2])) / 2, R[1, 0] - R[0, 1])
+    return w, x, y, z
+
+
+class Upright(unittest.TestCase):
+    """Sheets in the upright frame (question.json "axes": "upright"): Synthetic's scene turned into it (z up, y the
+    first camera's forward). The texts say so, and since up is then known (z), the camera text and the narrative are
+    the 16-frame sheet's, but for their sentences about the axes and the order of each size's sides."""
+
+    def setUp(self):
+        Synthetic.setUp(self)
+        self.legacy = self.root
+        root = Path(self.tmp.name) / "upright"
+        shutil.copytree(self.legacy, root)
+        for folder in (root / "s__1" / "subset-uniform16" / "sheets").iterdir():
+            record = json.loads((folder / "question.json").read_text())
+            (folder / "question.json").write_text(json.dumps({**record, "axes": "upright"}))
+            with open(folder / "objects.csv", newline="") as f:
+                reader = csv.DictReader(f)
+                fields, rows = reader.fieldnames, list(reader)
+            for r in rows:
+                x, y, z = TO_UPRIGHT @ [float(r[k]) for k in "xyz"]
+                r.update(x=repr(float(x)), y=repr(float(y)), z=repr(float(z)), size_y=r["size_z"], size_z=r["size_y"])
+            with open(folder / "objects.csv", "w", newline="") as f:
+                w = csv.DictWriter(f, fields)
+                w.writeheader()
+                w.writerows(rows)
+            with open(folder / "cameras.csv", newline="") as f:
+                reader = csv.DictReader(f)
+                fields, rows = reader.fieldnames, list(reader)
+            from mvp.openvocab_adapter import camera_sheet_format_converter as cs
+            for r in rows:
+                R = TO_UPRIGHT @ cs.quaternion_to_rotation(*(float(r[k]) for k in ("qw", "qx", "qy", "qz")))
+                position = TO_UPRIGHT @ [float(r[k]) for k in "xyz"]
+                r.update({k: repr(float(v)) for k, v in zip(("x", "y", "z"), position)})
+                r.update({k: repr(float(v)) for k, v in zip(("qw", "qx", "qy", "qz"), quaternion(R))})
+                r.update({f"forward_{k}": repr(float(v)) for k, v in zip("xyz", R[:, 2])})
+            with open(folder / "cameras.csv", "w", newline="") as f:
+                w = csv.DictWriter(f, fields)
+                w.writeheader()
+                w.writerows(rows)
+        self.root = root
+
+    def test_the_texts_say_the_axes(self):
+        sheet = ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt)
+        self.assertTrue(sheet.startswith("Scene sheet. " + ss.upright_text(ss.PIPELINE_AXES)))
+        self.assertIn(ss.UPRIGHT_AXES, sheet)
+        self.assertNotIn("y down", sheet.splitlines()[0])
+        self.assertIn("door_2,door,1.000,2.000,0.000,", sheet)  # z = -y: 0.0004 rounds to 0.000, never -0.000
+        self.assertEqual(ss.question_axes(1, self.root), "upright")
+        self.assertEqual(ss.question_axes(1, self.legacy), "camera0")  # no "axes": every sheet before the option
+        cameras = ss.render_cameras(1, "csv", self.root, self.vggt)
+        self.assertIn(ss.UPRIGHT_AXES, cameras.splitlines()[0])
+        self.assertIn("(x right, y down, z forward)", cameras.splitlines()[0])  # the camera's own axes stay OpenCV's
+        priors = ss.preamble("pipeline", metric_scale="priors", axes="upright")
+        self.assertIn("approximately in metres", priors)
+        self.assertIn(ss.UPRIGHT_AXES, priors)
+        self.assertEqual(ss.render_sheet(1, "gold", "csv", self.root, vggt_root=self.vggt),
+                         ss.render_sheet(1, "gold", "csv", self.legacy, vggt_root=self.vggt))  # gold: unchanged
+        with self.assertRaises(ValueError):
+            ss.preamble("pipeline", axes="sideways")
+
+    def test_with_the_floors_up_the_camera_text_and_narrative_are_the_same(self):
+        for time_unit in ss.TIME_UNITS:
+            a, b = (ss.render_cameras(1, "text", root, self.vggt, time_unit).splitlines()
+                    for root in (self.root, self.legacy))
+            self.assertEqual(a[0], ss.upright_text(b[0]))
+            self.assertIn("up is perpendicular to the floor", a[0])
+            self.assertEqual(a[1:], b[1:])
+            sizes = re.compile(r"[\d.]+ × [\d.]+ × [\d.]+")  # the sides' order follows the axes
+            a, b = (ss.render_sheet(1, "pipeline", ss.NARRATIVE, root, vggt_root=self.vggt, time_unit=time_unit)
+                    .splitlines() for root in (self.root, self.legacy))
+            self.assertEqual(a[0], ss.narrative_preamble(time_unit, "bridged", axes="upright"))
+            self.assertIn("up and down are perpendicular to the floor", a[0])
+            self.assertEqual([sizes.sub("S", line) for line in a[1:]], [sizes.sub("S", line) for line in b[1:]])
+
+
 class MetricScale(unittest.TestCase):
     """metric_scale "priors": the pipeline's objects approximately in metres, the scale from typical object sizes
     (mvp.benchmarks.scene_scale). The synthetic scene's largest rows: door 2.0 units, chair 0.9, coffee table 1.0 (no

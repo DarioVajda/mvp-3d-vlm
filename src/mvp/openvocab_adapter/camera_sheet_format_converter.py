@@ -150,16 +150,17 @@ def turn_phrase(heading_change, pitch_change):
     return "turn " + " and ".join(parts) if parts else None
 
 
-def frame_instructions(path, units=False, turn_first=False, scale=None, frames=None):
+def frame_instructions(path, units=False, turn_first=False, scale=None, frames=None, up=None):
     """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame.
     units=True says how far each move goes, in the sheet's units, instead of "a little" / "far"; with scale (metres
     per sheet unit) as well, in metres. turn_first=True says the turn before the move ("Turn 30° to the right and go
     north."); compass directions don't depend on the order. frames: only these frames (read_cameras), whose moves and
-    turns are then from one of them to the next."""
+    turns are then from one of them to the next. up: world up, when the sheet knows it (an upright sheet's z);
+    estimate_up's otherwise."""
     centres, rotations = read_cameras(path, frames)
     if not len(centres):
         return []
-    up = estimate_up(rotations)
+    up = estimate_up(rotations) if up is None else np.asarray(up, float) / np.linalg.norm(up)
     north = facing(rotations[0], up)
     east = np.cross(north, up)
     headings = [bearing(facing(r, up), north, east) for r in rotations]

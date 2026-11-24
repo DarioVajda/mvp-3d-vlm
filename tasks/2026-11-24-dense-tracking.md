@@ -63,8 +63,9 @@ The code is in the commit that adds this file. The defaults of `question_scene_s
 - all 128 frames (`--frames all`)
 - tracking by 3D overlap (`--association overlap`)
 - the mask-relative depth rule (`--depth-rule mask`)
+- upright axes (`--axes upright`: z up from a fitted floor, `src/mvp/openvocab_adapter/upright.py`)
 
-The original pipeline is `FRAMES=subset:uniform16 ASSOCIATION=centroid DEPTH_RULE=global`.
+The original pipeline is `FRAMES=subset:uniform16 ASSOCIATION=centroid DEPTH_RULE=global AXES=camera0`.
 
 ### Inputs
 
@@ -95,7 +96,7 @@ slurm/submit.sh -J sheets_dense -t 04:00:00 --gres gpu:1 -c 48 --mem 256G -- bas
 # regression check, independent of the full run: the original tracking, from the saved 16-frame masks
 cp -r tasks/openvocab_adapter/out tasks/openvocab_adapter/out_legacy_check
 rm -rf tasks/openvocab_adapter/out_legacy_check/reports tasks/openvocab_adapter/out_legacy_check/*/subset-uniform16/scene/tracks
-FRAMES=subset:uniform16 ASSOCIATION=centroid DEPTH_RULE=global OUT=tasks/openvocab_adapter/out_legacy_check \
+FRAMES=subset:uniform16 ASSOCIATION=centroid DEPTH_RULE=global AXES=camera0 OUT=tasks/openvocab_adapter/out_legacy_check \
     ZIP=scene_sheets_75_legacy_check.zip \
     slurm/submit.sh -J sheets_legacy -t 01:00:00 --gres gpu:1 -c 48 --mem 256G -- bash src/mvp/openvocab_adapter/hpc/run_sheets.sh
 .venv/bin/python - <<'EOF' > task-results/2026-11-24-dense-tracking/legacy_check.txt
@@ -121,6 +122,7 @@ The legacy check's run does no SAM 3: the masks in the copy are reused, so it on
   and `"min_track_frames": 4`.
 - **Each mask folder:** a `manifest.json` that lists 128 frames.
 - **Each `sheets/*/objects.csv`:** columns `frame_000` to `frame_127`.
+- **`scene/upright.json`:** its `method` is `floor`, and `sheets/*/question.json` has `"axes": "upright"`.
 - **Timing:** note how long SAM 3 and tracking took (`masks/*/manifest.json` has `seconds`). The full run's time is
   about 75 times the smoke test's per-scene share.
 
@@ -131,7 +133,7 @@ The legacy check's run does no SAM 3: the masks in the copy are reused, so it on
 - `reports/`: the 150 reports of `tasks/openvocab_adapter/out_all/reports/`, a few MB
 - `index.csv` of `out_all/`
 - `legacy_check.txt`
-- `README.md`: wall time, and any scene that failed
+- `README.md`: wall time, any scene that failed, and the scenes `sheet_index.py` lists as having no floor plane
 
 `scene_sheets_75_all.zip` (`tasks/openvocab_adapter/`) holds the sheets, the masks, the tracks and the frames, without
 `depth.npz`. Estimate: under 1 GB. It goes to the shared Drive folder where `scene_sheets_75.zip` is, not to git: the

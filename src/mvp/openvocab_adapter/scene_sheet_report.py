@@ -68,7 +68,15 @@ PREPARE_OPTIONS = {"frames", "dense_dir", "syntactic", "reid", "conf_percentile"
                    "checkpoint", "overlays", "patch_depth_fallback", "association", "depth_rule", "mask_conf_quantile",
                    "overlap_options"}
 # the pipeline options main() passes on only when they are given, so that their defaults stay create_scene_sheet's
-PIPELINE_CHOICES = ("frames", "association", "depth_rule")
+PIPELINE_CHOICES = ("frames", "association", "depth_rule", "axes")
+NO_FLOOR = "WARNING: no floor plane found"  # upright.py's warning, as the report repeats it once per scene
+
+
+def floor_warning(objects_csv):
+    """The upright frame's warning recorded in the sheet's question.json (no floor plane found), or None."""
+    path = Path(objects_csv).parent / "question.json"
+    record = json.loads(path.read_text()) if path.is_file() else {}
+    return (record.get("floor") or {}).get("warning")
 
 
 def read_jsonl(path):
@@ -251,7 +259,7 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
             print(f"preparing the scene failed ({type(error).__name__}: {error}); each question runs its own steps",
                   file=out, flush=True)
 
-    results = []
+    results, floor_warnings = [], set()
     for n, row in enumerate(rows, start=1):
         question = row["question"]
         print(f"\n[{n}/{len(rows)}] {row.get('question_type', '?')}, id {row.get('id', '?')}", file=out)
@@ -271,6 +279,8 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
             else:
                 options = {"data_root": data_root, "work_dir": work_dir, **sheet_options}
                 problems, counts, files = pipeline_sheet(scene, question, names, **options)
+                if warning := floor_warning(files[0]):
+                    floor_warnings.add(warning)
             result.update(problems=problems, counts=counts, files=[str(f) for f in files])
         except SystemExit as error:  # the steps stop with sys.exit("[question] ...") and their reason
             result["problems"] = [f"not made: {error.code}"]
@@ -293,6 +303,8 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
         out.flush()
         results.append(result)
 
+    for warning in sorted(floor_warnings):  # the scene's upright frame: up from the cameras, not a floor
+        print(f"\n{warning}", file=out)
     failed = sum(not r["ok"] for r in results)
     partial = sum(r["ok"] and any(c == 0 for c in r["counts"].values()) for r in results)
     print(f"\n{len(results)} questions: {len(results) - failed} sheets OK ({partial} with a prompt that has no rows), "
@@ -321,6 +333,8 @@ def main(argv=None):
                    help="pipeline: question_scene_sheet.py's --association (default: its default, overlap)")
     p.add_argument("--depth-rule", choices=["mask", "global"],
                    help="pipeline: question_scene_sheet.py's --depth-rule (default: its default, mask)")
+    p.add_argument("--axes", choices=["upright", "camera0"],
+                   help="pipeline: question_scene_sheet.py's --axes (default: its default, upright)")
     p.add_argument("--gold-dir", help="gold: folder with VSI-Bench's metadata (default: as scene_sheet_creator.py)")
     p.add_argument("--prompts", help='a .jsonl of {"id", "prompts", "prompt_mode"}: use these prompts instead of '
                                      "extracting them (then spaCy is not needed)")

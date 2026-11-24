@@ -319,7 +319,7 @@ The question is one string and doesn't have to be one of the scene's `questions.
 | Geometry | `adapt_vggt.py` validates the saved cameras and dense depth and writes them in OpenVocab-4D's format. The dense depth is read from `data/vggt/<dataset>/<scene>/` (or `--dense-dir`, or `$DENSE_ROOT`). Without it the script stops, unless `--patch-depth-fallback` is given (see below) |
 | SAM 3 | `sam3_infer.py` segments every prompt in every selected frame |
 | Tracking | OpenVocab-4D's track stage links the masks into objects: a detection continues the track whose 3D points it overlaps (`--association overlap`), or a farther one it looks like (DINOv2 re-identification). The fuse stage is not run, because the scene sheet only needs the tracks |
-| Sheet | `scene_sheet_creator.py` writes the two CSVs, with the size columns and one 0/1 column per frame |
+| Sheet | `scene_sheet_creator.py` writes the two CSVs, with the size columns and one 0/1 column per frame, in the scene's upright frame (`upright.py`) |
 
 **Defaults (since 2026-11-24).**
 
@@ -337,8 +337,13 @@ The question is one string and doesn't have to be one of the scene's `questions.
   50 by default. The original rule (`global`, 300 pixels) dropped 38% of SAM 3's detections of named objects:
   screens, windows, mirrors, ceiling lights and thin objects have low confidence over most of their mask.
 
+- **Upright axes** (`--axes upright`). z points up, perpendicular to the floor, which is at z = 0. The origin is on
+  the floor below the first camera, y points the way that camera faces along the floor, and x is to its right. Boxes
+  are upright, turned only about z. The first camera's own axes, which the sheets used before, are usually pitched (a
+  median 27°), so their "y down" isn't the room's. See [The upright frame](#the-upright-frame) below.
+
 The original pipeline, which made every sheet before 2026-11-24 (`docs/scene_sheets_75.md`), is
-`--frames subset:uniform16 --association centroid --depth-rule global`. Its tracks are identical to the code's before
+`--frames subset:uniform16 --association centroid --depth-rule global --axes camera0`. Its tracks are identical to the code's before
 the options existed. `milestone4_video.py` itself still defaults to the original rules, because the frozen runs of
 `experiments/2026-11-18-scene-sheet-formats/` call it without these options. The overlap settings are provisional,
 to be tuned on the dev scenes.
@@ -379,6 +384,7 @@ Options (`--help` lists all of them):
 | `--depth-rule` | `mask` | Which pixels have usable depth: `mask` (the lower of the sequence's `--conf-percentile` and the mask's own `--mask-conf-quantile`), or `global`, the original rule |
 | `--min-points` | 50 (`mask`), 300 (`global`) | Pixels of usable depth a detection needs to count in a frame |
 | `--voxel-frac`, `--overlap-min`, `--reid-radius-depth`, `--merge-overlap`, `--duplicate-overlap` | 0.065, 0.10, 0.5, 0.2, 0.6 | `--association overlap`'s settings, passed to `milestone4_video.py` (provisional) |
+| `--axes` | `upright` | The sheet's axes: `upright` (z up from the fitted floor) or `camera0`, the first camera's (x right, y down, z forward) |
 | `--dense-dir` | `data/vggt/<dataset>/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
 | `--patch-depth-fallback` | off | Without the dense depth, approximate it from the export's patch points instead of stopping (also in `scene_sheet_report.py`) |
 | `--out-dir` | `<work>/sheets/<prompts>` | Where the two CSVs go |
@@ -414,6 +420,45 @@ To see which prompts a question gives, and why, without running anything else:
 python src/mvp/openvocab_adapter/prompt_object_extractor.py --explain "How far is the red car from the stove?"
 python src/mvp/openvocab_adapter/prompt_extractor_report.py --per-dataset 1    # every question of a few scenes
 ```
+
+### The upright frame
+
+`upright.py` finds it once per scene, from the scene folder's `cameras.npz` and `depth.npz`. It keeps the result in
+`scene/upright.json`, so every sheet of the scene shares one frame. It is computed again only when the cameras or its
+settings change.
+
+1. **A first up from the cameras.** People hold the camera level: little roll, any pitch. So up is the direction most
+   perpendicular to every camera's right axis (`camera_sheet_format_converter.estimate_up`).
+2. **Points.** Every 4th pixel of every frame with depth confidence in the top half, at most 200k points. The scene's
+   length unit is its median depth.
+3. **Two fits of the floor, each refined by least squares:**
+   - **seeded:** the lowest strong peak of the low points' heights along the first up
+   - **RANSAC:** planes through three low points, within 15° of the first up
+4. **Checks.** The better-supported fit that passes them is the floor:
+   - at least 1% of the points on it
+   - at most 5% of the points more than 10 cm below it, so that a table or bed top isn't taken for the floor
+   - its normal within 8° of the first up
+   - the cameras above it, at a plausible height
+5. **The frame.** z is the floor's normal. y is the first camera's forward along the floor, or its image's up when it
+   looks nearly straight down. The origin is below the first camera.
+
+**If no floor plane passes,** up is the cameras' up and z = 0 is a low percentile of the points' heights. The sheet's
+log, its `question.json` (`"floor"`) and the scene's report then say `WARNING: no floor plane found`, and
+`sheet_index.py` lists such scenes.
+
+**Results on the 75 exported scenes:**
+
+- **A floor was found** in 74 of 75 at 16 frames and in 73 of 75 at 128 frames.
+- **Its normal is a median 1–2° from the cameras' up.** The 16- and 128-frame fits of one reconstruction agree to a
+  median 0.3°.
+- **Heights look right.** With the gold scale, the cameras are a median 1.39 m above the floor (IQR 1.36–1.46) and
+  table tops are at 0.82 m.
+- **Upright boxes are as good as free ones.** Their longest sides are a median 0.997 of the free boxes', and size_z is
+  the object's height.
+
+**Use `--axes camera0` for the frozen post-processing** of `experiments/2026-11-18-scene-sheet-formats`
+(`explore_sheets.direction_word`, which `relations_v4.py` uses). It assumes the first camera's axes and reads the
+floor plane as x–z.
 
 ## A scene sheet from the gold labels
 

@@ -218,9 +218,10 @@ format (CSV, JSON or prose), how objects are named in the text, and whether pair
 
 The two kinds of sheet use different units and frames, and nothing converts between them:
 
-- **Pipeline sheet:** VGGT's units and the first camera's frame. The axes follow that camera (y points down in that
-  frame, which isn't necessarily the floor's down), the scale differs from video to video, and `size` is in those
-  units cubed.
+- **Pipeline sheet:** VGGT's units, and since 2026-11-24 an upright frame (`src/mvp/openvocab_adapter/upright.py`):
+  z up, perpendicular to a fitted floor at z = 0, the origin below the first camera, y the way it faces. The scale
+  differs from video to video, and `size` is in those units cubed. Before that the sheets used the first camera's
+  own axes (`--axes camera0`), whose y points down only as seen from that camera, which is usually pitched.
 - **Perfect sheet:** metres, in the dataset's frame, with z up.
 
 The sheet must say which it is, or the model will read 1.35 as 1.35 m.

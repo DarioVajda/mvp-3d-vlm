@@ -116,8 +116,8 @@ for RUN in $RUNS; do
         --step 1 --stages vggt,track,fuse --masks-dir "$MASKS" $REID_FLAG
 
     step "5/5 $RUN: scene sheets and comparison"
-    for SIDE in adapted native; do
-        $PY $A/scene_sheet_creator.py --scene "$R/$SIDE" --prompts "$PROMPTS" --size
+    for SIDE in adapted native; do  # the original rules: compare.py aligns the two runs in the first camera's axes
+        $PY $A/scene_sheet_creator.py --scene "$R/$SIDE" --prompts "$PROMPTS" --size --axes camera0 --depth-rule global
     done
     $PY $A/compare.py --run-dir "$R" --masks "$MASKS" || echo "compare.py found a FAIL (see above)"
 

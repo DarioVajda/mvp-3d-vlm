@@ -20,7 +20,11 @@ the scene sheet of the objects the question names:
                 original rule (the sequence's percentile only). It keeps an object seen in enough of the selected
                 frames, a minimum that scales linearly with their number: 1 of 16, 4 of 128. Its fuse stage is not
                 run: the scene sheet only needs the tracks.
-  5. sheet      scene_sheet_creator.py writes objects.csv and cameras.csv (their columns are described there).
+  5. sheet      scene_sheet_creator.py writes objects.csv and cameras.csv (their columns are described there), by
+                default in the upright frame (--axes upright: z up from the fitted floor, the floor at z = 0, the
+                origin below the first camera, y the way it faces); --axes camera0 is the first camera's own axes, as
+                every sheet before 2026-11-24. question.json records how the floor was found; a WARNING is printed
+                when no floor plane was found (up is then the cameras').
 
 On stdout it prints exactly two lines, the path of objects.csv and then of cameras.csv. Every log goes to stderr.
 From Python, create_scene_sheet(scene, question) returns the same two paths.
@@ -63,6 +67,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adapt_vggt  # noqa: E402
 import common  # noqa: E402
 import scene_sheet_creator as sheet  # noqa: E402
+import upright  # noqa: E402
 
 SAM3_INFER = common.HERE / "sam3_infer.py"
 DENSE_FILES = ("depth.npy", "depth_conf.npy")
@@ -317,7 +322,7 @@ def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, d
                        conf_percentile=55.0, min_points=None, backend="transformers", min_score=0.5, checkpoint=None,
                        overlays=False, fresh=False, patch_depth_fallback=False, association=DEFAULT_ASSOCIATION,
                        depth_rule=DEFAULT_DEPTH_RULE, mask_conf_quantile=sheet.MASK_CONF_QUANTILE,
-                       overlap_options=None):
+                       overlap_options=None, axes="upright"):
     """Write the scene sheet for a question about a saved VGGT scene. Returns (objects.csv, cameras.csv) paths.
 
     scene       "<dataset>/<scene>", or only the scene's name
@@ -326,6 +331,7 @@ def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, d
                 VGGT saw, "subset:uniform16" the 16 the VLM sees.
                 frame_<t> in the sheet counts the selected frames, cameras.csv names each one's image
     association, depth_rule, mask_conf_quantile, overlap_options, min_points: the tracking (track_settings)
+    axes        the sheet's axes, scene_sheet_creator.AXES: upright (default) or camera0
     dense_dir   folder with depth.npy and depth_conf.npy (default: $DENSE_ROOT or data/vggt, then /<dataset>/<scene>)
     patch_depth_fallback  without dense depth, approximate it from the patch points (with a warning) instead of
                 stopping
@@ -360,12 +366,15 @@ def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, d
         out = Path(out_dir).resolve() if out_dir else work / "sheets" / folder_name(prompts)
         objects_csv, cameras_csv = sheet.build_scene_sheet(
             scene_out, prompts, relative_positions, include_size, out, conf_percentile, settings["min_points"],
-            size_trim, **sheet_depth_options(settings))
-        (out / "question.json").write_text(json.dumps({
+            size_trim, **sheet_depth_options(settings), axes=axes)
+        record = {
             "scene": scene, "question": question, "prompts": prompts, "prompt_mode": mode, "frames": spec,
             "tracking": settings, "size": include_size, "relative_positions": relative_positions,
-            "size_trim": size_trim, "geometry": str(scene_out), "depth": depth_source,
-        }, indent=1))
+            "size_trim": size_trim, "geometry": str(scene_out), "depth": depth_source, "axes": axes,
+        }
+        if axes == "upright":  # the frame is the scene's, kept in upright.json: how its floor was found
+            record["floor"] = upright.floor_summary(upright.scene_upright(scene_out, log=lambda text: None))
+        (out / "question.json").write_text(json.dumps(record, indent=1))
         if depth_source == "patch_points":
             log(f"WARNING: {objects_csv} was made with depth approximated from the patch points, not the dense depth")
     return objects_csv, cameras_csv
@@ -410,6 +419,9 @@ def parse_args(argv):
                         "--conf-percentile and the mask's own --mask-conf-quantile; global, the original rule")
     p.add_argument("--mask-conf-quantile", type=float, default=sheet.MASK_CONF_QUANTILE,
                    help="--depth-rule mask: percentile of the mask's own confidence its pixels need")
+    p.add_argument("--axes", choices=sheet.AXES, default="upright",
+                   help="the sheet's axes: upright (default), z up from the fitted floor, the floor at z = 0, the "
+                        "origin below the first camera, y the way it faces; camera0, the first camera's own axes")
     p.add_argument("--association", choices=["overlap", "centroid"], default=DEFAULT_ASSOCIATION,
                    help="how detections join tracks (milestone4_video.py): overlap (default), by their 3D points; "
                         "centroid, the original rule")
@@ -435,7 +447,7 @@ def main(argv=None):
         min_score=args.min_score, checkpoint=args.checkpoint, overlays=args.overlays, fresh=args.fresh,
         patch_depth_fallback=args.patch_depth_fallback, association=args.association, depth_rule=args.depth_rule,
         mask_conf_quantile=args.mask_conf_quantile,
-        overlap_options={name: getattr(args, name) for name in OVERLAP_OPTIONS})
+        overlap_options={name: getattr(args, name) for name in OVERLAP_OPTIONS}, axes=args.axes)
     print(objects_csv)
     print(cameras_csv)
     return 0

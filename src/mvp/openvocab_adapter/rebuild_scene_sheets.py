@@ -14,7 +14,8 @@ This script writes every sheet again with the current scene_sheet_creator.py, so
 or written (sizes, columns) reaches all of them in minutes on a CPU:
 
   pipeline  scene_sheet_creator.build_scene_sheet on the saved tracks, with the settings in each question.json (a
-            question.json that names no depth rule was made with the original one, "global"). The
+            question.json that names no depth rule was made with the original one, "global", and one that names no
+            axes in the first camera's, "camera0"). The
             zip leaves out scene/depth.npz (the shared VGGT depth, cut to the selected frames), so it is made again first
             from data/vggt/<dataset>/<scene>/depth.npy and depth_conf.npy, cut to adapter_report.json's
             selected_frames, exactly as adapt_vggt.py writes it. Checked: the dense depth's frame_indices.npy equals
@@ -75,6 +76,16 @@ def depth_options(tracking):
     if "depth_rule" in inspect.signature(sheet.build_scene_sheet).parameters:
         return {"depth_rule": rule, "mask_conf_quantile": tracking.get("mask_conf_quantile", 50.0)}
     return {} if rule == "global" else None
+
+
+def axes_options(record):
+    """build_scene_sheet's axes for a question.json, or None when that scene_sheet_creator.py can't make them. A
+    question.json that names no axes was made in the first camera's ("camera0"), as every sheet before 2026-11-24; a
+    scene_sheet_creator.py from before the option gets no option."""
+    axes = record.get("axes", "camera0")
+    if "axes" in inspect.signature(sheet.build_scene_sheet).parameters:
+        return {"axes": axes}
+    return {} if axes == "camera0" else None
 
 
 def log(message):
@@ -144,9 +155,12 @@ def build_pipeline_sheet(out, scene_out):
     untracked = [p for p in prompts if not sheet.track_file(scene_out, p).is_file()]
     if untracked:
         return [f"not rebuilt: no saved tracks for {untracked} (needs SAM 3)"], {}
-    options = depth_options(tracking)
+    options, axes = depth_options(tracking), axes_options(record)
     if options is None:
         return [f"not rebuilt: its depth rule {tracking['depth_rule']!r} is not in this scene_sheet_creator.py"], {}
+    if axes is None:
+        return [f"not rebuilt: its axes {record['axes']!r} are not in this scene_sheet_creator.py"], {}
+    options.update(axes)
     try:
         with contextlib.redirect_stdout(sys.stderr):
             objects_csv, cameras_csv = sheet.build_scene_sheet(

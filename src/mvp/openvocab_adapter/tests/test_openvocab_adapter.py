@@ -38,6 +38,7 @@ import reconstruct_pipeline  # noqa: E402
 import scene_sheet_creator  # noqa: E402
 import scene_sheet_report  # noqa: E402
 import sheet_index  # noqa: E402
+import upright  # noqa: E402
 
 sys.path.insert(0, str(common.TRACK_A))
 from saved_masks import SavedMasks  # noqa: E402
@@ -732,6 +733,42 @@ class Integration(unittest.TestCase):
         with open(cameras_csv, newline="") as f:
             self.assertEqual(len(list(csv.DictReader(f))), T)
 
+    def test_scene_sheet_in_the_upright_frame(self):
+        """The upright sheet is the camera-0 sheet moved into the scene's upright frame: the same cameras, turned and
+        moved, and objects at the same distances from them. The synthetic scene is one wall facing the camera, so no
+        floor plane is found: up is the cameras', with a warning, kept in upright.json."""
+        log = io.StringIO()
+        with contextlib.redirect_stderr(log):
+            objects_csv, cameras_csv = scene_sheet_creator.build_scene_sheet(
+                self.adapted, ["chair", "table"], include_size=True, out_dir=self.root / "upright_sheet",
+                conf_percentile=10, min_points=20)
+        self.assertIn("WARNING: no floor plane found", log.getvalue())
+        frame = upright.scene_upright(self.adapted, log=lambda text: None)
+        self.assertEqual(frame["method"], "cameras")
+        self.assertTrue((self.adapted / "upright.json").is_file())
+        R = frame["rotation"]
+        np.testing.assert_allclose(R @ R.T, np.eye(3), atol=1e-9)
+        self.assertAlmostEqual(float(np.linalg.det(R)), 1.0, places=9)
+        base_objects, base_cameras = scene_sheet_creator.build_scene_sheet(
+            self.adapted, ["chair", "table"], include_size=True, out_dir=self.root / "camera0_sheet",
+            conf_percentile=10, min_points=20, axes="camera0")
+        q = lambda r: camera_sheet_format_converter.quaternion_to_rotation(*(float(r[k]) for k in ("qw", "qx", "qy", "qz")))
+        pos = lambda r: np.array([float(r[k]) for k in "xyz"])
+        cams, base = read_csv(cameras_csv), read_csv(base_cameras)
+        for a, b in zip(cams, base):
+            np.testing.assert_allclose(pos(a), R @ (pos(b) - frame["origin"]), atol=1e-4)
+            np.testing.assert_allclose(q(a), R @ q(b), atol=1e-4)
+        self.assertAlmostEqual(float(cams[0]["x"]), 0.0, places=4)  # the origin is below the first camera
+        self.assertAlmostEqual(float(cams[0]["y"]), 0.0, places=4)
+        self.assertGreater(float(cams[0]["z"]), 0.0)
+        forward = np.array([float(cams[0][f"forward_{k}"]) for k in "xyz"])
+        self.assertAlmostEqual(forward[0], 0.0, places=4)  # the first camera faces +y, along the floor
+        self.assertGreater(forward[1], 0.0)
+        for a, b in zip(read_csv(objects_csv), read_csv(base_objects)):  # medians: close, not exact, after a turn
+            self.assertEqual((a["concept"], a["num_frames"]), (b["concept"], b["num_frames"]))
+            near = np.linalg.norm(pos(a) - pos(cams[0])), np.linalg.norm(pos(b) - pos(base[0]))
+            self.assertLess(abs(near[0] - near[1]), 0.05 * near[1])
+
     def test_scene_sheet_without_frames_or_cameras(self):
         out = self.root / "sheet_global"
         objects_csv, cameras_csv = scene_sheet_creator.build_scene_sheet(
@@ -752,9 +789,9 @@ class Integration(unittest.TestCase):
 
     @staticmethod
     def build_sheets(*runs):
-        for run in runs:
+        for run in runs:  # compare.py aligns the two runs in the first camera's axes
             scene_sheet_creator.build_scene_sheet(run, ["chair", "table"], include_size=True, conf_percentile=10,
-                                                  min_points=20)
+                                                  min_points=20, axes="camera0")
 
     def test_comparison_undoes_a_different_frame_and_scale(self):
         rotation, translation = rotation_y(0.7), np.array([1.0, -2.0, 0.5])
@@ -1014,7 +1051,7 @@ class OverlapTracking(unittest.TestCase):
                                  {k: v for k, v in b.items() if k not in ignore}, f"{name} {extra}")
             sheets = []
             for build, extra in ((legacy_sheet.build_scene_sheet, {}),
-                                 (scene_sheet_creator.build_scene_sheet, {"depth_rule": "global"})):
+                                 (scene_sheet_creator.build_scene_sheet, {"depth_rule": "global", "axes": "camera0"})):
                 out = self.root / f"sheet_{name}_{len(sheets)}"
                 objects_csv, cameras_csv = build(before, ["chair"], include_size=True, out_dir=out, conf_percentile=10,
                                                  min_points=20, size_trim=0.02, **extra)
@@ -1097,6 +1134,132 @@ def tracker_defaults():
     return out
 
 
+def heading_rotation(heading, pitch, roll=0.0):
+    """Camera-to-world rotation (columns: the camera's x right, y down, z forward) of a camera in a z-up world that
+    faces `heading` degrees clockwise from +y, `pitch` degrees up (negative: down), rolled `roll` degrees."""
+    h, p, r = np.radians([heading, pitch, roll])
+    flat = np.array([np.sin(h), np.cos(h), 0.0])
+    forward = np.cos(p) * flat + np.sin(p) * np.array([0.0, 0.0, 1.0])
+    right = np.cross(flat, [0.0, 0.0, 1.0])
+    down = np.cross(forward, right)
+    c, s = np.cos(r), np.sin(r)  # roll about the forward axis
+    right, down = c * right + s * down, c * down - s * right
+    return np.stack([right, down, forward], axis=1)
+
+
+def synthetic_room(rng, pitch0=-25.0, roll_deg=3.0, floor_points=6000):
+    """A room in a z-up world (floor z = 0, a 5 x 4 floor, two walls, a dense table top at 0.75, noise), seen by 16
+    cameras 1.4 above the floor that turn around it, slightly rolled; then expressed, as VGGT's are, in the first
+    camera's frame. Returns (points, extrinsic, true up, the first camera's heading along the floor), the last two in
+    that frame."""
+    noise = lambda n: rng.normal(0, 0.005, (n, 3))
+    floor = np.c_[rng.uniform(-2, 3, floor_points), rng.uniform(0, 4, floor_points), np.zeros(floor_points)]
+    wall_x = np.c_[np.full(3000, 3.0), rng.uniform(0, 4, 3000), rng.uniform(0, 2.5, 3000)]
+    wall_y = np.c_[rng.uniform(-2, 3, 3000), np.full(3000, 4.0), rng.uniform(0, 2.5, 3000)]
+    table = np.c_[rng.uniform(0, 1.2, 4000), rng.uniform(1, 2, 4000), np.full(4000, 0.75)]
+    points = np.concatenate([floor, wall_x, wall_y, table])
+    points = points + noise(len(points))
+    headings = np.linspace(20, 320, 16)
+    centres = np.c_[np.linspace(-1, 2, 16), np.linspace(0.5, 3, 16), np.full(16, 1.4)]
+    rotations = [heading_rotation(h, pitch0 if i == 0 else -25 + 10 * np.sin(i), rng.uniform(-roll_deg, roll_deg))
+                 for i, h in enumerate(headings)]
+    R0, c0 = rotations[0], centres[0]  # VGGT's world: the first camera's frame
+    to0 = lambda p: (p - c0) @ R0
+    extrinsic = np.zeros((16, 3, 4))
+    for i, (R, c) in enumerate(zip(rotations, centres)):
+        Rw = R0.T @ R  # camera-to-world in the first camera's frame
+        extrinsic[i, :, :3], extrinsic[i, :, 3] = Rw.T, -Rw.T @ to0(c)
+    up = R0.T @ np.array([0.0, 0.0, 1.0])
+    heading = R0.T @ np.array([np.sin(np.radians(headings[0])), np.cos(np.radians(headings[0])), 0.0])
+    return to0(points), extrinsic, up, heading
+
+
+class UprightFrame(unittest.TestCase):
+    """upright.py: the floor fit and the upright frame, on synthetic rooms (no depth maps), and its cache."""
+
+    def fit(self, points, extrinsic):
+        centres, rotations = upright.camera_poses(extrinsic)
+        up0 = camera_sheet_format_converter.estimate_up(rotations)
+        return up0, upright.fit_floor(points, up0, 1.5, centres)
+
+    def test_the_floor_is_found_and_not_the_table(self):
+        points, extrinsic, up, heading = synthetic_room(np.random.default_rng(1))
+        up0, (n, offset, diagnostics) = self.fit(points, extrinsic)
+        self.assertIsNotNone(n, diagnostics)
+        self.assertLess(upright.angle_deg(n, up), 0.3)
+        # the floor's normal, not the cameras' up: from an up 6 degrees off, the floor comes back as well
+        axis = np.cross(up0, [1.0, 0.0, 0.0])
+        axis /= np.linalg.norm(axis)
+        off = np.cos(np.radians(6)) * up0 + np.sin(np.radians(6)) * np.cross(axis, up0)
+        centres, _ = upright.camera_poses(extrinsic)
+        n_off, _, found = upright.fit_floor(points, off, 1.5, centres)
+        self.assertLess(upright.angle_deg(n_off, up), 0.3, found)
+        frame = upright.upright_frame(extrinsic, n, offset)
+        R = frame["rotation"]
+        np.testing.assert_allclose(R @ R.T, np.eye(3), atol=1e-9)
+        self.assertAlmostEqual(float(np.linalg.det(R)), 1.0, places=9)
+        moved = upright.to_upright(points, frame)
+        z = moved[:, 2]
+        self.assertLess(abs(float(np.median(z[:6000]))), 0.005)  # the floor's points at z = 0, the table's at 0.75
+        self.assertAlmostEqual(float(np.median(z[-4000:])), 0.75, delta=0.01)
+        centre0 = upright.to_upright(upright.camera_poses(extrinsic)[0][:1], frame)[0]
+        np.testing.assert_allclose(centre0, [0, 0, 1.4], atol=0.01)  # the origin is on the floor below camera 0
+        self.assertLess(upright.angle_deg(R[1], heading), 0.5)  # y: the way camera 0 faces, along the floor
+        self.assertEqual(frame["forward"], "camera")
+        self.assertGreater(diagnostics["inlier_share"], 0.2)
+
+    def test_a_first_camera_looking_straight_down_faces_its_image_up(self):
+        points, extrinsic, up, heading = synthetic_room(np.random.default_rng(2), pitch0=-89.5, roll_deg=0.0)
+        _, (n, offset, _) = self.fit(points, extrinsic)
+        frame = upright.upright_frame(extrinsic, n, offset)
+        self.assertEqual(frame["forward"], "image up")
+        self.assertLess(upright.angle_deg(frame["rotation"][1], heading), 1.0)
+
+    def test_no_floor_is_reported(self):
+        points, extrinsic, _, _ = synthetic_room(np.random.default_rng(3), floor_points=0)
+        keep = points[:, 2] > -10  # walls and the table only: the table top has the walls below it
+        _, (n, _, diagnostics) = self.fit(points[keep], extrinsic)
+        self.assertIsNone(n)
+        self.assertIn("reason", diagnostics)
+
+    def test_the_frame_is_kept_per_scene_and_made_again_for_other_cameras(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        _, data, dense = make_scene(root)
+        scene = root / "adapted"
+        self.assertEqual(adapt(data, scene, "--frames", "all", "--dense-dir", str(dense)), 0)
+        warnings = []
+        first = upright.scene_upright(scene, log=warnings.append)
+        self.assertEqual(first["method"], "cameras")  # a wall, no floor
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("no floor plane found", warnings[0])
+        with mock.patch.object(upright, "compute_upright", side_effect=AssertionError("computed again")):
+            again = upright.scene_upright(scene, log=warnings.append)  # from upright.json
+        np.testing.assert_array_equal(again["rotation"], first["rotation"])
+        self.assertEqual(len(warnings), 2)  # said again each time the frame is used
+        with np.load(scene / "cameras.npz") as z:
+            cams = dict(z)
+        cams["extrinsic"] = cams["extrinsic"].copy()
+        cams["extrinsic"][:, :, 3] *= 2
+        np.savez(scene / "cameras.npz", **cams)
+        with mock.patch.object(upright, "compute_upright", wraps=upright.compute_upright) as compute:
+            upright.scene_upright(scene, log=lambda text: None)
+        self.assertEqual(compute.call_count, 1)
+
+    def test_upright_boxes_turn_only_about_z(self):
+        rng = np.random.default_rng(4)
+        box = rng.uniform(-0.5, 0.5, (20000, 3)) * [2.0, 1.0, 0.8]
+        turn = np.radians(30)
+        Rz = np.array([[np.cos(turn), -np.sin(turn), 0], [np.sin(turn), np.cos(turn), 0], [0, 0, 1]])
+        _, sides = scene_sheet_creator.fit_upright_box(box @ Rz.T + [3, 1, 0.4])
+        np.testing.assert_allclose(sides, [2.0, 1.0, 0.8], rtol=0.02)
+        _, sides = scene_sheet_creator.fit_upright_box(box)  # unturned: the axis-aligned box
+        np.testing.assert_allclose(sides, [2.0, 1.0, 0.8], rtol=0.02)
+        tilted = box @ np.array([[1, 0, 0], [0, np.cos(0.5), -np.sin(0.5)], [0, np.sin(0.5), np.cos(0.5)]]).T
+        _, upright_sides = scene_sheet_creator.fit_upright_box(tilted)  # never turned about x: it stays upright
+        self.assertGreater(upright_sides[2], 0.8 * 1.1)
+
+
 class TrackingSettings(unittest.TestCase):
     """What question_scene_sheet.py records and passes to the tracker, with the fixed rules (the default) and with
     the original ones; and how a rebuild reads a sheet's depth rule back."""
@@ -1172,6 +1335,10 @@ class TrackingSettings(unittest.TestCase):
         with mock.patch.object(rebuild.sheet, "build_scene_sheet", before_the_rule):
             self.assertEqual(rebuild.depth_options({}), {})
             self.assertIsNone(rebuild.depth_options({"depth_rule": "mask"}))
+            self.assertEqual(rebuild.axes_options({}), {})
+            self.assertIsNone(rebuild.axes_options({"axes": "upright"}))
+        self.assertEqual(rebuild.axes_options({}), {"axes": "camera0"})  # every sheet before the option
+        self.assertEqual(rebuild.axes_options({"axes": "upright"}), {"axes": "upright"})
 
     def test_frames_folders_of_a_run(self):
         root = Path(tempfile.mkdtemp())
@@ -1397,6 +1564,14 @@ class QuestionSceneSheet(unittest.TestCase):
         record = json.loads((objects_csv.parent / "question.json").read_text())
         self.assertEqual((record["scene"], record["question"], record["prompts"]),
                          ("scannet/synthetic", "Is the chair near the table?", ["chair", "table"]))
+        self.assertEqual(record["axes"], "upright")  # the default; the synthetic wall has no floor
+        self.assertEqual(record["floor"]["method"], "cameras")
+        self.assertIn("no floor plane found", record["floor"]["warning"])
+        self.assertIn("no floor plane found", self.log.getvalue())
+        self.assertTrue((self.work / "scene" / upright.FILE).is_file())
+        camera0, _ = self.sheet(["chair", "table"], axes="camera0", out_dir=self.root / "camera0")
+        self.assertEqual(json.loads((camera0.parent / "question.json").read_text())["axes"], "camera0")
+        self.assertNotIn("floor", json.loads((camera0.parent / "question.json").read_text()))
         self.assertFalse((self.work / "scene/labels.npz").exists())  # the fuse stage is not run
 
     @unittest.skipIf(importlib.util.find_spec("torch") is None, "the track stage needs torch")
@@ -1418,6 +1593,10 @@ class QuestionSceneSheet(unittest.TestCase):
         self.assertEqual([r["counts"] for r in results],
                          [{"chair": 1, "table": 1}, {"chair": 1}, {"chair": 1, "lamp": 0}])
         self.assertIn("no rows:  lamp (SAM 3 found nothing)", out.getvalue())
+        lines = out.getvalue().strip().splitlines()  # the synthetic wall has no floor: said once, before the summary
+        self.assertEqual(sum(scene_sheet_report.NO_FLOOR in line for line in lines), 1)
+        self.assertIn(scene_sheet_report.NO_FLOOR, "\n".join(lines[-3:-1]))
+        self.assertTrue(lines[-1].startswith("3 questions:"))
         self.assertEqual([c for c in self.calls if c[0] == "sam3_infer.py"],
                          [("sam3_infer.py", "chair,table,lamp")])
 

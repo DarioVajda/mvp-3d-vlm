@@ -20,9 +20,11 @@
 #   FRAMES     question_scene_sheet.py's --frames (default all; subset:uniform16 is the VLM's 16 frames)
 #   ASSOCIATION, DEPTH_RULE  question_scene_sheet.py's --association and --depth-rule (default: its defaults, overlap
 #              and mask; centroid and global are the original tracking)
+#   AXES       question_scene_sheet.py's --axes (default: its default, upright; camera0 is the original). sheet_index.py
+#              lists the scenes where no floor plane was found (their reports end with a WARNING)
 #   OUT        where everything goes (default tasks/openvocab_adapter/out_<frames>, e.g. out_all). The sheets of
 #              docs/scene_sheets_75.md were made in tasks/openvocab_adapter/out with FRAMES=subset:uniform16 and the
-#              original tracking (ASSOCIATION=centroid DEPTH_RULE=global).
+#              original tracking and axes (ASSOCIATION=centroid DEPTH_RULE=global AXES=camera0).
 #   ZIP        the zip's name (default scene_sheets_75_<frames>.zip)
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
@@ -42,6 +44,7 @@ mkdir -p "$REPORTS"
 PIPELINE_OPTIONS=(--frames "$FRAMES")
 [[ -n "${ASSOCIATION:-}" ]] && PIPELINE_OPTIONS+=(--association "$ASSOCIATION")
 [[ -n "${DEPTH_RULE:-}" ]] && PIPELINE_OPTIONS+=(--depth-rule "$DEPTH_RULE")
+[[ -n "${AXES:-}" ]] && PIPELINE_OPTIONS+=(--axes "$AXES")
 echo "frames $FRAMES, tracking ${PIPELINE_OPTIONS[*]:2}, out $OUT"
 
 finished() {  # the report ran to its summary line and no sheet failed

@@ -102,6 +102,10 @@ def main(argv=None):
         writer.writerows(index)
     made = {s: sum(r[f"{s}_ok"] for r in index) for s in SOURCES}
     print(f"{out / 'index.csv'}: {len(index)} questions, sheets made: pipeline {made['pipeline']}, gold {made['gold']}")
+    no_floor = sorted(r.name[:-len("_pipeline.txt")] for r in (out / "reports").glob("*_pipeline.txt")
+                      if "WARNING: no floor plane found" in r.read_text())
+    if no_floor:  # upright sheets whose up is the cameras' (upright.py)
+        print(f"no floor plane found in {len(no_floor)} scenes: {', '.join(no_floor)}")
 
     for s in SOURCES:
         res = counting[s]

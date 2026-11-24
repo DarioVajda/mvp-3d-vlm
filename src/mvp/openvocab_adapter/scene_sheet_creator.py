@@ -23,7 +23,12 @@ Outputs (in --out-dir, default <scene>/scene_sheet/):
                   forward_x, forward_y, forward_z  optical axis (camera +z) in world coordinates
 
 Conventions
-  - World frame = camera of frame 0. Camera coordinates are OpenCV: x right, y down, z forward.
+  - Axes (--axes). upright (default): z up, perpendicular to the floor, which is at z = 0; the origin is the point of
+    the floor below the camera of frame 0; y is the way that camera faces, along the floor, and x is to its right
+    (upright.py fits the floor; the frame is kept in the scene folder's upright.json, the same for every sheet of the
+    scene, and a WARNING is printed where no floor plane was found). camera0 (every sheet before 2026-11-24): the
+    camera of frame 0's own axes, OpenCV: x right, y down, z forward. cameras.csv is in the same axes as objects.csv.
+    Camera coordinates (--relative-positions) are OpenCV: x right, y down, z forward.
   - Units are VGGT's arbitrary scene scale, not metres; sizes are in those units cubed.
   - "Seen in frame t": the object's tracked mask in frame t has at least --min-points pixels with
     usable depth (--depth-rule, the tracker's rule: usable_pixels). This is the rule the pipeline's
@@ -37,10 +42,11 @@ Conventions
     points, in that camera's coordinates (where the object was seen, not the global position
     re-expressed). Global positions and sizes use at most --max-frame-points of each frame's points.
   - Size: no metric size exists, so each object is approximated by the smallest box around its
-    points, turned to fit the object (fit_box), so an object standing at an angle to the world axes
-    is not overestimated. A side's length is max - min of the points along it (or between the
-    --size-trim and 100 - --size-trim percentiles, to ignore outliers). size_x/y/z are the sides
-    nearest the world x, y and z axes, and size = size_x * size_y * size_z.
+    points, turned to fit the object, so an object standing at an angle to the world axes is not
+    overestimated: upright, turned only about z (fit_upright_box, --axes upright), or in any
+    orientation (fit_box, --axes camera0). A side's length is max - min of the points along it (or
+    between the --size-trim and 100 - --size-trim percentiles, to ignore outliers). size_x/y/z are
+    the sides nearest the world x, y and z axes, and size = size_x * size_y * size_z.
 
   --no-frames drops num_frames and the per-frame columns, and --no-cameras drops cameras.csv.
 
@@ -78,6 +84,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import upright  # noqa: E402
 
 PIPELINE = common.TRACK_A / "milestone4_video.py"
 IMAGE_EXTS = common.IMAGE_EXTS  # same as the pipeline
@@ -90,6 +97,10 @@ DEPTH_RULES = ("mask", "global")  # the default first
 MIN_POINTS = {"global": 300, "mask": 50}  # pixels a detection needs under each rule (trackA/depth_rule.py)
 MASK_CONF_QUANTILE = 50.0
 MAX_OBJECT_POINTS = 80_000  # points an object's centre and size are computed from (16 frames x 5000 at most before)
+# The axes a pipeline sheet is written in: upright (default; upright.py: z up from the fitted floor, the floor at z = 0,
+# the origin below the first camera, y the way it faces along the floor) or camera0 (the first camera's own axes,
+# x right, y down, z forward: every sheet before 2026-11-24)
+AXES = ("upright", "camera0")
 
 
 def usable_pixels(mask, depth, conf, global_thr, rule="mask", quantile=MASK_CONF_QUANTILE):
@@ -410,6 +421,37 @@ def fit_box(points, trim=0.0, max_points=BOX_SEARCH_POINTS, seed=0):
     return match_world_axes(candidates[best], measured[best])
 
 
+def fit_upright_box(points, trim=0.0, max_points=BOX_SEARCH_POINTS, seed=0):
+    """The smallest box around points (n x 3, in an upright frame) that stands upright: turned only about z. Returns
+    (axes, sides) as fit_box does: the box's unit axes as columns, ordered and signed by match_world_axes, so size_z is
+    the vertical extent and the two horizontal sides go to the nearer of x and y. Sides are measured by spans with
+    trim. The turn is searched on at most max_points of the points (a fixed random choice) with TURN_GRIDS, then
+    measured on all of them, and the box is never bigger than the axis-aligned one."""
+    centred = np.asarray(points, float) - np.median(points, axis=0)
+    search = centred
+    if len(search) > max_points:
+        search = search[np.random.default_rng(seed).choice(len(search), max_points, replace=False)]
+    x, y = search[:, 0], search[:, 1]
+    scale = max(float(spans(search[:, :2].T, trim).max()) if len(search) else 0.0, 1e-12)
+    eps = 1e-6 * scale  # a flat object's box would otherwise have no area whichever way it was turned
+    angle, area = 0.0, np.inf
+    if len(search) >= 3:
+        area = (spans(x, trim) + eps) * (spans(y, trim) + eps)
+        for turns in TURN_GRIDS:
+            candidates = angle + turns
+            c, s = np.cos(candidates)[:, None], np.sin(candidates)[:, None]
+            areas = (spans(c * x + s * y, trim) + eps) * (spans(c * y - s * x, trim) + eps)
+            if areas.min() < area:
+                angle, area = float(candidates[np.argmin(areas)]), areas.min()
+    boxes = []
+    for a in (0.0, angle):
+        c, s = np.cos(a), np.sin(a)
+        axes = np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])  # columns: the box's axes
+        boxes.append((axes, spans((centred @ axes).T, trim)))
+    best = min(boxes, key=lambda b: (b[1][0] + eps) * (b[1][1] + eps))  # ties: the axis-aligned box
+    return match_world_axes(*best)
+
+
 def collect_objects(
     scene,
     prompts,
@@ -492,8 +534,13 @@ def build_scene_sheet(
     depth_rule="mask",
     mask_conf_quantile=MASK_CONF_QUANTILE,
     max_object_points=MAX_OBJECT_POINTS,
+    axes="upright",
 ):
     """Write objects.csv and cameras.csv for a scene that already has tracks for every prompt.
+
+    axes: upright (positions, sizes and cameras in upright.py's frame, boxes turned only about z: fit_upright_box) or
+    camera0 (the first camera's axes, boxes in any orientation: fit_box). The upright frame is the scene's
+    (upright.scene_upright, kept in the scene folder's upright.json), the same for every sheet of the scene.
 
     frame_columns=False leaves out num_frames and the per-frame columns, cameras=False leaves out cameras.csv.
     depth_rule, mask_conf_quantile, min_points (None: the rule's default): which pixels count (usable_pixels). An
@@ -503,7 +550,10 @@ def build_scene_sheet(
     """
     if relative_positions and not frame_columns:
         raise ValueError("relative_positions are per-frame columns, which frame_columns=False leaves out")
+    if axes not in AXES:
+        raise ValueError(f"axes must be one of {AXES}, not {axes!r}")
     scene = Path(scene)
+    frame = upright.scene_upright(scene) if axes == "upright" else None
     out_dir = Path(out_dir) if out_dir else scene / "scene_sheet"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -548,9 +598,11 @@ def build_scene_sheet(
         sample = np.concatenate(obj["sample"])
         if len(sample) > max_object_points:
             sample = sample[np.random.default_rng([pi, tid]).choice(len(sample), max_object_points, replace=False)]
+        if frame is not None:
+            sample = upright.to_upright(sample, frame)
         row = [len(rows), prompts[pi], tid, *np.median(sample, axis=0)]
         if include_size:
-            _, sides = fit_box(sample, size_trim)
+            _, sides = fit_box(sample, size_trim) if frame is None else fit_upright_box(sample, size_trim)
             row += [*sides, float(np.prod(sides))]
         if frame_columns:
             row.append(len(obj["frames"]))
@@ -575,9 +627,12 @@ def build_scene_sheet(
     cam_rows = []
     for t in range(S):
         R, tvec = extrinsic[t, :, :3], extrinsic[t, :, 3]
-        centre = -R.T @ tvec
+        centre, to_world, forward = -R.T @ tvec, R.T, R[2]
+        if frame is not None:  # the camera in the upright frame: its centre moved, its axes turned
+            centre = upright.to_upright(centre[None], frame)[0]
+            to_world, forward = frame["rotation"] @ to_world, frame["rotation"] @ forward
         cam_rows.append(
-            [t, image_paths[t], *centre, *rotation_to_quaternion(R.T), *R[2]]
+            [t, image_paths[t], *centre, *rotation_to_quaternion(to_world), *forward]
         )
     cameras_csv = out_dir / "cameras.csv"
     write_csv(
@@ -796,6 +851,13 @@ def main(argv=None):
         help="--depth-rule mask: percentile of the mask's own confidence its pixels need",
     )
     p.add_argument(
+        "--axes",
+        choices=AXES,
+        default="upright",
+        help="the sheet's axes: upright (default), z up from the fitted floor, the floor at z = 0, the origin below the "
+        "first camera and y the way it faces; camera0, the first camera's axes (x right, y down, z forward)",
+    )
+    p.add_argument(
         "--association",
         choices=["overlap", "centroid"],
         default="overlap",
@@ -883,6 +945,7 @@ def main(argv=None):
         cameras=not args.no_cameras,
         depth_rule=args.depth_rule,
         mask_conf_quantile=args.mask_conf_quantile,
+        axes=args.axes,
     )
 
 
