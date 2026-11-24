@@ -1,0 +1,56 @@
+condition,id,type,truth,A answer,answer,A score,score,effect,pipeline empty
+pipeline_v3,988,object_rel_direction_hard,D,A,D,0.0,1.0,helped,False
+pipeline_v3,1008,object_rel_direction_hard,D,D,B,1.0,0.0,hurt,False
+pipeline_v3,1099,object_rel_direction_hard,B,D,B,0.0,1.0,helped,False
+pipeline_v3,1140,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1141,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1147,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1148,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1176,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1234,object_rel_direction_medium,B,C,B,0.0,1.0,helped,False
+pipeline_v3,1255,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,1271,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1286,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1296,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1297,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,1513,object_rel_direction_medium,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,1594,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1595,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v3,1820,object_rel_direction_hard,C,A,B,0.0,0.0,same score,False
+pipeline_v3,1835,object_rel_direction_hard,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1837,object_rel_direction_hard,A,A,D,1.0,0.0,hurt,False
+pipeline_v3,1878,object_rel_direction_hard,C,D,C,0.0,1.0,helped,False
+pipeline_v3,1879,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,1881,object_rel_direction_hard,D,A,C,0.0,0.0,same score,False
+pipeline_v3,1882,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1891,object_rel_direction_hard,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1904,object_rel_direction_hard,B,D,B,0.0,1.0,helped,False
+pipeline_v3,2432,object_rel_direction_easy,B,A,B,0.0,1.0,helped,True
+pipeline_v3,2437,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,2439,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,2480,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3617,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3618,object_rel_direction_hard,C,A,C,0.0,1.0,helped,False
+pipeline_v3,3672,object_rel_direction_hard,B,A,D,0.0,0.0,same score,False
+pipeline_v3,3683,object_rel_direction_hard,C,B,C,0.0,1.0,helped,False
+pipeline_v3,3698,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3699,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3700,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3714,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3721,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3725,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3740,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3742,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,4266,object_rel_direction_medium,B,B,C,1.0,0.0,hurt,False
+pipeline_v3,4268,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v3,4279,object_rel_direction_medium,B,B,A,1.0,0.0,hurt,False
+pipeline_v3,4280,object_rel_direction_medium,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,4300,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v3,4333,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,4334,object_rel_direction_medium,C,C,B,1.0,0.0,hurt,False
+pipeline_v3,4335,object_rel_direction_medium,C,C,B,1.0,0.0,hurt,False
+pipeline_v3,4370,object_rel_direction_medium,C,C,A,1.0,0.0,hurt,False
+pipeline_v3,4372,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,4373,object_rel_direction_medium,C,A,B,0.0,0.0,same score,False
+pipeline_v3,5062,route_planning,C,A,B,0.0,0.0,same score,False
+pipeline_v3,5082,route_planning,D,D,C,1.0,0.0,hurt,False

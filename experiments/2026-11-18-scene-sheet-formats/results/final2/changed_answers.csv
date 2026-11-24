@@ -1,0 +1,516 @@
+condition,id,type,truth,A answer,answer,A score,score,effect,pipeline empty
+pipeline_v4,19,object_counting,12,6.0,1.0,0.1,0.0,hurt,False
+pipeline_v4,28,object_counting,3,1.0,2.0,0.0,0.4,helped,False
+pipeline_v4,29,object_counting,2,2.0,5.0,1.0,0.0,hurt,False
+pipeline_v4,36,object_counting,7,4.0,10.0,0.2,0.2,same score,False
+pipeline_v4,63,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v4,72,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v4,73,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v4,74,object_counting,2,2.0,5.0,1.0,0.0,hurt,False
+pipeline_v4,75,object_counting,2,1.0,3.0,0.1,0.1,same score,False
+pipeline_v4,96,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v4,144,object_counting,3,2.0,4.0,0.4,0.4,same score,False
+pipeline_v4,155,object_counting,3,2.0,1.0,0.4,0.0,hurt,False
+pipeline_v4,161,object_counting,3,1.0,2.0,0.0,0.4,helped,False
+pipeline_v4,163,object_counting,4,2.0,3.0,0.1,0.6,helped,False
+pipeline_v4,209,object_size_estimation,96,100.0,180.0,1.0,0.0,hurt,False
+pipeline_v4,210,object_size_estimation,156,180.0,85.7,0.7,0.1,hurt,False
+pipeline_v4,211,object_size_estimation,128,140.0,146.0,0.9,0.8,hurt,False
+pipeline_v4,212,object_size_estimation,69,70.0,64.7,1.0,0.9,hurt,False
+pipeline_v4,220,object_size_estimation,356,180.0,188.3,0.1,0.1,same score,False
+pipeline_v4,221,object_size_estimation,185,100.0,61.6,0.1,0.0,hurt,False
+pipeline_v4,236,object_size_estimation,84,100.0,47.9,0.7,0.2,hurt,False
+pipeline_v4,256,object_size_estimation,108,100.0,134.0,0.9,0.6,hurt,False
+pipeline_v4,257,object_size_estimation,71,50.0,100.0,0.5,0.2,hurt,True
+pipeline_v4,258,object_size_estimation,93,190.0,150.0,0.0,0.0,same score,True
+pipeline_v4,273,object_size_estimation,91,90.0,68.0,1.0,0.5,hurt,False
+pipeline_v4,274,object_size_estimation,91,60.0,44.7,0.4,0.0,hurt,False
+pipeline_v4,275,object_size_estimation,184,178.0,84.4,1.0,0.0,hurt,False
+pipeline_v4,322,object_size_estimation,158,120.0,84.8,0.6,0.1,hurt,False
+pipeline_v4,373,object_size_estimation,60,60.0,68.0,1.0,0.8,hurt,False
+pipeline_v4,374,object_size_estimation,89,100.0,370.0,0.8,0.0,hurt,False
+pipeline_v4,397,object_size_estimation,142,170.0,75.2,0.7,0.1,hurt,False
+pipeline_v4,398,object_size_estimation,53,100.0,44.7,0.0,0.7,helped,False
+pipeline_v4,426,object_size_estimation,213,200.0,97.4,0.9,0.0,hurt,False
+pipeline_v4,427,object_size_estimation,112,120.0,100.0,0.9,0.8,hurt,True
+pipeline_v4,444,object_size_estimation,75,100.0,37.4,0.4,0.0,hurt,False
+pipeline_v4,445,object_size_estimation,78,50.0,45.2,0.3,0.2,hurt,False
+pipeline_v4,446,object_size_estimation,87,90.0,260.0,1.0,0.0,hurt,False
+pipeline_v4,447,object_size_estimation,40,50.0,45.7,0.6,0.8,helped,False
+pipeline_v4,490,object_size_estimation,111,100.0,50.0,0.9,0.0,hurt,False
+pipeline_v4,491,object_size_estimation,82,100.0,53.4,0.6,0.4,hurt,False
+pipeline_v4,503,object_size_estimation,96,100.0,19.9,1.0,0.0,hurt,False
+pipeline_v4,505,object_size_estimation,114,190.0,31.5,0.0,0.0,same score,False
+pipeline_v4,513,object_size_estimation,205,200.0,80.1,1.0,0.0,hurt,False
+pipeline_v4,514,object_size_estimation,46,50.0,67.0,0.9,0.1,hurt,False
+pipeline_v4,516,object_size_estimation,168,170.0,20.9,1.0,0.0,hurt,False
+pipeline_v4,518,object_size_estimation,72,100.0,93.5,0.3,0.5,helped,False
+pipeline_v4,550,room_size_estimation,11.6,15.0,11.2,0.5,1.0,helped,False
+pipeline_v4,554,room_size_estimation,24.9,30.0,10.5,0.6,0.0,hurt,False
+pipeline_v4,561,room_size_estimation,22.6,20.0,12.5,0.8,0.2,hurt,False
+pipeline_v4,570,room_size_estimation,16.9,20.0,15.8,0.7,0.9,helped,False
+pipeline_v4,576,room_size_estimation,20.9,25.0,15.2,0.7,0.5,hurt,False
+pipeline_v4,589,room_size_estimation,33.5,30.0,10.5,0.8,0.0,hurt,False
+pipeline_v4,598,room_size_estimation,26.4,25.0,18.1,0.9,0.4,hurt,False
+pipeline_v4,621,room_size_estimation,24.1,30.0,13.3,0.6,0.2,hurt,False
+pipeline_v4,630,room_size_estimation,5.8,15.0,12.0,0.0,0.0,same score,True
+pipeline_v4,641,room_size_estimation,22.3,25.0,17.5,0.8,0.6,hurt,False
+pipeline_v4,649,room_size_estimation,12.3,15.0,2.7,0.6,0.0,hurt,False
+pipeline_v4,663,room_size_estimation,25.0,20.0,13.5,0.6,0.1,hurt,False
+pipeline_v4,669,room_size_estimation,19.3,30.0,10.5,0.0,0.1,helped,False
+pipeline_v4,674,room_size_estimation,25.6,20.0,15.6,0.6,0.3,hurt,False
+pipeline_v4,675,room_size_estimation,15.5,20.0,14.5,0.5,0.9,helped,False
+pipeline_v4,711,object_abs_distance,1.2,2.1,1.441,0.0,0.6,helped,False
+pipeline_v4,712,object_abs_distance,1.5,2.0,1.476,0.4,1.0,helped,False
+pipeline_v4,713,object_abs_distance,1.8,2.1,2.257,0.7,0.5,hurt,False
+pipeline_v4,714,object_abs_distance,0.5,1.0,0.817,0.0,0.0,same score,False
+pipeline_v4,720,object_abs_distance,0.7,2.0,0.413,0.0,0.2,helped,False
+pipeline_v4,734,object_abs_distance,2.6,2.1,3.1,0.7,0.7,same score,False
+pipeline_v4,747,object_abs_distance,3.5,2.0,1.578,0.2,0.0,hurt,False
+pipeline_v4,748,object_abs_distance,5.2,2.1,1.578,0.0,0.0,same score,False
+pipeline_v4,759,object_abs_distance,0.5,1.2,0.446,0.0,0.8,helped,False
+pipeline_v4,760,object_abs_distance,0.9,1.2,0.447,0.4,0.0,hurt,False
+pipeline_v4,761,object_abs_distance,1.5,1.2,1.061,0.6,0.5,hurt,False
+pipeline_v4,762,object_abs_distance,1.6,1.2,2.58,0.5,0.0,hurt,False
+pipeline_v4,763,object_abs_distance,1.4,1.2,2.58,0.8,0.0,hurt,False
+pipeline_v4,832,object_abs_distance,1.8,2.1,2.237,0.7,0.6,hurt,False
+pipeline_v4,850,object_abs_distance,1.2,2.0,1.2,0.0,1.0,helped,False
+pipeline_v4,851,object_abs_distance,0.4,1.2,0.154,0.0,0.0,same score,False
+pipeline_v4,875,object_abs_distance,1.9,2.0,1.33,0.9,0.5,hurt,False
+pipeline_v4,884,object_abs_distance,0.8,2.0,1.186,0.0,0.1,helped,False
+pipeline_v4,885,object_abs_distance,0.8,1.2,1.347,0.1,0.0,hurt,False
+pipeline_v4,886,object_abs_distance,0.4,1.0,0.0,0.0,0.0,same score,False
+pipeline_v4,931,object_abs_distance,4.4,1.2,0.145,0.0,0.0,same score,False
+pipeline_v4,940,object_abs_distance,3.4,2.5,1.3,0.5,0.0,hurt,False
+pipeline_v4,941,object_abs_distance,2.9,2.2,4.544,0.6,0.0,hurt,False
+pipeline_v4,942,object_abs_distance,0.8,1.2,0.224,0.1,0.0,hurt,False
+pipeline_v4,944,object_abs_distance,2.5,2.0,1.03,0.6,0.0,hurt,False
+pipeline_v4,945,object_abs_distance,3.2,2.0,1.32,0.3,0.0,hurt,False
+pipeline_v4,946,object_abs_distance,1.6,1.2,1.038,0.5,0.3,hurt,False
+pipeline_v4,947,object_abs_distance,0.7,1.2,0.88,0.0,0.5,helped,False
+pipeline_v4,948,object_abs_distance,1.9,1.2,1.002,0.3,0.1,hurt,False
+pipeline_v4,969,object_rel_direction_hard,A,B,A,0.0,1.0,helped,False
+pipeline_v4,970,object_rel_direction_hard,D,A,D,0.0,1.0,helped,False
+pipeline_v4,971,object_rel_direction_hard,B,C,B,0.0,1.0,helped,False
+pipeline_v4,1004,object_rel_direction_hard,C,A,C,0.0,1.0,helped,False
+pipeline_v4,1086,object_rel_direction_hard,D,A,D,0.0,1.0,helped,False
+pipeline_v4,1091,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v4,1151,object_rel_direction_medium,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,1223,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v4,1330,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v4,1476,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,1480,object_rel_distance,D,C,B,0.0,0.0,same score,False
+pipeline_v4,1482,object_rel_distance,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,1483,object_rel_distance,A,A,D,1.0,0.0,hurt,False
+pipeline_v4,1485,object_rel_distance,D,B,A,0.0,0.0,same score,False
+pipeline_v4,1486,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,1488,object_rel_distance,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,1489,object_rel_distance,D,C,B,0.0,0.0,same score,False
+pipeline_v4,1490,object_rel_distance,D,A,D,0.0,1.0,helped,False
+pipeline_v4,1493,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,1494,object_rel_distance,D,C,D,0.0,1.0,helped,False
+pipeline_v4,1544,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v4,1546,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v4,1553,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,1554,object_rel_direction_medium,B,B,C,1.0,0.0,hurt,False
+pipeline_v4,1556,object_rel_direction_medium,C,A,B,0.0,0.0,same score,False
+pipeline_v4,1656,object_abs_distance,4.8,2.5,1.23,0.1,0.0,hurt,False
+pipeline_v4,1657,object_abs_distance,1.8,3.1,1.283,0.0,0.5,helped,False
+pipeline_v4,1658,object_abs_distance,7.1,3.2,1.055,0.0,0.0,same score,False
+pipeline_v4,1659,object_abs_distance,7.0,3.2,2.3,0.0,0.0,same score,False
+pipeline_v4,1660,object_abs_distance,6.8,3.1,1.36,0.0,0.0,same score,False
+pipeline_v4,1661,object_abs_distance,0.4,1.1,0.338,0.0,0.7,helped,False
+pipeline_v4,1662,object_abs_distance,7.2,3.2,1.42,0.0,0.0,same score,False
+pipeline_v4,1663,object_abs_distance,7.1,3.2,1.43,0.0,0.0,same score,False
+pipeline_v4,1664,object_abs_distance,1.6,2.1,0.837,0.4,0.1,hurt,False
+pipeline_v4,1665,object_abs_distance,0.9,2.0,0.829,0.0,0.9,helped,False
+pipeline_v4,1666,object_abs_distance,1.2,2.0,1.024,0.0,0.8,helped,False
+pipeline_v4,1667,object_abs_distance,1.3,2.1,1.2,0.0,0.9,helped,False
+pipeline_v4,1668,object_abs_distance,1.6,2.1,1.2,0.4,0.5,helped,False
+pipeline_v4,1669,object_abs_distance,1.9,2.1,1.033,0.8,0.1,hurt,False
+pipeline_v4,1670,object_abs_distance,1.5,2.1,1.1,0.2,0.5,helped,False
+pipeline_v4,1678,object_abs_distance,1.9,2.1,0.391,0.8,0.0,hurt,False
+pipeline_v4,1679,object_abs_distance,4.5,3.0,0.463,0.4,0.0,hurt,False
+pipeline_v4,1680,object_abs_distance,2.5,2.1,0.053,0.7,0.0,hurt,False
+pipeline_v4,1681,object_abs_distance,2.4,1.0,1.1,0.0,0.0,same score,False
+pipeline_v4,1682,object_abs_distance,3.3,2.0,0.7,0.3,0.0,hurt,False
+pipeline_v4,1683,object_abs_distance,0.4,1.2,1.485,0.0,0.0,same score,False
+pipeline_v4,1684,object_abs_distance,3.6,2.1,0.487,0.2,0.0,hurt,False
+pipeline_v4,1685,object_abs_distance,4.5,3.2,2.347,0.5,0.1,hurt,False
+pipeline_v4,1708,object_abs_distance,2.3,2.0,1.675,0.8,0.5,hurt,False
+pipeline_v4,1709,object_abs_distance,2.3,2.5,1.552,0.9,0.4,hurt,False
+pipeline_v4,1740,object_abs_distance,3.4,2.1,2.796,0.3,0.7,helped,False
+pipeline_v4,1741,object_abs_distance,0.8,2.1,3.935,0.0,0.0,same score,False
+pipeline_v4,1742,object_abs_distance,2.5,2.4,1.1,1.0,0.0,hurt,False
+pipeline_v4,1743,object_abs_distance,1.6,2.1,1.1,0.4,0.4,same score,False
+pipeline_v4,1744,object_abs_distance,2.4,2.1,3.855,0.8,0.0,hurt,False
+pipeline_v4,1745,object_abs_distance,2.2,2.1,1.12,1.0,0.1,hurt,False
+pipeline_v4,1746,object_abs_distance,2.3,2.4,2.1,1.0,0.9,hurt,True
+pipeline_v4,1761,object_abs_distance,12.6,1.2,1.23,0.0,0.0,same score,False
+pipeline_v4,1762,object_abs_distance,11.3,2.1,1.2,0.0,0.0,same score,True
+pipeline_v4,1764,object_abs_distance,7.9,2.5,1.3,0.0,0.0,same score,False
+pipeline_v4,1765,object_abs_distance,1.8,2.1,1.275,0.7,0.5,hurt,False
+pipeline_v4,1766,object_abs_distance,8.4,3.2,1.901,0.0,0.0,same score,False
+pipeline_v4,1767,object_abs_distance,2.5,1.2,1.275,0.0,0.1,helped,False
+pipeline_v4,1768,object_abs_distance,8.3,3.2,2.4,0.0,0.0,same score,False
+pipeline_v4,1793,object_abs_distance,9.3,2.5,2.1,0.0,0.0,same score,True
+pipeline_v4,1794,object_abs_distance,9.1,1.2,1.144,0.0,0.0,same score,False
+pipeline_v4,1795,object_abs_distance,10.2,2.1,1.3,0.0,0.0,same score,False
+pipeline_v4,1796,object_abs_distance,5.3,3.1,1.49,0.2,0.0,hurt,False
+pipeline_v4,1798,object_abs_distance,8.8,3.1,1.62,0.0,0.0,same score,False
+pipeline_v4,1799,object_abs_distance,2.1,2.1,2.359,1.0,0.8,hurt,False
+pipeline_v4,1851,object_rel_direction_hard,B,B,C,1.0,0.0,hurt,False
+pipeline_v4,1853,object_rel_direction_hard,C,A,B,0.0,0.0,same score,False
+pipeline_v4,1854,object_rel_direction_hard,D,A,B,0.0,0.0,same score,False
+pipeline_v4,1855,object_rel_direction_hard,C,A,B,0.0,0.0,same score,False
+pipeline_v4,1975,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,1979,object_rel_distance,D,D,A,1.0,0.0,hurt,False
+pipeline_v4,1987,object_rel_distance,C,B,A,0.0,0.0,same score,False
+pipeline_v4,1988,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v4,1989,object_rel_distance,D,C,A,0.0,0.0,same score,False
+pipeline_v4,2019,object_rel_distance,C,C,A,1.0,0.0,hurt,False
+pipeline_v4,2021,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v4,2027,object_rel_distance,D,A,C,0.0,0.0,same score,False
+pipeline_v4,2028,object_rel_distance,B,A,C,0.0,0.0,same score,False
+pipeline_v4,2061,object_rel_distance,D,C,A,0.0,0.0,same score,False
+pipeline_v4,2063,object_rel_distance,C,D,A,0.0,0.0,same score,False
+pipeline_v4,2065,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,2066,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,2068,object_rel_distance,B,A,C,0.0,0.0,same score,False
+pipeline_v4,2094,object_rel_distance,D,A,C,0.0,0.0,same score,False
+pipeline_v4,2095,object_rel_distance,B,A,C,0.0,0.0,same score,False
+pipeline_v4,2096,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,2099,object_rel_distance,B,C,D,0.0,0.0,same score,False
+pipeline_v4,2100,object_rel_distance,C,A,D,0.0,0.0,same score,False
+pipeline_v4,2102,object_rel_distance,D,D,C,1.0,0.0,hurt,False
+pipeline_v4,2104,object_rel_distance,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,2105,object_rel_distance,B,B,C,1.0,0.0,hurt,False
+pipeline_v4,2106,object_rel_distance,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,2108,object_rel_distance,D,C,B,0.0,0.0,same score,False
+pipeline_v4,2109,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v4,2113,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,2114,object_rel_distance,A,D,B,0.0,0.0,same score,False
+pipeline_v4,2170,object_rel_distance,A,B,C,0.0,0.0,same score,False
+pipeline_v4,2171,object_rel_distance,B,A,C,0.0,0.0,same score,False
+pipeline_v4,2175,object_rel_distance,C,B,A,0.0,0.0,same score,False
+pipeline_v4,2180,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,2181,object_rel_distance,D,B,D,0.0,1.0,helped,False
+pipeline_v4,2182,object_rel_distance,C,A,B,0.0,0.0,same score,False
+pipeline_v4,2241,object_size_estimation,126,100.0,192.0,0.6,0.0,hurt,False
+pipeline_v4,2243,object_size_estimation,212,200.0,1196.0,0.9,0.0,hurt,False
+pipeline_v4,2249,object_size_estimation,35,40.0,22.7,0.8,0.3,hurt,False
+pipeline_v4,2252,object_size_estimation,201,120.0,157.1,0.2,0.6,helped,False
+pipeline_v4,2253,object_size_estimation,48,50.0,63.7,1.0,0.4,hurt,False
+pipeline_v4,2254,object_size_estimation,92,170.0,75.7,0.0,0.7,helped,False
+pipeline_v4,2255,object_size_estimation,124,140.0,148.5,0.8,0.7,hurt,False
+pipeline_v4,2256,object_size_estimation,215,200.0,836.0,0.9,0.0,hurt,False
+pipeline_v4,2263,object_size_estimation,139,100.0,46.0,0.5,0.0,hurt,False
+pipeline_v4,2264,object_size_estimation,47,50.0,137.0,0.9,0.0,hurt,False
+pipeline_v4,2265,object_size_estimation,211,200.0,77.2,0.9,0.0,hurt,False
+pipeline_v4,2267,object_size_estimation,53,50.0,171.0,0.9,0.0,hurt,False
+pipeline_v4,2268,object_size_estimation,211,200.0,158.2,0.9,0.5,hurt,False
+pipeline_v4,2269,object_size_estimation,148,100.0,55.8,0.4,0.0,hurt,False
+pipeline_v4,2294,object_size_estimation,79,75.0,55.2,0.9,0.4,hurt,False
+pipeline_v4,2295,object_size_estimation,212,200.0,671.0,0.9,0.0,hurt,False
+pipeline_v4,2296,object_size_estimation,66,45.0,33.2,0.4,0.1,hurt,False
+pipeline_v4,2331,object_size_estimation,83,100.0,162.0,0.6,0.0,hurt,False
+pipeline_v4,2332,object_size_estimation,33,15.0,7.9,0.0,0.0,same score,False
+pipeline_v4,2334,object_size_estimation,30,30.0,100.0,1.0,0.0,hurt,True
+pipeline_v4,2335,object_size_estimation,202,120.0,131.5,0.2,0.4,helped,False
+pipeline_v4,2336,object_size_estimation,62,50.0,42.0,0.7,0.4,hurt,False
+pipeline_v4,2337,object_size_estimation,13,10.0,13.0,0.6,1.0,helped,True
+pipeline_v4,2338,object_size_estimation,23,40.0,28.5,0.0,0.6,helped,False
+pipeline_v4,2363,object_size_estimation,57,40.0,50.0,0.5,0.8,helped,True
+pipeline_v4,2364,object_size_estimation,183,120.0,76.2,0.4,0.0,hurt,False
+pipeline_v4,2367,object_size_estimation,224,200.0,92.1,0.8,0.0,hurt,False
+pipeline_v4,2368,object_size_estimation,24,30.0,10.0,0.6,0.0,hurt,True
+pipeline_v4,2369,object_size_estimation,25,100.0,22.7,0.0,0.9,helped,False
+pipeline_v4,2402,object_size_estimation,223,200.0,102.5,0.8,0.0,hurt,False
+pipeline_v4,2403,object_size_estimation,28,13.0,10.0,0.0,0.0,same score,True
+pipeline_v4,2404,object_size_estimation,32,100.0,293.0,0.0,0.0,same score,False
+pipeline_v4,2405,object_size_estimation,58,50.0,100.0,0.8,0.0,hurt,True
+pipeline_v4,2407,object_size_estimation,46,40.0,124.8,0.8,0.0,hurt,False
+pipeline_v4,2408,object_size_estimation,31,30.0,318.0,1.0,0.0,hurt,False
+pipeline_v4,2409,object_size_estimation,174,180.0,140.0,1.0,0.7,hurt,True
+pipeline_v4,2410,object_size_estimation,14,10.0,7.8,0.5,0.2,hurt,False
+pipeline_v4,2411,object_size_estimation,40,30.0,27.7,0.6,0.4,hurt,False
+pipeline_v4,2412,object_size_estimation,26,30.0,26.9,0.7,1.0,helped,False
+pipeline_v4,2452,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v4,2544,object_counting,3,2.0,3.0,0.4,1.0,helped,False
+pipeline_v4,2545,object_counting,40,20.0,16.0,0.1,0.0,hurt,False
+pipeline_v4,2563,object_counting,36,12.0,10.0,0.0,0.0,same score,False
+pipeline_v4,2565,object_counting,12,10.0,1.0,0.7,0.0,hurt,False
+pipeline_v4,2567,object_counting,3,2.0,1.0,0.4,0.0,hurt,False
+pipeline_v4,2572,object_counting,3,1.0,4.0,0.0,0.4,helped,False
+pipeline_v4,2583,object_counting,2,1.0,0.0,0.1,0.0,hurt,False
+pipeline_v4,2595,object_counting,9,3.0,4.0,0.0,0.0,same score,False
+pipeline_v4,2597,object_counting,7,2.0,5.0,0.0,0.5,helped,False
+pipeline_v4,2598,object_counting,2,1.0,4.0,0.1,0.0,hurt,False
+pipeline_v4,2600,object_counting,3,1.0,2.0,0.0,0.4,helped,False
+pipeline_v4,2609,object_counting,9,5.0,6.0,0.2,0.4,helped,False
+pipeline_v4,2610,object_counting,8,3.0,10.0,0.0,0.6,helped,False
+pipeline_v4,2611,object_counting,3,1.0,6.0,0.0,0.0,same score,False
+pipeline_v4,2612,object_counting,6,4.0,6.0,0.4,1.0,helped,False
+pipeline_v4,2613,object_counting,9,4.0,6.0,0.0,0.4,helped,False
+pipeline_v4,2615,object_counting,4,2.0,4.0,0.1,1.0,helped,False
+pipeline_v4,2619,object_counting,19,4.0,13.0,0.0,0.4,helped,False
+pipeline_v4,2620,object_counting,16,10.0,5.0,0.3,0.0,hurt,False
+pipeline_v4,2621,object_counting,10,3.0,5.0,0.0,0.1,helped,False
+pipeline_v4,2622,object_counting,8,2.0,6.0,0.0,0.6,helped,False
+pipeline_v4,2623,object_counting,4,1.0,7.0,0.0,0.0,same score,False
+pipeline_v4,2624,object_counting,11,10.0,6.0,0.9,0.1,hurt,False
+pipeline_v4,2655,object_counting,5,3.0,10.0,0.3,0.0,hurt,False
+pipeline_v4,2656,object_counting,2,1.0,0.0,0.1,0.0,hurt,False
+pipeline_v4,2673,room_size_estimation,55.0,100.0,11.0,0.0,0.0,same score,False
+pipeline_v4,2678,room_size_estimation,52.3,100.0,11.1,0.0,0.0,same score,False
+pipeline_v4,2679,room_size_estimation,6.2,15.0,10.0,0.0,0.0,same score,False
+pipeline_v4,2681,room_size_estimation,8.8,15.0,11.5,0.0,0.4,helped,False
+pipeline_v4,2682,room_size_estimation,9.1,12.5,10.2,0.3,0.8,helped,False
+pipeline_v4,2692,room_size_estimation,8.9,15.0,10.5,0.0,0.7,helped,False
+pipeline_v4,2699,room_size_estimation,23.0,25.0,12.0,0.9,0.1,hurt,False
+pipeline_v4,2704,room_size_estimation,101.2,40.0,20.1,0.0,0.0,same score,False
+pipeline_v4,2711,room_size_estimation,34.2,25.0,13.7,0.5,0.0,hurt,False
+pipeline_v4,2811,obj_appearance_order,C,D,B,0.0,0.0,same score,False
+pipeline_v4,2812,obj_appearance_order,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,2813,obj_appearance_order,C,B,A,0.0,0.0,same score,False
+pipeline_v4,2814,obj_appearance_order,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,2817,obj_appearance_order,D,A,D,0.0,1.0,helped,False
+pipeline_v4,2818,obj_appearance_order,B,D,B,0.0,1.0,helped,False
+pipeline_v4,2819,obj_appearance_order,C,A,C,0.0,1.0,helped,False
+pipeline_v4,2824,obj_appearance_order,D,D,B,1.0,0.0,hurt,False
+pipeline_v4,2826,obj_appearance_order,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,2830,obj_appearance_order,D,A,B,0.0,0.0,same score,False
+pipeline_v4,2835,obj_appearance_order,C,A,B,0.0,0.0,same score,False
+pipeline_v4,2836,obj_appearance_order,D,A,B,0.0,0.0,same score,False
+pipeline_v4,2837,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v4,2840,obj_appearance_order,C,D,B,0.0,0.0,same score,False
+pipeline_v4,2923,obj_appearance_order,D,D,C,1.0,0.0,hurt,False
+pipeline_v4,2924,obj_appearance_order,B,A,D,0.0,0.0,same score,False
+pipeline_v4,2925,obj_appearance_order,C,A,B,0.0,0.0,same score,False
+pipeline_v4,2929,obj_appearance_order,D,D,B,1.0,0.0,hurt,False
+pipeline_v4,2930,obj_appearance_order,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,2932,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v4,2933,obj_appearance_order,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,2937,obj_appearance_order,A,D,A,0.0,1.0,helped,False
+pipeline_v4,2939,obj_appearance_order,C,B,C,0.0,1.0,helped,False
+pipeline_v4,2942,obj_appearance_order,D,D,C,1.0,0.0,hurt,False
+pipeline_v4,2943,obj_appearance_order,C,D,B,0.0,0.0,same score,False
+pipeline_v4,2945,obj_appearance_order,B,C,B,0.0,1.0,helped,False
+pipeline_v4,2946,obj_appearance_order,D,D,A,1.0,0.0,hurt,False
+pipeline_v4,2950,object_rel_distance,C,C,A,1.0,0.0,hurt,False
+pipeline_v4,2993,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v4,3025,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v4,3027,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v4,3028,object_rel_distance,B,C,B,0.0,1.0,helped,False
+pipeline_v4,3029,object_rel_distance,D,C,B,0.0,0.0,same score,False
+pipeline_v4,3030,object_rel_distance,A,B,A,0.0,1.0,helped,False
+pipeline_v4,3060,object_rel_distance,B,B,C,1.0,0.0,hurt,False
+pipeline_v4,3061,object_rel_distance,C,A,B,0.0,0.0,same score,False
+pipeline_v4,3062,object_rel_distance,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,3064,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v4,3089,object_rel_distance,D,A,D,0.0,1.0,helped,False
+pipeline_v4,3091,object_rel_distance,C,C,A,1.0,0.0,hurt,False
+pipeline_v4,3093,object_rel_distance,D,D,B,1.0,0.0,hurt,False
+pipeline_v4,3095,object_rel_distance,B,A,D,0.0,0.0,same score,False
+pipeline_v4,3096,object_rel_distance,D,A,D,0.0,1.0,helped,False
+pipeline_v4,3099,object_rel_distance,D,D,C,1.0,0.0,hurt,False
+pipeline_v4,3160,object_rel_distance,B,B,A,1.0,0.0,hurt,False
+pipeline_v4,3161,object_rel_distance,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,3206,object_size_estimation,221,200.0,145.0,0.9,0.4,hurt,False
+pipeline_v4,3208,object_size_estimation,171,140.0,65.5,0.7,0.0,hurt,False
+pipeline_v4,3209,object_size_estimation,90,100.0,78.7,0.8,0.8,same score,False
+pipeline_v4,3210,object_size_estimation,114,200.0,164.4,0.0,0.2,helped,False
+pipeline_v4,3212,object_size_estimation,55,30.0,42.6,0.1,0.6,helped,False
+pipeline_v4,3213,object_size_estimation,209,200.0,73.4,1.0,0.0,hurt,False
+pipeline_v4,3214,object_size_estimation,95,40.0,50.0,0.0,0.1,helped,True
+pipeline_v4,3273,object_size_estimation,115,100.0,86.2,0.8,0.5,hurt,False
+pipeline_v4,3275,object_size_estimation,49,50.0,57.8,1.0,0.7,hurt,False
+pipeline_v4,3276,object_size_estimation,34,100.0,28.1,0.0,0.7,helped,False
+pipeline_v4,3277,object_size_estimation,25,30.0,40.0,0.6,0.0,hurt,True
+pipeline_v4,3278,object_size_estimation,73,100.0,445.0,0.3,0.0,hurt,False
+pipeline_v4,3299,object_size_estimation,139,190.0,140.0,0.3,1.0,helped,True
+pipeline_v4,3300,object_size_estimation,221,180.0,132.4,0.7,0.2,hurt,False
+pipeline_v4,3301,object_size_estimation,155,180.0,67.4,0.7,0.0,hurt,False
+pipeline_v4,3302,object_size_estimation,43,40.0,49.4,0.9,0.8,hurt,False
+pipeline_v4,3341,object_size_estimation,191,140.0,77.8,0.5,0.0,hurt,False
+pipeline_v4,3342,object_size_estimation,192,190.0,179.9,1.0,0.9,hurt,False
+pipeline_v4,3343,object_size_estimation,172,100.0,39.7,0.2,0.0,hurt,False
+pipeline_v4,3344,object_size_estimation,202,205.0,426.0,1.0,0.0,hurt,False
+pipeline_v4,3345,object_size_estimation,280,180.0,154.7,0.3,0.2,hurt,False
+pipeline_v4,3357,object_size_estimation,47,40.0,59.3,0.8,0.5,hurt,False
+pipeline_v4,3358,object_size_estimation,151,100.0,95.6,0.4,0.3,hurt,False
+pipeline_v4,3359,object_size_estimation,29,10.0,39.9,0.0,0.3,helped,False
+pipeline_v4,3360,object_size_estimation,176,200.0,36.8,0.8,0.0,hurt,False
+pipeline_v4,3361,object_size_estimation,269,160.0,94.9,0.2,0.0,hurt,False
+pipeline_v4,3371,object_size_estimation,78,100.0,46.5,0.5,0.2,hurt,False
+pipeline_v4,3372,object_size_estimation,86,100.0,318.0,0.7,0.0,hurt,False
+pipeline_v4,3373,object_size_estimation,51,40.0,38.0,0.6,0.5,hurt,False
+pipeline_v4,3374,object_size_estimation,133,205.0,104.5,0.0,0.6,helped,False
+pipeline_v4,3376,object_size_estimation,146,140.0,144.0,1.0,1.0,same score,False
+pipeline_v4,3408,object_size_estimation,85,40.0,39.9,0.0,0.0,same score,False
+pipeline_v4,3409,object_size_estimation,96,100.0,21.2,1.0,0.0,hurt,False
+pipeline_v4,3410,object_size_estimation,188,200.0,82.7,0.9,0.0,hurt,False
+pipeline_v4,3469,object_size_estimation,205,200.0,209.5,1.0,1.0,same score,False
+pipeline_v4,3470,object_size_estimation,42,40.0,43.0,1.0,1.0,same score,False
+pipeline_v4,3472,object_size_estimation,145,100.0,216.8,0.4,0.1,hurt,False
+pipeline_v4,3473,object_size_estimation,156,100.0,70.9,0.3,0.0,hurt,False
+pipeline_v4,3477,object_size_estimation,156,120.0,81.7,0.6,0.1,hurt,False
+pipeline_v4,3478,object_size_estimation,29,100.0,40.1,0.0,0.3,helped,False
+pipeline_v4,3479,object_size_estimation,176,100.0,20.8,0.2,0.0,hurt,False
+pipeline_v4,3480,object_size_estimation,101,40.0,49.2,0.0,0.0,same score,False
+pipeline_v4,3481,object_size_estimation,148,200.0,130.5,0.3,0.8,helped,False
+pipeline_v4,3482,object_size_estimation,40,40.0,11.6,1.0,0.0,hurt,False
+pipeline_v4,3490,object_size_estimation,225,200.0,237.0,0.8,0.9,helped,False
+pipeline_v4,3491,object_size_estimation,201,190.0,101.0,0.9,0.1,hurt,False
+pipeline_v4,3492,object_size_estimation,79,100.0,85.0,0.5,0.9,helped,False
+pipeline_v4,3493,object_size_estimation,62,40.0,33.5,0.3,0.1,hurt,False
+pipeline_v4,3494,object_size_estimation,55,100.0,41.3,0.0,0.6,helped,False
+pipeline_v4,3495,object_size_estimation,78,100.0,152.0,0.5,0.0,hurt,False
+pipeline_v4,3496,object_size_estimation,116,205.0,103.0,0.0,0.8,helped,False
+pipeline_v4,3497,object_size_estimation,165,180.0,1796.0,0.9,0.0,hurt,False
+pipeline_v4,3560,object_size_estimation,228,200.0,213.0,0.8,0.9,helped,False
+pipeline_v4,3561,object_size_estimation,96,100.0,351.0,1.0,0.0,hurt,False
+pipeline_v4,3562,object_size_estimation,73,100.0,68.5,0.3,0.9,helped,False
+pipeline_v4,3563,object_size_estimation,68,50.0,45.2,0.5,0.4,hurt,False
+pipeline_v4,3564,object_size_estimation,130,100.0,45.3,0.6,0.0,hurt,False
+pipeline_v4,3565,object_rel_direction_hard,C,D,B,0.0,0.0,same score,False
+pipeline_v4,3599,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,3602,object_rel_direction_hard,D,A,B,0.0,0.0,same score,False
+pipeline_v4,3603,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,3627,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v4,3665,object_rel_direction_hard,C,A,D,0.0,0.0,same score,False
+pipeline_v4,3696,object_rel_direction_hard,D,C,D,0.0,1.0,helped,False
+pipeline_v4,3697,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v4,3737,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,3746,object_rel_direction_easy,B,B,A,1.0,0.0,hurt,False
+pipeline_v4,3747,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,3758,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v4,3760,object_rel_direction_easy,A,B,A,0.0,1.0,helped,False
+pipeline_v4,3762,room_size_estimation,11.0,15.0,11.3,0.3,1.0,helped,False
+pipeline_v4,3763,room_size_estimation,20.4,20.0,1.759,1.0,0.0,hurt,False
+pipeline_v4,3778,room_size_estimation,8.2,15.0,10.5,0.0,0.5,helped,False
+pipeline_v4,3783,room_size_estimation,15.9,25.0,16.8,0.0,0.9,helped,False
+pipeline_v4,3795,room_size_estimation,26.9,25.0,14.7,0.9,0.1,hurt,False
+pipeline_v4,3798,room_size_estimation,12.4,15.0,6.2,0.6,0.1,hurt,False
+pipeline_v4,3802,room_size_estimation,22.2,30.0,14.7,0.3,0.4,helped,False
+pipeline_v4,3814,room_size_estimation,5.4,10.0,11.7,0.0,0.0,same score,False
+pipeline_v4,3827,room_size_estimation,14.8,25.0,12.7,0.0,0.8,helped,False
+pipeline_v4,3830,room_size_estimation,14.1,12.5,3.1,0.8,0.0,hurt,False
+pipeline_v4,3831,room_size_estimation,18.7,30.0,13.7,0.0,0.5,helped,False
+pipeline_v4,3834,room_size_estimation,13.0,15.0,11.5,0.7,0.8,helped,False
+pipeline_v4,3848,room_size_estimation,17.4,15.0,10.5,0.8,0.3,hurt,False
+pipeline_v4,4174,obj_appearance_order,D,D,B,1.0,0.0,hurt,False
+pipeline_v4,4175,obj_appearance_order,C,C,B,1.0,0.0,hurt,False
+pipeline_v4,4239,object_rel_direction_medium,C,A,B,0.0,0.0,same score,False
+pipeline_v4,4240,object_rel_direction_medium,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,4282,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v4,4305,object_rel_direction_medium,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,4309,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v4,4320,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,4350,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,4351,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v4,4360,object_rel_direction_medium,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,4361,object_rel_direction_medium,B,A,C,0.0,0.0,same score,False
+pipeline_v4,4363,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v4,4382,object_rel_direction_medium,C,A,B,0.0,0.0,same score,False
+pipeline_v4,4383,object_rel_direction_medium,B,A,C,0.0,0.0,same score,False
+pipeline_v4,4471,object_counting,10,4.0,16.0,0.0,0.0,same score,False
+pipeline_v4,4472,object_counting,2,1.0,6.0,0.1,0.0,hurt,False
+pipeline_v4,4473,object_counting,2,2.0,1.0,1.0,0.1,hurt,False
+pipeline_v4,4482,object_counting,4,2.0,4.0,0.1,1.0,helped,False
+pipeline_v4,4483,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v4,4484,object_counting,2,2.0,1.0,1.0,0.1,hurt,False
+pipeline_v4,4485,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v4,4489,object_counting,2,1.0,3.0,0.1,0.1,same score,False
+pipeline_v4,4490,object_counting,8,4.0,6.0,0.1,0.6,helped,False
+pipeline_v4,4554,object_counting,2,1.0,3.0,0.1,0.1,same score,False
+pipeline_v4,4562,object_counting,3,2.0,6.0,0.4,0.0,hurt,False
+pipeline_v4,4563,object_counting,18,10.0,27.0,0.2,0.1,hurt,False
+pipeline_v4,4565,object_counting,2,1.0,5.0,0.1,0.0,hurt,False
+pipeline_v4,4606,object_counting,6,4.0,6.0,0.4,1.0,helped,False
+pipeline_v4,4607,object_counting,2,1.0,3.0,0.1,0.1,same score,False
+pipeline_v4,4608,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v4,4609,object_abs_distance,0.9,1.2,1.451,0.4,0.0,hurt,False
+pipeline_v4,4610,object_abs_distance,1.7,2.1,1.272,0.6,0.5,hurt,False
+pipeline_v4,4611,object_abs_distance,2.9,2.1,1.1,0.5,0.0,hurt,False
+pipeline_v4,4612,object_abs_distance,3.9,2.5,3.877,0.3,1.0,helped,False
+pipeline_v4,4613,object_abs_distance,3.7,2.1,3.755,0.2,1.0,helped,False
+pipeline_v4,4614,object_abs_distance,1.1,2.0,1.387,0.0,0.5,helped,False
+pipeline_v4,4615,object_abs_distance,2.5,2.1,1.111,0.7,0.0,hurt,False
+pipeline_v4,4616,object_abs_distance,3.2,2.5,0.0,0.6,0.0,hurt,False
+pipeline_v4,4617,object_abs_distance,1.3,2.0,0.75,0.0,0.2,helped,False
+pipeline_v4,4618,object_abs_distance,4.9,2.1,0.58,0.0,0.0,same score,False
+pipeline_v4,4680,object_abs_distance,0.8,2.1,3.93,0.0,0.0,same score,False
+pipeline_v4,4681,object_abs_distance,0.4,2.0,3.434,0.0,0.0,same score,False
+pipeline_v4,4682,object_abs_distance,2.8,2.1,3.94,0.6,0.2,hurt,False
+pipeline_v4,4683,object_abs_distance,0.8,2.0,0.68,0.0,0.8,helped,False
+pipeline_v4,4684,object_abs_distance,0.5,2.0,3.549,0.0,0.0,same score,False
+pipeline_v4,4685,object_abs_distance,2.4,2.1,2.77,0.8,0.7,hurt,False
+pipeline_v4,4686,object_abs_distance,2.1,2.1,1.97,1.0,0.9,hurt,False
+pipeline_v4,4710,object_abs_distance,3.5,3.0,3.1,0.8,0.8,same score,False
+pipeline_v4,4711,object_abs_distance,3.2,3.0,1.32,0.9,0.0,hurt,False
+pipeline_v4,4712,object_abs_distance,3.7,3.1,2.1,0.7,0.2,hurt,False
+pipeline_v4,4713,object_abs_distance,0.5,1.2,0.812,0.0,0.0,same score,False
+pipeline_v4,4714,object_abs_distance,1.3,2.2,1.293,0.0,1.0,helped,False
+pipeline_v4,4743,object_abs_distance,3.0,1.2,0.0,0.0,0.0,same score,False
+pipeline_v4,4744,object_abs_distance,4.2,1.1,0.064,0.0,0.0,same score,False
+pipeline_v4,4745,object_abs_distance,4.2,2.5,1.634,0.2,0.0,hurt,False
+pipeline_v4,4746,object_abs_distance,5.3,2.5,2.507,0.0,0.0,same score,False
+pipeline_v4,4747,object_abs_distance,1.1,2.0,1.057,0.0,1.0,helped,False
+pipeline_v4,4748,object_abs_distance,1.4,2.5,1.312,0.0,0.9,helped,False
+pipeline_v4,4763,object_abs_distance,1.4,1.2,2.533,0.8,0.0,hurt,False
+pipeline_v4,4764,object_abs_distance,3.8,2.1,6.163,0.2,0.0,hurt,False
+pipeline_v4,4765,object_abs_distance,1.8,2.1,4.328,0.7,0.0,hurt,False
+pipeline_v4,4766,object_abs_distance,0.9,2.1,2.3,0.0,0.0,same score,False
+pipeline_v4,4767,object_abs_distance,2.9,2.1,4.906,0.5,0.0,hurt,False
+pipeline_v4,4768,object_abs_distance,0.7,2.1,1.63,0.0,0.0,same score,False
+pipeline_v4,4769,object_abs_distance,4.9,2.5,1.5,0.1,0.0,hurt,False
+pipeline_v4,4774,object_abs_distance,2.3,2.0,3.003,0.8,0.4,hurt,False
+pipeline_v4,4775,object_abs_distance,3.0,2.0,1.394,0.4,0.0,hurt,False
+pipeline_v4,4776,object_abs_distance,2.6,2.0,1.36,0.6,0.1,hurt,False
+pipeline_v4,4777,object_abs_distance,2.7,2.1,1.414,0.6,0.1,hurt,False
+pipeline_v4,4778,object_abs_distance,1.2,2.0,1.414,0.0,0.7,helped,False
+pipeline_v4,4779,object_abs_distance,4.6,2.1,3.2,0.0,0.4,helped,False
+pipeline_v4,4780,object_abs_distance,2.7,2.0,1.034,0.5,0.0,hurt,False
+pipeline_v4,4807,object_abs_distance,1.2,2.1,2.101,0.0,0.0,same score,False
+pipeline_v4,4808,object_abs_distance,1.0,2.1,1.566,0.0,0.0,same score,False
+pipeline_v4,4809,object_abs_distance,0.8,2.0,1.12,0.0,0.2,helped,False
+pipeline_v4,4810,object_abs_distance,1.7,2.1,1.1,0.6,0.3,hurt,False
+pipeline_v4,4811,object_abs_distance,0.9,1.2,1.283,0.4,0.2,hurt,False
+pipeline_v4,4870,object_abs_distance,2.3,2.0,0.413,0.8,0.0,hurt,False
+pipeline_v4,4871,object_abs_distance,2.9,2.0,1.5,0.4,0.1,hurt,False
+pipeline_v4,4872,object_abs_distance,1.0,2.0,2.016,0.0,0.0,same score,False
+pipeline_v4,4873,object_abs_distance,2.1,2.0,1.3,1.0,0.3,hurt,False
+pipeline_v4,4874,object_abs_distance,1.0,2.0,2.031,0.0,0.0,same score,False
+pipeline_v4,4875,object_abs_distance,1.0,1.2,1.047,0.7,1.0,helped,False
+pipeline_v4,4876,object_abs_distance,2.9,2.5,5.236,0.8,0.0,hurt,False
+pipeline_v4,4879,object_abs_distance,4.4,2.1,5.085,0.0,0.7,helped,False
+pipeline_v4,4880,object_abs_distance,4.7,2.1,5.736,0.0,0.6,helped,False
+pipeline_v4,4881,object_abs_distance,4.7,2.2,5.294,0.0,0.8,helped,False
+pipeline_v4,4882,object_abs_distance,2.2,1.2,1.412,0.1,0.3,helped,False
+pipeline_v4,4889,object_abs_distance,2.0,2.1,2.726,1.0,0.3,hurt,False
+pipeline_v4,4890,object_abs_distance,3.1,2.5,0.879,0.7,0.0,hurt,False
+pipeline_v4,4891,object_abs_distance,1.8,2.0,2.277,0.8,0.5,hurt,False
+pipeline_v4,4892,object_abs_distance,0.7,1.1,1.116,0.0,0.0,same score,False
+pipeline_v4,4893,object_abs_distance,2.0,2.1,1.723,1.0,0.8,hurt,False
+pipeline_v4,4894,object_abs_distance,1.1,2.0,2.584,0.0,0.0,same score,False
+pipeline_v4,4895,object_abs_distance,1.8,1.1,1.99,0.3,0.8,helped,False
+pipeline_v4,4952,object_abs_distance,1.0,1.2,1.225,0.7,0.6,hurt,False
+pipeline_v4,4953,object_abs_distance,1.3,2.1,1.83,0.0,0.2,helped,False
+pipeline_v4,4954,object_abs_distance,2.4,1.2,1.307,0.1,0.1,same score,False
+pipeline_v4,4955,object_abs_distance,1.0,1.2,0.0,0.7,0.0,hurt,False
+pipeline_v4,4956,object_abs_distance,1.0,1.2,1.277,0.7,0.5,hurt,False
+pipeline_v4,4957,object_abs_distance,1.1,2.1,0.824,0.0,0.5,helped,False
+pipeline_v4,4958,object_abs_distance,2.2,1.1,0.0,0.1,0.0,hurt,False
+pipeline_v4,4966,route_planning,A,A,C,1.0,0.0,hurt,False
+pipeline_v4,4979,route_planning,A,D,C,0.0,0.0,same score,False
+pipeline_v4,4983,route_planning,B,D,B,0.0,1.0,helped,False
+pipeline_v4,5025,route_planning,A,D,B,0.0,0.0,same score,False
+pipeline_v4,5036,route_planning,C,B,C,0.0,1.0,helped,False
+pipeline_v4,5044,route_planning,A,A,B,1.0,0.0,hurt,False
+pipeline_v4,5050,route_planning,D,C,A,0.0,0.0,same score,False
+pipeline_v4,5086,route_planning,B,A,C,0.0,0.0,same score,False
+pipeline_v4,5096,route_planning,B,A,B,0.0,1.0,helped,False
+pipeline_v4,5113,route_planning,C,A,D,0.0,0.0,same score,False
+pipeline_v4,5134,route_planning,D,A,B,0.0,0.0,same score,False
+pipeline_v4,5137,route_planning,A,C,B,0.0,0.0,same score,False

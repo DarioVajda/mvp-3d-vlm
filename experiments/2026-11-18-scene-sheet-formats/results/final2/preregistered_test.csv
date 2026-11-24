@@ -1,0 +1,4 @@
+test,n,helped,hurt,p,holm p,verdict,difference,95% low,95% high
+primary: distance,309,53.0,89.0,0.0031718677905301705,,NOT CONFIRMED,,,
+secondary: relative direction,110,20.0,14.0,0.39152830513194203,0.7830566102638841,NOT SUPPORTED,,,
+secondary: full method overall,798,,,0.8612,0.8612,NOT SUPPORTED,0.2755628260903791,-2.4194191010151207,2.9668316649524744

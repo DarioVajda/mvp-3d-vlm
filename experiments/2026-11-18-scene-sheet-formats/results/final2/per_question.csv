@@ -1,0 +1,799 @@
+id,scene,type,truth,A_video,pipeline_v4,pipeline sheet,gold sheet
+19,arkitscenes/42445984,object_counting,12,6 (0.10),1 (0.00),"chair x1, room x1",chair x12
+28,arkitscenes/42446517,object_counting,3,1 (0.00),2 (0.40),"room x3, table x2",table x3
+29,arkitscenes/42446517,object_counting,2,2 (1.00),5 (0.00),"bed x6, room x3",bed x2
+36,arkitscenes/42897564,object_counting,7,4 (0.20),10 (0.20),"chair x9, room x2",chair x7
+47,arkitscenes/42898527,object_counting,2,2 (1.00),2 (1.00),"chair x2, room x3",chair x2
+62,arkitscenes/42899712,object_counting,3,1 (0.00),1 (0.00),"room x3, sofa x1",sofa x3
+63,arkitscenes/42899712,object_counting,2,2 (1.00),3 (0.10),"room x3, table x3",table x2
+64,arkitscenes/42899712,object_counting,2,3 (0.10),3 (0.10),"chair x3, room x3",chair x2
+72,arkitscenes/44358518,object_counting,2,1 (0.10),2 (1.00),"room x1, sofa x2",sofa x2
+73,arkitscenes/44358518,object_counting,2,2 (1.00),3 (0.10),"room x1, table x3",table x2
+74,arkitscenes/44358518,object_counting,2,2 (1.00),5 (0.00),"chair x4, room x1",chair x2
+75,arkitscenes/44358518,object_counting,2,1 (0.10),3 (0.10),"room x1, tv x3",tv x2
+96,arkitscenes/47115460,object_counting,2,2 (1.00),3 (0.10),"chair x3, room x3",chair x2
+122,arkitscenes/47331990,object_counting,2,1 (0.10),1 (0.10),room x1,sofa x2
+144,arkitscenes/47334362,object_counting,3,2 (0.40),4 (0.40),"room x3, sofa x5",sofa x3
+152,arkitscenes/47429977,object_counting,2,1 (0.10),1 (0.10),room x4,sofa x2
+153,arkitscenes/47429977,object_counting,2,1 (0.10),1 (0.10),"room x4, table x1",table x2
+154,arkitscenes/47429977,object_counting,2,1 (0.10),1 (0.10),room x4,stool x2
+155,arkitscenes/47429977,object_counting,3,2 (0.40),1 (0.00),"chair x1, room x4",chair x3
+160,arkitscenes/47430034,object_counting,3,2 (0.40),2 (0.40),"room x4, table x2",table x3
+161,arkitscenes/47430034,object_counting,3,1 (0.00),2 (0.40),"chair x2, room x4",chair x3
+162,arkitscenes/47430034,object_counting,2,1 (0.10),1 (0.10),room x4,sofa x2
+163,arkitscenes/47430038,object_counting,4,2 (0.10),3 (0.60),"chair x3, room x2",chair x4
+209,arkitscenes/42445026,object_size_estimation,96,100 (1.00),180 (0.00),tv x2,tv x1
+210,arkitscenes/42445026,object_size_estimation,156,180 (0.70),85.7 (0.10),sofa x1,sofa x1
+211,arkitscenes/42445026,object_size_estimation,128,140 (0.90),146 (0.80),table x2,table x1
+212,arkitscenes/42445026,object_size_estimation,69,70 (1.00),64.7 (0.90),chair x1,chair x1
+220,arkitscenes/42445984,object_size_estimation,356,180 (0.10),188.3 (0.10),table x1,table x1
+221,arkitscenes/42445984,object_size_estimation,185,100 (0.10),61.6 (0.00),fireplace x1,fireplace x1
+236,arkitscenes/42446517,object_size_estimation,84,100 (0.70),47.9 (0.20),chair x2,chair x1
+237,arkitscenes/42446517,object_size_estimation,111,100 (0.90),100 (0.90),(empty),tv x1
+256,arkitscenes/42897564,object_size_estimation,108,100 (0.90),134 (0.60),table x4,table x1
+257,arkitscenes/42897564,object_size_estimation,71,50 (0.50),100 (0.20),(empty),stool x1
+258,arkitscenes/42897564,object_size_estimation,93,190 (0.00),150 (0.00),(empty),refrigerator x1
+272,arkitscenes/42898527,object_size_estimation,59,100 (0.00),100 (0.00),(empty),stove x1
+273,arkitscenes/42898527,object_size_estimation,91,90 (1.00),68 (0.50),washer x1,washer x1
+274,arkitscenes/42898527,object_size_estimation,91,60 (0.40),44.7 (0.00),dishwasher x1,dishwasher x1
+275,arkitscenes/42898527,object_size_estimation,184,178 (1.00),84.4 (0.00),refrigerator x1,refrigerator x1
+306,arkitscenes/42899712,object_size_estimation,90,100 (0.80),100 (0.80),(empty),tv x1
+307,arkitscenes/42899712,object_size_estimation,61,100 (0.00),100 (0.00),(empty),stove x1
+322,arkitscenes/44358518,object_size_estimation,158,120 (0.60),84.8 (0.10),fireplace x2,fireplace x1
+373,arkitscenes/47115460,object_size_estimation,60,60 (1.00),68 (0.80),stove x1,stove x1
+374,arkitscenes/47115460,object_size_estimation,89,100 (0.80),370 (0.00),table x2,table x1
+396,arkitscenes/47331068,object_size_estimation,76,100 (0.40),100 (0.40),(empty),table x1
+397,arkitscenes/47331068,object_size_estimation,142,170 (0.70),75.2 (0.10),bathtub x1,bathtub x1
+398,arkitscenes/47331068,object_size_estimation,53,100 (0.00),44.7 (0.70),toilet x1,toilet x1
+426,arkitscenes/47331990,object_size_estimation,213,200 (0.90),97.4 (0.00),bed x3,bed x1
+427,arkitscenes/47331990,object_size_estimation,112,120 (0.90),100 (0.80),(empty),tv x1
+444,arkitscenes/47333441,object_size_estimation,75,100 (0.40),37.4 (0.00),toilet x3,toilet x1
+445,arkitscenes/47333441,object_size_estimation,78,50 (0.30),45.2 (0.20),chair x1,chair x1
+446,arkitscenes/47333441,object_size_estimation,87,90 (1.00),260 (0.00),washer x2,washer x1
+447,arkitscenes/47333441,object_size_estimation,40,50 (0.60),45.7 (0.80),stool x1,stool x1
+490,arkitscenes/47334362,object_size_estimation,111,100 (0.90),50 (0.00),tv x1,tv x1
+491,arkitscenes/47334362,object_size_estimation,82,100 (0.60),53.4 (0.40),table x1,table x1
+503,arkitscenes/47429977,object_size_estimation,96,100 (1.00),19.9 (0.00),tv x1,tv x1
+504,arkitscenes/47429977,object_size_estimation,58,100 (0.00),100 (0.00),(empty),stove x1
+505,arkitscenes/47429977,object_size_estimation,114,190 (0.00),31.5 (0.00),refrigerator x1,refrigerator x1
+513,arkitscenes/47430034,object_size_estimation,205,200 (1.00),80.1 (0.00),bed x1,bed x1
+514,arkitscenes/47430034,object_size_estimation,46,50 (0.90),67 (0.10),stool x1,stool x1
+515,arkitscenes/47430034,object_size_estimation,80,100 (0.60),100 (0.60),(empty),tv x1
+516,arkitscenes/47430038,object_size_estimation,168,170 (1.00),20.9 (0.00),refrigerator x2,refrigerator x1
+517,arkitscenes/47430038,object_size_estimation,58,100 (0.00),100 (0.00),(empty),stove x1
+518,arkitscenes/47430038,object_size_estimation,72,100 (0.30),93.5 (0.50),table x1,table x1
+550,arkitscenes/42445026,room_size_estimation,11.6,15 (0.50),11.2 (1.00),room x2,(empty)
+554,arkitscenes/42445984,room_size_estimation,24.9,30 (0.60),10.5 (0.00),room x1,(empty)
+561,arkitscenes/42446517,room_size_estimation,22.6,20 (0.80),12.5 (0.20),room x3,(empty)
+570,arkitscenes/42897564,room_size_estimation,16.9,20 (0.70),15.8 (0.90),room x2,(empty)
+576,arkitscenes/42898527,room_size_estimation,20.9,25 (0.70),15.2 (0.50),room x3,(empty)
+589,arkitscenes/42899712,room_size_estimation,33.5,30 (0.80),10.5 (0.00),room x3,(empty)
+598,arkitscenes/44358518,room_size_estimation,26.4,25 (0.90),18.1 (0.40),room x1,(empty)
+621,arkitscenes/47115460,room_size_estimation,24.1,30 (0.60),13.3 (0.20),room x3,(empty)
+630,arkitscenes/47331068,room_size_estimation,5.8,15 (0.00),12 (0.00),(empty),(empty)
+641,arkitscenes/47331990,room_size_estimation,22.3,25 (0.80),17.5 (0.60),room x1,(empty)
+649,arkitscenes/47333441,room_size_estimation,12.3,15 (0.60),2.7 (0.00),room x2,(empty)
+663,arkitscenes/47334362,room_size_estimation,25.0,20 (0.60),13.5 (0.10),room x3,(empty)
+669,arkitscenes/47429977,room_size_estimation,19.3,30 (0.00),10.5 (0.10),room x4,(empty)
+674,arkitscenes/47430034,room_size_estimation,25.6,20 (0.60),15.6 (0.30),room x4,(empty)
+675,arkitscenes/47430038,room_size_estimation,15.5,20 (0.50),14.5 (0.90),room x2,(empty)
+711,arkitscenes/42445026,object_abs_distance,1.2,2.1 (0.00),1.441 (0.60),"sofa x1, tv x1","sofa x1, tv x1"
+712,arkitscenes/42445026,object_abs_distance,1.5,2 (0.40),1.476 (1.00),"table x1, tv x1","table x1, tv x1"
+713,arkitscenes/42445026,object_abs_distance,1.8,2.1 (0.70),2.257 (0.50),"chair x1, tv x1","chair x1, tv x1"
+714,arkitscenes/42445026,object_abs_distance,0.5,1 (0.00),0.817 (0.00),"chair x1, sofa x1","chair x1, sofa x1"
+720,arkitscenes/42445984,object_abs_distance,0.7,2 (0.00),0.413 (0.20),"fireplace x1, table x1","fireplace x1, table x1"
+734,arkitscenes/42446517,object_abs_distance,2.6,2.1 (0.70),3.1 (0.70),chair x1,"chair x1, tv x1"
+747,arkitscenes/42897564,object_abs_distance,3.5,2 (0.20),1.578 (0.00),table x1,"stool x1, table x1"
+748,arkitscenes/42897564,object_abs_distance,5.2,2.1 (0.00),1.578 (0.00),table x1,"refrigerator x1, table x1"
+749,arkitscenes/42897564,object_abs_distance,1.0,2.1 (0.00),2.1 (0.00),(empty),"refrigerator x1, stool x1"
+759,arkitscenes/42898527,object_abs_distance,0.5,1.2 (0.00),0.446 (0.80),washer x1,"stove x1, washer x1"
+760,arkitscenes/42898527,object_abs_distance,0.9,1.2 (0.40),0.447 (0.00),dishwasher x1,"dishwasher x1, stove x1"
+761,arkitscenes/42898527,object_abs_distance,1.5,1.2 (0.60),1.061 (0.50),refrigerator x1,"refrigerator x1, stove x1"
+762,arkitscenes/42898527,object_abs_distance,1.6,1.2 (0.50),2.58 (0.00),"refrigerator x1, washer x1","refrigerator x1, washer x1"
+763,arkitscenes/42898527,object_abs_distance,1.4,1.2 (0.80),2.58 (0.00),"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1"
+787,arkitscenes/42899712,object_abs_distance,4.4,3.1 (0.50),3.1 (0.50),(empty),"stove x1, tv x1"
+832,arkitscenes/47115460,object_abs_distance,1.8,2.1 (0.70),2.237 (0.60),"stove x1, table x1","stove x1, table x1"
+850,arkitscenes/47331068,object_abs_distance,1.2,2 (0.00),1.2 (1.00),toilet x1,"table x1, toilet x1"
+851,arkitscenes/47331068,object_abs_distance,0.4,1.2 (0.00),0.154 (0.00),"bathtub x1, toilet x1","bathtub x1, toilet x1"
+875,arkitscenes/47331990,object_abs_distance,1.9,2 (0.90),1.33 (0.50),bed x1,"bed x1, tv x1"
+884,arkitscenes/47333441,object_abs_distance,0.8,2 (0.00),1.186 (0.10),"toilet x1, washer x1","toilet x1, washer x1"
+885,arkitscenes/47333441,object_abs_distance,0.8,1.2 (0.10),1.347 (0.00),"stool x1, toilet x1","stool x1, toilet x1"
+886,arkitscenes/47333441,object_abs_distance,0.4,1 (0.00),0 (0.00),"chair x1, stool x1","chair x1, stool x1"
+931,arkitscenes/47334362,object_abs_distance,4.4,1.2 (0.00),0.145 (0.00),"table x1, tv x1","table x1, tv x1"
+940,arkitscenes/47429977,object_abs_distance,3.4,2.5 (0.50),1.3 (0.00),tv x1,"stove x1, tv x1"
+941,arkitscenes/47429977,object_abs_distance,2.9,2.2 (0.60),4.544 (0.00),"refrigerator x1, tv x1","refrigerator x1, tv x1"
+942,arkitscenes/47429977,object_abs_distance,0.8,1.2 (0.10),0.224 (0.00),refrigerator x1,"refrigerator x1, stove x1"
+944,arkitscenes/47430034,object_abs_distance,2.5,2 (0.60),1.03 (0.00),bed x1,"bed x1, tv x1"
+945,arkitscenes/47430034,object_abs_distance,3.2,2 (0.30),1.32 (0.00),stool x1,"stool x1, tv x1"
+946,arkitscenes/47430038,object_abs_distance,1.6,1.2 (0.50),1.038 (0.30),refrigerator x1,"refrigerator x1, stove x1"
+947,arkitscenes/47430038,object_abs_distance,0.7,1.2 (0.00),0.88 (0.50),"refrigerator x1, table x1","refrigerator x1, table x1"
+948,arkitscenes/47430038,object_abs_distance,1.9,1.2 (0.30),1.002 (0.10),table x1,"stove x1, table x1"
+969,arkitscenes/42445026,object_rel_direction_hard,A,B ✗,A ✓,"sofa x1, table x1, tv x1","sofa x1, table x1, tv x1"
+970,arkitscenes/42445026,object_rel_direction_hard,D,A ✗,D ✓,"sofa x1, table x1, tv x1","sofa x1, table x1, tv x1"
+971,arkitscenes/42445026,object_rel_direction_hard,B,C ✗,B ✓,"chair x1, sofa x1, tv x1","chair x1, sofa x1, tv x1"
+972,arkitscenes/42445026,object_rel_direction_hard,C,C ✓,C ✓,"chair x1, sofa x1, tv x1","chair x1, sofa x1, tv x1"
+1000,arkitscenes/42898527,object_rel_direction_hard,D,A ✗,A ✗,"refrigerator x1, washer x1","refrigerator x1, stove x1, washer x1"
+1001,arkitscenes/42898527,object_rel_direction_hard,B,B ✓,B ✓,"refrigerator x1, washer x1","refrigerator x1, stove x1, washer x1"
+1002,arkitscenes/42898527,object_rel_direction_hard,A,C ✗,C ✗,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1003,arkitscenes/42898527,object_rel_direction_hard,D,D ✓,D ✓,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1004,arkitscenes/42898527,object_rel_direction_hard,C,A ✗,C ✓,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1084,arkitscenes/47429977,object_rel_direction_hard,A,C ✗,C ✗,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1085,arkitscenes/47429977,object_rel_direction_hard,C,C ✓,C ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1086,arkitscenes/47429977,object_rel_direction_hard,D,A ✗,D ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1090,arkitscenes/47430038,object_rel_direction_hard,D,D ✓,D ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1091,arkitscenes/47430038,object_rel_direction_hard,B,A ✗,B ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1092,arkitscenes/47430038,object_rel_direction_hard,A,B ✗,B ✗,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1120,arkitscenes/42445026,object_rel_direction_medium,B,B ✓,B ✓,"sofa x1, table x1, tv x1","sofa x1, table x1, tv x1"
+1121,arkitscenes/42445026,object_rel_direction_medium,A,A ✓,A ✓,"sofa x1, table x1, tv x1","sofa x1, table x1, tv x1"
+1122,arkitscenes/42445026,object_rel_direction_medium,B,B ✓,B ✓,"sofa x1, table x1, tv x1","sofa x1, table x1, tv x1"
+1149,arkitscenes/42898527,object_rel_direction_medium,A,A ✓,A ✓,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1150,arkitscenes/42898527,object_rel_direction_medium,B,B ✓,B ✓,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1151,arkitscenes/42898527,object_rel_direction_medium,A,A ✓,B ✗,"dishwasher x1, refrigerator x1","dishwasher x1, refrigerator x1, stove x1"
+1222,arkitscenes/47429977,object_rel_direction_medium,C,B ✗,B ✗,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1223,arkitscenes/47429977,object_rel_direction_medium,C,A ✗,C ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1224,arkitscenes/47429977,object_rel_direction_medium,A,A ✓,A ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1228,arkitscenes/47430038,object_rel_direction_medium,B,B ✓,B ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1229,arkitscenes/47430038,object_rel_direction_medium,B,B ✓,B ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1230,arkitscenes/47430038,object_rel_direction_medium,C,B ✗,B ✗,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1248,arkitscenes/42445026,object_rel_direction_easy,B,B ✓,B ✓,"chair x1, sofa x1, tv x1","chair x1, sofa x1, tv x1"
+1249,arkitscenes/42445026,object_rel_direction_easy,A,A ✓,A ✓,"chair x1, sofa x1, tv x1","chair x1, sofa x1, tv x1"
+1250,arkitscenes/42445026,object_rel_direction_easy,B,B ✓,B ✓,"chair x1, sofa x1, tv x1","chair x1, sofa x1, tv x1"
+1323,arkitscenes/47429977,object_rel_direction_easy,B,A ✗,A ✗,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1324,arkitscenes/47429977,object_rel_direction_easy,B,B ✓,B ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1325,arkitscenes/47429977,object_rel_direction_easy,A,A ✓,A ✓,"refrigerator x1, tv x1","refrigerator x1, stove x1, tv x1"
+1329,arkitscenes/47430038,object_rel_direction_easy,B,B ✓,B ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1330,arkitscenes/47430038,object_rel_direction_easy,B,A ✗,B ✓,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1331,arkitscenes/47430038,object_rel_direction_easy,A,B ✗,B ✗,"refrigerator x1, table x1","refrigerator x1, stove x1, table x1"
+1361,arkitscenes/42898527,object_rel_distance,C,A ✗,A ✗,"chair x1, dishwasher x1, refrigerator x1, washer x1","chair x2, dishwasher x1, refrigerator x1, stove x1, washer x1"
+1474,arkitscenes/47429977,object_rel_distance,D,A ✗,A ✗,"refrigerator x1, table x1, tv x1","refrigerator x1, sofa x2, stool x2, table x2, tv x1"
+1475,arkitscenes/47429977,object_rel_distance,B,B ✓,B ✓,"chair x1, refrigerator x1, table x1","chair x3, refrigerator x1, sofa x2, stove x1, table x2"
+1476,arkitscenes/47429977,object_rel_distance,C,A ✗,C ✓,"refrigerator x1, table x1, tv x1","refrigerator x1, stool x2, stove x1, table x2, tv x1"
+1477,arkitscenes/47429977,object_rel_distance,A,A ✓,A ✓,"refrigerator x1, tv x1","refrigerator x1, sofa x2, stool x2, stove x1, tv x1"
+1478,arkitscenes/47429977,object_rel_distance,B,B ✓,B ✓,"chair x1, tv x1","chair x3, sofa x2, stool x2, stove x1, tv x1"
+1479,arkitscenes/47429977,object_rel_distance,A,A ✓,A ✓,"chair x1, refrigerator x1, tv x1","chair x3, refrigerator x1, sofa x2, stove x1, tv x1"
+1480,arkitscenes/47429977,object_rel_distance,D,C ✗,B ✗,"chair x1, table x1, tv x1","chair x3, sofa x2, stove x1, table x2, tv x1"
+1481,arkitscenes/47429977,object_rel_distance,C,C ✓,C ✓,"refrigerator x1, table x1, tv x1","refrigerator x1, sofa x2, stove x1, table x2, tv x1"
+1482,arkitscenes/47429977,object_rel_distance,C,C ✓,B ✗,"chair x1, refrigerator x1, table x1, tv x1","chair x3, refrigerator x1, stove x1, table x2, tv x1"
+1483,arkitscenes/47429977,object_rel_distance,A,A ✓,D ✗,"refrigerator x1, table x1, tv x1","refrigerator x1, stool x2, stove x1, table x2, tv x1"
+1484,arkitscenes/47429977,object_rel_distance,B,A ✗,A ✗,"chair x1, table x1, tv x1","chair x3, sofa x2, stove x1, table x2, tv x1"
+1485,arkitscenes/47429977,object_rel_distance,D,B ✗,A ✗,"chair x1, refrigerator x1, table x1, tv x1","chair x3, refrigerator x1, stove x1, table x2, tv x1"
+1486,arkitscenes/47429977,object_rel_distance,A,A ✓,B ✗,"chair x1, refrigerator x1, tv x1","chair x3, refrigerator x1, stool x2, stove x1, tv x1"
+1487,arkitscenes/47429977,object_rel_distance,B,A ✗,A ✗,"refrigerator x1, table x1, tv x1","refrigerator x1, stool x2, stove x1, table x2, tv x1"
+1488,arkitscenes/47429977,object_rel_distance,C,C ✓,B ✗,"refrigerator x1, tv x1","refrigerator x1, sofa x2, stool x2, stove x1, tv x1"
+1489,arkitscenes/47429977,object_rel_distance,D,C ✗,B ✗,"table x1, tv x1","sofa x2, stool x2, stove x1, table x2, tv x1"
+1490,arkitscenes/47430034,object_rel_distance,D,A ✗,D ✓,"bed x1, chair x1, table x1","bed x1, chair x3, sofa x2, table x3, tv x1"
+1491,arkitscenes/47430034,object_rel_distance,B,B ✓,B ✓,"bed x1, chair x1, stool x1","bed x1, chair x3, sofa x2, stool x1, tv x1"
+1492,arkitscenes/47430034,object_rel_distance,A,A ✓,A ✓,"chair x1, stool x1, table x1","chair x3, sofa x2, stool x1, table x3, tv x1"
+1493,arkitscenes/47430034,object_rel_distance,C,A ✗,C ✓,"bed x1, chair x1, stool x1, table x1","bed x1, chair x3, stool x1, table x3, tv x1"
+1494,arkitscenes/47430034,object_rel_distance,D,C ✗,D ✓,"bed x1, stool x1, table x1","bed x1, sofa x2, stool x1, table x3, tv x1"
+1544,scannetpp/5ee7c22ba0,object_rel_direction_medium,B,A ✗,B ✓,"microwave x1, refrigerator x1","ceiling light x1, microwave x1, refrigerator x1"
+1545,scannetpp/5ee7c22ba0,object_rel_direction_medium,C,A ✗,A ✗,"microwave x1, refrigerator x1","ceiling light x1, microwave x1, refrigerator x1"
+1546,scannetpp/5ee7c22ba0,object_rel_direction_medium,B,A ✗,B ✓,"microwave x1, refrigerator x1","ceiling light x1, microwave x1, refrigerator x1"
+1553,scannetpp/3864514494,object_rel_direction_medium,A,A ✓,C ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1554,scannetpp/3864514494,object_rel_direction_medium,B,B ✓,C ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1555,scannetpp/40aec5fffa,object_rel_direction_medium,A,B ✗,B ✗,"heater x1, microwave x1","heater x1, microwave x1, refrigerator x1"
+1556,scannetpp/40aec5fffa,object_rel_direction_medium,C,A ✗,B ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1557,scannetpp/40aec5fffa,object_rel_direction_medium,B,B ✓,B ✓,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1656,scannetpp/21d970d8de,object_abs_distance,4.8,2.5 (0.10),1.23 (0.00),tv x1,"telephone x1, tv x1"
+1657,scannetpp/21d970d8de,object_abs_distance,1.8,3.1 (0.00),1.283 (0.50),"door x1, tv x1","door x1, tv x1"
+1658,scannetpp/21d970d8de,object_abs_distance,7.1,3.2 (0.00),1.055 (0.00),door x1,"door x1, telephone x1"
+1659,scannetpp/38d58a7a31,object_abs_distance,7.0,3.2 (0.00),2.3 (0.00),trash can x1,"telephone x1, trash can x1"
+1660,scannetpp/38d58a7a31,object_abs_distance,6.8,3.1 (0.00),1.36 (0.00),trash can x1,"keyboard x1, trash can x1"
+1661,scannetpp/38d58a7a31,object_abs_distance,0.4,1.1 (0.00),0.338 (0.70),"trash can x1, whiteboard x1","trash can x1, whiteboard x1"
+1662,scannetpp/38d58a7a31,object_abs_distance,7.2,3.2 (0.00),1.42 (0.00),whiteboard x1,"telephone x1, whiteboard x1"
+1663,scannetpp/38d58a7a31,object_abs_distance,7.1,3.2 (0.00),1.43 (0.00),whiteboard x1,"keyboard x1, whiteboard x1"
+1664,scannetpp/5ee7c22ba0,object_abs_distance,1.6,2.1 (0.40),0.837 (0.10),"door x1, table x1","door x1, table x1"
+1665,scannetpp/5ee7c22ba0,object_abs_distance,0.9,2 (0.00),0.829 (0.90),"refrigerator x1, table x1","refrigerator x1, table x1"
+1666,scannetpp/5ee7c22ba0,object_abs_distance,1.2,2 (0.00),1.024 (0.80),"microwave x1, refrigerator x1","microwave x1, refrigerator x1"
+1667,scannetpp/5ee7c22ba0,object_abs_distance,1.3,2.1 (0.00),1.2 (0.90),microwave x1,"ceiling light x1, microwave x1"
+1668,scannetpp/5ee7c22ba0,object_abs_distance,1.6,2.1 (0.40),1.2 (0.50),table x1,"ceiling light x1, table x1"
+1669,scannetpp/5ee7c22ba0,object_abs_distance,1.9,2.1 (0.80),1.033 (0.10),"door x1, microwave x1","door x1, microwave x1"
+1670,scannetpp/5ee7c22ba0,object_abs_distance,1.5,2.1 (0.20),1.1 (0.50),refrigerator x1,"ceiling light x1, refrigerator x1"
+1678,scannetpp/3864514494,object_abs_distance,1.9,2.1 (0.80),0.391 (0.00),"heater x1, microwave x1","heater x1, microwave x1"
+1679,scannetpp/3864514494,object_abs_distance,4.5,3 (0.40),0.463 (0.00),"door x1, heater x1","door x1, heater x1"
+1680,scannetpp/3864514494,object_abs_distance,2.5,2.1 (0.70),0.053 (0.00),"door x1, microwave x1","door x1, microwave x1"
+1681,scannetpp/40aec5fffa,object_abs_distance,2.4,1 (0.00),1.1 (0.00),microwave x1,"microwave x1, refrigerator x1"
+1682,scannetpp/40aec5fffa,object_abs_distance,3.3,2 (0.30),0.7 (0.00),door x1,"door x1, refrigerator x1"
+1683,scannetpp/40aec5fffa,object_abs_distance,0.4,1.2 (0.00),1.485 (0.00),heater x1,"heater x1, refrigerator x1"
+1684,scannetpp/40aec5fffa,object_abs_distance,3.6,2.1 (0.20),0.487 (0.00),"heater x1, microwave x1","heater x1, microwave x1"
+1685,scannetpp/40aec5fffa,object_abs_distance,4.5,3.2 (0.50),2.347 (0.10),"door x1, heater x1","door x1, heater x1"
+1708,scannetpp/b0a08200c9,object_abs_distance,2.3,2 (0.80),1.675 (0.50),"chair x1, door x1","chair x1, door x1"
+1709,scannetpp/b0a08200c9,object_abs_distance,2.3,2.5 (0.90),1.552 (0.40),"door x1, monitor x1","door x1, monitor x1"
+1740,scannetpp/f3d64c30f8,object_abs_distance,3.4,2.1 (0.30),2.796 (0.70),"microwave x1, power strip x1","microwave x1, power strip x1"
+1741,scannetpp/f3d64c30f8,object_abs_distance,0.8,2.1 (0.00),3.935 (0.00),"bucket x1, whiteboard x1","bucket x1, whiteboard x1"
+1742,scannetpp/f3d64c30f8,object_abs_distance,2.5,2.4 (1.00),1.1 (0.00),bookshelf x1,"bookshelf x1, heater x1"
+1743,scannetpp/f3d64c30f8,object_abs_distance,1.6,2.1 (0.40),1.1 (0.40),bookshelf x1,"bookshelf x1, plant x1"
+1744,scannetpp/f3d64c30f8,object_abs_distance,2.4,2.1 (0.80),3.855 (0.00),"bucket x1, power strip x1","bucket x1, power strip x1"
+1745,scannetpp/f3d64c30f8,object_abs_distance,2.2,2.1 (1.00),1.12 (0.10),power strip x1,"clock x1, power strip x1"
+1746,scannetpp/f3d64c30f8,object_abs_distance,2.3,2.4 (1.00),2.1 (0.90),(empty),"cup x1, heater x1"
+1761,scannetpp/ac48a9b736,object_abs_distance,12.6,1.2 (0.00),1.23 (0.00),whiteboard x1,"trash can x1, whiteboard x1"
+1762,scannetpp/578511c8a9,object_abs_distance,11.3,2.1 (0.00),1.2 (0.00),(empty),"kettle x1, table lamp x1"
+1763,scannetpp/578511c8a9,object_abs_distance,1.2,1.2 (1.00),1.2 (1.00),(empty),"exhaust fan x1, table lamp x1"
+1764,scannetpp/578511c8a9,object_abs_distance,7.9,2.5 (0.00),1.3 (0.00),door x1,"door x1, printer x1"
+1765,scannetpp/578511c8a9,object_abs_distance,1.8,2.1 (0.70),1.275 (0.50),telephone x1,"printer x1, telephone x1"
+1766,scannetpp/578511c8a9,object_abs_distance,8.4,3.2 (0.00),1.901 (0.00),"door x1, telephone x1","door x1, telephone x1"
+1767,scannetpp/578511c8a9,object_abs_distance,2.5,1.2 (0.00),1.275 (0.10),telephone x1,"kettle x1, telephone x1"
+1768,scannetpp/578511c8a9,object_abs_distance,8.3,3.2 (0.00),2.4 (0.00),door x1,"door x1, kettle x1"
+1793,scannetpp/27dd4da69e,object_abs_distance,9.3,2.5 (0.00),2.1 (0.00),(empty),"telephone x1, tv x1"
+1794,scannetpp/27dd4da69e,object_abs_distance,9.1,1.2 (0.00),1.144 (0.00),cutting board x1,"basket x1, cutting board x1"
+1795,scannetpp/27dd4da69e,object_abs_distance,10.2,2.1 (0.00),1.3 (0.00),crate x1,"crate x1, laptop x1"
+1796,scannetpp/27dd4da69e,object_abs_distance,5.3,3.1 (0.20),1.49 (0.00),"bed x1, cutting board x1","bed x1, cutting board x1"
+1797,scannetpp/27dd4da69e,object_abs_distance,1.4,2.1 (0.00),2.1 (0.00),(empty),"laptop x1, tv x1"
+1798,scannetpp/27dd4da69e,object_abs_distance,8.8,3.1 (0.00),1.62 (0.00),pan x1,"laptop x1, pan x1"
+1799,scannetpp/27dd4da69e,object_abs_distance,2.1,2.1 (1.00),2.359 (0.80),"crate x1, microwave x1","crate x1, microwave x1"
+1851,scannetpp/3864514494,object_rel_direction_hard,B,B ✓,C ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1852,scannetpp/3864514494,object_rel_direction_hard,A,B ✗,B ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1853,scannetpp/3864514494,object_rel_direction_hard,C,A ✗,B ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+1854,scannetpp/40aec5fffa,object_rel_direction_hard,D,A ✗,B ✗,"heater x1, microwave x1","heater x1, microwave x1, refrigerator x1"
+1855,scannetpp/40aec5fffa,object_rel_direction_hard,C,A ✗,B ✗,"door x1, heater x1","door x1, heater x1, refrigerator x1"
+1975,scannetpp/21d970d8de,object_rel_distance,C,A ✗,C ✓,"chair x1, door x1, tv x1","ceiling light x12, chair x40, door x1, telephone x1, tv x1"
+1976,scannetpp/21d970d8de,object_rel_distance,B,B ✓,B ✓,"chair x1, door x1, tv x1, whiteboard x1","ceiling light x12, chair x40, door x1, tv x1, whiteboard x3"
+1977,scannetpp/21d970d8de,object_rel_distance,A,A ✓,A ✓,"chair x1, door x1, tv x1, whiteboard x1","chair x40, door x1, telephone x1, tv x1, whiteboard x3"
+1978,scannetpp/21d970d8de,object_rel_distance,C,C ✓,C ✓,"chair x1, tv x1, whiteboard x1","ceiling light x12, chair x40, telephone x1, tv x1, whiteboard x3"
+1979,scannetpp/21d970d8de,object_rel_distance,D,D ✓,A ✗,"door x1, tv x1, whiteboard x1","ceiling light x12, door x1, telephone x1, tv x1, whiteboard x3"
+1980,scannetpp/21d970d8de,object_rel_distance,B,B ✓,B ✓,"chair x1, door x1, tv x1","ceiling light x12, chair x40, door x1, telephone x1, tv x1"
+1981,scannetpp/21d970d8de,object_rel_distance,C,C ✓,C ✓,"chair x1, door x1, whiteboard x1","ceiling light x12, chair x40, door x1, telephone x1, whiteboard x3"
+1982,scannetpp/21d970d8de,object_rel_distance,A,A ✓,A ✓,"chair x1, door x1, tv x1, whiteboard x1","chair x40, door x1, telephone x1, tv x1, whiteboard x3"
+1983,scannetpp/21d970d8de,object_rel_distance,D,A ✗,A ✗,"chair x1, tv x1, whiteboard x1","ceiling light x12, chair x40, telephone x1, tv x1, whiteboard x3"
+1984,scannetpp/21d970d8de,object_rel_distance,B,B ✓,B ✓,"door x1, tv x1, whiteboard x1","ceiling light x12, door x1, telephone x1, tv x1, whiteboard x3"
+1985,scannetpp/21d970d8de,object_rel_distance,A,B ✗,B ✗,"chair x1, door x1, tv x1","ceiling light x12, chair x40, door x1, telephone x1, tv x1"
+1986,scannetpp/21d970d8de,object_rel_distance,D,A ✗,A ✗,"chair x1, door x1, whiteboard x1","ceiling light x12, chair x40, door x1, telephone x1, whiteboard x3"
+1987,scannetpp/21d970d8de,object_rel_distance,C,B ✗,A ✗,"chair x1, door x1, tv x1, whiteboard x1","ceiling light x12, chair x40, door x1, tv x1, whiteboard x3"
+1988,scannetpp/21d970d8de,object_rel_distance,B,A ✗,B ✓,"chair x1, door x1, tv x1, whiteboard x1","chair x40, door x1, telephone x1, tv x1, whiteboard x3"
+1989,scannetpp/21d970d8de,object_rel_distance,D,C ✗,A ✗,"door x1, tv x1, whiteboard x1","ceiling light x12, door x1, telephone x1, tv x1, whiteboard x3"
+2008,scannetpp/38d58a7a31,object_rel_distance,B,C ✗,C ✗,"chair x1, table x1, trash can x1","chair x36, coat rack x2, heater x3, table x8, trash can x1"
+2009,scannetpp/38d58a7a31,object_rel_distance,B,B ✓,B ✓,"table x1, whiteboard x1","ceiling light x10, coat rack x2, keyboard x1, table x8, whiteboard x1"
+2011,scannetpp/38d58a7a31,object_rel_distance,C,C ✓,C ✓,"trash can x1, whiteboard x1","coat rack x2, heater x3, telephone x1, trash can x1, whiteboard x1"
+2012,scannetpp/38d58a7a31,object_rel_distance,A,A ✓,A ✓,"chair x1, door x1, table x1, trash can x1","chair x36, door x2, table x8, telephone x1, trash can x1"
+2013,scannetpp/38d58a7a31,object_rel_distance,D,B ✗,B ✗,"chair x1, trash can x1","chair x36, coat rack x2, heater x3, telephone x1, trash can x1"
+2014,scannetpp/38d58a7a31,object_rel_distance,B,B ✓,B ✓,"chair x1, table x1, whiteboard x1","chair x36, heater x3, table x8, telephone x1, whiteboard x1"
+2015,scannetpp/38d58a7a31,object_rel_distance,C,C ✓,C ✓,"chair x1, trash can x1","ceiling light x10, chair x36, heater x3, telephone x1, trash can x1"
+2016,scannetpp/38d58a7a31,object_rel_distance,A,A ✓,A ✓,"door x1, trash can x1","coat rack x2, door x2, keyboard x1, telephone x1, trash can x1"
+2017,scannetpp/38d58a7a31,object_rel_distance,B,B ✓,B ✓,"door x1, trash can x1","ceiling light x10, coat rack x2, door x2, heater x3, trash can x1"
+2018,scannetpp/38d58a7a31,object_rel_distance,D,D ✓,D ✓,"trash can x1, whiteboard x1","ceiling light x10, coat rack x2, heater x3, trash can x1, whiteboard x1"
+2019,scannetpp/38d58a7a31,object_rel_distance,C,C ✓,A ✗,whiteboard x1,"ceiling light x10, coat rack x2, heater x3, keyboard x1, whiteboard x1"
+2020,scannetpp/38d58a7a31,object_rel_distance,A,A ✓,A ✓,"door x1, trash can x1, whiteboard x1","door x2, heater x3, telephone x1, trash can x1, whiteboard x1"
+2021,scannetpp/38d58a7a31,object_rel_distance,B,A ✗,B ✓,trash can x1,"ceiling light x10, coat rack x2, keyboard x1, telephone x1, trash can x1"
+2022,scannetpp/38d58a7a31,object_rel_distance,A,A ✓,A ✓,"chair x1, trash can x1","ceiling light x10, chair x36, coat rack x2, keyboard x1, trash can x1"
+2023,scannetpp/38d58a7a31,object_rel_distance,D,A ✗,A ✗,"door x1, table x1, trash can x1","coat rack x2, door x2, table x8, telephone x1, trash can x1"
+2024,scannetpp/38d58a7a31,object_rel_distance,C,C ✓,C ✓,"door x1, table x1, trash can x1","ceiling light x10, door x2, table x8, telephone x1, trash can x1"
+2027,scannetpp/3864514494,object_rel_distance,D,A ✗,C ✗,"cup x1, door x1, heater x1, microwave x1","cup x3, door x1, heater x1, microwave x1, trash can x3"
+2028,scannetpp/3864514494,object_rel_distance,B,A ✗,C ✗,"cup x1, door x1, heater x1, microwave x1","cup x3, door x1, heater x1, microwave x1, trash can x3"
+2033,scannetpp/b0a08200c9,object_rel_distance,D,B ✗,B ✗,"chair x1, computer mouse x1, computer tower x1, door x1","chair x1, computer mouse x3, computer tower x25, door x1, heater x2"
+2061,scannetpp/f3d64c30f8,object_rel_distance,D,C ✗,A ✗,"bucket x1, table x1, whiteboard x1","bucket x1, heater x1, plant x1, table x7, whiteboard x1"
+2062,scannetpp/f3d64c30f8,object_rel_distance,B,B ✓,B ✓,"crate x1, power strip x1, table x1","bowl x2, ceiling light x2, crate x9, power strip x1, table x7"
+2063,scannetpp/f3d64c30f8,object_rel_distance,C,D ✗,A ✗,bookshelf x1,"bookshelf x1, bowl x2, clock x1, heater x1, plant x1"
+2064,scannetpp/f3d64c30f8,object_rel_distance,A,A ✓,A ✓,"chair x1, microwave x1","ceiling light x2, chair x17, clock x1, heater x1, microwave x1"
+2065,scannetpp/f3d64c30f8,object_rel_distance,A,A ✓,B ✗,"bookshelf x1, microwave x1, power strip x1","bookshelf x1, clock x1, cup x1, microwave x1, power strip x1"
+2066,scannetpp/f3d64c30f8,object_rel_distance,C,A ✗,C ✓,"bookshelf x1, table x1","bookshelf x1, clock x1, cup x1, plant x1, table x7"
+2067,scannetpp/f3d64c30f8,object_rel_distance,D,A ✗,A ✗,"bucket x1, chair x1","bowl x2, bucket x1, chair x17, clock x1, plant x1"
+2068,scannetpp/f3d64c30f8,object_rel_distance,B,A ✗,C ✗,"crate x1, power strip x1","bowl x2, clock x1, crate x9, cup x1, power strip x1"
+2093,scannetpp/ac48a9b736,object_rel_distance,A,B ✗,B ✗,"chair x1, door x1, keyboard x1, table x1","chair x9, door x3, keyboard x6, table x8, trash can x1"
+2094,scannetpp/ac48a9b736,object_rel_distance,D,A ✗,C ✗,"chair x1, door x1, heater x1, table x1, whiteboard x1","chair x9, door x3, heater x4, table x8, whiteboard x1"
+2095,scannetpp/ac48a9b736,object_rel_distance,B,A ✗,C ✗,"computer mouse x1, door x1, keyboard x1, table x1","computer mouse x2, door x3, keyboard x6, table x8, trash can x1"
+2096,scannetpp/ac48a9b736,object_rel_distance,C,A ✗,C ✓,"computer mouse x1, door x1, keyboard x1, whiteboard x1","computer mouse x2, door x3, keyboard x6, trash can x1, whiteboard x1"
+2097,scannetpp/ac48a9b736,object_rel_distance,A,C ✗,C ✗,"computer mouse x1, door x1, monitor x1, whiteboard x1","computer mouse x2, door x3, monitor x9, trash can x1, whiteboard x1"
+2098,scannetpp/ac48a9b736,object_rel_distance,D,B ✗,B ✗,"chair x1, keyboard x1, table x1, whiteboard x1","chair x9, keyboard x6, table x8, trash can x1, whiteboard x1"
+2099,scannetpp/ac48a9b736,object_rel_distance,B,C ✗,D ✗,"chair x1, keyboard x1, monitor x1, table x1, whiteboard x1","chair x9, keyboard x6, monitor x9, table x8, whiteboard x1"
+2100,scannetpp/ac48a9b736,object_rel_distance,C,A ✗,D ✗,"chair x1, computer mouse x1, monitor x1, table x1, whiteboard x1","chair x9, computer mouse x2, monitor x9, table x8, whiteboard x1"
+2101,scannetpp/ac48a9b736,object_rel_distance,C,A ✗,A ✗,"computer mouse x1, door x1, monitor x1, table x1, whiteboard x1","computer mouse x2, door x3, monitor x9, table x8, whiteboard x1"
+2102,scannetpp/ac48a9b736,object_rel_distance,D,D ✓,C ✗,"chair x1, computer mouse x1, door x1, heater x1, whiteboard x1","chair x9, computer mouse x2, door x3, heater x4, whiteboard x1"
+2103,scannetpp/ac48a9b736,object_rel_distance,B,B ✓,B ✓,"heater x1, monitor x1, table x1, whiteboard x1","heater x4, monitor x9, table x8, trash can x1, whiteboard x1"
+2104,scannetpp/ac48a9b736,object_rel_distance,A,A ✓,C ✗,"chair x1, computer mouse x1, table x1, whiteboard x1","chair x9, computer mouse x2, table x8, trash can x1, whiteboard x1"
+2105,scannetpp/ac48a9b736,object_rel_distance,B,B ✓,C ✗,"chair x1, computer mouse x1, door x1, keyboard x1, whiteboard x1","chair x9, computer mouse x2, door x3, keyboard x6, whiteboard x1"
+2106,scannetpp/ac48a9b736,object_rel_distance,A,A ✓,C ✗,"chair x1, heater x1, table x1, whiteboard x1","chair x9, heater x4, table x8, trash can x1, whiteboard x1"
+2107,scannetpp/578511c8a9,object_rel_distance,C,C ✓,C ✓,"monitor x1, telephone x1","kettle x1, monitor x16, printer x1, table lamp x1, telephone x1"
+2108,scannetpp/578511c8a9,object_rel_distance,D,C ✗,B ✗,"door x1, keyboard x1, whiteboard x1","door x1, exhaust fan x1, keyboard x10, table lamp x1, whiteboard x4"
+2109,scannetpp/578511c8a9,object_rel_distance,D,A ✗,B ✗,"computer tower x1, door x1, monitor x1","ceiling light x25, computer tower x8, door x1, exhaust fan x1, monitor x16"
+2110,scannetpp/578511c8a9,object_rel_distance,B,B ✓,B ✓,"chair x1, keyboard x1","chair x11, exhaust fan x1, kettle x1, keyboard x10, table lamp x1"
+2111,scannetpp/578511c8a9,object_rel_distance,A,A ✓,A ✓,"chair x1, keyboard x1, monitor x1","ceiling light x25, chair x11, exhaust fan x1, keyboard x10, monitor x16"
+2112,scannetpp/578511c8a9,object_rel_distance,C,A ✗,A ✗,"chair x1, computer mouse x1, telephone x1, whiteboard x1","chair x11, computer mouse x8, exhaust fan x1, telephone x1, whiteboard x4"
+2113,scannetpp/578511c8a9,object_rel_distance,C,A ✗,C ✓,"keyboard x1, monitor x1","exhaust fan x1, kettle x1, keyboard x10, monitor x16, printer x1"
+2114,scannetpp/578511c8a9,object_rel_distance,A,D ✗,B ✗,"door x1, keyboard x1, telephone x1, whiteboard x1","ceiling light x25, door x1, keyboard x10, telephone x1, whiteboard x4"
+2115,scannetpp/578511c8a9,object_rel_distance,B,A ✗,A ✗,"keyboard x1, whiteboard x1","ceiling light x25, kettle x1, keyboard x10, table lamp x1, whiteboard x4"
+2116,scannetpp/578511c8a9,object_rel_distance,D,B ✗,B ✗,"computer mouse x1, computer tower x1, keyboard x1, monitor x1","computer mouse x8, computer tower x8, keyboard x10, monitor x16, printer x1"
+2117,scannetpp/578511c8a9,object_rel_distance,C,A ✗,A ✗,"computer mouse x1, door x1, whiteboard x1","computer mouse x8, door x1, exhaust fan x1, kettle x1, whiteboard x4"
+2118,scannetpp/578511c8a9,object_rel_distance,B,A ✗,A ✗,"computer mouse x1, door x1, monitor x1","computer mouse x8, door x1, monitor x16, printer x1, table lamp x1"
+2119,scannetpp/578511c8a9,object_rel_distance,D,A ✗,A ✗,"chair x1, door x1","ceiling light x25, chair x11, door x1, exhaust fan x1, kettle x1"
+2120,scannetpp/578511c8a9,object_rel_distance,A,A ✓,A ✓,"computer mouse x1, monitor x1","ceiling light x25, computer mouse x8, exhaust fan x1, kettle x1, monitor x16"
+2166,scannetpp/27dd4da69e,object_rel_distance,C,B ✗,B ✗,"bed x1, microwave x1, trash can x1","bed x1, laptop x1, microwave x1, sofa x1, trash can x2"
+2167,scannetpp/27dd4da69e,object_rel_distance,B,C ✗,C ✗,"cutting board x1, trash can x1","cutting board x1, laptop x1, suitcase x3, telephone x1, trash can x2"
+2168,scannetpp/27dd4da69e,object_rel_distance,A,B ✗,B ✗,"crate x1, door x1, pan x1","crate x1, door x5, laptop x1, pan x1, suitcase x3"
+2169,scannetpp/27dd4da69e,object_rel_distance,C,A ✗,A ✗,"bed x1, kettle x1, microwave x1, power strip x1","bed x1, chair x2, kettle x1, microwave x1, power strip x1"
+2170,scannetpp/27dd4da69e,object_rel_distance,A,B ✗,C ✗,"bed x1, crate x1, cutting board x1, power strip x1","bed x1, crate x1, cutting board x1, power strip x1, tv x1"
+2171,scannetpp/27dd4da69e,object_rel_distance,B,A ✗,C ✗,"cutting board x1, microwave x1, power strip x1","cutting board x1, microwave x1, monitor x1, power strip x1, suitcase x3"
+2172,scannetpp/27dd4da69e,object_rel_distance,D,A ✗,A ✗,crate x1,"crate x1, monitor x1, sofa x1, suitcase x3, telephone x1"
+2173,scannetpp/27dd4da69e,object_rel_distance,D,B ✗,B ✗,"bed x1, kettle x1, pan x1, power strip x1","bed x1, kettle x1, laptop x1, pan x1, power strip x1"
+2174,scannetpp/27dd4da69e,object_rel_distance,B,A ✗,A ✗,"cutting board x1, microwave x1","basket x1, cutting board x1, microwave x1, monitor x1, tv x1"
+2175,scannetpp/27dd4da69e,object_rel_distance,C,B ✗,A ✗,"bed x1, crate x1, kettle x1, pan x1, trash can x1","bed x1, crate x1, kettle x1, pan x1, trash can x2"
+2176,scannetpp/27dd4da69e,object_rel_distance,A,A ✓,A ✓,"microwave x1, power strip x1","chair x2, microwave x1, power strip x1, suitcase x3, tv x1"
+2177,scannetpp/27dd4da69e,object_rel_distance,B,B ✓,B ✓,"cutting board x1, microwave x1","basket x1, cutting board x1, microwave x1, monitor x1, suitcase x3"
+2178,scannetpp/27dd4da69e,object_rel_distance,D,A ✗,A ✗,"bed x1, cutting board x1, microwave x1, pan x1","bed x1, cutting board x1, microwave x1, pan x1, suitcase x3"
+2179,scannetpp/27dd4da69e,object_rel_distance,C,C ✓,C ✓,"microwave x1, power strip x1","chair x2, microwave x1, monitor x1, power strip x1, telephone x1"
+2180,scannetpp/27dd4da69e,object_rel_distance,A,A ✓,B ✗,"microwave x1, pan x1","basket x1, laptop x1, microwave x1, pan x1, suitcase x3"
+2181,scannetpp/27dd4da69e,object_rel_distance,D,B ✗,D ✓,"cutting board x1, power strip x1","basket x1, cutting board x1, laptop x1, power strip x1, suitcase x3"
+2182,scannetpp/27dd4da69e,object_rel_distance,C,A ✗,B ✗,"microwave x1, power strip x1","chair x2, microwave x1, monitor x1, power strip x1, telephone x1"
+2183,scannetpp/27dd4da69e,object_rel_distance,B,B ✓,B ✓,"bed x1, cutting board x1, door x1, microwave x1","bed x1, cutting board x1, door x5, microwave x1, monitor x1"
+2241,scannetpp/21d970d8de,object_size_estimation,126,100 (0.60),192 (0.00),tv x1,tv x1
+2242,scannetpp/21d970d8de,object_size_estimation,28,100 (0.00),100 (0.00),(empty),telephone x1
+2243,scannetpp/21d970d8de,object_size_estimation,212,200 (0.90),1196 (0.00),door x1,door x1
+2249,scannetpp/38d58a7a31,object_size_estimation,35,40 (0.80),22.7 (0.30),trash can x1,trash can x1
+2250,scannetpp/38d58a7a31,object_size_estimation,25,10 (0.00),10 (0.00),(empty),telephone x1
+2251,scannetpp/38d58a7a31,object_size_estimation,49,40 (0.70),40 (0.70),(empty),keyboard x1
+2252,scannetpp/38d58a7a31,object_size_estimation,201,120 (0.20),157.1 (0.60),whiteboard x2,whiteboard x1
+2253,scannetpp/5ee7c22ba0,object_size_estimation,48,50 (1.00),63.7 (0.40),microwave x1,microwave x1
+2254,scannetpp/5ee7c22ba0,object_size_estimation,92,170 (0.00),75.7 (0.70),refrigerator x2,refrigerator x1
+2255,scannetpp/5ee7c22ba0,object_size_estimation,124,140 (0.80),148.5 (0.70),table x1,table x1
+2256,scannetpp/5ee7c22ba0,object_size_estimation,215,200 (0.90),836 (0.00),door x5,door x1
+2257,scannetpp/5ee7c22ba0,object_size_estimation,159,120 (0.60),120 (0.60),(empty),ceiling light x1
+2263,scannetpp/3864514494,object_size_estimation,139,100 (0.50),46 (0.00),heater x2,heater x1
+2264,scannetpp/3864514494,object_size_estimation,47,50 (0.90),137 (0.00),microwave x2,microwave x1
+2265,scannetpp/3864514494,object_size_estimation,211,200 (0.90),77.2 (0.00),door x9,door x1
+2266,scannetpp/40aec5fffa,object_size_estimation,204,100 (0.00),100 (0.00),(empty),refrigerator x1
+2267,scannetpp/40aec5fffa,object_size_estimation,53,50 (0.90),171 (0.00),microwave x2,microwave x1
+2268,scannetpp/40aec5fffa,object_size_estimation,211,200 (0.90),158.2 (0.50),door x10,door x1
+2269,scannetpp/40aec5fffa,object_size_estimation,148,100 (0.40),55.8 (0.00),heater x1,heater x1
+2294,scannetpp/b0a08200c9,object_size_estimation,79,75 (0.90),55.2 (0.40),chair x1,chair x1
+2295,scannetpp/b0a08200c9,object_size_estimation,212,200 (0.90),671 (0.00),door x2,door x1
+2296,scannetpp/b0a08200c9,object_size_estimation,66,45 (0.40),33.2 (0.10),monitor x4,monitor x1
+2331,scannetpp/f3d64c30f8,object_size_estimation,83,100 (0.60),162 (0.00),bookshelf x1,bookshelf x1
+2332,scannetpp/f3d64c30f8,object_size_estimation,33,15 (0.00),7.9 (0.00),power strip x2,power strip x1
+2333,scannetpp/f3d64c30f8,object_size_estimation,145,100 (0.40),100 (0.40),(empty),heater x1
+2334,scannetpp/f3d64c30f8,object_size_estimation,30,30 (1.00),100 (0.00),(empty),clock x1
+2335,scannetpp/f3d64c30f8,object_size_estimation,202,120 (0.20),131.5 (0.40),whiteboard x3,whiteboard x1
+2336,scannetpp/f3d64c30f8,object_size_estimation,62,50 (0.70),42 (0.40),microwave x1,microwave x1
+2337,scannetpp/f3d64c30f8,object_size_estimation,13,10 (0.60),13 (1.00),(empty),cup x1
+2338,scannetpp/f3d64c30f8,object_size_estimation,23,40 (0.00),28.5 (0.60),bucket x1,bucket x1
+2339,scannetpp/f3d64c30f8,object_size_estimation,19,100 (0.00),100 (0.00),(empty),plant x1
+2363,scannetpp/ac48a9b736,object_size_estimation,57,40 (0.50),50 (0.80),(empty),trash can x1
+2364,scannetpp/ac48a9b736,object_size_estimation,183,120 (0.40),76.2 (0.00),whiteboard x5,whiteboard x1
+2366,scannetpp/578511c8a9,object_size_estimation,66,100 (0.00),100 (0.00),(empty),exhaust fan x1
+2367,scannetpp/578511c8a9,object_size_estimation,224,200 (0.80),92.1 (0.00),door x3,door x1
+2368,scannetpp/578511c8a9,object_size_estimation,24,30 (0.60),10 (0.00),(empty),kettle x1
+2369,scannetpp/578511c8a9,object_size_estimation,25,100 (0.00),22.7 (0.90),telephone x1,telephone x1
+2370,scannetpp/578511c8a9,object_size_estimation,50,100 (0.00),100 (0.00),(empty),printer x1
+2371,scannetpp/578511c8a9,object_size_estimation,103,100 (1.00),100 (1.00),(empty),table lamp x1
+2401,scannetpp/27dd4da69e,object_size_estimation,108,100 (0.90),100 (0.90),(empty),tv x1
+2402,scannetpp/27dd4da69e,object_size_estimation,223,200 (0.80),102.5 (0.00),bed x3,bed x1
+2403,scannetpp/27dd4da69e,object_size_estimation,28,13 (0.00),10 (0.00),(empty),telephone x1
+2404,scannetpp/27dd4da69e,object_size_estimation,32,100 (0.00),293 (0.00),crate x1,crate x1
+2405,scannetpp/27dd4da69e,object_size_estimation,58,50 (0.80),100 (0.00),(empty),monitor x1
+2406,scannetpp/27dd4da69e,object_size_estimation,33,30 (0.90),30 (0.90),(empty),laptop x1
+2407,scannetpp/27dd4da69e,object_size_estimation,46,40 (0.80),124.8 (0.00),microwave x1,microwave x1
+2408,scannetpp/27dd4da69e,object_size_estimation,31,30 (1.00),318 (0.00),pan x4,pan x1
+2409,scannetpp/27dd4da69e,object_size_estimation,174,180 (1.00),140 (0.70),(empty),sofa x1
+2410,scannetpp/27dd4da69e,object_size_estimation,14,10 (0.50),7.8 (0.20),power strip x2,power strip x1
+2411,scannetpp/27dd4da69e,object_size_estimation,40,30 (0.60),27.7 (0.40),cutting board x3,cutting board x1
+2412,scannetpp/27dd4da69e,object_size_estimation,26,30 (0.70),26.9 (1.00),kettle x3,kettle x1
+2413,scannetpp/27dd4da69e,object_size_estimation,46,40 (0.80),40 (0.80),(empty),basket x1
+2449,scannetpp/3864514494,object_rel_direction_easy,B,B ✓,B ✓,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+2450,scannetpp/3864514494,object_rel_direction_easy,A,B ✗,B ✗,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+2451,scannetpp/40aec5fffa,object_rel_direction_easy,A,A ✓,A ✓,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+2452,scannetpp/40aec5fffa,object_rel_direction_easy,B,A ✗,B ✓,"door x1, heater x1, microwave x1","door x1, heater x1, microwave x1"
+2472,scannetpp/f3d64c30f8,object_rel_direction_easy,B,A ✗,A ✗,"bucket x1, microwave x1","bucket x1, heater x1, microwave x1"
+2473,scannetpp/f3d64c30f8,object_rel_direction_easy,B,B ✓,B ✓,"bucket x1, microwave x1","bucket x1, heater x1, microwave x1"
+2544,scannetpp/21d970d8de,object_counting,3,2 (0.40),3 (1.00),"room x1, whiteboard x4",whiteboard x3
+2545,scannetpp/21d970d8de,object_counting,40,20 (0.10),16 (0.00),"chair x14, room x1",chair x40
+2546,scannetpp/21d970d8de,object_counting,12,2 (0.00),2 (0.00),room x1,ceiling light x12
+2563,scannetpp/38d58a7a31,object_counting,36,12 (0.00),10 (0.00),"chair x10, room x1",chair x36
+2565,scannetpp/38d58a7a31,object_counting,12,10 (0.70),1 (0.00),room x1,ceiling light x10
+2567,scannetpp/38d58a7a31,object_counting,3,2 (0.40),1 (0.00),room x1,heater x3
+2568,scannetpp/38d58a7a31,object_counting,2,1 (0.10),1 (0.10),room x1,coat rack x2
+2571,scannetpp/3864514494,object_counting,3,1 (0.00),1 (0.00),room x3,trash can x3
+2572,scannetpp/3864514494,object_counting,3,1 (0.00),4 (0.40),"cup x3, room x3",cup x3
+2579,scannetpp/b0a08200c9,object_counting,25,10 (0.00),10 (0.00),"computer tower x11, room x2",computer tower x25
+2580,scannetpp/b0a08200c9,object_counting,3,1 (0.00),1 (0.00),"computer mouse x1, room x2",computer mouse x3
+2581,scannetpp/b0a08200c9,object_counting,2,1 (0.10),1 (0.10),room x2,ceiling light x2
+2582,scannetpp/b0a08200c9,object_counting,2,1 (0.10),1 (0.10),"keyboard x1, room x2",keyboard x2
+2583,scannetpp/b0a08200c9,object_counting,2,1 (0.10),0 (0.00),room x2,heater x2
+2595,scannetpp/f3d64c30f8,object_counting,9,3 (0.00),4 (0.00),"crate x4, room x1",crate x9
+2596,scannetpp/f3d64c30f8,object_counting,17,10 (0.20),10 (0.20),"chair x10, room x1",chair x17
+2597,scannetpp/f3d64c30f8,object_counting,7,2 (0.00),5 (0.50),"room x1, table x6",table x7
+2598,scannetpp/f3d64c30f8,object_counting,2,1 (0.10),4 (0.00),"door x4, room x1",door x2
+2599,scannetpp/f3d64c30f8,object_counting,2,1 (0.10),1 (0.10),room x1,ceiling light x2
+2600,scannetpp/f3d64c30f8,object_counting,3,1 (0.00),2 (0.40),"room x1, trash can x2",trash can x3
+2601,scannetpp/f3d64c30f8,object_counting,2,1 (0.10),1 (0.10),room x1,bowl x2
+2609,scannetpp/ac48a9b736,object_counting,9,5 (0.20),6 (0.40),"chair x6, room x4",chair x9
+2610,scannetpp/ac48a9b736,object_counting,8,3 (0.00),10 (0.60),"room x4, table x14",table x8
+2611,scannetpp/ac48a9b736,object_counting,3,1 (0.00),6 (0.00),"door x7, room x4",door x3
+2612,scannetpp/ac48a9b736,object_counting,6,4 (0.40),6 (1.00),"keyboard x6, room x4",keyboard x6
+2613,scannetpp/ac48a9b736,object_counting,9,4 (0.00),6 (0.40),"monitor x5, room x4",monitor x9
+2614,scannetpp/ac48a9b736,object_counting,2,2 (1.00),2 (1.00),"computer mouse x2, room x4",computer mouse x2
+2615,scannetpp/ac48a9b736,object_counting,4,2 (0.10),4 (1.00),"heater x3, room x4",heater x4
+2619,scannetpp/578511c8a9,object_counting,19,4 (0.00),13 (0.40),"room x1, table x15",table x19
+2620,scannetpp/578511c8a9,object_counting,16,10 (0.30),5 (0.00),"monitor x4, room x1",monitor x16
+2621,scannetpp/578511c8a9,object_counting,10,3 (0.00),5 (0.10),"keyboard x4, room x1",keyboard x10
+2622,scannetpp/578511c8a9,object_counting,8,2 (0.00),6 (0.60),"computer tower x4, room x1",computer tower x8
+2623,scannetpp/578511c8a9,object_counting,4,1 (0.00),7 (0.00),"room x1, whiteboard x6",whiteboard x4
+2624,scannetpp/578511c8a9,object_counting,11,10 (0.90),6 (0.10),"chair x6, room x1",chair x11
+2625,scannetpp/578511c8a9,object_counting,8,2 (0.00),2 (0.00),"computer mouse x2, room x1",computer mouse x8
+2626,scannetpp/578511c8a9,object_counting,25,4 (0.00),4 (0.00),room x1,ceiling light x25
+2655,scannetpp/27dd4da69e,object_counting,5,3 (0.30),10 (0.00),"door x6, room x8",door x5
+2656,scannetpp/27dd4da69e,object_counting,2,1 (0.10),0 (0.00),room x8,chair x2
+2657,scannetpp/27dd4da69e,object_counting,3,1 (0.00),1 (0.00),room x8,suitcase x3
+2658,scannetpp/27dd4da69e,object_counting,2,2 (1.00),2 (1.00),"room x8, trash can x2",trash can x2
+2673,scannetpp/21d970d8de,room_size_estimation,55.0,100 (0.00),11 (0.00),room x1,(empty)
+2678,scannetpp/38d58a7a31,room_size_estimation,52.3,100 (0.00),11.1 (0.00),room x1,(empty)
+2679,scannetpp/5ee7c22ba0,room_size_estimation,6.2,15 (0.00),10 (0.00),room x1,(empty)
+2681,scannetpp/3864514494,room_size_estimation,8.8,15 (0.00),11.5 (0.40),room x3,(empty)
+2682,scannetpp/40aec5fffa,room_size_estimation,9.1,12.5 (0.30),10.2 (0.80),room x1,(empty)
+2692,scannetpp/b0a08200c9,room_size_estimation,8.9,15 (0.00),10.5 (0.70),room x2,(empty)
+2699,scannetpp/f3d64c30f8,room_size_estimation,23.0,25 (0.90),12 (0.10),room x1,(empty)
+2702,scannetpp/ac48a9b736,room_size_estimation,128.5,100 (0.60),100 (0.60),room x4,(empty)
+2704,scannetpp/578511c8a9,room_size_estimation,101.2,40 (0.00),20.1 (0.00),room x1,(empty)
+2711,scannetpp/27dd4da69e,room_size_estimation,34.2,25 (0.50),13.7 (0.00),room x8,(empty)
+2811,scannetpp/578511c8a9,obj_appearance_order,C,D ✗,B ✗,"computer mouse x2, computer tower x4, whiteboard x6","computer mouse x8, computer tower x8, printer x1, whiteboard x4"
+2812,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,B ✗,"computer mouse x2, keyboard x4","computer mouse x8, exhaust fan x1, keyboard x10, printer x1"
+2813,scannetpp/578511c8a9,obj_appearance_order,C,B ✗,A ✗,computer tower x4,"computer tower x8, kettle x1, printer x1, table lamp x1"
+2814,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,B ✗,"computer mouse x2, keyboard x4, telephone x1","computer mouse x8, exhaust fan x1, keyboard x10, telephone x1"
+2815,scannetpp/578511c8a9,obj_appearance_order,D,B ✗,B ✗,"computer tower x4, whiteboard x6","computer tower x8, kettle x1, printer x1, whiteboard x4"
+2816,scannetpp/578511c8a9,obj_appearance_order,B,B ✓,B ✓,"computer mouse x2, monitor x4, telephone x1","computer mouse x8, kettle x1, monitor x16, telephone x1"
+2817,scannetpp/578511c8a9,obj_appearance_order,D,A ✗,D ✓,"computer mouse x2, keyboard x4, table x15","computer mouse x8, keyboard x10, printer x1, table x19"
+2818,scannetpp/578511c8a9,obj_appearance_order,B,D ✗,B ✓,"monitor x4, telephone x1, whiteboard x6","kettle x1, monitor x16, telephone x1, whiteboard x4"
+2819,scannetpp/578511c8a9,obj_appearance_order,C,A ✗,C ✓,"chair x6, computer tower x4, telephone x1","chair x11, computer tower x8, kettle x1, telephone x1"
+2820,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,A ✓,"chair x6, door x3, monitor x4","chair x11, door x1, kettle x1, monitor x16"
+2821,scannetpp/578511c8a9,obj_appearance_order,B,B ✓,B ✓,"computer mouse x2, monitor x4","computer mouse x8, exhaust fan x1, monitor x16, printer x1"
+2822,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,A ✓,"computer mouse x2, computer tower x4, table x15","computer mouse x8, computer tower x8, printer x1, table x19"
+2823,scannetpp/578511c8a9,obj_appearance_order,C,A ✗,A ✗,"computer mouse x2, telephone x1","ceiling light x25, computer mouse x8, kettle x1, telephone x1"
+2824,scannetpp/578511c8a9,obj_appearance_order,D,D ✓,B ✗,"computer tower x4, table x15","computer tower x8, kettle x1, printer x1, table x19"
+2825,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,A ✓,"keyboard x4, whiteboard x6","kettle x1, keyboard x10, printer x1, whiteboard x4"
+2826,scannetpp/578511c8a9,obj_appearance_order,C,C ✓,B ✗,"monitor x4, telephone x1","ceiling light x25, kettle x1, monitor x16, telephone x1"
+2827,scannetpp/578511c8a9,obj_appearance_order,B,B ✓,B ✓,"computer mouse x2, whiteboard x6","computer mouse x8, kettle x1, printer x1, whiteboard x4"
+2828,scannetpp/578511c8a9,obj_appearance_order,D,C ✗,C ✗,computer mouse x2,"ceiling light x25, computer mouse x8, kettle x1, printer x1"
+2829,scannetpp/578511c8a9,obj_appearance_order,A,B ✗,B ✗,"computer tower x4, door x3, whiteboard x6","computer tower x8, door x1, kettle x1, whiteboard x4"
+2830,scannetpp/578511c8a9,obj_appearance_order,D,A ✗,B ✗,keyboard x4,"ceiling light x25, kettle x1, keyboard x10, printer x1"
+2831,scannetpp/578511c8a9,obj_appearance_order,C,C ✓,C ✓,"computer mouse x2, computer tower x4, table x15","computer mouse x8, computer tower x8, kettle x1, table x19"
+2832,scannetpp/578511c8a9,obj_appearance_order,B,A ✗,A ✗,"chair x6, computer mouse x2, monitor x4, telephone x1","chair x11, computer mouse x8, monitor x16, telephone x1"
+2833,scannetpp/578511c8a9,obj_appearance_order,A,A ✓,A ✓,"computer mouse x2, monitor x4","computer mouse x8, monitor x16, printer x1, table lamp x1"
+2834,scannetpp/578511c8a9,obj_appearance_order,B,C ✗,C ✗,"door x3, monitor x4, table x15","door x1, kettle x1, monitor x16, table x19"
+2835,scannetpp/578511c8a9,obj_appearance_order,C,A ✗,B ✗,"computer mouse x2, keyboard x4","computer mouse x8, exhaust fan x1, kettle x1, keyboard x10"
+2836,scannetpp/578511c8a9,obj_appearance_order,D,A ✗,B ✗,"computer mouse x2, keyboard x4, telephone x1, whiteboard x6","computer mouse x8, keyboard x10, telephone x1, whiteboard x4"
+2837,scannetpp/578511c8a9,obj_appearance_order,B,A ✗,B ✓,"computer mouse x2, keyboard x4, whiteboard x6","computer mouse x8, kettle x1, keyboard x10, whiteboard x4"
+2838,scannetpp/578511c8a9,obj_appearance_order,A,B ✗,B ✗,keyboard x4,"kettle x1, keyboard x10, printer x1, table lamp x1"
+2839,scannetpp/578511c8a9,obj_appearance_order,D,A ✗,A ✗,"computer mouse x2, keyboard x4","computer mouse x8, kettle x1, keyboard x10, table lamp x1"
+2840,scannetpp/578511c8a9,obj_appearance_order,C,D ✗,B ✗,"door x3, keyboard x4","door x1, kettle x1, keyboard x10, table lamp x1"
+2917,scannetpp/27dd4da69e,obj_appearance_order,A,A ✓,A ✓,"bed x3, pan x4","bed x1, pan x1, suitcase x3, tv x1"
+2918,scannetpp/27dd4da69e,obj_appearance_order,C,A ✗,A ✗,"crate x1, power strip x2","crate x1, power strip x1, sofa x1, telephone x1"
+2919,scannetpp/27dd4da69e,obj_appearance_order,B,A ✗,A ✗,"door x6, power strip x2","basket x1, door x5, power strip x1, sofa x1"
+2920,scannetpp/27dd4da69e,obj_appearance_order,D,A ✗,A ✗,cutting board x3,"cutting board x1, sofa x1, telephone x1, tv x1"
+2921,scannetpp/27dd4da69e,obj_appearance_order,C,B ✗,B ✗,"door x6, trash can x2","door x5, sofa x1, trash can x2, tv x1"
+2922,scannetpp/27dd4da69e,obj_appearance_order,A,A ✓,A ✓,bed x3,"bed x1, laptop x1, suitcase x3, telephone x1"
+2923,scannetpp/27dd4da69e,obj_appearance_order,D,D ✓,C ✗,"door x6, trash can x2","door x5, monitor x1, suitcase x3, trash can x2"
+2924,scannetpp/27dd4da69e,obj_appearance_order,B,A ✗,D ✗,"bed x3, power strip x2","bed x1, power strip x1, telephone x1, tv x1"
+2925,scannetpp/27dd4da69e,obj_appearance_order,C,A ✗,B ✗,"bed x3, power strip x2","bed x1, monitor x1, power strip x1, telephone x1"
+2926,scannetpp/27dd4da69e,obj_appearance_order,D,A ✗,A ✗,"cutting board x3, trash can x2","cutting board x1, laptop x1, telephone x1, trash can x2"
+2927,scannetpp/27dd4da69e,obj_appearance_order,A,A ✓,A ✓,"crate x1, cutting board x3","chair x2, crate x1, cutting board x1, telephone x1"
+2928,scannetpp/27dd4da69e,obj_appearance_order,B,A ✗,A ✗,"bed x3, cutting board x3","bed x1, cutting board x1, telephone x1, tv x1"
+2929,scannetpp/27dd4da69e,obj_appearance_order,D,D ✓,B ✗,"kettle x3, microwave x1","kettle x1, microwave x1, sofa x1, suitcase x3"
+2930,scannetpp/27dd4da69e,obj_appearance_order,A,A ✓,B ✗,"crate x1, door x6, pan x4","crate x1, door x5, laptop x1, pan x1"
+2931,scannetpp/27dd4da69e,obj_appearance_order,C,B ✗,B ✗,"power strip x2, trash can x2","power strip x1, sofa x1, trash can x2, tv x1"
+2932,scannetpp/27dd4da69e,obj_appearance_order,B,A ✗,B ✓,power strip x2,"monitor x1, power strip x1, sofa x1, suitcase x3"
+2933,scannetpp/27dd4da69e,obj_appearance_order,C,C ✓,B ✗,"kettle x3, pan x4, trash can x2","kettle x1, pan x1, suitcase x3, trash can x2"
+2934,scannetpp/27dd4da69e,obj_appearance_order,D,C ✗,C ✗,"kettle x3, pan x4","kettle x1, pan x1, sofa x1, telephone x1"
+2935,scannetpp/27dd4da69e,obj_appearance_order,B,A ✗,A ✗,"crate x1, microwave x1","crate x1, laptop x1, microwave x1, telephone x1"
+2936,scannetpp/27dd4da69e,obj_appearance_order,A,A ✓,A ✓,"crate x1, cutting board x3, door x6, kettle x3","crate x1, cutting board x1, door x5, kettle x1"
+2937,scannetpp/27dd4da69e,obj_appearance_order,A,D ✗,A ✓,"crate x1, door x6","crate x1, door x5, laptop x1, suitcase x3"
+2938,scannetpp/27dd4da69e,obj_appearance_order,D,A ✗,A ✗,"door x6, trash can x2","basket x1, door x5, suitcase x3, trash can x2"
+2939,scannetpp/27dd4da69e,obj_appearance_order,C,B ✗,C ✓,power strip x2,"laptop x1, power strip x1, suitcase x3, telephone x1"
+2940,scannetpp/27dd4da69e,obj_appearance_order,B,B ✓,B ✓,"pan x4, trash can x2","pan x1, sofa x1, trash can x2, tv x1"
+2941,scannetpp/27dd4da69e,obj_appearance_order,B,B ✓,B ✓,"bed x3, crate x1, pan x4","bed x1, crate x1, pan x1, telephone x1"
+2942,scannetpp/27dd4da69e,obj_appearance_order,D,D ✓,C ✗,"door x6, trash can x2","basket x1, door x5, trash can x2"
+2943,scannetpp/27dd4da69e,obj_appearance_order,C,D ✗,B ✗,"bed x3, crate x1","bed x1, chair x2, crate x1, telephone x1"
+2944,scannetpp/27dd4da69e,obj_appearance_order,A,B ✗,B ✗,"crate x1, kettle x3, power strip x2","crate x1, kettle x1, power strip x1, telephone x1"
+2945,scannetpp/27dd4da69e,obj_appearance_order,B,C ✗,B ✓,"bed x3, door x6, microwave x1","basket x1, bed x1, door x5, microwave x1"
+2946,scannetpp/27dd4da69e,obj_appearance_order,D,D ✓,A ✗,"door x6, kettle x3","door x5, kettle x1, sofa x1, suitcase x3"
+2947,scannet/scene0277_02,object_rel_distance,B,A ✗,A ✗,"bed x1, door x1, trash bin x1","bed x1, chair x1, door x1, table x1, trash bin x2"
+2948,scannet/scene0277_02,object_rel_distance,A,A ✓,A ✓,"bed x1, door x1, radiator x1, trash bin x1","bed x1, chair x1, door x1, radiator x1, trash bin x2"
+2949,scannet/scene0277_02,object_rel_distance,D,A ✗,A ✗,"bed x1, door x1, trash bin x1, window x1","bed x1, chair x1, door x1, trash bin x2, window x1"
+2950,scannet/scene0277_02,object_rel_distance,C,C ✓,A ✗,"door x1, radiator x1, trash bin x1","chair x1, door x1, radiator x1, table x1, trash bin x2"
+2992,scannet/scene0633_00,object_rel_distance,B,A ✗,A ✗,"chair x1, lamp x1, pillow x1, table x1","chair x1, clock x1, lamp x1, pillow x1, table x1"
+2993,scannet/scene0633_00,object_rel_distance,D,A ✗,B ✗,"chair x1, lamp x1, pillow x1","chair x1, clock x1, lamp x1, pillow x1, window x1"
+2994,scannet/scene0633_00,object_rel_distance,C,A ✗,A ✗,"chair x1, lamp x1, pillow x1","chair x1, clock x1, lamp x1, pillow x1, window x1"
+3021,scannet/scene0651_02,object_rel_distance,C,C ✓,C ✓,"chair x1, counter x1, table x1, trash bin x1","chair x4, counter x1, sofa x1, table x2, trash bin x1"
+3022,scannet/scene0651_02,object_rel_distance,B,B ✓,B ✓,"chair x1, counter x1, refrigerator x1, trash bin x1","chair x4, counter x1, refrigerator x1, sofa x1, trash bin x1"
+3023,scannet/scene0651_02,object_rel_distance,C,A ✗,A ✗,"chair x1, counter x1, refrigerator x1, table x1","chair x4, counter x1, refrigerator x1, sofa x1, table x2"
+3024,scannet/scene0651_02,object_rel_distance,A,A ✓,A ✓,"counter x1, refrigerator x1, table x1, trash bin x1","counter x1, refrigerator x1, sofa x1, table x2, trash bin x1"
+3025,scannet/scene0651_02,object_rel_distance,B,A ✗,B ✓,"chair x1, refrigerator x1, table x1, trash bin x1","chair x4, refrigerator x1, sofa x1, table x2, trash bin x1"
+3026,scannet/scene0651_02,object_rel_distance,D,A ✗,A ✗,"chair x1, counter x1, table x1, trash bin x1","chair x4, counter x1, sofa x1, table x2, trash bin x1"
+3027,scannet/scene0651_02,object_rel_distance,C,A ✗,C ✓,"chair x1, counter x1, table x1, trash bin x1","chair x4, counter x1, sofa x1, table x2, trash bin x1"
+3028,scannet/scene0651_02,object_rel_distance,B,C ✗,B ✓,"chair x1, counter x1, refrigerator x1, trash bin x1","chair x4, counter x1, refrigerator x1, sofa x1, trash bin x1"
+3029,scannet/scene0651_02,object_rel_distance,D,C ✗,B ✗,"counter x1, refrigerator x1, table x1, trash bin x1","counter x1, refrigerator x1, sofa x1, table x2, trash bin x1"
+3030,scannet/scene0651_02,object_rel_distance,A,B ✗,A ✓,"chair x1, counter x1, refrigerator x1, table x1, trash bin x1","chair x4, counter x1, refrigerator x1, table x2, trash bin x1"
+3031,scannet/scene0651_02,object_rel_distance,B,A ✗,A ✗,"chair x1, refrigerator x1, table x1, trash bin x1","chair x4, refrigerator x1, sofa x1, table x2, trash bin x1"
+3058,scannet/scene0696_01,object_rel_distance,C,A ✗,A ✗,"door x1, mattress x1, pillow x1, radiator x1, table x1","door x1, mattress x1, pillow x2, radiator x1, table x1"
+3059,scannet/scene0696_01,object_rel_distance,D,B ✗,B ✗,"door x1, mattress x1, pillow x1, sofa x1, table x1","door x1, mattress x1, pillow x2, sofa x1, table x1"
+3060,scannet/scene0696_01,object_rel_distance,B,B ✓,C ✗,"door x1, mattress x1, sofa x1, table x1, tv x1","door x1, mattress x1, sofa x1, table x1, tv x2"
+3061,scannet/scene0696_01,object_rel_distance,C,A ✗,B ✗,"door x1, mattress x1, sofa x1, table x1, tv x1","door x1, mattress x1, sofa x1, table x1, tv x2"
+3062,scannet/scene0696_01,object_rel_distance,A,A ✓,C ✗,"chair x1, door x1, mattress x1, radiator x1, table x1","chair x10, door x1, mattress x1, radiator x1, table x1"
+3063,scannet/scene0696_01,object_rel_distance,A,A ✓,A ✓,"door x1, mattress x1, pillow x1, radiator x1, tv x1","door x1, mattress x1, pillow x2, radiator x1, tv x2"
+3064,scannet/scene0696_01,object_rel_distance,B,A ✗,B ✓,"door x1, radiator x1, sofa x1, table x1, tv x1","door x1, radiator x1, sofa x1, table x1, tv x2"
+3085,scannet/scene0700_02,object_rel_distance,B,B ✓,B ✓,"door x1, radiator x1, table x1, trash bin x1","door x1, radiator x1, table x1, trash bin x2, window x1"
+3086,scannet/scene0700_02,object_rel_distance,C,C ✓,C ✓,"door x1, table x1, telephone x1, trash bin x1","door x1, table x1, telephone x1, trash bin x2, window x1"
+3087,scannet/scene0700_02,object_rel_distance,C,C ✓,C ✓,"backpack x1, door x1, table x1, trash bin x1","backpack x2, door x1, table x1, trash bin x2, window x1"
+3088,scannet/scene0700_02,object_rel_distance,B,B ✓,B ✓,"backpack x1, door x1, keyboard x1, telephone x1, trash bin x1","backpack x2, door x1, keyboard x1, telephone x1, trash bin x2"
+3089,scannet/scene0700_02,object_rel_distance,D,A ✗,D ✓,"backpack x1, chair x1, keyboard x1, telephone x1","backpack x2, chair x4, keyboard x1, telephone x1, window x1"
+3090,scannet/scene0700_02,object_rel_distance,A,A ✓,A ✓,"backpack x1, chair x1, keyboard x1, trash bin x1","backpack x2, chair x4, keyboard x1, trash bin x2, window x1"
+3091,scannet/scene0435_02,object_rel_distance,C,C ✓,A ✗,"chair x1, door x1, lamp x1, tv x1","chair x2, door x1, lamp x2, refrigerator x1, tv x1"
+3092,scannet/scene0435_02,object_rel_distance,B,B ✓,B ✓,"bed x1, door x1, pillow x1, tv x1","bed x2, door x1, pillow x8, trash bin x1, tv x1"
+3093,scannet/scene0435_02,object_rel_distance,D,D ✓,B ✗,"chair x1, lamp x1, nightstand x1, tv x1","chair x2, lamp x2, nightstand x1, trash bin x1, tv x1"
+3094,scannet/scene0435_02,object_rel_distance,A,B ✗,B ✗,"backpack x1, door x1, lamp x1, tv x1","backpack x1, door x1, lamp x2, trash bin x1, tv x1"
+3095,scannet/scene0435_02,object_rel_distance,B,A ✗,D ✗,"chair x1, door x1, lamp x1, pillow x1, tv x1","chair x2, door x1, lamp x2, pillow x8, tv x1"
+3096,scannet/scene0435_02,object_rel_distance,D,A ✗,D ✓,"door x1, lamp x1, pillow x1, tv x1","door x1, lamp x2, pillow x8, refrigerator x1, tv x1"
+3097,scannet/scene0435_02,object_rel_distance,A,B ✗,B ✗,"backpack x1, bed x1, chair x1, door x1, pillow x1","backpack x1, bed x2, chair x2, door x1, pillow x8"
+3098,scannet/scene0435_02,object_rel_distance,C,C ✓,C ✓,"bed x1, lamp x1, pillow x1, table x1","bed x2, lamp x2, pillow x8, refrigerator x1, table x1"
+3099,scannet/scene0435_02,object_rel_distance,D,D ✓,C ✗,"backpack x1, bed x1, lamp x1, pillow x1, table x1","backpack x1, bed x2, lamp x2, pillow x8, table x1"
+3100,scannet/scene0435_02,object_rel_distance,B,A ✗,A ✗,"backpack x1, lamp x1, pillow x1","backpack x1, lamp x2, pillow x8, refrigerator x1, trash bin x1"
+3154,scannet/scene0050_01,object_rel_distance,C,C ✓,C ✓,"backpack x1, chair x1, lamp x1, piano x1, sofa x1","backpack x2, chair x2, lamp x1, piano x1, sofa x1"
+3155,scannet/scene0050_01,object_rel_distance,D,A ✗,A ✗,"chair x1, lamp x1, piano x1, sofa x1","chair x2, lamp x1, piano x1, printer x2, sofa x1"
+3156,scannet/scene0050_01,object_rel_distance,C,A ✗,A ✗,"backpack x1, piano x1, sofa x1, table x1","backpack x2, piano x1, printer x2, sofa x1, table x1"
+3157,scannet/scene0086_02,object_rel_distance,B,B ✓,B ✓,"door x1, mirror x1, plant x1, trash bin x1, window x1","door x3, mirror x1, plant x1, trash bin x1, window x1"
+3158,scannet/scene0086_02,object_rel_distance,A,A ✓,A ✓,"door x1, mirror x1, plant x1, trash bin x1, window x1","door x3, mirror x1, plant x1, trash bin x1, window x1"
+3159,scannet/scene0088_01,object_rel_distance,D,D ✓,D ✓,"chair x1, door x1, table x1, trash bin x1, window x1","chair x18, door x1, table x2, trash bin x1, window x2"
+3160,scannet/scene0144_00,object_rel_distance,B,B ✓,A ✗,"door x1, lamp x1, pillow x1, printer x1, table x1","door x1, lamp x1, pillow x1, printer x2, table x1"
+3161,scannet/scene0144_00,object_rel_distance,C,C ✓,B ✗,"chair x1, door x1, lamp x1, pillow x1, printer x1","chair x3, door x1, lamp x1, pillow x1, printer x2"
+3206,scannet/scene0277_02,object_size_estimation,221,200 (0.90),145 (0.40),bed x1,bed x1
+3207,scannet/scene0277_02,object_size_estimation,86,100 (0.70),100 (0.70),(empty),chair x1
+3208,scannet/scene0277_02,object_size_estimation,171,140 (0.70),65.5 (0.00),window x2,window x1
+3209,scannet/scene0277_02,object_size_estimation,90,100 (0.80),78.7 (0.80),radiator x1,radiator x1
+3210,scannet/scene0277_02,object_size_estimation,114,200 (0.00),164.4 (0.20),door x3,door x1
+3211,scannet/scene0277_02,object_size_estimation,133,100 (0.60),100 (0.60),(empty),table x1
+3212,scannet/scene0304_00,object_size_estimation,55,30 (0.10),42.6 (0.60),backpack x1,backpack x1
+3213,scannet/scene0304_00,object_size_estimation,209,200 (1.00),73.4 (0.00),door x2,door x1
+3214,scannet/scene0304_00,object_size_estimation,95,40 (0.00),50 (0.10),(empty),trash bin x1
+3273,scannet/scene0633_00,object_size_estimation,115,100 (0.80),86.2 (0.50),chair x1,chair x1
+3274,scannet/scene0633_00,object_size_estimation,82,140 (0.00),140 (0.00),(empty),window x1
+3275,scannet/scene0633_00,object_size_estimation,49,50 (1.00),57.8 (0.70),pillow x3,pillow x1
+3276,scannet/scene0633_00,object_size_estimation,34,100 (0.00),28.1 (0.70),lamp x1,lamp x1
+3277,scannet/scene0633_00,object_size_estimation,25,30 (0.60),40 (0.00),(empty),clock x1
+3278,scannet/scene0633_00,object_size_estimation,73,100 (0.30),445 (0.00),table x2,table x1
+3299,scannet/scene0651_02,object_size_estimation,139,190 (0.30),140 (1.00),(empty),sofa x1
+3300,scannet/scene0651_02,object_size_estimation,221,180 (0.70),132.4 (0.20),counter x2,counter x1
+3301,scannet/scene0651_02,object_size_estimation,155,180 (0.70),67.4 (0.00),refrigerator x1,refrigerator x1
+3302,scannet/scene0651_02,object_size_estimation,43,40 (0.90),49.4 (0.80),trash bin x1,trash bin x1
+3341,scannet/scene0696_01,object_size_estimation,191,140 (0.50),77.8 (0.00),mattress x2,mattress x1
+3342,scannet/scene0696_01,object_size_estimation,192,190 (1.00),179.9 (0.90),sofa x3,sofa x1
+3343,scannet/scene0696_01,object_size_estimation,172,100 (0.20),39.7 (0.00),radiator x4,radiator x1
+3344,scannet/scene0696_01,object_size_estimation,202,205 (1.00),426 (0.00),door x5,door x1
+3345,scannet/scene0696_01,object_size_estimation,280,180 (0.30),154.7 (0.20),table x4,table x1
+3356,scannet/scene0700_02,object_size_estimation,253,140 (0.20),140 (0.20),(empty),window x1
+3357,scannet/scene0700_02,object_size_estimation,47,40 (0.80),59.3 (0.50),keyboard x2,keyboard x1
+3358,scannet/scene0700_02,object_size_estimation,151,100 (0.40),95.6 (0.30),radiator x1,radiator x1
+3359,scannet/scene0700_02,object_size_estimation,29,10 (0.00),39.9 (0.30),telephone x1,telephone x1
+3360,scannet/scene0700_02,object_size_estimation,176,200 (0.80),36.8 (0.00),door x1,door x1
+3361,scannet/scene0700_02,object_size_estimation,269,160 (0.20),94.9 (0.00),table x3,table x1
+3370,scannet/scene0435_02,object_size_estimation,84,100 (0.70),100 (0.70),(empty),refrigerator x1
+3371,scannet/scene0435_02,object_size_estimation,78,100 (0.50),46.5 (0.20),tv x3,tv x1
+3372,scannet/scene0435_02,object_size_estimation,86,100 (0.70),318 (0.00),nightstand x2,nightstand x1
+3373,scannet/scene0435_02,object_size_estimation,51,40 (0.60),38 (0.50),backpack x1,backpack x1
+3374,scannet/scene0435_02,object_size_estimation,133,205 (0.00),104.5 (0.60),door x2,door x1
+3375,scannet/scene0435_02,object_size_estimation,31,40 (0.50),40 (0.50),(empty),trash bin x1
+3376,scannet/scene0435_02,object_size_estimation,146,140 (1.00),144 (1.00),table x5,table x1
+3408,scannet/scene0553_00,object_size_estimation,85,40 (0.00),39.9 (0.00),backpack x1,backpack x1
+3409,scannet/scene0553_00,object_size_estimation,96,100 (1.00),21.2 (0.00),mirror x2,mirror x1
+3410,scannet/scene0553_00,object_size_estimation,188,200 (0.90),82.7 (0.00),door x2,door x1
+3411,scannet/scene0553_00,object_size_estimation,106,100 (0.90),100 (0.90),(empty),trash bin x1
+3469,scannet/scene0050_01,object_size_estimation,205,200 (1.00),209.5 (1.00),sofa x5,sofa x1
+3470,scannet/scene0050_01,object_size_estimation,42,40 (1.00),43 (1.00),lamp x1,lamp x1
+3471,scannet/scene0050_01,object_size_estimation,51,30 (0.20),30 (0.20),(empty),printer x2
+3472,scannet/scene0050_01,object_size_estimation,145,100 (0.40),216.8 (0.10),piano x1,piano x1
+3473,scannet/scene0050_01,object_size_estimation,156,100 (0.30),70.9 (0.00),table x4,table x1
+3477,scannet/scene0086_02,object_size_estimation,156,120 (0.60),81.7 (0.10),window x1,window x1
+3478,scannet/scene0086_02,object_size_estimation,29,100 (0.00),40.1 (0.30),plant x1,plant x1
+3479,scannet/scene0086_02,object_size_estimation,176,100 (0.20),20.8 (0.00),mirror x1,mirror x1
+3480,scannet/scene0086_02,object_size_estimation,101,40 (0.00),49.2 (0.00),trash bin x3,trash bin x1
+3481,scannet/scene0088_01,object_size_estimation,148,200 (0.30),130.5 (0.80),door x3,door x1
+3482,scannet/scene0088_01,object_size_estimation,40,40 (1.00),11.6 (0.00),trash bin x1,trash bin x1
+3490,scannet/scene0144_00,object_size_estimation,225,200 (0.80),237 (0.90),bed x1,bed x1
+3491,scannet/scene0144_00,object_size_estimation,201,190 (0.90),101 (0.10),window x1,window x1
+3492,scannet/scene0144_00,object_size_estimation,79,100 (0.50),85 (0.90),pillow x4,pillow x1
+3493,scannet/scene0144_00,object_size_estimation,62,40 (0.30),33.5 (0.10),lamp x1,lamp x1
+3494,scannet/scene0144_00,object_size_estimation,55,100 (0.00),41.3 (0.60),printer x1,printer x2
+3495,scannet/scene0144_00,object_size_estimation,78,100 (0.50),152 (0.00),nightstand x1,nightstand x1
+3496,scannet/scene0144_00,object_size_estimation,116,205 (0.00),103 (0.80),door x4,door x1
+3497,scannet/scene0144_00,object_size_estimation,165,180 (0.90),1796 (0.00),table x4,table x1
+3560,scannet/scene0246_00,object_size_estimation,228,200 (0.80),213 (0.90),bed x1,bed x1
+3561,scannet/scene0246_00,object_size_estimation,96,100 (1.00),351 (0.00),chair x3,chair x1
+3562,scannet/scene0246_00,object_size_estimation,73,100 (0.30),68.5 (0.90),towel x4,towel x1
+3563,scannet/scene0246_00,object_size_estimation,68,50 (0.50),45.2 (0.40),nightstand x1,nightstand x1
+3564,scannet/scene0246_00,object_size_estimation,130,100 (0.60),45.3 (0.00),table x3,table x1
+3565,scannet/scene0304_00,object_rel_direction_hard,C,D ✗,B ✗,"backpack x1, door x1","backpack x1, door x1, trash bin x1"
+3566,scannet/scene0304_00,object_rel_direction_hard,A,C ✗,C ✗,"backpack x1, door x1","backpack x1, door x1, trash bin x1"
+3567,scannet/scene0304_00,object_rel_direction_hard,B,B ✓,B ✓,"backpack x1, door x1","backpack x1, door x1, trash bin x1"
+3599,scannet/scene0651_02,object_rel_direction_hard,A,A ✓,B ✗,"counter x1, trash bin x1","counter x1, sofa x1, trash bin x1"
+3600,scannet/scene0651_02,object_rel_direction_hard,D,C ✗,C ✗,"counter x1, trash bin x1","counter x1, sofa x1, trash bin x1"
+3601,scannet/scene0651_02,object_rel_direction_hard,B,C ✗,C ✗,"counter x1, trash bin x1","counter x1, sofa x1, trash bin x1"
+3602,scannet/scene0651_02,object_rel_direction_hard,D,A ✗,B ✗,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+3603,scannet/scene0651_02,object_rel_direction_hard,A,A ✓,B ✗,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+3604,scannet/scene0651_02,object_rel_direction_hard,C,D ✗,D ✗,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+3626,scannet/scene0700_02,object_rel_direction_hard,A,A ✓,A ✓,"keyboard x1, telephone x1","keyboard x1, telephone x1, window x1"
+3627,scannet/scene0700_02,object_rel_direction_hard,B,A ✗,B ✓,"keyboard x1, telephone x1","keyboard x1, telephone x1, window x1"
+3628,scannet/scene0700_02,object_rel_direction_hard,C,C ✓,C ✓,"keyboard x1, telephone x1","keyboard x1, telephone x1, window x1"
+3629,scannet/scene0435_02,object_rel_direction_hard,D,A ✗,A ✗,backpack x1,"backpack x1, refrigerator x1, trash bin x1"
+3665,scannet/scene0050_01,object_rel_direction_hard,C,A ✗,D ✗,"lamp x1, piano x1","lamp x1, piano x1, printer x2"
+3666,scannet/scene0050_01,object_rel_direction_hard,B,B ✓,B ✓,"lamp x1, piano x1","lamp x1, piano x1, printer x2"
+3667,scannet/scene0050_01,object_rel_direction_hard,A,A ✓,A ✓,"piano x1, sofa x1","piano x1, printer x2, sofa x1"
+3696,scannet/scene0246_00,object_rel_direction_hard,D,C ✗,D ✓,"chair x1, nightstand x1, table x1","chair x1, nightstand x1, table x1"
+3697,scannet/scene0246_00,object_rel_direction_hard,B,A ✗,B ✓,"chair x1, nightstand x1, table x1","chair x1, nightstand x1, table x1"
+3737,scannet/scene0553_00,object_rel_direction_easy,A,A ✓,B ✗,"door x1, mirror x1","door x1, mirror x1, trash bin x1"
+3738,scannet/scene0553_00,object_rel_direction_easy,A,B ✗,B ✗,"door x1, mirror x1","door x1, mirror x1, trash bin x1"
+3739,scannet/scene0553_00,object_rel_direction_easy,B,B ✓,B ✓,"door x1, mirror x1","door x1, mirror x1, trash bin x1"
+3746,scannet/scene0144_00,object_rel_direction_easy,B,B ✓,A ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+3747,scannet/scene0144_00,object_rel_direction_easy,A,A ✓,B ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+3748,scannet/scene0144_00,object_rel_direction_easy,B,A ✗,A ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+3758,scannet/scene0246_00,object_rel_direction_easy,B,A ✗,B ✓,"chair x1, nightstand x1, table x1","chair x1, nightstand x1, table x1"
+3759,scannet/scene0246_00,object_rel_direction_easy,A,A ✓,A ✓,"chair x1, nightstand x1, table x1","chair x1, nightstand x1, table x1"
+3760,scannet/scene0246_00,object_rel_direction_easy,A,B ✗,A ✓,"chair x1, nightstand x1, table x1","chair x1, nightstand x1, table x1"
+3762,scannet/scene0277_02,room_size_estimation,11.0,15 (0.30),11.3 (1.00),room x1,(empty)
+3763,scannet/scene0304_00,room_size_estimation,20.4,20 (1.00),1.759 (0.00),room x3,(empty)
+3778,scannet/scene0633_00,room_size_estimation,8.2,15 (0.00),10.5 (0.50),room x1,(empty)
+3783,scannet/scene0651_02,room_size_estimation,15.9,25 (0.00),16.8 (0.90),room x2,(empty)
+3795,scannet/scene0696_01,room_size_estimation,26.9,25 (0.90),14.7 (0.10),room x1,(empty)
+3798,scannet/scene0700_02,room_size_estimation,12.4,15 (0.60),6.2 (0.10),room x1,(empty)
+3802,scannet/scene0435_02,room_size_estimation,22.2,30 (0.30),14.7 (0.40),room x1,(empty)
+3814,scannet/scene0553_00,room_size_estimation,5.4,10 (0.00),11.7 (0.00),room x1,(empty)
+3827,scannet/scene0050_01,room_size_estimation,14.8,25 (0.00),12.7 (0.80),room x2,(empty)
+3830,scannet/scene0086_02,room_size_estimation,14.1,12.5 (0.80),3.1 (0.00),room x1,(empty)
+3831,scannet/scene0088_01,room_size_estimation,18.7,30 (0.00),13.7 (0.50),room x1,(empty)
+3834,scannet/scene0144_00,room_size_estimation,13.0,15 (0.70),11.5 (0.80),room x1,(empty)
+3848,scannet/scene0246_00,room_size_estimation,17.4,15 (0.80),10.5 (0.30),room x1,(empty)
+4171,scannet/scene0050_01,obj_appearance_order,C,C ✓,C ✓,"chair x3, lamp x1, piano x1","chair x2, lamp x1, piano x1, printer x2"
+4172,scannet/scene0050_01,obj_appearance_order,D,B ✗,B ✗,"chair x3, door x2, lamp x1","chair x2, door x4, lamp x1, printer x2"
+4173,scannet/scene0050_01,obj_appearance_order,A,A ✓,A ✓,"lamp x1, sofa x5, table x4","lamp x1, printer x2, sofa x1, table x1"
+4174,scannet/scene0050_01,obj_appearance_order,D,D ✓,B ✗,"backpack x2, chair x3, lamp x1","backpack x2, chair x2, lamp x1, printer x2"
+4175,scannet/scene0050_01,obj_appearance_order,C,C ✓,B ✗,"door x2, lamp x1, table x4","door x4, lamp x1, printer x2, table x1"
+4176,scannet/scene0050_01,obj_appearance_order,B,B ✓,B ✓,"chair x3, lamp x1, sofa x5","chair x2, lamp x1, printer x2, sofa x1"
+4177,scannet/scene0050_01,obj_appearance_order,B,A ✗,A ✗,"backpack x2, lamp x1, table x4","backpack x2, lamp x1, printer x2, table x1"
+4178,scannet/scene0050_01,obj_appearance_order,A,A ✓,A ✓,"lamp x1, piano x1, table x4","lamp x1, piano x1, printer x2, table x1"
+4239,scannet/scene0304_00,object_rel_direction_medium,C,A ✗,B ✗,"backpack x1, door x1","backpack x1, door x1, trash bin x1"
+4240,scannet/scene0304_00,object_rel_direction_medium,A,A ✓,B ✗,"backpack x1, door x1","backpack x1, door x1, trash bin x1"
+4281,scannet/scene0651_02,object_rel_direction_medium,C,B ✗,B ✗,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+4282,scannet/scene0651_02,object_rel_direction_medium,B,A ✗,B ✓,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+4283,scannet/scene0651_02,object_rel_direction_medium,A,B ✗,B ✗,"refrigerator x1, trash bin x1","refrigerator x1, sofa x1, trash bin x1"
+4305,scannet/scene0700_02,object_rel_direction_medium,A,A ✓,B ✗,"door x1, telephone x1","door x1, telephone x1, window x1"
+4306,scannet/scene0700_02,object_rel_direction_medium,B,B ✓,B ✓,"door x1, telephone x1","door x1, telephone x1, window x1"
+4307,scannet/scene0700_02,object_rel_direction_medium,C,A ✗,A ✗,"door x1, keyboard x1","door x1, keyboard x1, window x1"
+4308,scannet/scene0700_02,object_rel_direction_medium,A,A ✓,A ✓,"door x1, keyboard x1","door x1, keyboard x1, window x1"
+4309,scannet/scene0435_02,object_rel_direction_medium,C,A ✗,C ✓,"backpack x1, nightstand x1, tv x1","backpack x1, nightstand x1, tv x1"
+4310,scannet/scene0435_02,object_rel_direction_medium,B,B ✓,B ✓,"backpack x1, nightstand x1, tv x1","backpack x1, nightstand x1, tv x1"
+4311,scannet/scene0435_02,object_rel_direction_medium,A,B ✗,B ✗,"backpack x1, nightstand x1, tv x1","backpack x1, nightstand x1, tv x1"
+4318,scannet/scene0553_00,object_rel_direction_medium,B,B ✓,B ✓,"backpack x1, mirror x1","backpack x1, mirror x1, trash bin x1"
+4319,scannet/scene0553_00,object_rel_direction_medium,C,B ✗,B ✗,"backpack x1, mirror x1","backpack x1, mirror x1, trash bin x1"
+4320,scannet/scene0553_00,object_rel_direction_medium,A,A ✓,C ✗,"backpack x1, mirror x1","backpack x1, mirror x1, trash bin x1"
+4350,scannet/scene0050_01,object_rel_direction_medium,A,A ✓,C ✗,"lamp x1, piano x1, sofa x1","lamp x1, piano x1, sofa x1"
+4351,scannet/scene0050_01,object_rel_direction_medium,C,A ✗,C ✓,"lamp x1, piano x1, sofa x1","lamp x1, piano x1, sofa x1"
+4352,scannet/scene0050_01,object_rel_direction_medium,B,B ✓,B ✓,"lamp x1, piano x1, sofa x1","lamp x1, piano x1, sofa x1"
+4359,scannet/scene0144_00,object_rel_direction_medium,C,A ✗,A ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+4360,scannet/scene0144_00,object_rel_direction_medium,A,A ✓,C ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+4361,scannet/scene0144_00,object_rel_direction_medium,B,A ✗,C ✗,"door x1, lamp x1, printer x1","door x1, lamp x1, printer x2"
+4362,scannet/scene0144_00,object_rel_direction_medium,C,B ✗,B ✗,"door x1, lamp x1, window x1","door x1, lamp x1, window x1"
+4363,scannet/scene0144_00,object_rel_direction_medium,B,A ✗,B ✓,"door x1, lamp x1, window x1","door x1, lamp x1, window x1"
+4364,scannet/scene0144_00,object_rel_direction_medium,A,A ✓,A ✓,"door x1, lamp x1, window x1","door x1, lamp x1, window x1"
+4382,scannet/scene0246_00,object_rel_direction_medium,C,A ✗,B ✗,"nightstand x1, table x1, towel x1","nightstand x1, table x1, towel x1"
+4383,scannet/scene0246_00,object_rel_direction_medium,B,A ✗,C ✗,"nightstand x1, table x1, towel x1","nightstand x1, table x1, towel x1"
+4384,scannet/scene0246_00,object_rel_direction_medium,C,B ✗,B ✗,"chair x1, nightstand x1, towel x1","chair x1, nightstand x1, towel x1"
+4385,scannet/scene0246_00,object_rel_direction_medium,A,A ✓,A ✓,"chair x1, nightstand x1, towel x1","chair x1, nightstand x1, towel x1"
+4391,scannet/scene0277_02,object_counting,2,1 (0.10),1 (0.10),"room x1, trash bin x1",trash bin x2
+4444,scannet/scene0651_02,object_counting,4,4 (1.00),4 (1.00),"chair x3, room x2",chair x4
+4445,scannet/scene0651_02,object_counting,2,1 (0.10),1 (0.10),"room x2, table x1",table x2
+4471,scannet/scene0696_01,object_counting,10,4 (0.00),16 (0.00),"chair x10, room x1",chair x10
+4472,scannet/scene0696_01,object_counting,2,1 (0.10),6 (0.00),"pillow x8, room x1",pillow x2
+4473,scannet/scene0696_01,object_counting,2,2 (1.00),1 (0.10),"room x1, tv x1",tv x2
+4482,scannet/scene0700_02,object_counting,4,2 (0.10),4 (1.00),"chair x4, room x1",chair x4
+4483,scannet/scene0700_02,object_counting,2,2 (1.00),3 (0.10),"monitor x3, room x1",monitor x2
+4484,scannet/scene0700_02,object_counting,2,2 (1.00),1 (0.10),"backpack x1, room x1",backpack x2
+4485,scannet/scene0700_02,object_counting,2,1 (0.10),2 (1.00),"room x1, trash bin x2",trash bin x2
+4488,scannet/scene0435_02,object_counting,2,2 (1.00),2 (1.00),"bed x3, room x1",bed x2
+4489,scannet/scene0435_02,object_counting,2,1 (0.10),3 (0.10),"chair x3, room x1",chair x2
+4490,scannet/scene0435_02,object_counting,8,4 (0.10),6 (0.60),"pillow x8, room x1",pillow x8
+4491,scannet/scene0435_02,object_counting,2,2 (1.00),2 (1.00),"lamp x2, room x1",lamp x2
+4554,scannet/scene0050_01,object_counting,2,1 (0.10),3 (0.10),"chair x3, room x2",chair x2
+4555,scannet/scene0050_01,object_counting,2,2 (1.00),2 (1.00),"backpack x2, room x2",backpack x2
+4556,scannet/scene0050_01,object_counting,4,2 (0.10),2 (0.10),"door x2, room x2",door x4
+4562,scannet/scene0086_02,object_counting,3,2 (0.40),6 (0.00),"door x7, room x1",door x3
+4563,scannet/scene0088_01,object_counting,18,10 (0.20),27 (0.10),"chair x17, room x1",chair x18
+4564,scannet/scene0088_01,object_counting,2,2 (1.00),2 (1.00),"room x1, window x1",window x2
+4565,scannet/scene0088_01,object_counting,2,1 (0.10),5 (0.00),"room x1, table x4",table x2
+4568,scannet/scene0144_00,object_counting,3,3 (1.00),3 (1.00),"chair x3, room x1",chair x3
+4606,scannet/scene0246_00,object_counting,6,4 (0.40),6 (1.00),"pillow x8, room x1",pillow x6
+4607,scannet/scene0246_00,object_counting,2,1 (0.10),3 (0.10),"lamp x3, room x1",lamp x2
+4608,scannet/scene0246_00,object_counting,2,1 (0.10),2 (1.00),"mirror x2, room x1",mirror x2
+4609,scannet/scene0277_02,object_abs_distance,0.9,1.2 (0.40),1.451 (0.00),bed x1,"bed x1, chair x1"
+4610,scannet/scene0277_02,object_abs_distance,1.7,2.1 (0.60),1.272 (0.50),"bed x1, door x1","bed x1, door x1"
+4611,scannet/scene0277_02,object_abs_distance,2.9,2.1 (0.50),1.1 (0.00),door x1,"chair x1, door x1"
+4612,scannet/scene0277_02,object_abs_distance,3.9,2.5 (0.30),3.877 (1.00),"door x1, window x1","door x1, window x1"
+4613,scannet/scene0277_02,object_abs_distance,3.7,2.1 (0.20),3.755 (1.00),"door x1, radiator x1","door x1, radiator x1"
+4614,scannet/scene0277_02,object_abs_distance,1.1,2 (0.00),1.387 (0.50),bed x1,"bed x1, table x1"
+4615,scannet/scene0277_02,object_abs_distance,2.5,2.1 (0.70),1.111 (0.00),door x1,"door x1, table x1"
+4616,scannet/scene0304_00,object_abs_distance,3.2,2.5 (0.60),0 (0.00),"backpack x1, door x1","backpack x1, door x1"
+4617,scannet/scene0304_00,object_abs_distance,1.3,2 (0.00),0.75 (0.20),backpack x1,"backpack x1, trash bin x1"
+4618,scannet/scene0304_00,object_abs_distance,4.9,2.1 (0.00),0.58 (0.00),door x1,"door x1, trash bin x1"
+4680,scannet/scene0633_00,object_abs_distance,0.8,2.1 (0.00),3.93 (0.00),lamp x1,"lamp x1, window x1"
+4681,scannet/scene0633_00,object_abs_distance,0.4,2 (0.00),3.434 (0.00),chair x1,"chair x1, window x1"
+4682,scannet/scene0633_00,object_abs_distance,2.8,2.1 (0.60),3.94 (0.20),pillow x1,"clock x1, pillow x1"
+4683,scannet/scene0633_00,object_abs_distance,0.8,2 (0.00),0.68 (0.80),"lamp x1, table x1","lamp x1, table x1"
+4684,scannet/scene0633_00,object_abs_distance,0.5,2 (0.00),3.549 (0.00),pillow x1,"pillow x1, window x1"
+4685,scannet/scene0633_00,object_abs_distance,2.4,2.1 (0.80),2.77 (0.70),chair x1,"chair x1, clock x1"
+4686,scannet/scene0633_00,object_abs_distance,2.1,2.1 (1.00),1.97 (0.90),table x1,"clock x1, table x1"
+4710,scannet/scene0651_02,object_abs_distance,3.5,3 (0.80),3.1 (0.80),counter x1,"counter x1, sofa x1"
+4711,scannet/scene0651_02,object_abs_distance,3.2,3 (0.90),1.32 (0.00),refrigerator x1,"refrigerator x1, sofa x1"
+4712,scannet/scene0651_02,object_abs_distance,3.7,3.1 (0.70),2.1 (0.20),trash bin x1,"sofa x1, trash bin x1"
+4713,scannet/scene0651_02,object_abs_distance,0.5,1.2 (0.00),0.812 (0.00),"counter x1, trash bin x1","counter x1, trash bin x1"
+4714,scannet/scene0651_02,object_abs_distance,1.3,2.2 (0.00),1.293 (1.00),"refrigerator x1, trash bin x1","refrigerator x1, trash bin x1"
+4743,scannet/scene0696_01,object_abs_distance,3.0,1.2 (0.00),0 (0.00),"mattress x1, sofa x1","mattress x1, sofa x1"
+4744,scannet/scene0696_01,object_abs_distance,4.2,1.1 (0.00),0.064 (0.00),"mattress x1, radiator x1","mattress x1, radiator x1"
+4745,scannet/scene0696_01,object_abs_distance,4.2,2.5 (0.20),1.634 (0.00),"door x1, sofa x1","door x1, sofa x1"
+4746,scannet/scene0696_01,object_abs_distance,5.3,2.5 (0.00),2.507 (0.00),"door x1, radiator x1","door x1, radiator x1"
+4747,scannet/scene0696_01,object_abs_distance,1.1,2 (0.00),1.057 (1.00),"radiator x1, table x1","radiator x1, table x1"
+4748,scannet/scene0696_01,object_abs_distance,1.4,2.5 (0.00),1.312 (0.90),"door x1, table x1","door x1, table x1"
+4763,scannet/scene0700_02,object_abs_distance,1.4,1.2 (0.80),2.533 (0.00),"keyboard x1, radiator x1","keyboard x1, radiator x1"
+4764,scannet/scene0700_02,object_abs_distance,3.8,2.1 (0.20),6.163 (0.00),"door x1, telephone x1","door x1, telephone x1"
+4765,scannet/scene0700_02,object_abs_distance,1.8,2.1 (0.70),4.328 (0.00),"door x1, table x1","door x1, table x1"
+4766,scannet/scene0700_02,object_abs_distance,0.9,2.1 (0.00),2.3 (0.00),telephone x1,"telephone x1, window x1"
+4767,scannet/scene0700_02,object_abs_distance,2.9,2.1 (0.50),4.906 (0.00),"door x1, keyboard x1","door x1, keyboard x1"
+4768,scannet/scene0700_02,object_abs_distance,0.7,2.1 (0.00),1.63 (0.00),"radiator x1, telephone x1","radiator x1, telephone x1"
+4769,scannet/scene0700_02,object_abs_distance,4.9,2.5 (0.10),1.5 (0.00),door x1,"door x1, window x1"
+4774,scannet/scene0435_02,object_abs_distance,2.3,2 (0.80),3.003 (0.40),"backpack x1, table x1","backpack x1, table x1"
+4775,scannet/scene0435_02,object_abs_distance,3.0,2 (0.40),1.394 (0.00),door x1,"door x1, trash bin x1"
+4776,scannet/scene0435_02,object_abs_distance,2.6,2 (0.60),1.36 (0.10),nightstand x1,"nightstand x1, trash bin x1"
+4777,scannet/scene0435_02,object_abs_distance,2.7,2.1 (0.60),1.414 (0.10),backpack x1,"backpack x1, trash bin x1"
+4778,scannet/scene0435_02,object_abs_distance,1.2,2 (0.00),1.414 (0.70),backpack x1,"backpack x1, refrigerator x1"
+4779,scannet/scene0435_02,object_abs_distance,4.6,2.1 (0.00),3.2 (0.40),"backpack x1, door x1","backpack x1, door x1"
+4780,scannet/scene0435_02,object_abs_distance,2.7,2 (0.50),1.034 (0.00),"door x1, table x1","door x1, table x1"
+4807,scannet/scene0553_00,object_abs_distance,1.2,2.1 (0.00),2.101 (0.00),"backpack x1, mirror x1","backpack x1, mirror x1"
+4808,scannet/scene0553_00,object_abs_distance,1.0,2.1 (0.00),1.566 (0.00),"door x1, mirror x1","door x1, mirror x1"
+4809,scannet/scene0553_00,object_abs_distance,0.8,2 (0.00),1.12 (0.20),backpack x1,"backpack x1, trash bin x1"
+4810,scannet/scene0553_00,object_abs_distance,1.7,2.1 (0.60),1.1 (0.30),mirror x1,"mirror x1, trash bin x1"
+4811,scannet/scene0553_00,object_abs_distance,0.9,1.2 (0.40),1.283 (0.20),door x1,"door x1, trash bin x1"
+4870,scannet/scene0050_01,object_abs_distance,2.3,2 (0.80),0.413 (0.00),"piano x1, table x1","piano x1, table x1"
+4871,scannet/scene0050_01,object_abs_distance,2.9,2 (0.40),1.5 (0.10),piano x1,"piano x1, printer x2"
+4872,scannet/scene0050_01,object_abs_distance,1.0,2 (0.00),2.016 (0.00),"lamp x1, sofa x1","lamp x1, sofa x1"
+4873,scannet/scene0050_01,object_abs_distance,2.1,2 (1.00),1.3 (0.30),sofa x1,"printer x2, sofa x1"
+4874,scannet/scene0050_01,object_abs_distance,1.0,2 (0.00),2.031 (0.00),"piano x1, sofa x1","piano x1, sofa x1"
+4875,scannet/scene0050_01,object_abs_distance,1.0,1.2 (0.70),1.047 (1.00),"sofa x1, table x1","sofa x1, table x1"
+4876,scannet/scene0050_01,object_abs_distance,2.9,2.5 (0.80),5.236 (0.00),"lamp x1, piano x1","lamp x1, piano x1"
+4879,scannet/scene0086_02,object_abs_distance,4.4,2.1 (0.00),5.085 (0.70),"plant x1, window x1","plant x1, window x1"
+4880,scannet/scene0086_02,object_abs_distance,4.7,2.1 (0.00),5.736 (0.60),"mirror x1, window x1","mirror x1, window x1"
+4881,scannet/scene0086_02,object_abs_distance,4.7,2.2 (0.00),5.294 (0.80),"trash bin x1, window x1","trash bin x1, window x1"
+4882,scannet/scene0088_01,object_abs_distance,2.2,1.2 (0.10),1.412 (0.30),"door x1, trash bin x1","door x1, trash bin x1"
+4889,scannet/scene0144_00,object_abs_distance,2.0,2.1 (1.00),2.726 (0.30),"lamp x1, printer x1","lamp x1, printer x2"
+4890,scannet/scene0144_00,object_abs_distance,3.1,2.5 (0.70),0.879 (0.00),"door x1, window x1","door x1, window x1"
+4891,scannet/scene0144_00,object_abs_distance,1.8,2 (0.80),2.277 (0.50),"pillow x1, printer x1","pillow x1, printer x2"
+4892,scannet/scene0144_00,object_abs_distance,0.7,1.1 (0.00),1.116 (0.00),"lamp x1, pillow x1","lamp x1, pillow x1"
+4893,scannet/scene0144_00,object_abs_distance,2.0,2.1 (1.00),1.723 (0.80),"door x1, table x1","door x1, table x1"
+4894,scannet/scene0144_00,object_abs_distance,1.1,2 (0.00),2.584 (0.00),"table x1, window x1","table x1, window x1"
+4895,scannet/scene0144_00,object_abs_distance,1.8,1.1 (0.30),1.99 (0.80),"nightstand x1, pillow x1","nightstand x1, pillow x1"
+4952,scannet/scene0246_00,object_abs_distance,1.0,1.2 (0.70),1.225 (0.60),"bed x1, chair x1","bed x1, chair x1"
+4953,scannet/scene0246_00,object_abs_distance,1.3,2.1 (0.00),1.83 (0.20),"chair x1, towel x1","chair x1, towel x1"
+4954,scannet/scene0246_00,object_abs_distance,2.4,1.2 (0.10),1.307 (0.10),"chair x1, nightstand x1","chair x1, nightstand x1"
+4955,scannet/scene0246_00,object_abs_distance,1.0,1.2 (0.70),0 (0.00),"bed x1, table x1","bed x1, table x1"
+4956,scannet/scene0246_00,object_abs_distance,1.0,1.2 (0.70),1.277 (0.50),"chair x1, table x1","chair x1, table x1"
+4957,scannet/scene0246_00,object_abs_distance,1.1,2.1 (0.00),0.824 (0.50),"table x1, towel x1","table x1, towel x1"
+4958,scannet/scene0246_00,object_abs_distance,2.2,1.1 (0.10),0 (0.00),"nightstand x1, table x1","nightstand x1, table x1"
+4966,scannetpp/578511c8a9,route_planning,A,A ✓,C ✗,"blue chair x2, boxes x8, fan x1, tables x16, trash bin x2",tables x19
+4979,arkitscenes/42446517,route_planning,A,D ✗,C ✗,"black chair x1, trash bin x1, white table x3",tv x1
+4983,arkitscenes/47331990,route_planning,B,D ✗,B ✓,"bed x3, door x6, wall x15, window x3",bed x1
+4984,scannet/scene0696_01,route_planning,B,B ✓,B ✓,"microwave x1, sofa x3, table x4","sofa x1, table x1"
+4986,arkitscenes/47334362,route_planning,A,B ✗,B ✗,"door x2, sofa x5, tv x1","sofa x3, tv x1"
+5016,scannetpp/38d58a7a31,route_planning,A,B ✗,B ✗,"door x2, room x1, wall x10, whiteboard x2","coat rack x2, door x2, heater x3, whiteboard x1"
+5020,scannetpp/21d970d8de,route_planning,C,B ✗,B ✗,"classroom x1, door x1, red chair x2, wall x9",door x1
+5025,arkitscenes/44358518,route_planning,A,D ✗,B ✗,"desk chair x3, lamp x1, printer x1, sofa x2, window x2",sofa x2
+5034,scannet/scene0277_02,route_planning,B,A ✗,A ✗,"door x3, window x2","door x1, window x1"
+5036,scannet/scene0088_01,route_planning,C,B ✗,C ✓,"electronic white board x4, tv x1",(empty)
+5044,arkitscenes/42898527,route_planning,A,A ✓,B ✗,"refrigerator x1, washer x1","refrigerator x1, stove x1, washer x1"
+5050,scannetpp/ac48a9b736,route_planning,D,C ✗,A ✗,"black chairs x5, brown door x1, chair x6, door x7, table x14","chair x9, door x3, table x8"
+5055,scannet/scene0086_02,route_planning,A,C ✗,C ✗,"door x7, sink x4, toilet x1, toilet paper x3, wall x20",door x3
+5057,scannet/scene0553_00,route_planning,B,A ✗,A ✗,"backpack x1, toilet x2","backpack x1, trash bin x1"
+5070,arkitscenes/47115460,route_planning,A,A ✓,A ✓,"door x17, doorframe x4",(empty)
+5075,arkitscenes/42445984,route_planning,B,B ✓,B ✓,"chair x1, fireplace x1, table x1, wall x9","chair x12, fireplace x1, table x1"
+5086,scannet/scene0633_00,route_planning,B,A ✗,C ✗,"bed x2, sofa x1",window x1
+5096,scannetpp/27dd4da69e,route_planning,B,A ✗,B ✓,"wall x15, washer x2, white cabinet x3",(empty)
+5102,scannet/scene0435_02,route_planning,B,B ✓,B ✓,bed x3,bed x2
+5111,arkitscenes/47331068,route_planning,A,A ✓,A ✓,"bathtub x1, blue bucket x1, toilet x1","bathtub x1, toilet x1"
+5113,scannet/scene0246_00,route_planning,C,A ✗,D ✗,"bed x1, blue pillow x1, chair x3, mirror x2, red curtain x2, toilet x1","bed x1, chair x1, mirror x2"
+5115,scannet/scene0651_02,route_planning,B,B ✓,B ✓,"chair x3, coffee table x1, sink x2",chair x4
+5116,arkitscenes/47333441,route_planning,A,C ✗,C ✗,"sink x1, toilet x3, washer x2","toilet x1, washer x1"
+5122,arkitscenes/42897564,route_planning,A,C ✗,C ✗,"chair x9, door x3, mirror x2, wall x7, window x2",chair x7
+5134,scannet/scene0304_00,route_planning,D,A ✗,B ✗,"backpack x1, door x2","backpack x1, door x1"
+5135,arkitscenes/47430038,route_planning,B,A ✗,A ✗,table x1,table x1
+5137,scannet/scene0144_00,route_planning,A,C ✗,B ✗,"bed x1, laptop x1, printer x1","bed x1, printer x2"
+5154,arkitscenes/42445026,route_planning,C,C ✓,C ✓,"doorframe x2, sofa x1, tv x2","sofa x1, tv x1"

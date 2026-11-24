@@ -1,0 +1,20 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "video",
+ "fusion_ckpt": null,
+ "arm": null,
+ "nframes": 16,
+ "sampling": "uniform128",
+ "vggt_root": "/content/mvp-3d-vlm/data/vggt",
+ "layout": "sit",
+ "system": "You are a helpful assistant.",
+ "fps": null,
+ "max_new_tokens": 2048,
+ "final_answer": true,
+ "split": "full",
+ "scene_sheet": null,
+ "n": 180,
+ "object_rel_direction": 42.32003643852143,
+ "route_planning": 33.33333333333333,
+ "overall": 37.82668488592738
+}

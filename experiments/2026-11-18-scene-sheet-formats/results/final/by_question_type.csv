@@ -1,0 +1,6 @@
+question_type,n,A_video,pipeline_v3_dedup_relations
+object_counting,36,46.9,43.6
+object_size_estimation,128,62.9,35.6
+object_abs_distance,122,34.8,28.4
+object_rel_distance,123,46.3,40.7
+obj_appearance_order,129,48.8,45.7

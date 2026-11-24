@@ -1,0 +1,5 @@
+question_type,n,A_video,pipeline_v3
+object_rel_direction_hard,67,31.3,38.8
+object_rel_direction_medium,69,49.3,47.8
+object_rel_direction_easy,41,46.3,53.7
+route_planning,3,33.3,0.0

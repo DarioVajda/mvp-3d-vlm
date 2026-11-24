@@ -1,0 +1,11 @@
+question_type,n,A_video,pipeline_v3
+object_counting,25,49.6,40.4
+object_size_estimation,25,68.8,53.2
+room_size_estimation,25,39.2,34.4
+object_abs_distance,25,39.6,29.6
+object_rel_direction_hard,9,66.7,66.7
+object_rel_direction_medium,8,12.5,62.5
+object_rel_direction_easy,8,62.5,62.5
+object_rel_distance,25,76.0,68.0
+obj_appearance_order,25,44.0,36.0
+route_planning,25,24.0,36.0

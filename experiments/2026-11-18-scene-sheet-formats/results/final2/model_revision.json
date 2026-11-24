@@ -1,0 +1,9 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "revision_served_before_runs": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+ "last_modified": "2026-03-02 11:26:29+00:00",
+ "recorded_at": "2026-11-22 22:53:02 UTC",
+ "snapshots_in_cache_after_runs": [
+  "15852e8c16360a2fea060d615a32b45270f8a8fc"
+ ]
+}

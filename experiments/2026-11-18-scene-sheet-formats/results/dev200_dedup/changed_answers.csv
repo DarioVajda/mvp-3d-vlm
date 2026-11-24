@@ -1,0 +1,249 @@
+condition,id,type,truth,A answer,answer,A score,score,effect,pipeline empty
+pipeline_v3,205,object_size_estimation,186,180.0,83.4,1.0,0.0,hurt,False
+pipeline_v3,223,object_size_estimation,94,90.0,88.9,1.0,0.9,hurt,False
+pipeline_v3,229,object_size_estimation,44,40.0,48.0,0.9,0.9,same score,False
+pipeline_v3,234,object_size_estimation,82,100.0,27.0,0.6,0.0,hurt,False
+pipeline_v3,390,object_size_estimation,125,140.0,57.6,0.8,0.0,hurt,False
+pipeline_v3,455,object_size_estimation,165,170.0,68.2,1.0,0.0,hurt,False
+pipeline_v3,468,object_size_estimation,179,190.0,100.0,0.9,0.2,hurt,True
+pipeline_v3,480,object_size_estimation,75,40.0,74.3,0.1,1.0,helped,False
+pipeline_v3,530,room_size_estimation,26.4,20.0,15.5,0.6,0.2,hurt,False
+pipeline_v3,538,room_size_estimation,29.5,25.0,10.3,0.7,0.0,hurt,False
+pipeline_v3,549,room_size_estimation,17.6,20.0,10.2,0.8,0.2,hurt,False
+pipeline_v3,555,room_size_estimation,10.6,20.0,1.413,0.0,0.0,same score,False
+pipeline_v3,560,room_size_estimation,20.7,25.0,11.1,0.6,0.1,hurt,False
+pipeline_v3,597,room_size_estimation,43.1,40.0,11.5,0.9,0.0,hurt,False
+pipeline_v3,604,room_size_estimation,25.2,30.0,11.99,0.7,0.0,hurt,False
+pipeline_v3,638,room_size_estimation,13.4,20.0,10.5,0.1,0.6,helped,False
+pipeline_v3,651,room_size_estimation,9.8,15.0,12.4,0.0,0.5,helped,False
+pipeline_v3,656,room_size_estimation,39.3,30.0,14.4,0.6,0.0,hurt,False
+pipeline_v3,668,room_size_estimation,15.2,20.0,10.1,0.4,0.4,same score,False
+pipeline_v3,680,object_abs_distance,2.9,2.5,1.376,0.8,0.0,hurt,False
+pipeline_v3,707,object_abs_distance,2.4,3.0,1.3,0.5,0.1,hurt,False
+pipeline_v3,798,object_abs_distance,1.3,2.5,1.451,0.0,0.8,helped,False
+pipeline_v3,799,object_abs_distance,3.6,2.4,3.44,0.4,1.0,helped,False
+pipeline_v3,896,object_abs_distance,0.9,1.2,1.41,0.4,0.0,hurt,False
+pipeline_v3,902,object_abs_distance,1.4,2.1,3.23,0.0,0.0,same score,False
+pipeline_v3,907,object_abs_distance,4.5,3.2,3.5,0.5,0.6,helped,False
+pipeline_v3,912,object_abs_distance,3.5,2.5,2.3,0.5,0.4,hurt,False
+pipeline_v3,1066,object_rel_direction_hard,D,C,D,0.0,1.0,helped,False
+pipeline_v3,1117,object_rel_direction_medium,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1182,object_rel_direction_medium,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1338,object_rel_distance,A,A,C,1.0,0.0,hurt,False
+pipeline_v3,1406,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v3,1622,object_abs_distance,4.7,2.1,2.47,0.0,0.1,helped,True
+pipeline_v3,1636,object_abs_distance,1.6,1.2,1.124,0.5,0.5,same score,True
+pipeline_v3,1691,object_abs_distance,1.5,2.1,0.588,0.2,0.0,hurt,True
+pipeline_v3,1721,object_abs_distance,3.5,2.5,1.4,0.5,0.0,hurt,False
+pipeline_v3,1747,object_abs_distance,2.7,2.1,1.17,0.6,0.0,hurt,False
+pipeline_v3,1778,object_abs_distance,1.8,2.1,1.997,0.7,0.8,helped,False
+pipeline_v3,1910,object_rel_distance,A,B,A,0.0,1.0,helped,False
+pipeline_v3,1918,object_rel_distance,A,A,C,1.0,0.0,hurt,False
+pipeline_v3,1924,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v3,1937,object_rel_distance,A,A,D,1.0,0.0,hurt,False
+pipeline_v3,1952,object_rel_distance,D,D,B,1.0,0.0,hurt,False
+pipeline_v3,2071,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v3,2124,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v3,2214,object_size_estimation,134,100.0,15.8,0.5,0.0,hurt,True
+pipeline_v3,2236,object_size_estimation,215,203.0,62.9,0.9,0.0,hurt,False
+pipeline_v3,2282,object_size_estimation,95,50.0,74.9,0.1,0.6,helped,False
+pipeline_v3,2374,object_size_estimation,196,100.0,64.0,0.1,0.0,hurt,True
+pipeline_v3,2385,object_size_estimation,55,30.0,30.9,0.1,0.2,helped,False
+pipeline_v3,2489,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v3,2510,object_counting,2,2.0,1.0,1.0,0.1,hurt,False
+pipeline_v3,2515,object_counting,18,10.0,16.0,0.2,0.8,helped,False
+pipeline_v3,2525,object_counting,4,2.0,3.0,0.1,0.6,helped,False
+pipeline_v3,2587,object_counting,4,2.0,5.0,0.1,0.6,helped,False
+pipeline_v3,2628,object_counting,3,2.0,4.0,0.4,0.4,same score,False
+pipeline_v3,2664,room_size_estimation,18.0,20.0,12.7,0.8,0.5,hurt,False
+pipeline_v3,2667,room_size_estimation,34.6,100.0,10.5,0.0,0.0,same score,False
+pipeline_v3,2671,room_size_estimation,17.9,15.0,1.225,0.7,0.0,hurt,False
+pipeline_v3,2680,room_size_estimation,3.5,10.0,1.8,0.0,0.1,helped,False
+pipeline_v3,2705,room_size_estimation,16.9,20.0,12.0,0.7,0.5,hurt,False
+pipeline_v3,2707,room_size_estimation,54.1,45.0,21.3,0.7,0.0,hurt,False
+pipeline_v3,2847,obj_appearance_order,D,D,C,1.0,0.0,hurt,False
+pipeline_v3,2874,obj_appearance_order,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,2979,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v3,3000,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3005,object_rel_distance,C,D,A,0.0,0.0,same score,False
+pipeline_v3,3084,object_rel_distance,D,D,A,1.0,0.0,hurt,False
+pipeline_v3,3234,object_size_estimation,27,190.0,283.0,0.0,0.0,same score,False
+pipeline_v3,3243,object_size_estimation,89,75.0,71.9,0.7,0.7,same score,False
+pipeline_v3,3257,object_size_estimation,40,40.0,50.0,1.0,0.6,hurt,True
+pipeline_v3,3282,object_size_estimation,54,40.0,36.2,0.5,0.4,hurt,False
+pipeline_v3,3426,object_size_estimation,206,140.0,68.8,0.4,0.0,hurt,False
+pipeline_v3,3429,object_size_estimation,69,100.0,52.8,0.2,0.6,helped,False
+pipeline_v3,3435,object_size_estimation,47,45.0,33.8,1.0,0.5,hurt,False
+pipeline_v3,3436,object_size_estimation,34,10.0,20.7,0.0,0.3,helped,False
+pipeline_v3,3451,object_size_estimation,141,200.0,80.0,0.2,0.2,same score,False
+pipeline_v3,3465,object_size_estimation,58,60.0,60.7,1.0,1.0,same score,False
+pipeline_v3,3585,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v3,3586,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,3793,room_size_estimation,3.9,10.0,3.2,0.0,0.7,helped,True
+pipeline_v3,3797,room_size_estimation,20.4,20.0,10.3,1.0,0.1,hurt,False
+pipeline_v3,3804,room_size_estimation,3.9,10.0,10.5,0.0,0.0,same score,True
+pipeline_v3,3819,room_size_estimation,9.3,15.0,10.0,0.0,0.9,helped,False
+pipeline_v3,3824,room_size_estimation,17.5,20.0,14.3,0.8,0.7,hurt,False
+pipeline_v3,3826,room_size_estimation,15.2,20.0,1.596,0.4,0.0,hurt,False
+pipeline_v3,3846,room_size_estimation,17.5,15.0,13.7,0.8,0.6,hurt,False
+pipeline_v3,3847,room_size_estimation,39.3,100.0,24.5,0.0,0.3,helped,False
+pipeline_v3,3875,obj_appearance_order,C,C,B,1.0,0.0,hurt,False
+pipeline_v3,3879,obj_appearance_order,D,A,B,0.0,0.0,same score,False
+pipeline_v3,4092,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v3,4106,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v3,4109,obj_appearance_order,B,C,B,0.0,1.0,helped,False
+pipeline_v3,4132,obj_appearance_order,D,D,A,1.0,0.0,hurt,False
+pipeline_v3,4397,object_counting,4,1.0,2.0,0.0,0.1,helped,False
+pipeline_v3,4429,object_counting,3,2.0,4.0,0.4,0.4,same score,False
+pipeline_v3,4430,object_counting,3,1.0,5.0,0.0,0.0,same score,False
+pipeline_v3,4526,object_counting,2,2.0,5.0,1.0,0.0,hurt,False
+pipeline_v3,4544,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v3,4546,object_counting,4,2.0,3.0,0.1,0.6,helped,False
+pipeline_v3,4547,object_counting,2,1.0,6.0,0.1,0.0,hurt,False
+pipeline_v3,4594,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v3,4600,object_counting,2,2.0,6.0,1.0,0.0,hurt,False
+pipeline_v3,4634,object_abs_distance,5.0,2.4,2.7,0.0,0.1,helped,False
+pipeline_v3,4638,object_abs_distance,2.7,2.1,2.34,0.6,0.8,helped,False
+pipeline_v3,4651,object_abs_distance,2.0,2.1,1.503,1.0,0.6,hurt,False
+pipeline_v3,4695,object_abs_distance,3.4,2.1,1.31,0.3,0.0,hurt,False
+pipeline_v3,4782,object_abs_distance,1.5,2.0,1.137,0.4,0.6,helped,False
+pipeline_v3,4786,object_abs_distance,0.9,1.2,0.559,0.4,0.3,hurt,False
+pipeline_v3,4831,object_abs_distance,0.5,1.2,0.944,0.0,0.0,same score,False
+pipeline_v3,4838,object_abs_distance,1.1,1.2,1.79,0.9,0.0,hurt,False
+pipeline_v3,4848,object_abs_distance,2.5,2.0,0.484,0.6,0.0,hurt,False
+pipeline_v3,4856,object_abs_distance,0.5,1.2,0.75,0.0,0.1,helped,False
+pipeline_v3,4963,route_planning,B,A,B,0.0,1.0,helped,False
+pipeline_v3,5060,route_planning,D,C,B,0.0,0.0,same score,False
+pipeline_v3,5068,route_planning,D,A,C,0.0,0.0,same score,False
+pipeline_v3,5069,route_planning,B,D,B,0.0,1.0,helped,False
+pipeline_v3,5094,route_planning,A,B,C,0.0,0.0,same score,False
+pipeline_v3,5101,route_planning,A,A,B,1.0,0.0,hurt,False
+pipeline_v3,5104,route_planning,C,A,B,0.0,0.0,same score,False
+pipeline_v3,5121,route_planning,D,A,B,0.0,0.0,same score,True
+pipeline_v3,5123,route_planning,C,A,C,0.0,1.0,helped,False
+pipeline_v3,5133,route_planning,B,A,B,0.0,1.0,helped,False
+pipeline_v3,5152,route_planning,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,205,object_size_estimation,186,180.0,83.4,1.0,0.0,hurt,False
+pipeline_v3_dedup,223,object_size_estimation,94,90.0,88.9,1.0,0.9,hurt,False
+pipeline_v3_dedup,229,object_size_estimation,44,40.0,48.0,0.9,0.9,same score,False
+pipeline_v3_dedup,234,object_size_estimation,82,100.0,27.0,0.6,0.0,hurt,False
+pipeline_v3_dedup,390,object_size_estimation,125,140.0,57.6,0.8,0.0,hurt,False
+pipeline_v3_dedup,455,object_size_estimation,165,170.0,68.2,1.0,0.0,hurt,False
+pipeline_v3_dedup,468,object_size_estimation,179,190.0,100.0,0.9,0.2,hurt,True
+pipeline_v3_dedup,480,object_size_estimation,75,40.0,74.3,0.1,1.0,helped,False
+pipeline_v3_dedup,530,room_size_estimation,26.4,20.0,15.5,0.6,0.2,hurt,False
+pipeline_v3_dedup,538,room_size_estimation,29.5,25.0,10.3,0.7,0.0,hurt,False
+pipeline_v3_dedup,549,room_size_estimation,17.6,20.0,10.5,0.8,0.2,hurt,False
+pipeline_v3_dedup,555,room_size_estimation,10.6,20.0,1.413,0.0,0.0,same score,False
+pipeline_v3_dedup,560,room_size_estimation,20.7,25.0,11.1,0.6,0.1,hurt,False
+pipeline_v3_dedup,597,room_size_estimation,43.1,40.0,11.5,0.9,0.0,hurt,False
+pipeline_v3_dedup,604,room_size_estimation,25.2,30.0,18.02,0.7,0.5,hurt,False
+pipeline_v3_dedup,638,room_size_estimation,13.4,20.0,10.5,0.1,0.6,helped,False
+pipeline_v3_dedup,651,room_size_estimation,9.8,15.0,12.4,0.0,0.5,helped,False
+pipeline_v3_dedup,656,room_size_estimation,39.3,30.0,14.4,0.6,0.0,hurt,False
+pipeline_v3_dedup,668,room_size_estimation,15.2,20.0,10.1,0.4,0.4,same score,False
+pipeline_v3_dedup,680,object_abs_distance,2.9,2.5,3.1,0.8,0.9,helped,False
+pipeline_v3_dedup,707,object_abs_distance,2.4,3.0,2.065,0.5,0.8,helped,False
+pipeline_v3_dedup,798,object_abs_distance,1.3,2.5,1.6,0.0,0.6,helped,False
+pipeline_v3_dedup,799,object_abs_distance,3.6,2.4,3.44,0.4,1.0,helped,False
+pipeline_v3_dedup,896,object_abs_distance,0.9,1.2,1.193,0.4,0.4,same score,False
+pipeline_v3_dedup,902,object_abs_distance,1.4,2.1,3.23,0.0,0.0,same score,False
+pipeline_v3_dedup,907,object_abs_distance,4.5,3.2,3.67,0.5,0.7,helped,False
+pipeline_v3_dedup,912,object_abs_distance,3.5,2.5,2.3,0.5,0.4,hurt,False
+pipeline_v3_dedup,1066,object_rel_direction_hard,D,C,D,0.0,1.0,helped,False
+pipeline_v3_dedup,1282,object_rel_direction_easy,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,1305,object_rel_direction_easy,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,1622,object_abs_distance,4.7,2.1,2.47,0.0,0.1,helped,True
+pipeline_v3_dedup,1636,object_abs_distance,1.6,1.2,0.939,0.5,0.2,hurt,True
+pipeline_v3_dedup,1691,object_abs_distance,1.5,2.1,0.588,0.2,0.0,hurt,True
+pipeline_v3_dedup,1721,object_abs_distance,3.5,2.5,1.4,0.5,0.0,hurt,False
+pipeline_v3_dedup,1747,object_abs_distance,2.7,2.1,1.17,0.6,0.0,hurt,False
+pipeline_v3_dedup,1778,object_abs_distance,1.8,2.1,1.997,0.7,0.8,helped,False
+pipeline_v3_dedup,1910,object_rel_distance,A,B,A,0.0,1.0,helped,False
+pipeline_v3_dedup,1924,object_rel_distance,C,A,C,0.0,1.0,helped,False
+pipeline_v3_dedup,1937,object_rel_distance,A,A,D,1.0,0.0,hurt,False
+pipeline_v3_dedup,1938,object_rel_distance,B,C,A,0.0,0.0,same score,False
+pipeline_v3_dedup,2071,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v3_dedup,2124,object_rel_distance,D,A,C,0.0,0.0,same score,False
+pipeline_v3_dedup,2214,object_size_estimation,134,100.0,15.8,0.5,0.0,hurt,True
+pipeline_v3_dedup,2236,object_size_estimation,215,203.0,62.9,0.9,0.0,hurt,False
+pipeline_v3_dedup,2282,object_size_estimation,95,50.0,74.9,0.1,0.6,helped,False
+pipeline_v3_dedup,2374,object_size_estimation,196,100.0,640.0,0.1,0.0,hurt,True
+pipeline_v3_dedup,2385,object_size_estimation,55,30.0,30.9,0.1,0.2,helped,False
+pipeline_v3_dedup,2489,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v3_dedup,2510,object_counting,2,2.0,1.0,1.0,0.1,hurt,False
+pipeline_v3_dedup,2515,object_counting,18,10.0,16.0,0.2,0.8,helped,False
+pipeline_v3_dedup,2525,object_counting,4,2.0,3.0,0.1,0.6,helped,False
+pipeline_v3_dedup,2587,object_counting,4,2.0,5.0,0.1,0.6,helped,False
+pipeline_v3_dedup,2628,object_counting,3,2.0,4.0,0.4,0.4,same score,False
+pipeline_v3_dedup,2664,room_size_estimation,18.0,20.0,13.5,0.8,0.6,hurt,False
+pipeline_v3_dedup,2667,room_size_estimation,34.6,100.0,10.5,0.0,0.0,same score,False
+pipeline_v3_dedup,2671,room_size_estimation,17.9,15.0,1.225,0.7,0.0,hurt,False
+pipeline_v3_dedup,2680,room_size_estimation,3.5,10.0,1.8,0.0,0.1,helped,False
+pipeline_v3_dedup,2705,room_size_estimation,16.9,20.0,12.0,0.7,0.5,hurt,False
+pipeline_v3_dedup,2707,room_size_estimation,54.1,45.0,21.3,0.7,0.0,hurt,False
+pipeline_v3_dedup,2847,obj_appearance_order,D,D,C,1.0,0.0,hurt,False
+pipeline_v3_dedup,2874,obj_appearance_order,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,2970,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,2979,object_rel_distance,D,A,B,0.0,0.0,same score,False
+pipeline_v3_dedup,3000,object_rel_distance,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,3005,object_rel_distance,C,D,C,0.0,1.0,helped,False
+pipeline_v3_dedup,3084,object_rel_distance,D,D,A,1.0,0.0,hurt,False
+pipeline_v3_dedup,3119,object_rel_distance,B,B,D,1.0,0.0,hurt,False
+pipeline_v3_dedup,3193,object_rel_distance,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,3234,object_size_estimation,27,190.0,283.0,0.0,0.0,same score,False
+pipeline_v3_dedup,3243,object_size_estimation,89,75.0,71.9,0.7,0.7,same score,False
+pipeline_v3_dedup,3257,object_size_estimation,40,40.0,50.0,1.0,0.6,hurt,True
+pipeline_v3_dedup,3282,object_size_estimation,54,40.0,36.2,0.5,0.4,hurt,False
+pipeline_v3_dedup,3426,object_size_estimation,206,140.0,68.8,0.4,0.0,hurt,False
+pipeline_v3_dedup,3429,object_size_estimation,69,100.0,52.8,0.2,0.6,helped,False
+pipeline_v3_dedup,3435,object_size_estimation,47,45.0,33.8,1.0,0.5,hurt,False
+pipeline_v3_dedup,3436,object_size_estimation,34,10.0,20.7,0.0,0.3,helped,False
+pipeline_v3_dedup,3451,object_size_estimation,141,200.0,80.0,0.2,0.2,same score,False
+pipeline_v3_dedup,3465,object_size_estimation,58,60.0,60.7,1.0,1.0,same score,False
+pipeline_v3_dedup,3585,object_rel_direction_hard,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,3586,object_rel_direction_hard,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,3793,room_size_estimation,3.9,10.0,3.2,0.0,0.7,helped,True
+pipeline_v3_dedup,3797,room_size_estimation,20.4,20.0,10.3,1.0,0.1,hurt,False
+pipeline_v3_dedup,3804,room_size_estimation,3.9,10.0,10.5,0.0,0.0,same score,True
+pipeline_v3_dedup,3819,room_size_estimation,9.3,15.0,10.0,0.0,0.9,helped,False
+pipeline_v3_dedup,3824,room_size_estimation,17.5,20.0,14.3,0.8,0.7,hurt,False
+pipeline_v3_dedup,3826,room_size_estimation,15.2,20.0,1.596,0.4,0.0,hurt,False
+pipeline_v3_dedup,3846,room_size_estimation,17.5,15.0,13.7,0.8,0.6,hurt,False
+pipeline_v3_dedup,3847,room_size_estimation,39.3,100.0,24.5,0.0,0.3,helped,False
+pipeline_v3_dedup,3875,obj_appearance_order,C,C,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,3879,obj_appearance_order,D,A,B,0.0,0.0,same score,False
+pipeline_v3_dedup,4092,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,4106,obj_appearance_order,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,4109,obj_appearance_order,B,C,B,0.0,1.0,helped,False
+pipeline_v3_dedup,4132,obj_appearance_order,D,D,A,1.0,0.0,hurt,False
+pipeline_v3_dedup,4397,object_counting,4,1.0,2.0,0.0,0.1,helped,False
+pipeline_v3_dedup,4429,object_counting,3,2.0,4.0,0.4,0.4,same score,False
+pipeline_v3_dedup,4430,object_counting,3,1.0,5.0,0.0,0.0,same score,False
+pipeline_v3_dedup,4526,object_counting,2,2.0,5.0,1.0,0.0,hurt,False
+pipeline_v3_dedup,4544,object_counting,2,1.0,2.0,0.1,1.0,helped,False
+pipeline_v3_dedup,4546,object_counting,4,2.0,3.0,0.1,0.6,helped,False
+pipeline_v3_dedup,4547,object_counting,2,1.0,6.0,0.1,0.0,hurt,False
+pipeline_v3_dedup,4594,object_counting,2,2.0,3.0,1.0,0.1,hurt,False
+pipeline_v3_dedup,4600,object_counting,2,2.0,6.0,1.0,0.0,hurt,False
+pipeline_v3_dedup,4634,object_abs_distance,5.0,2.4,2.633,0.0,0.1,helped,False
+pipeline_v3_dedup,4638,object_abs_distance,2.7,2.1,2.326,0.6,0.8,helped,False
+pipeline_v3_dedup,4651,object_abs_distance,2.0,2.1,1.5,1.0,0.6,hurt,False
+pipeline_v3_dedup,4695,object_abs_distance,3.4,2.1,1.885,0.3,0.2,hurt,False
+pipeline_v3_dedup,4782,object_abs_distance,1.5,2.0,1.13,0.4,0.6,helped,False
+pipeline_v3_dedup,4786,object_abs_distance,0.9,1.2,1.137,0.4,0.5,helped,False
+pipeline_v3_dedup,4831,object_abs_distance,0.5,1.2,0.44,0.0,0.8,helped,False
+pipeline_v3_dedup,4838,object_abs_distance,1.1,1.2,1.79,0.9,0.0,hurt,False
+pipeline_v3_dedup,4848,object_abs_distance,2.5,2.0,0.994,0.6,0.0,hurt,False
+pipeline_v3_dedup,4856,object_abs_distance,0.5,1.2,0.75,0.0,0.1,helped,False
+pipeline_v3_dedup,4963,route_planning,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,5060,route_planning,D,C,B,0.0,0.0,same score,False
+pipeline_v3_dedup,5068,route_planning,D,A,C,0.0,0.0,same score,False
+pipeline_v3_dedup,5069,route_planning,B,D,B,0.0,1.0,helped,False
+pipeline_v3_dedup,5094,route_planning,A,B,C,0.0,0.0,same score,False
+pipeline_v3_dedup,5101,route_planning,A,A,B,1.0,0.0,hurt,False
+pipeline_v3_dedup,5104,route_planning,C,A,B,0.0,0.0,same score,False
+pipeline_v3_dedup,5121,route_planning,D,A,B,0.0,0.0,same score,True
+pipeline_v3_dedup,5123,route_planning,C,A,C,0.0,1.0,helped,False
+pipeline_v3_dedup,5133,route_planning,B,A,B,0.0,1.0,helped,False
+pipeline_v3_dedup,5152,route_planning,A,A,B,1.0,0.0,hurt,False

@@ -1,0 +1,30 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "protocol": "video",
+ "fusion_ckpt": null,
+ "arm": null,
+ "nframes": 16,
+ "sampling": "uniform128",
+ "vggt_root": "/content/mvp-3d-vlm/data/vggt",
+ "layout": "sit",
+ "system": "You are a helpful assistant.",
+ "fps": null,
+ "max_new_tokens": 2048,
+ "final_answer": true,
+ "split": "full",
+ "scene_sheet": {
+  "source": "pipeline",
+  "format": "csv",
+  "root": "/content/mvp-3d-vlm/data/scene_sheets_pipeline_v3_dedup_priors"
+ },
+ "n": 200,
+ "object_counting": 35.6,
+ "object_abs_distance": 42.400000000000006,
+ "object_size_estimation": 37.2,
+ "room_size_estimation": 28.000000000000004,
+ "object_rel_distance": 44.0,
+ "object_rel_direction": 35.18518518518518,
+ "route_planning": 36.0,
+ "obj_appearance_order": 44.0,
+ "overall": 37.798148148148144
+}
