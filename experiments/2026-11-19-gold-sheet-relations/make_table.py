@@ -7,7 +7,7 @@ results.csv, in this folder.
 
 Checks that every run answered exactly the questions of --ids, then per condition: VSI-Bench overall (macro over the
 tasks present, as mvp.benchmarks.vsibench.summarize), the overall without counting, per task and question type, the
-parse rate (the final-answer rule, compare_runs.parse_rate) and the mean and median input tokens. Comparisons, question by
+parse rate (the final-answer rule, compare_runs.parse_rate) and the mean and median input tokens (n_prompt_tokens). Comparisons, question by
 question with an exact two-sided sign test: B − A and C − B, Holm-corrected as one family; C − A and B − A without the
 counting questions, descriptive; with D and E (no video), B − D, E − C and D − A as a second Holm family. C − B is also broken down by whether the question gets relations (scene_sheet.relations) and,
 among those, by absolute and relative distance (where the relations state the answer) against the other types.
@@ -78,6 +78,12 @@ def compare(runs, ref, other, mask=None):
             "better": better, "worse": worse, "same": same, "p": sign_test(better, worse)}
 
 
+def tokens(run):
+    """Each question's own input length (n_prompt_tokens); runs made before it was recorded have only the batch's padded
+    length (n_input_tokens), which is used then."""
+    return run["n_prompt_tokens"] if "n_prompt_tokens" in run else run["n_input_tokens"]
+
+
 def table(runs, conditions=CONDITIONS):
     rows = []
     for cond, name, stem in conditions:
@@ -87,8 +93,8 @@ def table(runs, conditions=CONDITIONS):
         rows.append({"condition": cond, "name": name, "file": f"{stem}.jsonl", "n": len(run),
                      "overall": summary["overall"], "no_counting": overall(run, True),
                      **{t: summary.get(t) for t in TASKS}, **per_type.to_dict(),
-                     "parse_rate": 100 * parse_rate(run), "input_tokens": run["n_input_tokens"].mean(),
-                     "input_tokens_median": run["n_input_tokens"].median()})
+                     "parse_rate": 100 * parse_rate(run), "input_tokens": tokens(run).mean(),
+                     "input_tokens_median": tokens(run).median()})
     return pd.DataFrame(rows).set_index("condition")
 
 

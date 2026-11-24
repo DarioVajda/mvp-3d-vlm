@@ -197,7 +197,8 @@ training: none
 - **Primary metric:** VSI-Bench overall (8 tasks) on the 5,130 questions (fallback: the 2,728), for C − B.
 - **Secondary metrics:** overall without counting; score per task and question type; parse rate
   (`compare_runs.parse_rate`, the final-answer rule); input tokens, mean and median per condition (the token cost of
-  frames only, sheet only and both); the share of questions that get relations.
+  frames only, sheet only and both), from each question's own `n_prompt_tokens` (`n_input_tokens` is the batch's
+  padded length); the share of questions that get relations.
 - **Pipeline metrics:** n/a (gold sheets only).
 - **Breakdowns:** question type, always; questions with relations vs without; absolute and relative distance (the
   relations state the answer) vs the other types with relations; dataset (ScanNet, ScanNet++, ARKitScenes).
@@ -280,12 +281,13 @@ counting questions (the others are where VSI-Bench's labels and its answer disag
       results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
   python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv --no-video \
       --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/E.jsonl
-  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 3 tests, none skipped here
+  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 4 tests, none skipped here
   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
       results/zeroshot/vsibench/gold_sheet_relations_full/model_revision.txt
   ```
 
-`E.jsonl` must have 20 lines, each with `"n_frames": 0` and an input far shorter than C's for the same question.
+`E.jsonl` must have 20 lines, each with `"n_frames": 0`, an `n_prompt_tokens` and an input far shorter than C's for
+the same question.
 
 **3. The 5 runs on the full benchmark**, one command per condition, no `--ids`. They are independent and each resumes
 from its `--out` file if stopped:
@@ -404,3 +406,6 @@ Not run yet.
   sentence; tested in `test_scene_sheet.NoVideo`). A–C are unchanged: their prompts for all 5,130 questions equal
   those at `f3fdf2f`. D and E's comparisons are a second Holm family, so the A–C analysis is as planned, and input
   tokens per condition are reported as the token cost.
+- 2026-11-24, before any run: each prediction now also records `n_prompt_tokens`, the question's own input length
+  (`n_input_tokens` is the padded length of its batch of up to 8 questions, so it overstates short prompts). Nothing
+  sent to the model changes; it is for the token cost of A–E.

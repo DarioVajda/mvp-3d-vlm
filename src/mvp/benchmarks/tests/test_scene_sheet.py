@@ -931,6 +931,30 @@ class NoVideo(unittest.TestCase):
         self.assertNotIn("videos", call.kwargs)
         self.assertNotIn("images", call.kwargs)
 
+    def test_each_prompts_own_length_is_recorded(self):
+        try:
+            import torch
+            from mvp.models import qwen_vl
+        except Exception as e:  # no torch, transformers or decord here
+            self.skipTest(f"mvp.models.qwen_vl not importable: {e}")
+        from unittest import mock
+        model = qwen_vl.QwenVL.__new__(qwen_vl.QwenVL)
+        model.processor = mock.Mock()
+        model.processor.tokenizer.convert_tokens_to_ids.return_value = 0
+        model.processor.batch_decode.return_value = ["A", "B"]
+        model.model = mock.Mock(device="cpu")
+        inputs = mock.MagicMock()
+        inputs.to.return_value = inputs
+        ids, mask = torch.zeros(2, 5, dtype=torch.long), torch.tensor([[0, 0, 1, 1, 1], [1, 1, 1, 1, 1]])
+        inputs.__getitem__.side_effect = {"input_ids": ids, "attention_mask": mask}.__getitem__
+        model.model.generate.return_value = torch.cat([ids, torch.tensor([[7, 0], [8, 0]])], dim=1)
+        with mock.patch.object(qwen_vl, "stop_tokens", return_value={"eos_token_id": [0]}):
+            replies, padded = model._generate(inputs, 2)
+        self.assertEqual((replies, padded, model.last_prompt_tokens), (["A", "B"], 5, [3, 5]))
+        from mvp.eval import vsibench as ev
+        import inspect
+        self.assertIn('rec["n_prompt_tokens"]', inspect.getsource(ev.main))
+
 
 class PromptTemplate(unittest.TestCase):
     def test_system_prompt_is_the_models(self):

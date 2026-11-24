@@ -269,6 +269,7 @@ def main():
                                                         pres=[q for q, _ in parts], system=system,
                                                         max_new_tokens=args.max_new_tokens)
                 new_tokens = getattr(model, "last_new_tokens", None)  # QwenVL: (tokens, hit_limit) per reply
+                prompt_tokens = getattr(model, "last_prompt_tokens", None)  # QwenVL: each input without padding
                 for j, (d, p) in enumerate(zip(batch, preds)):
                     rec = {"id": int(d["id"]), "dataset": d["dataset"], "scene_name": d["scene_name"],
                            "question_type": d["question_type"], "task": task_of(d["question_type"]),
@@ -281,6 +282,8 @@ def main():
                         rec["score_first"] = score(d, p)
                     if new_tokens is not None and not args.images:
                         rec["n_new_tokens"], rec["hit_token_limit"] = new_tokens[j]  # reply length; cut off?
+                    if prompt_tokens is not None and not args.images:
+                        rec["n_prompt_tokens"] = int(prompt_tokens[j])  # n_input_tokens is the batch's padded length
                     fout.write(json.dumps(rec) + "\n")
                 fout.flush()
                 n += len(batch)

@@ -118,8 +118,9 @@ class QwenVL:
 
     def _generate(self, inputs, max_new_tokens):
         """(replies, padded input length). Also sets last_new_tokens, one (tokens, hit_limit) per reply
-        (new_token_counts)."""
+        (new_token_counts), and last_prompt_tokens, each prompt's own input length without the batch's padding."""
         inputs = inputs.to(self.model.device)
+        self.last_prompt_tokens = inputs["attention_mask"].sum(dim=1).tolist()
         stops = stop_tokens(self.processor.tokenizer)
         out = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False,
                                   temperature=None, top_p=None, top_k=None, **stops)
