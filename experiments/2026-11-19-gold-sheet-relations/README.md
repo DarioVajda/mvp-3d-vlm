@@ -5,7 +5,7 @@ owner: Tamara Grujičić
 created: 2026-11-19
 status: planned              # draft | planned | running | analysing | done | abandoned
 tags: [scene-sheet, gold-sheet, relations]
-varies: [scene_sheet.source]  # keys that differ between conditions
+varies: [scene_sheet.source, visual.video]  # keys that differ between conditions
 depends_on: [2026-11-18-scene-sheet-formats (gold sheets, the 40-question pilot)]
 ---
 
@@ -15,7 +15,8 @@ depends_on: [2026-11-18-scene-sheet-formats (gold sheets, the 40-question pilot)
 
 ## Question
 
-Do correct scene sheets, and precomputed relations, help Qwen3.5-2B on VSI-Bench?
+Do correct scene sheets, and precomputed relations, help Qwen3.5-2B on VSI-Bench? And how much of it does the sheet
+carry without the video, at what cost in input tokens (frames only, sheet only, both)?
 
 ## Hypothesis and what would change our mind
 
@@ -26,11 +27,15 @@ Do correct scene sheets, and precomputed relations, help Qwen3.5-2B on VSI-Bench
     distance, where they state the answer and the model copies it (pilot, structured-cot's 200 questions, the
     pipeline tests). On relative direction, appearance order and route planning, which also get relations, C − B is
     near 0 or negative: the model uses distances it is given but does not compute anything else from them.
+  - Without the video (D, E), the sheet keeps what it states: counting, and with relations absolute and relative
+    distance, about as in B and C. Appearance order needs the video (the gold sheet has no times), so D and E fall
+    there, and the overall falls below B and C. Sheet-only prompts are a small fraction of the video's input tokens.
 - **Results that would prove it wrong:**
   - C − B ≤ 0, or within the smallest difference that matters: the pilot's gain from the relations was noise.
   - C − B positive only on absolute and relative distance: the model copies the answer lines (the relations state the
     answer to most distance questions) but gets nothing else from the relations.
   - B − A clearly positive without counting: the gold sheet helps on its own, unlike in the format experiment.
+  - D ≥ B overall (within the smallest difference that matters): with a correct sheet the video adds nothing.
 - **What we do next in each case:**
   - The relations help beyond the distance questions: give the pipeline sheet the same relations (with the pipeline's
     content and a usable metric scale) and measure how much survives; that is the step towards a usable system.
@@ -102,11 +107,13 @@ paper backs as an assumption. -->
 
 <!-- One row per condition, and one column per key in `varies`. Every other setting is in Configuration. -->
 
-| ID | Condition | `scene_sheet.source` | Role | Existing run |
-|---|---|---|---|---|
-| A | Video only | none | baseline | |
-| B | Video + gold sheet (csv) | gold | treatment | |
-| C | Video + gold sheet + relations (csv) | gold_relations | treatment, upper bound for "uses given relations" | |
+| ID | Condition | `scene_sheet.source` | `visual.video` | Role | Existing run |
+|---|---|---|---|---|---|
+| A | Video only | none | true | baseline | |
+| B | Video + gold sheet (csv) | gold | true | treatment | |
+| C | Video + gold sheet + relations (csv) | gold_relations | true | treatment, upper bound for "uses given relations" | |
+| D | Gold sheet only (csv), no video | gold | false | sheet only | |
+| E | Gold sheet + relations only (csv), no video | gold_relations | false | sheet only, with relations | |
 
 ### Comparisons
 
@@ -116,6 +123,10 @@ paper backs as an assumption. -->
 - **C − B: do precomputed relations help beyond the sheet?** The primary comparison. Also on the question types that
   get relations, and with absolute and relative distance (where the relations state the answer) apart from the rest.
 - **C − A:** both together, descriptive.
+- **Without the video (added before any run; a second family, so the A–C comparisons above are unchanged):**
+  - **B − D:** what the video adds to a correct sheet; **E − C** the same with relations.
+  - **D − A:** sheet only against video only.
+  - **Token cost:** mean and median input tokens per condition: frames only (A), sheet only (D, E), both (B, C).
 
 ### Decisions
 
@@ -130,7 +141,8 @@ paper backs as an assumption. -->
 | Gold sheets | Built again for all 288 scenes with the current code (`build_gold_sheets.py`, into `tasks/openvocab_adapter/out_full`), the 75 scenes included; not the 75-scene sheets of `run_sheets.sh` | One build, from one commit, for every question keeps the full run and the fallback the same, whichever copy of the 75-scene sheets a machine has. Since `980cf00` a gold box is turned to fit its object; `scene_sheets_75.zip` (Drive, 18 Nov, and its local copies) was built before it, with larger axis-aligned extents (2,643 of its 2,728 `objects.csv` differ in the sizes, none in the positions). Which sheets structured-cot read is not recorded; its answers fit the rebuilt sheets and not that zip (Log, the explore200 preview) |
 | Prompts | `prompts_full.jsonl`: each question's SAM 3 prompts, extracted once with spaCy 3.8 / `en_core_web_md` 3.8.0 (`extract_prompts.py`, on Colab, `prompts_full.ipynb`) | The gold sheets are then built with numpy only, the same on any machine; the prompts of the 2,728 questions are identical to the 75-scene sheets' |
 | Decoding | 2,048 new tokens, final answer scored (`--final-answer`) | The format experiment's and the pilot's settings: replies were bare answers, and the same rule scores every condition |
-| Runs | All three at one commit, none reused | The renderer has changed since the format experiment (`980cf00`, `080acf4`, `6642c48`) |
+| Sheet only (D, E) | `--no-video`: the same prompt as B and C without the video and without its sentence ("These are frames of a video."), so it starts with the sheet; same model, decoding and answer rule | The proposal's success criteria ask for frames only, sheet only and both, with their token cost. Added before any run; A–C's prompts are unchanged (checked for all 5,130 questions against `f3fdf2f`) |
+| Runs | All five at one commit, none reused | The renderer has changed since the format experiment (`980cf00`, `080acf4`, `6642c48`) |
 
 ## Configuration
 
@@ -147,7 +159,7 @@ data:
   n_questions: 5130            # fallback: 2728
 
 visual:                        # what the VLM sees of the video
-  video: true
+  video: varies                # true (A, B, C) | false (D, E: --no-video, text only)
   model: Qwen/Qwen3.5-2B       # revision: the cluster's cached snapshot, recorded by the smoke test (model_revision.txt)
   protocol: video              # one Qwen video, frames merged in pairs
   nframes: 16
@@ -156,7 +168,7 @@ visual:                        # what the VLM sees of the video
   resolution: default
 
 scene_sheet:
-  source: varies               # none (A) | gold (B) | gold_relations (C)
+  source: varies               # none (A) | gold (B, D) | gold_relations (C, E)
   geometry: ground truth (source)  # gold sheets: VSI-Bench's labelled boxes
   frames: n/a                  # gold sheets are not built from frames
   sam3_prompts: ground truth   # the question's prompts matched to the dataset's classes
@@ -166,7 +178,7 @@ scene_sheet:
   units: metres                # gold
   format: csv
   renderer: src/mvp/benchmarks/scene_sheet.py:render_sheet (relations: scene_sheet.relations)
-  placement: between video and question
+  placement: between video and question (D, E: before the question, no video)
 
 prompt:
   system: You are a helpful assistant.
@@ -184,13 +196,14 @@ training: none
 
 - **Primary metric:** VSI-Bench overall (8 tasks) on the 5,130 questions (fallback: the 2,728), for C − B.
 - **Secondary metrics:** overall without counting; score per task and question type; parse rate
-  (`compare_runs.parse_rate`, the final-answer rule); input tokens; the share of questions that get relations.
+  (`compare_runs.parse_rate`, the final-answer rule); input tokens, mean and median per condition (the token cost of
+  frames only, sheet only and both); the share of questions that get relations.
 - **Pipeline metrics:** n/a (gold sheets only).
 - **Breakdowns:** question type, always; questions with relations vs without; absolute and relative distance (the
   relations state the answer) vs the other types with relations; dataset (ScanNet, ScanNet++, ARKitScenes).
 - **Statistics:** every condition on the same questions, compared question by question: how many get better and
   worse, with an exact two-sided sign test (`mvp.reporting.compare_runs.sign_test`), Holm-corrected over B − A and
-  C − B.
+  C − B; B − D, E − C and D − A are a second family, Holm-corrected among themselves.
 - **Smallest difference that matters:** 2 points overall, 5 on a task, as in the format experiment.
 
 ## Threats to validity and checks
@@ -207,6 +220,8 @@ training: none
 | The pilot's conditions are among these questions | — | 40 of 5,130 (of 2,728 in the fallback); the pilot motivates the plan, it is not a result here |
 | structured-cot ran the same conditions on 200 of these questions | — | 200 of 5,130 (4%; 7% of the fallback's 2,728); reported in Background, not reused, and every run here is new |
 | The model copies relations, so C on distance questions is set by the relations' accuracy | C near 100 on absolute and relative distance | Read C − B on the other types with relations apart; that is the comparison about using relations |
+| D and E differ from B and C in more than the video: the video's sentence is left out | — | Stated (Decisions); it is the only other difference, and its words describe the frames that are not there |
+| Without the video, appearance order and route planning have little to go on (the gold sheet has no times) | D and E near chance there | Expected; read B − D per task |
 | The model's revision or the sheets differ from the pilot's | The smoke test's revision; the prompt check | Stated in the Log |
 
 ## Runs and cost
@@ -263,11 +278,16 @@ counting questions (the others are where VSI-Bench's labels and its answer disag
       --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/C.jsonl
   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py smoke \
       results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
+  python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv --no-video \
+      --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/E.jsonl
+  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 3 tests, none skipped here
   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
       results/zeroshot/vsibench/gold_sheet_relations_full/model_revision.txt
   ```
 
-**3. The 3 runs on the full benchmark**, one command per condition, no `--ids`. They are independent and each resumes
+`E.jsonl` must have 20 lines, each with `"n_frames": 0` and an input far shorter than C's for the same question.
+
+**3. The 5 runs on the full benchmark**, one command per condition, no `--ids`. They are independent and each resumes
 from its `--out` file if stopped:
 
 ```bash
@@ -277,6 +297,8 @@ SHEETS=tasks/openvocab_adapter/out_full
 python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_A_video.jsonl
 python -m mvp.eval.vsibench $COMMON --sheet-source gold           --sheet-format csv --sheets-root $SHEETS --out $OUT/qwen3_5_2B_B_gold_csv.jsonl
 python -m mvp.eval.vsibench $COMMON --sheet-source gold_relations --sheet-format csv --sheets-root $SHEETS --out $OUT/qwen3_5_2B_C_gold_relations_csv.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold           --sheet-format csv --sheets-root $SHEETS --no-video --out $OUT/qwen3_5_2B_D_gold_csv_no_video.jsonl
+python -m mvp.eval.vsibench $COMMON --sheet-source gold_relations --sheet-format csv --sheets-root $SHEETS --no-video --out $OUT/qwen3_5_2B_E_gold_relations_csv_no_video.jsonl
 ```
 
 Each must report 5,130 questions (the eval prints how many have a sheet; all do). Record the commit each run was
@@ -287,9 +309,13 @@ made at (`git rev-parse HEAD`) in the Log.
 | A | A | the first command above | `results/zeroshot/vsibench/gold_sheet_relations_full/qwen3_5_2B_A_video.jsonl` | |
 | B | B | the second | `.../qwen3_5_2B_B_gold_csv.jsonl` | |
 | C | C | the third | `.../qwen3_5_2B_C_gold_relations_csv.jsonl` | |
+| D | D | the fourth | `.../qwen3_5_2B_D_gold_csv_no_video.jsonl` | |
+| E | E | the fifth | `.../qwen3_5_2B_E_gold_relations_csv_no_video.jsonl` | |
 
-**Cost:** about 20–30 GPU minutes on one B200 for the three runs (15,390 answers) and the checks, estimated from the
-format experiment, whose checks and eleven runs of the same model and frames (30,008 answers) took 31 minutes there.
+**Cost:** about 20–30 GPU minutes on one B200 for A–C (15,390 answers) and the checks, estimated from the format
+experiment, whose checks and eleven runs of the same model and frames (30,008 answers) took 31 minutes there. D and E
+(10,260 answers) carry no video, so their inputs are a few hundred tokens instead of about 3,000: an estimated 5–10
+minutes more for both, about 30–40 in all.
 C's longest prompts (Threats) make a few of its batches slower. Building and checking the gold sheets took under two
 minutes on a laptop CPU.
 
@@ -299,7 +325,7 @@ If the full runs are too much, the same steps with `--ids experiments/2026-11-19
 added to `COMMON` and `OUT=results/zeroshot/vsibench/gold_sheet_relations`. Keep `SHEETS=tasks/openvocab_adapter/out_full`
 (step 1 still runs): its sheets of these scenes are the current code's, unlike `tasks/openvocab_adapter/out`'s
 (Decisions). About 15–20 GPU minutes with the checks (8,184 answers). These questions are a subset of the full run,
-so the fallback is not a replication of it.
+so the fallback is not a replication of it. D and E take the same `--ids` (about 5 minutes more).
 
 ## Results
 
@@ -372,3 +398,9 @@ Not run yet.
     run on the rebuild, but the file it read is not identified. The earlier entry's statement that structured-cot's numbers
     came from older sheets is withdrawn. The 40-question pilot's sheets were not checked. No condition, setting or
     question changed.
+- 2026-11-24, before any run: conditions D (gold sheet only) and E (gold sheet + relations only), without the video,
+  are added, because the proposal's success criteria ask for frames only, sheet only and both, with their token cost.
+  The eval's new `--no-video` sends the sheet and the question as text (the prompt of B or C less the video and its
+  sentence; tested in `test_scene_sheet.NoVideo`). A–C are unchanged: their prompts for all 5,130 questions equal
+  those at `f3fdf2f`. D and E's comparisons are a second Holm family, so the A–C analysis is as planned, and input
+  tokens per condition are reported as the token cost.

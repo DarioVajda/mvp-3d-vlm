@@ -1,4 +1,5 @@
-"""The experiment's results once runs A–C have finished: the README's Results block and results.csv, in this folder.
+"""The experiment's results once runs A–C (and D, E if present) have finished: the README's Results block and
+results.csv, in this folder.
 
   PYTHONPATH=src python experiments/2026-11-19-gold-sheet-relations/make_table.py \
       [--results results/zeroshot/vsibench/gold_sheet_relations] [--ids .../question_ids.txt] \
@@ -6,9 +7,9 @@
 
 Checks that every run answered exactly the questions of --ids, then per condition: VSI-Bench overall (macro over the
 tasks present, as mvp.benchmarks.vsibench.summarize), the overall without counting, per task and question type, the
-parse rate (the final-answer rule, compare_runs.parse_rate) and the mean input tokens. Comparisons, question by question
-with an exact two-sided sign test: B − A and C − B, Holm-corrected as one family; C − A and B − A without the counting
-questions, descriptive. C − B is also broken down by whether the question gets relations (scene_sheet.relations) and,
+parse rate (the final-answer rule, compare_runs.parse_rate) and the mean and median input tokens. Comparisons, question by
+question with an exact two-sided sign test: B − A and C − B, Holm-corrected as one family; C − A and B − A without the
+counting questions, descriptive; with D and E (no video), B − D, E − C and D − A as a second Holm family. C − B is also broken down by whether the question gets relations (scene_sheet.relations) and,
 among those, by absolute and relative distance (where the relations state the answer) against the other types.
 """
 import argparse
@@ -28,6 +29,9 @@ RESULTS = Path("results/zeroshot/vsibench/gold_sheet_relations")
 CONDITIONS = [("A", "video only", "qwen3_5_2B_A_video"),
               ("B", "+ gold sheet", "qwen3_5_2B_B_gold_csv"),
               ("C", "+ gold sheet + relations", "qwen3_5_2B_C_gold_relations_csv")]
+# without the video (--no-video); included when their files are there
+NO_VIDEO = [("D", "gold sheet only", "qwen3_5_2B_D_gold_csv_no_video"),
+            ("E", "gold sheet + relations only", "qwen3_5_2B_E_gold_relations_csv_no_video")]
 TASK_NAMES = {"object_counting": "Count", "object_abs_distance": "Abs. dist.", "object_size_estimation": "Obj. size",
               "room_size_estimation": "Room size", "object_rel_distance": "Rel. dist.",
               "object_rel_direction": "Rel. dir.", "route_planning": "Route", "obj_appearance_order": "Order"}
@@ -74,16 +78,17 @@ def compare(runs, ref, other, mask=None):
             "better": better, "worse": worse, "same": same, "p": sign_test(better, worse)}
 
 
-def table(runs):
+def table(runs, conditions=CONDITIONS):
     rows = []
-    for cond, name, stem in CONDITIONS:
+    for cond, name, stem in conditions:
         run = runs[cond].reset_index()
         summary = summarize(run)
         per_type = (100 * run.groupby("question_type")["score"].mean()).add_prefix("type:")
         rows.append({"condition": cond, "name": name, "file": f"{stem}.jsonl", "n": len(run),
                      "overall": summary["overall"], "no_counting": overall(run, True),
                      **{t: summary.get(t) for t in TASKS}, **per_type.to_dict(),
-                     "parse_rate": 100 * parse_rate(run), "input_tokens": run["n_input_tokens"].mean()})
+                     "parse_rate": 100 * parse_rate(run), "input_tokens": run["n_input_tokens"].mean(),
+                     "input_tokens_median": run["n_input_tokens"].median()})
     return pd.DataFrame(rows).set_index("condition")
 
 
@@ -116,13 +121,14 @@ def markdown(df, comparisons, by_group, runs, has_rel, ids):
              f"the {len(tasks)} tasks present" + (f", without {', '.join(absent)}, which these questions don't have"
                                                   if absent else "") + ").", "",
              "| ID | Condition | Overall | Without counting | " + " | ".join(TASK_NAMES[t] for t in tasks)
-             + " | Parsed | Input tokens |",
+             + " | Parsed | Input tokens (mean / median) |",
              "|---|---|" + "---:|" * (len(tasks) + 4)]
     for cond, r in df.iterrows():
         lines.append(f"| {cond} | {r['name']} | {fmt(r.overall)} | {fmt(r.no_counting)} | "
-                     + " | ".join(fmt(r[t]) for t in tasks) + f" | {r.parse_rate:.1f}% | {r.input_tokens:.0f} |")
+                     + " | ".join(fmt(r[t]) for t in tasks) + f" | {r.parse_rate:.1f}% | {r.input_tokens:.0f} / {r.input_tokens_median:.0f} |")
     lines += ["", "Comparisons, question by question (better / worse: questions where the second condition scores "
-              "higher / lower; exact two-sided sign test; Holm over B − A and C − B):", "",
+              "higher / lower; exact two-sided sign test; Holm over B − A and C − B, and with D and E over B − D, "
+              "E − C and D − A):", "",
               "| Comparison | Overall | Without counting | Better / worse / same | p | Holm p |",
               "|---|---:|---:|---:|---:|---:|"]
     for c in comparisons:
@@ -171,17 +177,23 @@ def main():
     ap.add_argument("--csv", default=str(HERE / "results.csv"))
     args = ap.parse_args()
     ids = [int(line) for line in open(args.ids) if line.strip()]
-    runs = load_runs(args.results, ids)
+    no_video = [c for c in NO_VIDEO if (Path(args.results) / f"{c[2]}.jsonl").exists()]
+    if len(no_video) == 1:
+        raise SystemExit(f"only {no_video[0][0]} of D and E is in {args.results}: both or neither")
+    conditions = CONDITIONS + no_video
+    runs = load_runs(args.results, ids, conditions)
     has_rel = pd.Series({q: ss.relations(q, Path(args.sheets_root)) != "" for q in runs["A"].index})
-    df = table(runs)
+    df = table(runs, conditions)
     family = [compare(runs, "A", "B"), compare(runs, "B", "C")]
-    for c, h in zip(family, holm([c["p"] for c in family])):
-        c["holm_p"] = h
+    second = [compare(runs, "D", "B"), compare(runs, "C", "E"), compare(runs, "A", "D")] if no_video else []
+    for fam in (family, second):
+        for c, h in zip(fam, holm([c["p"] for c in fam])):
+            c["holm_p"] = h
     no_count = runs["A"]["task"] != "object_counting"
     descriptive = [compare(runs, "A", "C"), {**compare(runs, "A", "B", no_count), "note": ", counting left out"}]
     by_group = groups(runs, has_rel)
     df.to_csv(args.csv, float_format="%.4g")
-    block = markdown(df, family + descriptive, by_group, runs, has_rel, ids)
+    block = markdown(df, family + descriptive + second, by_group, runs, has_rel, ids)
     write_readme(args.readme, block)
     print(block)
     print(f"\nwrote the Results block of {args.readme} and {args.csv}")
