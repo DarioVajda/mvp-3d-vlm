@@ -854,6 +854,346 @@ class Integration(unittest.TestCase):
         self.assertEqual(compare.verdict(report)["verdict"], "INCOMPLETE")
 
 
+LEGACY_COMMIT = "9be239b"  # the last commit before --association and --depth-rule existed
+EXPERIMENT = common.REPO / "experiments" / "2026-11-18-scene-sheet-formats"
+
+
+def file_at(commit, path):
+    """A file's text at a commit of this repository, or None (no git, a copy without history)."""
+    try:
+        done = subprocess.run(["git", "-C", str(common.REPO), "show", f"{commit}:{path}"], capture_output=True,
+                              text=True)
+    except OSError:
+        return None
+    return done.stdout if done.returncode == 0 else None
+
+
+def write_masks(folder, frames_dir, detections, prompts):
+    """Saved SAM 3 masks in sam3_infer.py's format, for the frames of frames_dir. detections: {frame index:
+    [(prompt, (x0, y0, x1, y1), score)]}, each a rectangle."""
+    folder.mkdir(parents=True)
+    records = []
+    for t, path in enumerate(common.list_images(frames_dir)):
+        dets = detections.get(t, [])
+        masks = np.zeros((len(dets), H, W), bool)
+        for i, (_, (x0, y0, x1, y1), _) in enumerate(dets):
+            masks[i, y0:y1, x0:x1] = True
+        np.savez_compressed(folder / f"{path.stem}__masks.npz", masks=masks,
+                            boxes=np.array([d[1] for d in dets], np.float32).reshape(-1, 4),
+                            scores=np.array([d[2] for d in dets], np.float64),
+                            prompt_ids=np.array([prompts.index(d[0]) for d in dets], np.int64),
+                            prompts=np.array(prompts), source=str(path))
+        records.append({"stem": path.stem, "file": f"{path.stem}__masks.npz", "image_sha256": common.sha256_file(path),
+                        "image_hw": [H, W], "detections": {}})
+    (folder / "manifest.json").write_text(json.dumps({
+        "format": "openvocab4d-sam3-masks/v1", "model": "test", "backend": "sam3", "prompts": prompts,
+        "min_score": 0.5, "frame_selection": "all", "frames": records}))
+    return folder
+
+
+# One chair seen in every frame through a window that slides 8 pixels (0.2 scene units) a frame: its visible centre
+# moves farther than the centroid rule's 5% of the first frame's diagonal (about 0.13), its points overlap.
+SLIDING = {t: [("chair", (2 + 8 * t, 10, 26 + 8 * t, 46), 0.9)] for t in range(T)}
+TWO_CHAIRS = {t: [("chair", (2, 10, 22, 46), 0.9), ("chair", (60, 10, 80, 46), 0.85)] for t in range(T)}
+# one chair segmented twice in every frame, as a whole and as a part of it
+DUPLICATES = {t: [("chair", (8, 8, 38, 46), 0.9), ("chair", (14, 14, 32, 40), 0.7)] for t in range(T)}
+LOW_CONF_BOX = (8, 8, 38, 46)  # where low_confidence_geometry sets the depth confidence to its minimum
+
+
+class OverlapTracking(unittest.TestCase):
+    """milestone4_video.py's --association overlap and --depth-rule mask against the original rules (its defaults), on
+    saved masks of the synthetic scene, without re-identification (no GPU)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = Path(cls.tmp.name)
+        _, data, dense = make_scene(cls.root)
+        cls.stubs, _ = write_stubs(cls.root)
+        cls.adapted = cls.root / "adapted"
+        assert adapt(data, cls.adapted, "--frames", "all", "--dense-dir", str(dense)) == 0
+        cls.frames = cls.adapted / "frames"
+        cls.masks = {name: write_masks(cls.root / f"masks_{name}", cls.frames, dets, ["chair"])
+                     for name, dets in (("sliding", SLIDING), ("two", TWO_CHAIRS), ("duplicates", DUPLICATES))}
+        cls.low_conf = cls.root / "low_conf"
+        cls.low_conf.mkdir()
+        shutil.copyfile(cls.adapted / "cameras.npz", cls.low_conf / "cameras.npz")
+        with np.load(cls.adapted / "depth.npz") as z:
+            depth, conf = z["depth"], z["conf"].copy()
+        x0, y0, x1, y1 = LOW_CONF_BOX
+        conf[:, y0:y1, x0:x1] = 1.0  # VGGT's lowest confidence: the original rule drops every pixel of the chair
+        np.savez_compressed(cls.low_conf / "depth.npz", depth=depth, conf=conf)
+        cls.runs = 0
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def track(self, masks, *extra, geometry=None, script=M4, conf_percentile=10, min_points=20):
+        type(self).runs += 1
+        out = self.root / f"run{self.runs}"
+        out.mkdir()
+        for name in ("cameras.npz", "depth.npz"):
+            shutil.copyfile((geometry or self.adapted) / name, out / name)
+        points = [] if min_points is None else ["--min-points", str(min_points)]
+        done = subprocess.run([sys.executable, "-u", str(script), "--images", str(self.frames), "--out", str(out),
+                               "--prompts", "chair", "--step", "1", "--stages", "track", "--no-reid",
+                               "--masks-dir", str(masks), "--conf-percentile", str(conf_percentile), *points, *extra],
+                              env={**os.environ, "PYTHONPATH": str(self.stubs)}, capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        return out
+
+    @staticmethod
+    def labels(out):
+        with np.load(out / "tracks" / "chair.npz") as z:
+            return z["labels"]
+
+    def objects(self, out):
+        return sorted(set(np.unique(self.labels(out)).tolist()) - {0})
+
+    NEW = ("--association", "overlap", "--depth-rule", "mask")
+
+    def test_overlap_follows_an_object_whose_visible_part_moves(self):
+        self.assertGreater(len(self.objects(self.track(self.masks["sliding"]))), 2)  # the original rule splits it
+        out = self.track(self.masks["sliding"], *self.NEW)
+        self.assertEqual(self.objects(out), [1])
+        self.assertEqual(json.loads((out / "tracks/summary.json").read_text())["chair"]["max_detections_per_track"], T)
+
+    def test_overlap_keeps_two_objects_apart(self):
+        for extra in ((), self.NEW):
+            self.assertEqual(len(self.objects(self.track(self.masks["two"], *extra))), 2, extra)
+
+    def test_two_masks_of_one_object_are_joined(self):
+        self.assertEqual(len(self.objects(self.track(self.masks["duplicates"]))), 2)  # the original rule, no re-id
+        out = self.track(self.masks["duplicates"], *self.NEW)
+        self.assertEqual(self.objects(out), [1])
+        self.assertTrue((self.labels(out)[:, 14:40, 14:32] == 1).all())  # the part's pixels now belong to the whole
+
+    def test_a_low_confidence_mask_counts_under_the_mask_rule_only(self):
+        original = self.track(self.masks["duplicates"], geometry=self.low_conf, conf_percentile=55, min_points=None)
+        self.assertEqual(self.objects(original), [])  # 300 pixels of top-45% confidence: none
+        out = self.track(self.masks["duplicates"], *self.NEW, geometry=self.low_conf, conf_percentile=55,
+                         min_points=None)
+        self.assertEqual(self.objects(out), [1])
+        summary = json.loads((out / "tracks/summary.json").read_text())
+        self.assertEqual(summary["depth_rule"]["min_points"], 50)  # depth_rule.MIN_POINTS["mask"]
+        self.assertEqual(summary["association"]["rule"], "overlap")
+        rows = read_csv(scene_sheet_creator.build_scene_sheet(
+            out, ["chair"], include_size=True, out_dir=self.root / "low_conf_sheet", conf_percentile=55)[0])
+        self.assertEqual([int(r["num_frames"]) for r in rows], [T])  # the sheet counts the frames by the same rule
+        rows = read_csv(scene_sheet_creator.build_scene_sheet(
+            out, ["chair"], include_size=True, out_dir=self.root / "low_conf_global", conf_percentile=55,
+            depth_rule="global")[0])
+        self.assertEqual(rows, [])
+
+    def test_the_original_rules_give_exactly_the_tracks_of_the_code_before_them(self):
+        """The defaults, and --association centroid --depth-rule global, track as milestone4_video.py did before
+        either option existed (LEGACY_COMMIT), on every test scene; the sheets match the scene sheet code of then."""
+        old = file_at(LEGACY_COMMIT, "openvocab-4D-main/trackA/milestone4_video.py")
+        old_sheet = file_at(LEGACY_COMMIT, "src/mvp/openvocab_adapter/scene_sheet_creator.py")
+        if old is None or old_sheet is None:
+            self.skipTest(f"the code at {LEGACY_COMMIT} is not available (no git history)")
+        folder = self.root / "legacy"
+        folder.mkdir()
+        (folder / "milestone4_video.py").write_text(old)
+        shutil.copyfile(common.TRACK_A / "saved_masks.py", folder / "saved_masks.py")
+        (folder / "scene_sheet_creator_legacy.py").write_text(old_sheet)
+        spec = importlib.util.spec_from_file_location("scene_sheet_creator_legacy", folder / "scene_sheet_creator_legacy.py")
+        legacy_sheet = importlib.util.module_from_spec(spec)
+        path = list(sys.path)
+        spec.loader.exec_module(legacy_sheet)  # it puts its own folder on sys.path, as scene_sheet_creator.py does
+        sys.path[:] = path
+        ignore = {"seconds", "peak_vram_gib"}
+        for name, masks in self.masks.items():
+            before = self.track(masks, script=folder / "milestone4_video.py")
+            for extra in ((), ("--association", "centroid", "--depth-rule", "global")):
+                now = self.track(masks, *extra)
+                np.testing.assert_array_equal(self.labels(now), self.labels(before), err_msg=f"{name} {extra}")
+                a, b = (json.loads((o / "tracks/summary.json").read_text()) for o in (now, before))
+                self.assertEqual({k: v for k, v in a.items() if k not in ignore},
+                                 {k: v for k, v in b.items() if k not in ignore}, f"{name} {extra}")
+            sheets = []
+            for build, extra in ((legacy_sheet.build_scene_sheet, {}),
+                                 (scene_sheet_creator.build_scene_sheet, {"depth_rule": "global"})):
+                out = self.root / f"sheet_{name}_{len(sheets)}"
+                objects_csv, cameras_csv = build(before, ["chair"], include_size=True, out_dir=out, conf_percentile=10,
+                                                 min_points=20, size_trim=0.02, **extra)
+                sheets.append((objects_csv.read_text(), cameras_csv.read_text()))
+            self.assertEqual(sheets[0], sheets[1], name)
+
+    def test_rerun_detection_can_still_patch_the_tracker(self):
+        """The frozen pipeline_v3 runs (rerun_detection.patch_tracker) edit milestone4_video.py by exact strings."""
+        sys.path.insert(0, str(EXPERIMENT))
+        try:
+            import rerun_detection
+        finally:
+            sys.path.remove(str(EXPERIMENT))
+        code_root = self.root / "patch"
+        (code_root / rerun_detection.TRACKER.parent).mkdir(parents=True)
+        shutil.copyfile(M4, code_root / rerun_detection.TRACKER)
+        patched = rerun_detection.patch_tracker(code_root)
+        compile(patched.read_text(), str(patched), "exec")
+        shutil.copyfile(common.TRACK_A / "saved_masks.py", patched.parent / "saved_masks.py")
+        shutil.copyfile(common.TRACK_A / "depth_rule.py", patched.parent / "depth_rule.py")
+        out = self.track(self.masks["two"], "--det-score", "0.55", "--near-frac", "0.05", script=patched)
+        np.testing.assert_array_equal(self.labels(out), self.labels(self.track(self.masks["two"])))
+        self.assertTrue((out / "tracks/chair.scores.json").is_file())
+
+
+class DepthRule(unittest.TestCase):
+    """The depth rule is written twice, in the tracker (trackA/depth_rule.py) and the scene sheet
+    (scene_sheet_creator.usable_pixels): they must agree."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location("depth_rule_tracker", common.TRACK_A / "depth_rule.py")
+        cls.tracker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.tracker)
+
+    def test_tracker_and_sheet_have_the_same_rules(self):
+        rng = np.random.default_rng(0)
+        for _ in range(100):
+            mask = rng.uniform(size=(20, 30)) < rng.uniform(0, 1)
+            depth = rng.uniform(-0.2, 3, (20, 30)).astype(np.float32)
+            conf = (1 + rng.uniform(0, 5, (20, 30))).astype(np.float16).astype(np.float32)
+            threshold, quantile = float(rng.uniform(1, 6)), float(rng.uniform(10, 90))
+            for rule in ("global", "mask"):
+                np.testing.assert_array_equal(
+                    self.tracker.usable_pixels(mask, depth, conf, threshold, rule, quantile),
+                    scene_sheet_creator.usable_pixels(mask, depth, conf, threshold, rule, quantile))
+        self.assertEqual(self.tracker.MIN_POINTS, scene_sheet_creator.MIN_POINTS)
+        self.assertEqual(self.tracker.DEFAULT_QUANTILE, scene_sheet_creator.MASK_CONF_QUANTILE)
+        self.assertEqual(set(self.tracker.RULES), set(scene_sheet_creator.DEPTH_RULES))
+
+    def test_the_rules(self):
+        mask = np.zeros((4, 4), bool)
+        mask[:2] = True
+        depth = np.ones((4, 4), np.float32)
+        depth[0, 0] = 0
+        conf = np.array([[1, 1, 2, 4]] * 4, np.float32)
+        usable = scene_sheet_creator.usable_pixels
+        np.testing.assert_array_equal(usable(mask, depth, conf, 3.0, "global"), mask & (conf >= 3) & (depth > 0))
+        # the mask's own median (1.5 over its seven pixels with depth: 1, 2, 4, 1, 1, 2, 4 -> 2) is the lower threshold
+        np.testing.assert_array_equal(usable(mask, depth, conf, 3.0, "mask"), mask & (conf >= 2) & (depth > 0))
+        np.testing.assert_array_equal(usable(mask, depth, conf, 1.0, "mask"), mask & (depth > 0))  # global is lower
+        self.assertFalse(usable(np.zeros((4, 4), bool), depth, conf, 3.0, "mask").any())
+        with self.assertRaises(ValueError):
+            usable(mask, depth, conf, 3.0, "nearest")
+        self.assertEqual((scene_sheet_creator.min_points_for("global"), scene_sheet_creator.min_points_for("mask"),
+                          scene_sheet_creator.min_points_for("mask", 20)), (300, 50, 20))
+
+
+def tracker_defaults():
+    """milestone4_video.py's option defaults, {name with underscores: value}, read from its parse_args (the script
+    parses its arguments when imported)."""
+    tree = ast.parse(M4.read_text(encoding="utf-8"))
+    out = {}
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and getattr(node.func, "attr", None) == "add_argument" and node.args
+                and isinstance(node.args[0], ast.Constant)):
+            default = next((k.value for k in node.keywords if k.arg == "default"), None)
+            out[node.args[0].value.lstrip("-").replace("-", "_")] = (ast.literal_eval(default) if default is not None
+                                                                     else None)
+    return out
+
+
+class TrackingSettings(unittest.TestCase):
+    """What question_scene_sheet.py records and passes to the tracker, with the fixed rules (the default) and with
+    the original ones; and how a rebuild reads a sheet's depth rule back."""
+
+    ORIGINAL = {"reid": True, "backend": "transformers", "min_score": 0.5, "conf_percentile": 55.0, "min_points": 300,
+                "min_track_frames": question_scene_sheet.MIN_TRACK_FRAMES_RULE}
+
+    def test_original_rules_record_exactly_the_settings_of_every_earlier_sheet(self):
+        legacy = question_scene_sheet.track_settings(True, "transformers", 0.5, 55.0, None, "centroid", "global")
+        self.assertEqual(legacy, self.ORIGINAL)  # so their saved tracks are reused, not made again
+        self.assertEqual(question_scene_sheet.track_settings(True, "transformers", 0.5, 55.0, 300, "centroid",
+                                                             "global"), self.ORIGINAL)
+        self.assertEqual(question_scene_sheet.tracker_options(legacy),
+                         {"association": None, "depth_rule": None, "mask_conf_quantile": None,
+                          "tracker_options": None})
+
+    def test_defaults_are_the_fixed_rules(self):
+        default = question_scene_sheet.track_settings(True, "transformers", 0.5, 55.0)
+        self.assertEqual(default, {**self.ORIGINAL, "min_points": 50, "association": "overlap", "depth_rule": "mask",
+                                   "mask_conf_quantile": 50.0, **question_scene_sheet.OVERLAP_OPTIONS})
+        args = question_scene_sheet.parse_args(["synthetic", "Where is the chair?"])
+        self.assertEqual((args.frames, args.association, args.depth_rule, args.min_points, args.voxel_frac),
+                         ("all", "overlap", "mask", None, question_scene_sheet.OVERLAP_OPTIONS["voxel_frac"]))
+        for function in (question_scene_sheet.create_scene_sheet, question_scene_sheet.prepare_scene):
+            parameters = inspect.signature(function).parameters
+            self.assertEqual((parameters["frames"].default, parameters["association"].default,
+                              parameters["depth_rule"].default), ("all", "overlap", "mask"))
+        self.assertEqual(question_scene_sheet.frame_selection(question_scene_sheet.DEFAULT_FRAMES), ("all", "all"))
+        # the milestone 4 defaults these settings stand in for, so that tuning one of them makes the tracks again
+        defaults = tracker_defaults()
+        for name, value in question_scene_sheet.OVERLAP_OPTIONS.items():
+            self.assertEqual(defaults[name], value, name)
+        # milestone 4's own defaults stay the original rules, which the frozen runs rely on
+        self.assertEqual((defaults["association"], defaults["depth_rule"], defaults["min_points"]),
+                         ("centroid", "global", None))
+
+    def test_tracker_command_line(self):
+        commands = []
+
+        def run(cmd, **kwargs):
+            commands.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0)
+
+        legacy = question_scene_sheet.track_settings(True, "transformers", 0.5, 55.0, None, "centroid", "global")
+        default = question_scene_sheet.track_settings(False, "transformers", 0.5, 55.0)
+        with mock.patch.object(subprocess, "run", run), contextlib.redirect_stdout(io.StringIO()):
+            for settings in (legacy, default):
+                scene_sheet_creator.run_pipeline("frames", "scene", ["chair"], "track", 1,
+                                                 no_reid=not settings["reid"], masks_dir="masks",
+                                                 conf_percentile=settings["conf_percentile"],
+                                                 min_points=settings["min_points"],
+                                                 **question_scene_sheet.tracker_options(settings))
+        tail = lambda cmd: cmd[cmd.index("--overlap") + 2:]  # after the VGGT chunk options
+        masks = str(Path("masks").resolve())
+        self.assertEqual(tail(commands[0]), ["--masks-dir", masks, "--conf-percentile", "55.0", "--min-points", "300"])
+        self.assertEqual(tail(commands[1]), ["--no-reid", "--masks-dir", masks, "--conf-percentile", "55.0",
+                                             "--min-points", "50", "--association", "overlap", "--depth-rule", "mask",
+                                             "--mask-conf-quantile", "50.0", "--voxel-frac", "0.065",
+                                             "--overlap-min", "0.1", "--reid-radius-depth", "0.5",
+                                             "--merge-overlap", "0.2", "--duplicate-overlap", "0.6"])
+
+    def test_a_rebuild_reads_the_depth_rule_back(self):
+        rebuild = reconstruct_pipeline.rebuild
+        self.assertEqual(rebuild.depth_options({}), {"depth_rule": "global", "mask_conf_quantile": 50.0})
+        self.assertEqual(rebuild.depth_options({"depth_rule": "mask", "mask_conf_quantile": 40.0}),
+                         {"depth_rule": "mask", "mask_conf_quantile": 40.0})
+
+        def before_the_rule(scene, prompts, relative_positions=False, include_size=False, out_dir=None,
+                            conf_percentile=55.0, min_points=300, size_trim=0.0, max_frame_points=5000,
+                            frame_columns=True, cameras=True):
+            """build_scene_sheet's signature before the depth rule (as pipeline_v3.py runs it, from 50fe543)."""
+
+        with mock.patch.object(rebuild.sheet, "build_scene_sheet", before_the_rule):
+            self.assertEqual(rebuild.depth_options({}), {})
+            self.assertIsNone(rebuild.depth_options({"depth_rule": "mask"}))
+
+    def test_frames_folders_of_a_run(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        scene = root / "scannet__s1"
+        for label in ("all", "subset-uniform16", "gold"):
+            (scene / label / "scene").mkdir(parents=True)
+            (scene / label / "scene" / "adapter_report.json").write_text("{}")
+        (scene / "notes").mkdir()
+        rebuild = reconstruct_pipeline.rebuild
+        self.assertEqual(rebuild.pipeline_labels(scene), ["all", "subset-uniform16"])
+        self.assertEqual(rebuild.pipeline_labels(scene, "all"), ["all"])
+        with self.assertRaises(ValueError):  # two frames folders and no index.csv: the run must say which
+            reconstruct_pipeline.run_label(root)
+        self.assertEqual(reconstruct_pipeline.run_label(root, "all"), "all")
+        with open(root / "index.csv", "w", newline="") as f:
+            writer = csv.DictWriter(f, ["id", "pipeline_sheet", "gold_sheet"])
+            writer.writeheader()
+            writer.writerow({"id": 1, "pipeline_sheet": "scannet__s1/all/sheets/chair", "gold_sheet": ""})
+        self.assertEqual(reconstruct_pipeline.run_label(root), "all")
+
+
 class ComparisonMaths(unittest.TestCase):
     def test_track_matching_ignores_id_numbers(self):
         a, b = np.zeros((2, 4, 4), np.uint16), np.zeros((2, 4, 4), np.uint16)
@@ -1198,12 +1538,15 @@ class QuestionSceneSheet(unittest.TestCase):
         self.assertEqual(question_scene_sheet.frame_selection("half"), (common.PRESETS["half"], "half"))
         self.assertEqual(question_scene_sheet.frame_selection("list:0,4"), ("list:0,4", "list-0_4"))
 
-    def test_default_frames_are_16_uniformly_sampled(self):
-        """By default, from Python and from the command line, the sheet uses the VLM's 16 uniform frames of the 128."""
+    def test_default_frames_are_all_128_and_the_vlms_16_can_be_chosen(self):
+        """By default, from Python and from the command line, the sheet uses all 128 VGGT frames; subset:uniform16, the
+        default before 2026-11-24, is the VLM's 16 uniform frames of the 128."""
         default = question_scene_sheet.DEFAULT_FRAMES
+        self.assertEqual(default, "all")
         self.assertEqual(inspect.signature(question_scene_sheet.create_scene_sheet).parameters["frames"].default, default)
         self.assertEqual(question_scene_sheet.parse_args(["synthetic", "Where is the chair?"]).frames, default)
-        spec, label = question_scene_sheet.frame_selection(default)
+        self.assertEqual(question_scene_sheet.frame_selection(default), ("all", "all"))
+        spec, label = question_scene_sheet.frame_selection("subset:uniform16")
         self.assertEqual(label, "subset-uniform16")
         uniform16 = np.linspace(0, 127, 16, dtype=int).tolist()
         self.assertEqual(common.select_frames(spec, 128, {"frame_subsets": {"uniform16": uniform16}}), uniform16)

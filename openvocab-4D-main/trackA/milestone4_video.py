@@ -47,8 +47,9 @@ def parse_args():
     p.add_argument("--overlap", type=int, default=8, help="shared frames between chunks")
     p.add_argument("--stages", default="vggt,track,fuse", help="which stages to run")
     p.add_argument("--conf-percentile", type=float, default=55.0)
-    p.add_argument("--min-points", type=int, default=300,
-                   help="min 3D points for an object to appear in a frame")
+    p.add_argument("--min-points", type=int, default=None,
+                   help="min 3D points for an object to appear in a frame (default: the depth rule's, "
+                        "depth_rule.MIN_POINTS: 300 for global, 50 for mask)")
     p.add_argument("--max-obj-frame-points", type=int, default=2500,
                    help="per-frame per-object point cap (RAM bound)")
     p.add_argument("--max-obj-points", type=int, default=150_000,
@@ -69,6 +70,34 @@ def parse_args():
     p.add_argument("--min-track-frames", type=int, default=None,
                    help="frames a track must be seen in to be kept (default: scales linearly with the number of "
                         "frames, 1 at 16 frames and 4 at 128, at least 1)")
+    # Added for the scene sheets (src/mvp/openvocab_adapter): each default is the original behaviour, which frozen
+    # runs (experiments/2026-11-18-scene-sheet-formats/rerun_detection.py) rely on; the sheet pipeline passes the new
+    # values (question_scene_sheet.py).
+    p.add_argument("--depth-rule", choices=["global", "mask"], default="global",
+                   help="which pixels of a mask have usable depth (depth_rule.py): global, confidence at least the "
+                        "--conf-percentile of the whole sequence (original); mask, at least the lower of that and "
+                        "the mask's own --mask-conf-quantile")
+    p.add_argument("--mask-conf-quantile", type=float, default=50.0,
+                   help="--depth-rule mask: percentile of a mask's own confidence its pixels need")
+    p.add_argument("--association", choices=["centroid", "overlap"], default="centroid",
+                   help="how a detection joins a track: centroid, 3D centroids within 5%% of the first frame's "
+                        "diagonal, or re-identified within --reid-radius-frac (original); overlap, its 3D points "
+                        "overlap the track's (voxels within one voxel of each other), or re-identified within "
+                        "--reid-radius-depth of the track's points")
+    p.add_argument("--voxel-frac", type=float, default=0.065,
+                   help="--association overlap: voxel side, as a fraction of the scene's median depth")
+    p.add_argument("--overlap-min", type=float, default=0.10,
+                   help="--association overlap: share of a detection's voxels next to a track's voxel for it to "
+                        "continue that track")
+    p.add_argument("--reid-radius-depth", type=float, default=0.5,
+                   help="--association overlap: re-identification radius, from the detection's centre to the "
+                        "track's nearest voxel, as a fraction of the scene's median depth")
+    p.add_argument("--merge-overlap", type=float, default=0.2,
+                   help="--association overlap: after the pass, two tracks seen together in at most 2 frames are "
+                        "joined when this share of the smaller one's voxels is next to the other's")
+    p.add_argument("--duplicate-overlap", type=float, default=0.6,
+                   help="--association overlap: two tracks are joined at this share whether or not they were seen "
+                        "together (two masks of one object)")
     return p.parse_args()
 
 
@@ -106,6 +135,7 @@ _REPO = Path(__file__).resolve().parents[1] / "vggt"
 if _REPO.exists() and str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 from vggt.utils.geometry import depth_to_world_coords_points  # noqa: E402
+from depth_rule import min_points_for, usable_pixels  # noqa: E402  (this folder, as saved_masks)
 
 
 def frame_list():
@@ -292,6 +322,184 @@ def embed_detections(dino, pil_img, det_masks, dw, dh):
     return embs
 
 
+# ---------------------------------------------------------------------------
+# --association overlap: a detection continues the track whose 3D points it overlaps
+# ---------------------------------------------------------------------------
+# The centroid rule compares the centre of what is visible of an object. Between two views of a large object that
+# centre moves by much of the object's size, while the points of the part both views see stay where they are. Here a
+# track keeps the voxels its points have filled, and a detection continues it when enough of its own voxels lie next
+# to them. Voxels are packed into one int64 each (21 bits per axis, offset so that negative coordinates fit).
+VOXEL_BITS = 21
+VOXEL_OFFSET = 1 << (VOXEL_BITS - 1)
+VOXEL_NEIGHBOURS = np.array([(dx << (2 * VOXEL_BITS)) + (dy << VOXEL_BITS) + dz
+                             for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)], np.int64)
+OVERLAP_POINTS = 4000  # points of a detection voxelised (a fixed random choice), enough to cover its mask
+OVERLAP_MIN_SIM = 0.2  # with re-identification on, the appearance a continuation needs, as in the centroid rule
+OVERLAP_MAX_TOGETHER = 2  # frames two tracks may share and still be joined at --merge-overlap, as in the centroid rule
+
+
+def scene_unit(depth):
+    """The scene's length unit for --association overlap: the median depth over every frame (every 4th pixel).
+
+    VGGT's scale is arbitrary per scene; the median depth tracks it more steadily than the extent of what the first
+    frame sees (in metres it is about 1.5 m in most scenes)."""
+    d = np.asarray(depth[:, ::4, ::4], np.float32)
+    d = d[d > 0]
+    return float(np.median(d)) if len(d) else 1.0
+
+
+def voxel_cells(points, voxel):
+    """Integer voxel coordinates (N, 3) of points."""
+    return np.floor(points / voxel).astype(np.int64) + VOXEL_OFFSET
+
+
+def pack_cells(cells):
+    return (cells[:, 0] << (2 * VOXEL_BITS)) | (cells[:, 1] << VOXEL_BITS) | cells[:, 2]
+
+
+def unpack_keys(keys):
+    mask = (1 << VOXEL_BITS) - 1
+    return np.stack([(keys >> (2 * VOXEL_BITS)) & mask, (keys >> VOXEL_BITS) & mask, keys & mask], axis=1)
+
+
+def neighbour_share(keys, other):
+    """Share of keys (unique voxels) with a voxel of other (sorted unique voxels) in their 3x3x3 neighbourhood."""
+    if not len(keys) or not len(other):
+        return 0.0
+    wanted = (keys[:, None] + VOXEL_NEIGHBOURS[None, :]).ravel()
+    at = np.minimum(np.searchsorted(other, wanted), len(other) - 1)
+    return float((other[at] == wanted).reshape(len(keys), -1).any(axis=1).mean())
+
+
+def boxes_apart(lo_a, hi_a, lo_b, hi_b):
+    """Whether two voxel boxes are more than one voxel apart along some axis (so no voxel can be a neighbour)."""
+    return bool(np.any(lo_a > hi_b + 1) or np.any(lo_b > hi_a + 1))
+
+
+def nearest_voxel_distance(centre, keys, voxel):
+    """Distance from centre to the nearest voxel centre of keys."""
+    centres = (unpack_keys(keys) - VOXEL_OFFSET + 0.5) * voxel
+    return float(np.sqrt(((centres - centre) ** 2).sum(axis=1).min()))
+
+
+def detection_voxels(points, voxel, seed):
+    """(sorted unique voxel keys, lowest cell, highest cell) of a detection's points."""
+    if len(points) > OVERLAP_POINTS:
+        points = points[np.random.default_rng(seed).choice(len(points), OVERLAP_POINTS, replace=False)]
+    cells = voxel_cells(points, voxel)
+    return np.unique(pack_cells(cells)), cells.min(axis=0), cells.max(axis=0)
+
+
+def assign_by_overlap(tracks_of_prompt, dets, frame, labels, next_track, voxel, unit, args):
+    """--association overlap for one prompt in one frame. dets: [score, mask, mean, embedding, points], taken by
+    highest score first; each continues at most one track and each track takes at most one detection per frame.
+
+      continue  a track not yet taken in this frame, with at least --overlap-min of the detection's voxels next to
+                its voxels (and, with re-identification on, appearance similarity above OVERLAP_MIN_SIM)
+      re-id     otherwise a track with appearance similarity at least --reid-sim whose nearest voxel is within
+                --reid-radius-depth scene units of the detection's centre (the median of its points)
+      new       otherwise a new track
+    A continuation always beats a re-identification. Writes the track ids into labels (this frame's label volume)
+    and returns the next free track id."""
+    radius = args.reid_radius_depth * unit
+    for k, (score, mask, _, emb, points) in enumerate(sorted(dets, key=lambda x: -x[0])):
+        keys, lo, hi = detection_voxels(points, voxel, seed=frame * 1000 + k)
+        centre = np.median(points, axis=0)
+        best, best_value = None, -np.inf
+        for tid, track in tracks_of_prompt.items():
+            if track["last_frame"] == frame:
+                continue
+            sim = float(emb @ track["emb"]) if emb is not None and track["emb"] is not None else None
+            share = 0.0 if boxes_apart(lo, hi, track["lo"], track["hi"]) else neighbour_share(keys, track["keys"])
+            if share >= args.overlap_min and (sim is None or sim > OVERLAP_MIN_SIM):
+                value = 2.0 + share + (sim or 0.0)
+            elif sim is not None and sim >= args.reid_sim:
+                dist = nearest_voxel_distance(centre, track["keys"], voxel)
+                if dist > radius:
+                    continue
+                value = sim - 0.3 * dist / radius
+            else:
+                continue
+            if value > best_value:
+                best, best_value = tid, value
+        if best is None:
+            best = next_track
+            next_track += 1
+            tracks_of_prompt[best] = {"centroid": centre, "last_frame": frame, "frames": 0, "first_frame": frame,
+                                      "emb": None, "frame_set": set(), "keys": keys, "lo": lo, "hi": hi,
+                                      "best_score": score}
+        track = tracks_of_prompt[best]
+        track["keys"] = np.union1d(track["keys"], keys)
+        track["lo"], track["hi"] = np.minimum(track["lo"], lo), np.maximum(track["hi"], hi)
+        track["centroid"] = 0.7 * track["centroid"] + 0.3 * centre
+        if emb is not None:
+            e = emb if track["emb"] is None else 0.8 * track["emb"] + 0.2 * emb
+            track["emb"] = e / (np.linalg.norm(e) + 1e-9)
+        track["last_frame"] = frame
+        track["frames"] += 1
+        track["frame_set"].add(frame)
+        track["best_score"] = max(track["best_score"], score)
+        labels[mask] = best
+    return next_track
+
+
+def consolidate_by_overlap(tracks_of_prompt, volume, next_track, args):
+    """Join a prompt's tracks that are one object, after the pass. Two tracks are joined when the share of the
+    smaller one's voxels next to the other's is at least --duplicate-overlap, or at least --merge-overlap when they were
+    seen together in at most OVERLAP_MAX_TOGETHER frames (two tracks seen together in more frames are two objects,
+    unless they overlap that much: then they are two masks of one). The most overlapping pairs are joined first; the
+    joined track keeps the smaller id. Returns (pairs joined, the relabelled volume)."""
+    ids = sorted(tracks_of_prompt)
+    pairs = []
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            ta, tb = tracks_of_prompt[a], tracks_of_prompt[b]
+            if boxes_apart(ta["lo"], ta["hi"], tb["lo"], tb["hi"]):
+                continue
+            small, large = (ta, tb) if len(ta["keys"]) <= len(tb["keys"]) else (tb, ta)
+            share = neighbour_share(small["keys"], large["keys"])
+            if share >= args.merge_overlap:
+                pairs.append((share, a, b))
+    root = {tid: tid for tid in ids}
+
+    def find(t):
+        while root[t] != t:
+            root[t] = root[root[t]]
+            t = root[t]
+        return t
+
+    seen_in = {tid: set(tracks_of_prompt[tid]["frame_set"]) for tid in ids}
+    joined = 0
+    for share, a, b in sorted(pairs, key=lambda p: (-p[0], p[1], p[2])):
+        ra, rb = find(a), find(b)
+        if ra == rb:
+            continue
+        if share < args.duplicate_overlap and len(seen_in[ra] & seen_in[rb]) > OVERLAP_MAX_TOGETHER:
+            continue
+        keep_id, gone_id = min(ra, rb), max(ra, rb)
+        root[gone_id] = keep_id
+        seen_in[keep_id] |= seen_in.pop(gone_id)
+        joined += 1
+    if not joined:
+        return 0, volume
+    lut = np.arange(next_track, dtype=np.uint16)
+    for tid in ids:
+        lut[tid] = find(tid)
+    for tid in ids:
+        r = find(tid)
+        if r == tid:
+            continue
+        gone, kept = tracks_of_prompt.pop(tid), tracks_of_prompt[r]
+        kept["keys"] = np.union1d(kept["keys"], gone["keys"])
+        kept["lo"], kept["hi"] = np.minimum(kept["lo"], gone["lo"]), np.maximum(kept["hi"], gone["hi"])
+        kept["frame_set"] = kept["frame_set"] | gone["frame_set"]
+        kept["frames"] = len(kept["frame_set"])
+        kept["first_frame"] = min(kept["first_frame"], gone["first_frame"])
+        kept["last_frame"] = max(kept["last_frame"], gone["last_frame"])
+        kept["best_score"] = max(kept["best_score"], gone["best_score"])
+    return joined, lut[volume]
+
+
 def stage_track(frames):
     """3D tracking-by-detection with appearance re-identification.
 
@@ -344,6 +552,10 @@ def stage_track(frames):
     tracks = [{} for _ in prompts]   # per prompt: id -> {"centroid", "last_frame", "frames"}
     next_id = [1] * len(prompts)
     scene_diag = None
+    min_points = min_points_for(ARGS.depth_rule, ARGS.min_points)
+    overlap = ARGS.association == "overlap"
+    unit = scene_unit(depth) if overlap else None
+    voxel = ARGS.voxel_frac * unit if overlap else None
     tp = time.perf_counter()
     if torch.cuda.is_available():  # saved masks can run on a CPU-only machine
         torch.cuda.reset_peak_memory_stats()
@@ -351,6 +563,7 @@ def stage_track(frames):
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         for f, path in enumerate(frames):
             d = depth[f].astype(np.float32)
+            frame_depth = d  # d is reused below as a loop variable
             keep = (conf[f] >= conf_thr) & (d > 0)
             world, _, _ = depth_to_world_coords_points(d, extrinsic[f], intrinsic[f])
             if scene_diag is None:
@@ -377,14 +590,20 @@ def stage_track(frames):
                     if scores[k] < 0.55:
                         continue
                     m = resize_mask(masks[k] > 0.5, dw, dh)
-                    sel = m & keep
-                    if sel.sum() < ARGS.min_points:
+                    sel = usable_pixels(m, frame_depth, conf[f], conf_thr, ARGS.depth_rule, ARGS.mask_conf_quantile)
+                    if sel.sum() < min_points:
                         continue
                     dets.append([float(scores[k]), m, world[sel].mean(axis=0), None])
+                    if overlap:
+                        dets[-1].append(world[sel])
                 if dino is not None and dets:
                     embs = embed_detections(dino, pil_img, [d[1] for d in dets], dw, dh)
                     for d, e in zip(dets, embs):
                         d[3] = e
+                if overlap:
+                    next_id[pi] = assign_by_overlap(tracks[pi], dets, f, label_vols[pi][f], next_id[pi], voxel,
+                                                    unit, ARGS)
+                    continue
                 # greedy association, highest detection score first
                 for score, m, cen, emb in sorted(dets, key=lambda x: -x[0]):
                     best, best_score = None, -1.0
@@ -429,7 +648,13 @@ def stage_track(frames):
     # object. Merge track pairs with similar appearance and nearby centroids,
     # UNLESS they were detected in the same frames (>2 co-occurrences means
     # two real objects were visible simultaneously).
-    if not ARGS.no_reid:
+    # --association overlap joins fragments by their 3D points instead (consolidate_by_overlap), with or without re-id.
+    if overlap:
+        for pi, prompt in enumerate(prompts):
+            joined, label_vols[pi] = consolidate_by_overlap(tracks[pi], label_vols[pi], next_id[pi], ARGS)
+            if joined:
+                print(f"[track] '{prompt}': joined {joined} overlapping track pairs")
+    elif not ARGS.no_reid:
         for pi, prompt in enumerate(prompts):
             trs = tracks[pi]
             parent = {tid: tid for tid in trs}
@@ -486,6 +711,17 @@ def stage_track(frames):
                "seconds": round(time.perf_counter() - tp, 1), "peak_vram_gib": round(peak, 2)}
     if saved:
         summary["saved_masks"] = saved.describe()
+    if overlap or ARGS.depth_rule != "global":  # the original rules' summary stays as it was
+        summary["depth_rule"] = {"rule": ARGS.depth_rule, "conf_percentile": ARGS.conf_percentile,
+                                 "mask_conf_quantile": ARGS.mask_conf_quantile, "min_points": min_points}
+        summary["association"] = {"rule": ARGS.association}
+        if overlap:
+            summary["method"] = "3D tracking-by-detection (SAM3 image + 3D point-overlap association)"
+            summary["association"].update({
+                "scene_unit": round(unit, 6), "voxel": round(voxel, 6), "voxel_frac": ARGS.voxel_frac,
+                "overlap_min": ARGS.overlap_min, "reid_radius_depth": ARGS.reid_radius_depth,
+                "merge_overlap": ARGS.merge_overlap, "duplicate_overlap": ARGS.duplicate_overlap,
+                "reid": not ARGS.no_reid, "reid_sim": ARGS.reid_sim})
     min_frames = ARGS.min_track_frames if ARGS.min_track_frames is not None else min_track_frames(S)
     summary["min_track_frames"] = min_frames
     print(f"[track] keeping tracks seen in at least {min_frames} of {S} frames")
@@ -533,28 +769,30 @@ def stage_fuse(frames):
     rng = np.random.default_rng(0)
     objects = {}   # (prompt_idx, obj_id) -> {"pts": [...], "cols": [...], "frames": int}
     bg_pts, bg_cols = [], []
+    min_points = min_points_for(ARGS.depth_rule, ARGS.min_points)
 
     for f in range(S):
         d = depth[f].astype(np.float32)
         keep = (conf[f] >= conf_thr) & (d > 0)
-        if not keep.any():
+        if not keep.any() and ARGS.depth_rule == "global":  # the mask rule can still place objects in such a frame
             continue
         world, _, _ = depth_to_world_coords_points(d, extrinsic[f], intrinsic[f])
         rgb = np.array(Image.open(str(cams["image_paths"][f])).convert("RGB")
                        .resize((dw, dh), Image.BILINEAR))
-        ys, xs = np.nonzero(keep)
-        sel = rng.choice(len(ys), min(2000, len(ys)), replace=False)
-        bg_pts.append(world[ys[sel], xs[sel]])
-        bg_cols.append(rgb[ys[sel], xs[sel]])
+        if keep.any():
+            ys, xs = np.nonzero(keep)
+            sel = rng.choice(len(ys), min(2000, len(ys)), replace=False)
+            bg_pts.append(world[ys[sel], xs[sel]])
+            bg_cols.append(rgb[ys[sel], xs[sel]])
 
         for pi, vol in label_vols.items():
             lab = vol[f]
             for oid in np.unique(lab):
                 if oid == 0:
                     continue
-                m = (lab == oid) & keep
+                m = usable_pixels(lab == oid, d, conf[f], conf_thr, ARGS.depth_rule, ARGS.mask_conf_quantile)
                 n = int(m.sum())
-                if n < ARGS.min_points:
+                if n < min_points:
                     continue
                 key = (pi, int(oid))
                 obj = objects.setdefault(key, {"pts": [], "cols": [], "frames": 0, "n": 0})

@@ -28,14 +28,15 @@ class Prompts(unittest.TestCase):
 
     def test_curated_set_covers_every_option(self):
         configs = [config for _, config in sp.curated_configs()]
-        self.assertEqual(len(configs), 20)
-        self.assertEqual(len({label for label, _ in sp.curated_configs()}), 20)
+        self.assertEqual(len(configs), 21)
+        self.assertEqual(len({label for label, _ in sp.curated_configs()}), 21)
+        visibility = [v for v in ss.VISIBILITY if v != "nearby"]  # nearby needs a dense sheet: auto shows it there
         for key, values in [("source", [None] + ss.SOURCES), ("fmt", ss.SHEET_FORMATS), ("cameras", [False, True]),
-                            ("time_unit", ss.TIME_UNITS), ("reasoning", REASONING), ("visibility", ss.VISIBILITY),
+                            ("time_unit", ss.TIME_UNITS), ("reasoning", REASONING), ("visibility", visibility),
                             ("step_order", ss.STEP_ORDERS), ("object_directions", ss.OBJECT_DIRECTIONS)]:
             self.assertTrue(set(values) <= {c[key] for c in configs}, key)
         shown, skipped = sp.render(1, sp.curated_configs(), self.root, self.vggt)
-        self.assertEqual((len(shown), skipped), (20, []))
+        self.assertEqual((len(shown), skipped), (21, []))
         for number, label, config, prompt, _ in shown:
             self.assertEqual(prompt, ss.build_sheet_prompt(
                 1, config["source"], config["fmt"], self.root, self.vggt, cameras=config["cameras"],
@@ -43,16 +44,18 @@ class Prompts(unittest.TestCase):
                 step_order=config["step_order"], object_directions=config["object_directions"]), label)
         # the synthetic cameras are level, so the camera's axes give the same narrative as the floor
         same = {label: same_as for _, label, _, _, same_as in shown if same_as}
-        self.assertEqual(same, {"narrative, object directions in the camera's axes": 15})
+        # and on a 16-frame sheet auto is bridged
+        self.assertEqual(same, {"narrative, object directions in the camera's axes": 15,
+                                "objects as csv, bridged visibility": 3})
 
     def test_option_lists_combine_and_skip_contradictions(self):
         configs = sp.product_configs({"source": ["pipeline", "gold"], "fmt": ["csv", ss.NARRATIVE],
                                       "cameras": [False, True]})
         shown, skipped = sp.render(1, configs, self.root, self.vggt)
         self.assertEqual([label for _, label, *_ in shown], [
-            "objects: pipeline csv | time: seconds | visibility: bridged | reasoning: direct",
-            "objects: pipeline csv + cameras | time: seconds | visibility: bridged | reasoning: direct",
-            "objects: pipeline narrative | time: seconds | visibility: bridged | steps: move-turn | object directions: "
+            "objects: pipeline csv | time: seconds | visibility: auto | reasoning: direct",
+            "objects: pipeline csv + cameras | time: seconds | visibility: auto | reasoning: direct",
+            "objects: pipeline narrative | time: seconds | visibility: auto | steps: move-turn | object directions: "
             "floor | reasoning: direct",
             "objects: gold csv | time: seconds | reasoning: direct"])
         self.assertEqual(len(skipped), 4)  # the narrative with cameras, and gold with cameras or the narrative
@@ -62,10 +65,10 @@ class Prompts(unittest.TestCase):
 
     def test_command_line(self):
         out = self.run_main()
-        self.assertTrue(out.startswith("question 1, s/1 (object_counting)\nHow many?\nground truth: 2\n\n20 prompts"))
-        self.assertIn("===== 3/20  objects as csv (the baseline)\nobjects: pipeline csv | time: seconds | visibility: "
-                      "bridged | reasoning: direct\n\n<|im_start|>system", out)
-        self.assertIn("===== 18/20  narrative, object directions in the camera's axes\n", out)
+        self.assertTrue(out.startswith("question 1, s/1 (object_counting)\nHow many?\nground truth: 2\n\n21 prompts"))
+        self.assertIn("===== 3/21  objects as csv (the baseline)\nobjects: pipeline csv | time: seconds | visibility: "
+                      "auto | reasoning: direct\n\n<|im_start|>system", out)
+        self.assertIn("===== 18/21  narrative, object directions in the camera's axes\n", out)
         self.assertIn("(the same prompt as 15)", out)
         out = self.run_main("--question", "2", "--format", "csv", "narrative", "--source", "gold", "pipeline")
         self.assertIn("3 prompts, 1 contradictory combinations skipped", out)

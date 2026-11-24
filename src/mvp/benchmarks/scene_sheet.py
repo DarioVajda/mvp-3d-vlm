@@ -1,8 +1,10 @@
 """Scene sheets as prompt text: one question's objects, and for pipeline sheets its cameras, written out for the model.
 
 The sheets are the CSVs of hpc/run_sheets.sh (docs/scene_sheets_75.md): index.csv gives each VSI-Bench question a
-pipeline sheet folder (VGGT + SAM 3 + tracking, 16 uniform frames: objects.csv and cameras.csv) and a gold sheet folder
-(VSI-Bench's labelled boxes: objects.csv only). The table formats are for comparing how the sheet is written, so they
+pipeline sheet folder (VGGT + SAM 3 + tracking: objects.csv and cameras.csv) and a gold sheet folder (VSI-Bench's
+labelled boxes: objects.csv only). A pipeline sheet was made on the VLM's 16 frames (the 16 uniform frames of the 128,
+every sheet before 2026-11-24) or on all 128 (a dense sheet); a dense sheet's frames are mapped onto the 16 the VLM
+sees here, when the prompt is written (vlm_frames_seen), and the CSVs keep every frame. The table formats are for comparing how the sheet is written, so they
 hold exactly the same information: one canonical object list per question (load_objects) and one canonical camera list
 (load_cameras), the same preamble per source, and renderers that differ only in layout. cameras.csv's image column is
 never written. Nothing here writes to the sheets folder.
@@ -23,8 +25,15 @@ never written. Nothing here writes to the sheets folder.
 time_unit, for all of them: "seconds" (the default) writes a frame as the video timestamp the model's video input shows
 for it (Qwen's processor writes one per pair of frames); "frames" writes it as its number, 1 to 16. The video's own
 labels are always in seconds. A pipeline object's `visible` field gives the stretches of consecutive frames it is seen
-in, "[2, 4], [6, 8]" (frames) or "[3.0, 15.5], [30.3, 41.3]" (seconds); visibility "bridged" (the default) counts a
-single missed frame between two sightings as seen, "exact" doesn't, and the narrative follows the same rule.
+in, "[2, 4], [6, 8]" (frames) or "[3.0, 15.5], [30.3, 41.3]" (seconds). visibility says which of the 16 frames that
+is, and the narrative follows the same rule:
+  nearby   (dense sheets) seen in the frame itself, or in at least NEARBY_MIN of the NEARBY_FRAMES frames just before it
+           and as many of those just after it (at the first and last frame, the one side there is)
+  bridged  seen in the frame itself, plus a single missed frame between two sightings
+  exact    seen in the frame itself
+  auto     (the default) nearby for dense sheets, bridged for 16-frame ones, so the 16-frame sheets read as before
+On a dense sheet, an object that none of the 16 frames counts (seen only between them) is given, for each frame it was
+seen in, the nearest of the 16.
 step_order, for the camera text and the narrative: "move-turn" (the default) says each step as "move, then turn",
 "turn-move" as "turn, then move". In the narrative, moves are relative to where the camera faces when it moves, so the
 order can change a move's words; the camera text's compass directions don't depend on it. object_directions, for the
@@ -63,11 +72,16 @@ NARRATIVE = "narrative"  # objects and cameras as one walk through the frames: p
 SHEET_FORMATS = FORMATS + [NARRATIVE]  # cameras are written in the objects' format, so in one of FORMATS
 TIME_UNITS = ["seconds", "frames"]
 METRIC_SCALES = [None, "priors"]  # pipeline objects as they are, or approximately in metres (scene_scale)
-VISIBILITY = ["bridged", "exact"]  # bridged: a gap of up to MAX_GAP missed frames between two sightings counts as seen
-MAX_GAP = 1
+VISIBILITY = ["auto", "nearby", "bridged", "exact"]  # see the module docstring; bridged: a gap of up to MAX_GAP missed
+MAX_GAP = 1  # frames between two sightings counts as seen
+NEARBY_FRAMES = 4  # nearby: frames on each side of a VLM frame, in the 128; the VLM's frames are 8 or 9 apart
+NEARBY_MIN = 2  # nearby: sightings needed on each side
 STEP_ORDERS = ["move-turn", "turn-move"]  # how the camera text and the narrative word each step between two frames
 OBJECT_DIRECTIONS = ["floor", "camera"]  # how the narrative says where an object is (floor_side, view_side)
-N_FRAMES = 16  # the pipeline's frames: 16 uniform over the 128 exported ones (docs/scene_sheets_75.md)
+N_FRAMES = 16  # the VLM's frames: 16 uniform over the 128 exported ones (docs/scene_sheets_75.md)
+N_CANDIDATES = 128  # the frames VGGT reconstructed, a dense sheet's
+# The VLM's frames among the 128: the eval's --sampling uniform128 (sa_sampling.uniform_subset: truncated, not rounded)
+VLM_FRAMES = tuple(int(i) for i in np.linspace(0, N_CANDIDATES - 1, N_FRAMES, dtype=int))
 MERGE = 2  # Qwen3-VL / Qwen3.5 merge video frames in pairs and show one timestamp per pair
 DECIMALS = 3
 EMPTY = ("The detector did not find the objects named in the question. This does not mean they are absent from "
@@ -117,6 +131,9 @@ VISIBLE = {
 }
 BRIDGED_NOTE = (" The detector sometimes misses an object for a single frame, so one missed frame between two "
                 "sightings is counted as seen.")
+NEARBY_NOTE = (" The detector looked at more frames of the video than these: an object counts as seen in a frame if it "
+               "was found in that frame, or in frames just before and just after it, and an object found only between "
+               "two of these frames counts as seen in the nearer one.")
 PREAMBLES = {  # with time_unit "seconds" and visibility "bridged"; preamble() gives the others
     "pipeline": "Scene sheet. " + PIPELINE_AXES + " " + VISIBLE["seconds"] + BRIDGED_NOTE,
     "gold": ("Scene sheet. Positions x, y, z are object centres in metres, with the z axis pointing up. size_x, size_y "
@@ -195,8 +212,11 @@ def check_object_directions(object_directions):
 
 
 def bridged_note(visibility):
+    """The sentence the preamble says about visibility (resolved: not "auto")."""
     check_visibility(visibility)
-    return BRIDGED_NOTE if visibility == "bridged" else ""
+    if visibility == "auto":
+        raise ValueError('visibility "auto" depends on the sheet: resolve it first (resolve_visibility)')
+    return {"bridged": BRIDGED_NOTE, "nearby": NEARBY_NOTE}.get(visibility, "")
 
 
 def preamble(source, volume=False, time_unit="seconds", visibility="bridged", metric_scale=None):
@@ -248,17 +268,103 @@ def camera_folder(question_id, root=SCENE_SHEETS):
     return sheet_folders(question_id, "pipeline", root)[0]
 
 
+class SheetFrames:
+    """The frames a pipeline sheet was made on (its scene's adapter_report.json), and where the VLM's 16 are among
+    them. selected: the sheet's frames as indices of the 128 (frame_<t> is selected[t]); vlm: the positions t of the
+    VLM's 16 frames (VLM_FRAMES); source_video_frames: the video frame of each of selected; dense: whether the sheet
+    has more frames than the VLM's 16."""
+
+    def __init__(self, selected, source_video_frames, where="the sheet"):
+        self.selected, self.source_video_frames = tuple(selected), tuple(source_video_frames)
+        if len(self.selected) != len(self.source_video_frames):
+            raise ValueError(f"{where}: {len(self.selected)} frames but {len(self.source_video_frames)} video frames")
+        position = {u: t for t, u in enumerate(self.selected)}
+        missing = [u for u in VLM_FRAMES if u not in position]
+        if missing:
+            raise ValueError(f"{where}: its frames don't include the VLM's 16 frames of --sampling uniform128 "
+                             f"({missing} missing)")
+        self.vlm = tuple(position[u] for u in VLM_FRAMES)
+        self.dense = self.selected != VLM_FRAMES
+        self.vlm_video_frames = tuple(self.source_video_frames[t] for t in self.vlm)
+
+
+@lru_cache(maxsize=None)
+def sheet_frames(scene_dir):
+    """SheetFrames of a pipeline sheet's scene folder (<frames folder>/scene/, with adapter_report.json)."""
+    report = json.loads((Path(scene_dir) / "adapter_report.json").read_text())
+    return SheetFrames(report["selected_frames"], report["source_video_frames"], scene_dir)
+
+
+def folder_frames(folder):
+    """SheetFrames of a pipeline sheet folder (<frames folder>/sheets/<prompts>/)."""
+    return sheet_frames(Path(folder).parents[1] / "scene")
+
+
+def resolve_visibility(visibility, dense):
+    """visibility for a sheet: "auto" becomes "nearby" on a dense sheet and "bridged" on a 16-frame one; "nearby" needs
+    a dense sheet (a 16-frame sheet has no frames between the VLM's)."""
+    check_visibility(visibility)
+    if visibility == "auto":
+        return "nearby" if dense else "bridged"
+    if visibility == "nearby" and not dense:
+        raise ValueError('visibility "nearby" needs a sheet made on more frames than the VLM\'s 16')
+    return visibility
+
+
+def question_visibility(question_id, root=SCENE_SHEETS, visibility="auto"):
+    """visibility resolved for the question's pipeline sheet."""
+    return resolve_visibility(visibility, folder_frames(camera_folder(question_id, root)).dense)
+
+
+def nearest_vlm_frame(u):
+    """The VLM frame (0 to 15) nearest to frame u of the 128; the earlier one when two are as near."""
+    return min(range(N_FRAMES), key=lambda j: (abs(VLM_FRAMES[j] - u), j))
+
+
+def seen_nearby(u, seen, available):
+    """Whether an object seen in frames `seen` (of the 128) counts as seen in VLM frame u under "nearby": seen in u,
+    or in at least NEARBY_MIN of the NEARBY_FRAMES frames before u and as many of those after it, among the frames the
+    sheet has (available). At u = 0 and u = 127 only the side there is counts."""
+    if u in seen:
+        return True
+    sides = []
+    if u > 0:
+        sides.append([v for v in range(u - NEARBY_FRAMES, u) if v in available])
+    if u < N_CANDIDATES - 1:
+        sides.append([v for v in range(u + 1, u + NEARBY_FRAMES + 1) if v in available])
+    return all(sum(v in seen for v in side) >= NEARBY_MIN for side in sides)
+
+
+def vlm_frames_seen(positions, frames, visibility="auto"):
+    """The VLM frames (0 to 15) an object counts as visible in, from the positions t of the sheet frames it was seen
+    in (its frame_<t> flags) and the sheet's SheetFrames. A 16-frame sheet: those frames, bridged or exact
+    (visible_frames). A dense sheet: nearby, exact or bridged as the module docstring says; an object no VLM frame
+    counts gets the nearest VLM frame of each frame it was seen in."""
+    visibility = resolve_visibility(visibility, frames.dense)
+    if not frames.dense:
+        return visible_frames(positions, visibility)
+    seen = {frames.selected[t] for t in positions}
+    if visibility == "nearby":
+        available = set(frames.selected)
+        out = {j for j, u in enumerate(VLM_FRAMES) if seen_nearby(u, seen, available)}
+    else:
+        out = visible_frames([j for j, u in enumerate(VLM_FRAMES) if u in seen], visibility)
+    if not out:
+        out = {nearest_vlm_frame(u) for u in seen}
+    return out
+
+
 @lru_cache(maxsize=None)
 def frame_timestamps(scene_dir, scene, vggt_root=VGGT_DIR):
-    """The timestamp the model's video input shows for each of the 16 frames, as text ('6.4').
+    """The timestamp the model's video input shows for each of the 16 VLM frames, as text ('6.4').
 
     Qwen's processor (transformers 5.20.1, Qwen3VLProcessor, also Qwen3.5's) writes "<{t:.1f} seconds>" once per pair
     of frames, t being the mean of the pair's video frame index / fps (_calculate_timestamps). The frames are the
-    sheet's source_video_frames (scene/adapter_report.json), which are the eval's --sampling uniform128 frames; fps is
-    the video's, from the VGGT export's meta.json (decord's average fps)."""
-    report = json.loads((Path(scene_dir) / "adapter_report.json").read_text())
-    indices = report["source_video_frames"]
-    if report["selected_frames"] != np.linspace(0, 127, N_FRAMES, dtype=int).tolist() or len(indices) % MERGE:
+    sheet's source_video_frames (scene/adapter_report.json) at the VLM's 16 (all of them for a 16-frame sheet), which
+    are the eval's --sampling uniform128 frames; fps is the video's, from the VGGT export's meta.json (decord's average
+    fps)."""
+    indices = list(sheet_frames(scene_dir).vlm_video_frames)
+    if len(indices) % MERGE:
         raise ValueError(f"{scene_dir}: not the 16 uniform frames of --sampling uniform128")
     fps = json.loads((Path(vggt_root) / scene / "meta.json").read_text())["video_fps"]
     seconds = [idx / fps for idx in indices]  # in the processor's order: divide, then average, so .x5 rounds the same
@@ -281,9 +387,9 @@ def object_id(row):
     return f"{row['concept'].replace(' ', '_')}_{row['track_id']}"
 
 
-def seen_in(row):
-    """The frames (0 to 15) a pipeline objects.csv row was seen in, from its frame flags."""
-    return [t for t in range(N_FRAMES) if row[f"frame_{t:03d}"] == "1"]
+def seen_in(row, n_frames=N_FRAMES):
+    """The sheet frames (0 to n_frames - 1) a pipeline objects.csv row was seen in, from its frame flags."""
+    return [t for t in range(n_frames) if row[f"frame_{t:03d}"] == "1"]
 
 
 def visible_frames(seen, visibility="bridged"):
@@ -318,26 +424,28 @@ def ranges_of(visible):
     return RANGE.findall(visible)
 
 
-def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged",
+def read_objects(folder, source, volume=False, vggt_root=VGGT_DIR, time_unit="seconds", visibility="auto",
                  scale=1.0):
     """One sheet folder's objects.csv as canonical objects: dicts of formatted strings in the order of fields().
-    scale multiplies positions and extents (and size, the volume, by its cube) before they are written."""
+    scale multiplies positions and extents (and size, the volume, by its cube) before they are written. A pipeline
+    object's visible field gives the VLM frames vlm_frames_seen counts."""
     folder = Path(folder)
     with open(folder / "objects.csv", newline="") as f:
         rows = list(csv.DictReader(f))
     if source == "pipeline" and rows:
         labels = frame_labels(folder, time_unit, vggt_root)
+        frames = folder_frames(folder)
     objects = []
     for row in rows:
         obj = {"id": object_id(row), "label": row["concept"]}
         for key in POSITION + EXTENT + (["size"] if volume else []):
             obj[key] = fmt_float(float(row[key]) * (scale ** 3 if key == "size" else scale))
         if source == "pipeline":
-            seen = seen_in(row)
+            seen = seen_in(row, len(frames.selected))
             if not seen or len(seen) != int(row["num_frames"]):
                 raise ValueError(f"{folder}: {obj['id']} has num_frames {row['num_frames']} but frame flags {seen}")
             obj["visible"] = ", ".join(f"[{labels[a]}, {labels[b]}]"
-                                       for a, b in runs(visible_frames(seen, visibility)))
+                                       for a, b in runs(vlm_frames_seen(seen, frames, visibility)))
         objects.append(obj)
     return objects
 
@@ -363,7 +471,7 @@ def sort_key(obj):
 
 
 def load_objects(question_id, source, root=SCENE_SHEETS, volume=False, stats=None, vggt_root=VGGT_DIR,
-                 time_unit="seconds", visibility="bridged", scale=1.0):
+                 time_unit="seconds", visibility="auto", scale=1.0):
     """The question's canonical object list: every sheet folder of this source merged, sorted by the frame it is first
     seen in, label and track_id (gold: label and track_id). stats, a dict, counts merged folders and dropped
     duplicates."""
@@ -376,15 +484,23 @@ def load_objects(question_id, source, root=SCENE_SHEETS, volume=False, stats=Non
     return sorted(objects, key=sort_key)
 
 
-def frames_seen(question_id, root=SCENE_SHEETS, visibility="bridged"):
-    """{object id: the set of frames (0 to 15) it counts as visible in (visible_frames)}, over the question's pipeline
-    sheet folders."""
+def frames_seen(question_id, root=SCENE_SHEETS, visibility="auto"):
+    """{object id: the set of VLM frames (0 to 15) it counts as visible in (vlm_frames_seen)}, over the question's
+    pipeline sheet folders."""
     seen = {}
     for folder in sheet_folders(question_id, "pipeline", root):
+        frames = folder_frames(folder)
         with open(folder / "objects.csv", newline="") as f:
             for row in csv.DictReader(f):
-                seen.setdefault(object_id(row), set()).update(seen_in(row))
-    return {key: visible_frames(frames, visibility) for key, frames in seen.items()}
+                seen.setdefault(object_id(row), (frames, set()))[1].update(seen_in(row, len(frames.selected)))
+    return {key: vlm_frames_seen(sorted(positions), frames, visibility) for key, (frames, positions) in seen.items()}
+
+
+def camera_rows(folder):
+    """The cameras.csv frame numbers to read for the VLM's 16 frames: None (every row) for a 16-frame sheet, the VLM
+    frames' positions for a dense one."""
+    frames = folder_frames(folder)
+    return list(frames.vlm) if frames.dense else None
 
 
 def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", scale=1.0):
@@ -394,8 +510,10 @@ def load_cameras(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="
     folder = camera_folder(question_id, root)
     with open(folder / "cameras.csv", newline="") as f:
         rows = sorted(csv.DictReader(f), key=lambda r: int(r["frame"]))
-    if [int(r["frame"]) for r in rows] != list(range(N_FRAMES)):
-        raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
+    frames = folder_frames(folder)
+    if [int(r["frame"]) for r in rows] != list(range(len(frames.selected))):
+        raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {len(frames.selected)} frames")
+    rows = [rows[t] for t in frames.vlm]  # the VLM's 16 (all of them on a 16-frame sheet)
     key = FRAME_KEY[time_unit]
     labels = frame_labels(folder, time_unit, vggt_root)
     return [{key: label, **{c: fmt_float(float(row[c]) * (scale if c in POSITION else 1.0)) for c in CAMERA_COLUMNS}}
@@ -515,7 +633,7 @@ def render_cameras(question_id, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time
     if fmt == "text":
         folder = camera_folder(question_id, root)
         sentences = directions.frame_instructions(folder, units=True, turn_first=step_order == "turn-move",
-                                                  scale=scale if metric_scale else None)
+                                                  scale=scale if metric_scale else None, frames=camera_rows(folder))
         if len(sentences) != N_FRAMES:
             raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
         lines = label_lines(sentences, frame_labels(folder, time_unit, vggt_root), time_unit)
@@ -639,13 +757,14 @@ def narrative_step(move, turn, step_order="move-turn"):
 
 
 def narrative_preamble(time_unit="seconds", visibility="bridged", step_order="move-turn", metric_scale=None):
+    """The narrative's preamble; visibility resolved (not "auto")."""
     check_step_order(step_order)
     details = NARRATIVE_DETAILS_PRIORS if metric_scale == "priors" else NARRATIVE_DETAILS
     return (" ".join([NARRATIVE_PREAMBLE, NARRATIVE_STEPS[step_order], details]) + bridged_note(visibility)
             + " " + LINE_LABELS[time_unit])
 
 
-def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged",
+def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", visibility="auto",
                      step_order="move-turn", object_directions="floor", metric_scale=None):
     """The pipeline sheet's objects and cameras as one walk, a sentence per frame: how the camera moved and turned
     since the frame before (forward, left... relative to where it faced), then what it sees: "Move 0.812 units forward
@@ -663,10 +782,11 @@ def render_narrative(question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_un
         raise ValueError(f"metric_scale must be one of {METRIC_SCALES}, not {metric_scale!r}")
     scale, unit = scale_of(question_id, root, metric_scale), UNIT_WORD[metric_scale]
     folder = camera_folder(question_id, root)
+    visibility = question_visibility(question_id, root, visibility)
     objects = load_objects(question_id, "pipeline", root, vggt_root=vggt_root, time_unit=time_unit,
                            visibility=visibility, scale=scale)
     seen = frames_seen(question_id, root, visibility)
-    centres, rotations = directions.read_cameras(folder)
+    centres, rotations = directions.read_cameras(folder, frames=camera_rows(folder))
     centres = centres * scale
     if len(centres) != N_FRAMES:
         raise ValueError(f"{folder}: cameras.csv does not have one row for each of the {N_FRAMES} frames")
@@ -748,7 +868,7 @@ def relations(question_id, root=SCENE_SHEETS):
 
 # ---- one question's scene information ----
 
-def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="bridged", step_order="move-turn",
+def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="auto", step_order="move-turn",
                   object_directions="floor", metric_scale=None):
     """ValueError if these sheet options are unknown or contradict each other. fmt is ignored without a source,
     visibility without pipeline objects, step_order without the camera text or the narrative, and object_directions
@@ -782,7 +902,7 @@ def check_options(source, fmt, cameras=False, time_unit="seconds", visibility="b
 
 
 def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt_root=VGGT_DIR, time_unit="seconds",
-                 visibility="bridged", step_order="move-turn", object_directions="floor", metric_scale=None):
+                 visibility="auto", step_order="move-turn", object_directions="floor", metric_scale=None):
     """One question's objects as prompt text. source: pipeline | gold | gold_relations (the gold sheet, then
     relations()); fmt: one of SHEET_FORMATS ("narrative": pipeline only, with its cameras). vggt_root holds each video's
     meta.json (its fps, for timestamps). metric_scale "priors": pipeline objects (and the narrative's moves) approximately
@@ -800,13 +920,15 @@ def render_sheet(question_id, source, fmt, root=SCENE_SHEETS, volume=False, vggt
         return render_narrative(question_id, root, vggt_root, time_unit, visibility, step_order, object_directions,
                                 metric_scale)
     scale = scale_of(question_id, root, metric_scale)
+    if source == "pipeline":
+        visibility = question_visibility(question_id, root, visibility)
     objects = load_objects(question_id, source, root, volume, vggt_root=vggt_root, time_unit=time_unit,
                            visibility=visibility, scale=scale)
     return render_objects(objects, source, fmt, volume, time_unit, visibility, metric_scale)
 
 
 def render_scene(question_id, source=None, fmt=None, cameras=False, root=SCENE_SHEETS, vggt_root=VGGT_DIR,
-                 time_unit="seconds", visibility="bridged", step_order="move-turn", object_directions="floor",
+                 time_unit="seconds", visibility="auto", step_order="move-turn", object_directions="floor",
                  metric_scale=None):
     """What the prompt carries about the scene: the objects (source and fmt), then, with cameras, the pipeline's
     cameras in the same format. None without a source. Contradictory options raise ValueError (check_options)."""
@@ -841,7 +963,7 @@ VIDEO_PAD = "<|video_pad|>"
 
 
 def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None,
-                       cameras=False, time_unit="seconds", reasoning="direct", visibility="bridged",
+                       cameras=False, time_unit="seconds", reasoning="direct", visibility="auto",
                        step_order="move-turn", object_directions="floor", metric_scale=None):
     """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
     question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the scene
@@ -868,7 +990,7 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
 # ---- command line: examples, token counts and prompts ----
 
 def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds",
-                   visibility="bridged", step_order="move-turn", object_directions="floor"):
+                   visibility="auto", step_order="move-turn", object_directions="floor"):
     """The question rendered in every format and source, its cameras in every camera format and its narrative, one
     file each, plus the question itself. Options other than the defaults go into the file names."""
     out_dir = Path(out_dir)
@@ -883,7 +1005,7 @@ def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, 
              for source in SOURCES for fmt in SHEET_FORMATS if source == "pipeline" or fmt != NARRATIVE}
     texts.update({f"cameras_{fmt}": render_cameras(question_id, fmt, root, vggt_root, time_unit, step_order)
                   for fmt in FORMATS})
-    defaults = {"seconds", "bridged", "move-turn", "floor"}
+    defaults = {"seconds", "auto", "bridged", "move-turn", "floor"}
     suffix = "".join(f"_{option}" for option in (time_unit, visibility, step_order, object_directions)
                      if option not in defaults)
     for name, text in texts.items():
@@ -891,7 +1013,7 @@ def write_examples(out_dir, question_id, root=SCENE_SHEETS, vggt_root=VGGT_DIR, 
     print(f"wrote {len(texts) + 1} files to {out_dir}")
 
 
-def token_table(count, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", visibility="bridged",
+def token_table(count, root=SCENE_SHEETS, vggt_root=VGGT_DIR, time_unit="seconds", visibility="auto",
                 step_order="move-turn", object_directions="floor"):
     """Tokens per rendered sheet (count: text -> number of tokens) over every question: a markdown table with the mean,
     median and max per source and format (and for the cameras), and the question with the most."""
@@ -930,8 +1052,10 @@ def main():
     ap.add_argument("--metric-scale", choices=["none", "priors"], default="none",
                     help="for --prompt: the pipeline sheet (and its cameras) approximately in metres from typical "
                          "object sizes")
-    ap.add_argument("--visibility", choices=VISIBILITY, default="bridged",
-                    help="bridged: one missed frame between two sightings counts as seen; exact: only detections")
+    ap.add_argument("--visibility", choices=VISIBILITY, default="auto",
+                    help="auto (default): nearby for a sheet made on more frames than the VLM's 16, bridged for one "
+                         "made on those 16; nearby: seen in a frame, or in frames just before and after it; bridged: "
+                         "one missed frame between two sightings counts as seen; exact: only detections")
     ap.add_argument("--step-order", choices=STEP_ORDERS, default="move-turn",
                     help="how the camera text and the narrative word each step: move then turn, or turn then move")
     ap.add_argument("--object-directions", choices=OBJECT_DIRECTIONS, default="floor",

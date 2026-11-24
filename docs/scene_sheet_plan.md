@@ -67,7 +67,13 @@ flowchart LR
 3. **Segment.** `sam3_infer.py` runs SAM 3 on every selected frame, once per prompt, and saves the masks with a
    score of at least 0.5.
 4. **Track.** OpenVocab-4D's track stage (`openvocab-4D-main/trackA/milestone4_video.py --stages track`) reads the
-   saved masks. This step replaces the proposal's merge rule.
+   saved masks. This step replaces the proposal's merge rule. *Since 2026-11-24 the pipeline's defaults differ from
+   the rules below, which are kept as `--association centroid --depth-rule global`.* The centroid radius came from
+   the first frame alone, about 0.15 m, while the same object's visible centre moves about 0.65 m between the 16
+   frames. So a detection now continues the track whose 3D points it overlaps (voxels about 10 cm across, within one
+   voxel of the track's). The confident-depth rule dropped 38% of SAM 3's detections of named objects, so a pixel now
+   counts when its confidence reaches the lower of the global threshold and the mask's own median, and a detection
+   needs 50 such pixels. The original rules:
    - It keeps a detection if its score is at least 0.55 and it covers at least 300 pixels with confident depth. Depth
      counts as confident when it is in the top 45% of VGGT's depth confidence over the whole video. The detection
      is placed at the mean 3D point of those pixels.
@@ -81,7 +87,8 @@ flowchart LR
      (the default selection), 2 of 64, 4 of 128 (`min_track_frames` in `milestone4_video.py`;
      `--min-track-frames N` there fixes it).
 5. **Write the sheet.** `scene_sheet_creator.py` collects each track's 3D points and writes the two CSVs. Only
-   frames where the object has at least 300 confident pixels count.
+   frames where the object has enough pixels of usable depth count, by the same rule as tracking (300 confident pixels
+   under the original rule).
 
 Geometry, masks and tracks are kept for each scene. A second question about the same scene runs SAM 3 and tracking
 only for prompts that have no tracks yet.
@@ -106,7 +113,13 @@ per 14×14 patch. This is coarser: object outlines are blocky, and sizes can tak
 synthetic test scene, centres move by less than 5% of the object's size, and volumes come out about 10% smaller.
 `question.json` records which depth was used.
 
-**Frames.** `question_scene_sheet.py` (and so `scene_sheet_report.py`) uses 16 frames uniformly sampled from the 128
+**Frames (since 2026-11-24).** `question_scene_sheet.py` (and so `scene_sheet_report.py`) uses all 128 frames by
+default (`--frames all`), so that neighbouring frames overlap and tracking can follow objects. The sheet keeps all 128
+frame columns. When the prompt is written (`mvp.benchmarks.scene_sheet`, visibility `nearby`), they are mapped onto
+the 16 frames the VLM sees. An object counts as seen in one of them if it was seen there, or in at least 2 of the 4
+frames just before it and 2 of the 4 just after. An object seen only between them gets the nearest one. Before that:
+
+**Frames (before 2026-11-24).** `question_scene_sheet.py` (and so `scene_sheet_report.py`) used 16 frames uniformly sampled from the 128
 by default, `subset:uniform16` of `meta.json`: the 16 frames that the VLM sees with `--sampling uniform128`
 (Qwen3-VL-4B, 16 frames: 51.9 overall), so the sheet and the VLM see the same frames. `--frames all` uses all 128.
 

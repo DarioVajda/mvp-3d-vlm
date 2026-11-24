@@ -28,7 +28,8 @@ import pandas as pd
 from pathlib import Path
 
 from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, SHEET_SOURCES, STEP_ORDERS, TIME_UNITS,
-                                        VISIBILITY, check_options, load_index, render_scene, sheet_kind)
+                                        VISIBILITY, camera_folder, check_options, folder_frames, load_index,
+                                        render_scene, sheet_kind)
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -44,6 +45,16 @@ def prompt_parts(d, args):
                           Path(args.vggt_root), args.time_unit, args.visibility, args.step_order,
                           args.object_directions, args.metric_scale) if args.sheets else None)
     return build_prompt_parts(d, args.layout, sheet, args.reasoning, sheet_kind(args.sheet_source, args.metric_scale))
+
+
+def check_sheet_frames(docs, indices, args):
+    """Stop unless the video frames the model gets (indices) are the frames the questions' pipeline sheets map their
+    objects and timestamps onto (scene_sheet.folder_frames: the VLM's 16 of the sheet's frames)."""
+    for d in docs:
+        sheet_frames = list(folder_frames(camera_folder(d["id"], Path(args.sheets_root))).vlm_video_frames)
+        if sheet_frames != list(indices):
+            raise SystemExit(f"question {d['id']}: the video's frames {list(indices)} are not its scene sheet's "
+                             f"{sheet_frames} (--vggt-root and --sheets-root must be the same reconstruction)")
 
 
 def frame_indices(path, sampling, nframes, vggt_root):
@@ -72,7 +83,10 @@ def print_prompts(df, args):
         if args.sampling == "qwen":
             video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
         else:
-            video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
+            indices = frame_indices(path, args.sampling, args.nframes, args.vggt_root)
+            if args.sheets:
+                check_sheet_frames(group.to_dict("records"), indices, args)
+            video, meta, vkw = model.load_video_frames(path, indices)
         for d in group.to_dict("records"):
             pre, post = prompt_parts(d, args)
             print(f"===== question {d['id']} ({d['question_type']}), {path}, video fps {meta.get('fps')}, "
@@ -113,9 +127,11 @@ def main():
     ap.add_argument("--time-unit", default="seconds", choices=TIME_UNITS,
                     help="how the sheets write frames: as the video timestamps the model sees, or as frame numbers "
                          "1-16 (the video's own labels are always seconds)")
-    ap.add_argument("--visibility", default="bridged", choices=VISIBILITY,
+    ap.add_argument("--visibility", default="auto", choices=VISIBILITY,
                     help="which frames a pipeline object counts as visible in (its 'visible' ranges, the narrative): "
-                         "bridged, one missed frame between two sightings counts as seen; exact, only detections")
+                         "auto (default), nearby for a sheet made on all 128 frames, bridged for one made on the 16 "
+                         "the model sees; nearby, seen in the frame or in frames just before and after it; bridged, one "
+                         "missed frame between two sightings counts as seen; exact, only detections")
     ap.add_argument("--step-order", default="move-turn", choices=STEP_ORDERS,
                     help="how the cameras as text and the narrative word each step between two frames: move then "
                          "turn, or turn then move (the narrative's moves are relative to where the camera faces as it "
@@ -227,7 +243,10 @@ def main():
             elif args.sampling == "qwen":
                 video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
             else:
-                video, meta, vkw = model.load_video_frames(path, frame_indices(path, args.sampling, args.nframes, args.vggt_root))
+                indices = frame_indices(path, args.sampling, args.nframes, args.vggt_root)
+                if args.sheets:
+                    check_sheet_frames(group.to_dict("records"), indices, args)
+                video, meta, vkw = model.load_video_frames(path, indices)
             docs = group.to_dict("records")
             if not args.images:
                 n_vis = video.shape[0] * video.shape[2] * video.shape[3] // (2 * 32 * 32)  # visual tokens

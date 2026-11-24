@@ -3,12 +3,15 @@
 For every scene folder <dataset>__<scene>/ of the run, both of its sheets/ folders are deleted and written again with
 the current scene_sheet_creator.py, one sheet folder for each one that was there:
 
-  subset-uniform16/sheets/<prompts>/   pipeline: objects.csv, cameras.csv, question.json
-  gold/sheets/<prompts>/               gold: objects.csv, sheet.json, question.json
+  <frames>/sheets/<prompts>/   pipeline: objects.csv, cameras.csv, question.json
+  gold/sheets/<prompts>/       gold: objects.csv, sheet.json, question.json
+
+<frames> is the run's pipeline frames folder: subset-uniform16 (the VLM's 16 frames, every run before 2026-11-24) or
+all (the 128), read from index.csv's pipeline sheets, else from the scene folders, or given with --label.
 
 Each sheet is made from what the run saved, without SAM 3 or a GPU:
 
-  pipeline  scene_sheet_creator.build_scene_sheet on subset-uniform16/scene/ (tracks/<prompt>.npz, cameras.npz,
+  pipeline  scene_sheet_creator.build_scene_sheet on <frames>/scene/ (tracks/<prompt>.npz, cameras.npz,
             depth.npz, adapter_report.json), with the prompts and settings of the sheet's question.json. If
             depth.npz is missing (the shared zip leaves it out), it is made again from the dense VGGT depth
             (--dense-root), as rebuild_scene_sheets.py does.
@@ -50,28 +53,51 @@ import rebuild_scene_sheets as rebuild  # noqa: E402
 import scene_sheet_creator as sheet  # noqa: E402
 
 DEFAULT_ROOT = common.REPO / "data" / "scene_sheets_75"
-SOURCES = {"pipeline": rebuild.PIPELINE_LABEL, "gold": "gold"}  # each source's folder, holding its sheets/
+SOURCES = {"pipeline": rebuild.PIPELINE_LABEL, "gold": "gold"}  # each source's folder by default, holding its sheets/
+
+
+def sources_for(label):
+    """Each source's folder in a run whose pipeline frames folder is label."""
+    return {"pipeline": label, "gold": "gold"}
+
+
+def run_label(root, label=None):
+    """The run's pipeline frames folder: label, else the one index.csv's pipeline sheets are in, else the one the scene
+    folders have (rebuild_scene_sheets.pipeline_labels), else PIPELINE_LABEL. ValueError if there are several."""
+    if label:
+        return label
+    found = set()
+    path = Path(root) / "index.csv"
+    if path.is_file():
+        with open(path, newline="", encoding="utf-8") as f:
+            found = {Path(r["pipeline_sheet"]).parts[1] for r in csv.DictReader(f) if r.get("pipeline_sheet")}
+    if not found:
+        found = {x for d in Path(root).iterdir() if d.is_dir() for x in rebuild.pipeline_labels(d)}
+    if len(found) > 1:
+        raise ValueError(f"{root} has pipeline sheets in several frames folders {sorted(found)}: choose one with --label")
+    return found.pop() if found else rebuild.PIPELINE_LABEL
 
 
 def log(message):
     print(f"[reconstruct] {message}", file=sys.stderr, flush=True)
 
 
-def indexed_sheets(root):
+def indexed_sheets(root, sources=None):
     """{scene folder: {source: names of the sheet folders index.csv names}}, or None without an index.csv."""
+    sources = sources or SOURCES
     path = root / "index.csv"
     if not path.is_file():
         return None
     named = {}
     with open(path, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            for source, label in SOURCES.items():
+            for source, label in sources.items():
                 if not row[f"{source}_sheet"]:  # a sheet that wasn't made
                     continue
                 folder = Path(row[f"{source}_sheet"])
                 if folder.parent != Path(folder.parts[0]) / label / "sheets":
                     raise ValueError(f"index.csv, question {row['id']}: {folder} is not a {source} sheet folder")
-                named.setdefault(folder.parts[0], {s: set() for s in SOURCES})[source].add(folder.name)
+                named.setdefault(folder.parts[0], {s: set() for s in sources})[source].add(folder.name)
     return named
 
 
@@ -88,10 +114,10 @@ def recover(sheets):
             log(f"removed {leftover}, left by an interrupted run")
 
 
-def reconstruct_sheets(scene_dir, source, expected, dense_root, gold_dir):
+def reconstruct_sheets(scene_dir, source, expected, dense_root, gold_dir, sources=None):
     """Make one scene's pipeline or gold sheets/ again in sheets.new/, and swap it in if every sheet is made and
     passes its checks. Returns (results, one per sheet, whether sheets/ was replaced)."""
-    work = scene_dir / SOURCES[source]
+    work = scene_dir / (sources or SOURCES)[source]
     sheets = work / "sheets"
     recover(sheets)
     folders = sorted(p for p in sheets.iterdir() if p.is_dir()) if sheets.is_dir() else []
@@ -136,15 +162,17 @@ def reconstruct_sheets(scene_dir, source, expected, dense_root, gold_dir):
     return results, True
 
 
-def reconstruct_scene(scene_dir, expected, dense_root, gold_dir):
+def reconstruct_scene(scene_dir, expected, dense_root, gold_dir, sources=None):
     """Make one scene's sheets again. Returns {"scene", "pipeline", "gold", "replaced", "error", "seconds"}."""
+    sources = sources or SOURCES
     start = time.time()
     scene_dir = Path(scene_dir)
     summary = {"scene": scene_dir.name, "pipeline": [], "gold": [], "replaced": [], "error": None}
     errors = []
-    for source in SOURCES:  # the two are independent: one failing doesn't stop the other
+    for source in sources:  # the two are independent: one failing doesn't stop the other
         try:
-            summary[source], replaced = reconstruct_sheets(scene_dir, source, expected[source], dense_root, gold_dir)
+            summary[source], replaced = reconstruct_sheets(scene_dir, source, expected[source], dense_root, gold_dir,
+                                                           sources)
             if replaced:
                 summary["replaced"].append(source)
         except Exception as error:  # noqa: BLE001 - reported per scene; the other scenes go on
@@ -167,15 +195,21 @@ def main(argv=None):
                         "(default: $DENSE_ROOT or data/vggt)")
     p.add_argument("--workers", type=int, default=max(1, min(8, (os.cpu_count() or 2) // 2)),
                    help="scenes made at a time (default: half the CPUs, at most 8)")
+    p.add_argument("--label", help="the run's pipeline frames folder, e.g. subset-uniform16 or all (default: the one "
+                                   "index.csv names)")
     args = p.parse_args(argv)
 
     root = Path(args.root)
     if not root.is_dir():
         p.error(f"no such folder: {root}")
-    scene_dirs = sorted(d for d in root.iterdir()
-                        if d.is_dir() and any((d / label).is_dir() for label in SOURCES.values()))
     try:
-        named = indexed_sheets(root)
+        sources = sources_for(run_label(root, args.label))
+    except (KeyError, ValueError) as error:
+        p.error(str(error))
+    scene_dirs = sorted(d for d in root.iterdir()
+                        if d.is_dir() and any((d / label).is_dir() for label in sources.values()))
+    try:
+        named = indexed_sheets(root, sources)
     except (KeyError, ValueError) as error:
         p.error(f"{root / 'index.csv'} is not a sheet run's index: {error}")
     if named is None:
@@ -197,8 +231,8 @@ def main(argv=None):
           flush=True)
 
     start = time.time()
-    none = {s: set() for s in SOURCES}
-    jobs = [(d, (named or {}).get(d.name, none), args.dense_root, args.gold_dir) for d in scene_dirs]
+    none = {s: set() for s in sources}
+    jobs = [(d, (named or {}).get(d.name, none), args.dense_root, args.gold_dir, sources) for d in scene_dirs]
     summaries = []
     if args.workers == 1:
         for job in jobs:

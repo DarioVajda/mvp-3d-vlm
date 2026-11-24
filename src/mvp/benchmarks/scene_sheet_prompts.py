@@ -33,7 +33,7 @@ from mvp.paths import SCENE_SHEETS, VGGT_DIR
 
 DEFAULT_QUESTION = 706  # experiments/2026-11-18-scene-sheet-formats/examples
 BASELINE = {"source": "pipeline", "fmt": "csv", "cameras": False, "time_unit": "seconds", "reasoning": "direct",
-            "visibility": "bridged", "step_order": "move-turn", "object_directions": "floor"}
+            "visibility": "auto", "step_order": "move-turn", "object_directions": "floor"}
 VIDEO_ONLY = {"source": None, "fmt": None}
 WALK = {"fmt": ss.NARRATIVE}
 CURATED = [  # (label, how it differs from BASELINE)
@@ -54,6 +54,8 @@ CURATED = [  # (label, how it differs from BASELINE)
     ("narrative, object directions in the camera's axes", {**WALK, "object_directions": "camera"}),
     ("objects as csv, chain of thought", {"reasoning": "cot"}),
     ("narrative, chain of thought", {**WALK, "reasoning": "cot"}),
+    # auto is bridged on a 16-frame sheet and nearby on a dense one (a sheet made on all 128 frames)
+    ("objects as csv, bridged visibility", {"visibility": "bridged"}),
 ]
 # the command line's option lists: (flag, config key, values); WORDS gives the values that aren't strings
 OPTION_LISTS = [

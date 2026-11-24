@@ -157,9 +157,12 @@ scene sheets (`adapted/objects.csv` and `native/objects.csv`) for comparing by e
 ## A scene sheet for one question
 
 Separately from the test, `question_scene_sheet.py` goes from one scene and one question to that question's scene
-sheet. It picks the SAM 3 prompts from the question, runs SAM 3 on 16 uniformly sampled frames of the 128 (the frames
-the VLM sees; `--frames all` uses all 128), and tracks the objects with the saved VGGT cameras and depth. It prints the
-paths of `objects.csv` and `cameras.csv`:
+sheet. It picks the SAM 3 prompts from the question, runs SAM 3 on all 128 VGGT frames, and tracks the objects with the
+saved VGGT cameras and depth: a detection continues the track whose 3D points it overlaps, and a mask's depth counts by
+a confidence threshold relative to the mask. The prompt maps the 128 frames onto the 16 the VLM sees
+(`mvp.benchmarks.scene_sheet`). `--frames subset:uniform16 --association centroid --depth-rule global` is the original
+pipeline, which made every sheet before 2026-11-24 (details in [DETAILS.md](DETAILS.md#a-scene-sheet-for-one-question)).
+It prints the paths of `objects.csv` and `cameras.csv`:
 
 ```bash
 slurm/submit.sh -J scene_sheet -t 00:30:00 -- .venv-ov4d/bin/python src/mvp/openvocab_adapter/question_scene_sheet.py \

@@ -5,6 +5,16 @@ A scene sheet for every one of the 2,728 VSI-Bench questions about the 75 scenes
 5,456 sheets were made; none failed. `hpc/run_sheets.sh` makes them (see the end); this file is the `README.md` of
 its output folder, `scene_sheets_75/`.
 
+**Runs after 2026-11-24.** This file describes the 16-frame sheets made before then. `hpc/run_sheets.sh` now defaults
+to all 128 frames, tracking by 3D overlap and the mask-relative depth rule (`src/mvp/openvocab_adapter/DETAILS.md`). Its
+output has the same layout, with these differences:
+
+- `all/` in place of `subset-uniform16/`
+- frame columns `frame_000` … `frame_127`, where frame `t` is exported frame `t`
+- 128 rows in `cameras.csv`
+
+`mvp.benchmarks.scene_sheet` maps those frames onto the VLM's 16 when it writes a prompt.
+
 ## Quick start
 
 `index.csv` has one row per question. Look a question up there, then open its two sheet folders:

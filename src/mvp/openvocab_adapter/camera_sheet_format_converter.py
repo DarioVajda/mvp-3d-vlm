@@ -59,9 +59,10 @@ def quaternion_to_rotation(w, x, y, z):
     ])
 
 
-def read_cameras(path):
+def read_cameras(path, frames=None):
     """cameras.csv, or the sheet folder that holds it -> camera centres (N, 3) and camera-to-world rotations (N, 3, 3),
-    in frame order."""
+    in frame order. frames: only the rows with these frame numbers, in this order (every row when None), e.g. the
+    VLM's 16 frames of a sheet made on all 128 (mvp.benchmarks.scene_sheet)."""
     path = Path(path)
     if path.is_dir():
         path = path / "cameras.csv"
@@ -71,6 +72,11 @@ def read_cameras(path):
         if missing:
             raise ValueError(f"{path} is not a camera sheet: it has no {', '.join(missing)} column")
         rows = sorted(reader, key=lambda r: int(r["frame"]))
+    if frames is not None:
+        by_frame = {int(r["frame"]): r for r in rows}
+        if missing := [t for t in frames if t not in by_frame]:
+            raise ValueError(f"{path} has no row for frames {missing}")
+        rows = [by_frame[t] for t in frames]
     centres = np.array([[float(r[a]) for a in "xyz"] for r in rows]).reshape(-1, 3)
     rotations = np.array(
         [quaternion_to_rotation(*(float(r[q]) for q in ("qw", "qx", "qy", "qz"))) for r in rows]).reshape(-1, 3, 3)
@@ -144,12 +150,13 @@ def turn_phrase(heading_change, pitch_change):
     return "turn " + " and ".join(parts) if parts else None
 
 
-def frame_instructions(path, units=False, turn_first=False, scale=None):
+def frame_instructions(path, units=False, turn_first=False, scale=None, frames=None):
     """The camera sheet at path (a cameras.csv, or the sheet folder that holds it) as one sentence per frame.
     units=True says how far each move goes, in the sheet's units, instead of "a little" / "far"; with scale (metres
     per sheet unit) as well, in metres. turn_first=True says the turn before the move ("Turn 30° to the right and go
-    north."); compass directions don't depend on the order."""
-    centres, rotations = read_cameras(path)
+    north."); compass directions don't depend on the order. frames: only these frames (read_cameras), whose moves and
+    turns are then from one of them to the next."""
+    centres, rotations = read_cameras(path, frames)
     if not len(centres):
         return []
     up = estimate_up(rotations)

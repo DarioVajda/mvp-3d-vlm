@@ -26,8 +26,12 @@ Conventions
   - World frame = camera of frame 0. Camera coordinates are OpenCV: x right, y down, z forward.
   - Units are VGGT's arbitrary scene scale, not metres; sizes are in those units cubed.
   - "Seen in frame t": the object's tracked mask in frame t has at least --min-points pixels with
-    confident depth. This is the rule the pipeline's fuse stage uses, so num_frames equals
-    report.json's frames_seen.
+    usable depth (--depth-rule, the tracker's rule: usable_pixels). This is the rule the pipeline's
+    track and fuse stages use, so num_frames equals report.json's frames_seen.
+      mask   (default) confidence at least the lower of the sequence's --conf-percentile and the
+             mask's own --mask-conf-quantile; --min-points 50 by default
+      global (the original rule) confidence at least the sequence's --conf-percentile; --min-points
+             300 by default
   - Positions are per-axis medians of the object's 3D points, which is robust to the stray points
     that depth edges produce. Global: all frames, world coordinates. Per frame: that frame's
     points, in that camera's coordinates (where the object was seen, not the global position
@@ -78,6 +82,35 @@ import common  # noqa: E402
 PIPELINE = common.TRACK_A / "milestone4_video.py"
 IMAGE_EXTS = common.IMAGE_EXTS  # same as the pipeline
 
+# Which pixels of a mask have usable depth: the same rules as openvocab-4D-main/trackA/depth_rule.py, which the tracker
+# uses (tests/test_openvocab_adapter.py checks that the two agree). They are written out here because this file also
+# runs from copies of src/ outside the repository (experiments/2026-11-18-scene-sheet-formats/merge_points.py), where
+# trackA/ is not there to import from.
+DEPTH_RULES = ("mask", "global")  # the default first
+MIN_POINTS = {"global": 300, "mask": 50}  # pixels a detection needs under each rule (trackA/depth_rule.py)
+MASK_CONF_QUANTILE = 50.0
+MAX_OBJECT_POINTS = 80_000  # points an object's centre and size are computed from (16 frames x 5000 at most before)
+
+
+def usable_pixels(mask, depth, conf, global_thr, rule="mask", quantile=MASK_CONF_QUANTILE):
+    """The pixels of mask whose depth counts: depth > 0 and confidence at least global_thr (global), or at least the
+    lower of global_thr and the mask's own quantile (mask). conf: float array of the frame's depth confidence."""
+    if rule not in DEPTH_RULES:
+        raise ValueError(f"depth rule must be one of {DEPTH_RULES}, not {rule!r}")
+    valid = mask & (depth > 0)
+    if rule == "global":
+        return valid & (conf >= global_thr)
+    if not valid.any():
+        return valid
+    return valid & (conf >= min(global_thr, np.percentile(conf[valid], quantile)))
+
+
+def min_points_for(rule, min_points=None):
+    """min_points, or the rule's default (MIN_POINTS) when it is None."""
+    if rule not in DEPTH_RULES:
+        raise ValueError(f"depth rule must be one of {DEPTH_RULES}, not {rule!r}")
+    return MIN_POINTS[rule] if min_points is None else int(min_points)
+
 # Gold labels: VSI-Bench's metadata (Apache-2.0), at the commit that added it (2025-08-05), with the files' SHA-256
 GOLD_DIR = common.REPO / "data" / "raw" / "VSI-Bench" / "meta_info"
 GOLD_REPO = "vision-x-nyu/thinking-in-space"
@@ -117,11 +150,18 @@ def run_pipeline(
     conf_percentile=None,
     min_points=None,
     stdout=None,
+    association=None,
+    depth_rule=None,
+    mask_conf_quantile=None,
+    tracker_options=None,
 ):
     """Run stages of the OpenVocab-4D pipeline (milestone 4) on a scene folder.
 
     masks_dir: saved SAM 3 masks (sam3_infer.py) for the track stage, instead of running SAM 3.
     conf_percentile, min_points: the pipeline's confident-depth rule; None keeps its defaults.
+    association, depth_rule, mask_conf_quantile: milestone 4's --association, --depth-rule and --mask-conf-quantile;
+    tracker_options: more of its options, {name: value} as in its --help without the dashes ("voxel_frac": 0.065).
+    None leaves an option out, so milestone 4 uses its own default (the original behaviour).
     stdout: where the pipeline's log goes (default: this process's stdout).
     """
     cmd = [
@@ -151,6 +191,11 @@ def run_pipeline(
         cmd += ["--conf-percentile", str(conf_percentile)]
     if min_points is not None:
         cmd += ["--min-points", str(min_points)]
+    options = {"association": association, "depth_rule": depth_rule, "mask_conf_quantile": mask_conf_quantile,
+               **(tracker_options or {})}
+    for name, value in options.items():
+        if value is not None:
+            cmd += [f"--{name.replace('_', '-')}", str(value)]
     print(f"[sheet] running pipeline stages '{stages}' for {prompts}")
     if subprocess.run(cmd, stdout=stdout).returncode != 0:
         sys.exit("[sheet] pipeline failed, see its log above")
@@ -184,11 +229,18 @@ def ensure_scene(
     overlap=8,
     no_reid=False,
     masks_dir=None,
+    association="overlap",
+    depth_rule="mask",
+    mask_conf_quantile=MASK_CONF_QUANTILE,
+    min_points=None,
 ):
     """Make sure the scene has geometry and tracks for every prompt, running the pipeline if not.
 
-    With masks_dir, the track stage reads those saved SAM 3 masks instead of running SAM 3.
+    With masks_dir, the track stage reads those saved SAM 3 masks instead of running SAM 3. association, depth_rule,
+    mask_conf_quantile and min_points go to the track stage (and to fuse); see run_pipeline.
     """
+    tracking = dict(association=association, depth_rule=depth_rule, mask_conf_quantile=mask_conf_quantile,
+                    min_points=min_points_for(depth_rule, min_points))
     if not ((scene / "cameras.npz").exists() and (scene / "depth.npz").exists()):
         if images is None:
             sys.exit(
@@ -205,6 +257,7 @@ def ensure_scene(
             overlap,
             no_reid,
             masks_dir,
+            **tracking,
         )
         return
     missing = [p for p in prompts if not track_file(scene, p).exists()]
@@ -213,7 +266,7 @@ def ensure_scene(
         # prompts. The scene sheet only needs the tracks.
         folder, scene_step = frames_used_by(scene)
         run_pipeline(
-            folder, scene, missing, "track", scene_step, no_reid=no_reid, masks_dir=masks_dir
+            folder, scene, missing, "track", scene_step, no_reid=no_reid, masks_dir=masks_dir, **tracking
         )
 
 
@@ -367,8 +420,14 @@ def collect_objects(
     conf_percentile,
     min_points,
     max_frame_points,
+    *,
+    depth_rule="mask",
+    mask_conf_quantile=MASK_CONF_QUANTILE,
 ):
-    """Per-frame 3D observations of every tracked object, keyed by (prompt index, track id)."""
+    """Per-frame 3D observations of every tracked object, keyed by (prompt index, track id). An object counts in a
+    frame where its mask has at least min_points pixels of usable depth (usable_pixels under depth_rule; min_points
+    None: the rule's default)."""
+    min_points = min_points_for(depth_rule, min_points)
     S, H, W = depth.shape
     volumes = {}
     for pi, prompt in enumerate(prompts):
@@ -386,7 +445,7 @@ def collect_objects(
     objects = {}
     for t in range(S):
         d = depth[t].astype(np.float32)
-        keep = (conf[t].astype(np.float32) >= conf_thr) & (d > 0)
+        c = conf[t].astype(np.float32)
         R, tvec = extrinsic[t, :, :3], extrinsic[t, :, 3]
         fx, fy, cx, cy = (
             intrinsic[t, 0, 0],
@@ -399,7 +458,7 @@ def collect_objects(
             for tid in np.unique(lab):
                 if tid == 0:
                     continue
-                ys, xs = np.nonzero((lab == tid) & keep)
+                ys, xs = np.nonzero(usable_pixels(lab == tid, d, c, conf_thr, depth_rule, mask_conf_quantile))
                 if len(ys) < min_points:
                     continue
                 z = d[ys, xs]
@@ -424,15 +483,22 @@ def build_scene_sheet(
     include_size=False,
     out_dir=None,
     conf_percentile=55.0,
-    min_points=300,
+    min_points=None,
     size_trim=0.0,
     max_frame_points=5000,
     frame_columns=True,
     cameras=True,
+    *,
+    depth_rule="mask",
+    mask_conf_quantile=MASK_CONF_QUANTILE,
+    max_object_points=MAX_OBJECT_POINTS,
 ):
     """Write objects.csv and cameras.csv for a scene that already has tracks for every prompt.
 
     frame_columns=False leaves out num_frames and the per-frame columns, cameras=False leaves out cameras.csv.
+    depth_rule, mask_conf_quantile, min_points (None: the rule's default): which pixels count (usable_pixels). An
+    object's centre and size come from at most max_frame_points points per frame and max_object_points in all (a fixed
+    random choice; at 16 frames the first limit keeps every object under the second).
     Returns the two CSV paths (None for cameras.csv when it is left out).
     """
     if relative_positions and not frame_columns:
@@ -459,6 +525,8 @@ def build_scene_sheet(
         conf_percentile,
         min_points,
         max_frame_points,
+        depth_rule=depth_rule,
+        mask_conf_quantile=mask_conf_quantile,
     )
 
     width = max(3, len(str(S - 1)))
@@ -478,6 +546,8 @@ def build_scene_sheet(
         objects.items()
     ):  # same order as the pipeline's fuse stage
         sample = np.concatenate(obj["sample"])
+        if len(sample) > max_object_points:
+            sample = sample[np.random.default_rng([pi, tid]).choice(len(sample), max_object_points, replace=False)]
         row = [len(rows), prompts[pi], tid, *np.median(sample, axis=0)]
         if include_size:
             _, sides = fit_box(sample, size_trim)
@@ -707,9 +777,30 @@ def main(argv=None):
     p.add_argument(
         "--min-points",
         type=int,
-        default=300,
-        help="confident pixels needed for an object to count as seen in a frame "
-        "(the pipeline's default)",
+        default=None,
+        help="pixels of usable depth needed for an object to count as seen in a frame "
+        f"(default: the depth rule's, {MIN_POINTS})",
+    )
+    p.add_argument(
+        "--depth-rule",
+        choices=DEPTH_RULES,
+        default="mask",
+        help="which pixels of a mask have usable depth: mask (default), confidence at least the lower of "
+        "--conf-percentile over the sequence and the mask's own --mask-conf-quantile; global (the original rule), at "
+        "least --conf-percentile",
+    )
+    p.add_argument(
+        "--mask-conf-quantile",
+        type=float,
+        default=MASK_CONF_QUANTILE,
+        help="--depth-rule mask: percentile of the mask's own confidence its pixels need",
+    )
+    p.add_argument(
+        "--association",
+        choices=["overlap", "centroid"],
+        default="overlap",
+        help="when the pipeline has to track: how detections join tracks (milestone4_video.py --association); "
+        "overlap (default), by their 3D points; centroid, the original rule",
     )
     p.add_argument(
         "--conf-percentile",
@@ -773,6 +864,10 @@ def main(argv=None):
         args.overlap,
         args.no_reid,
         args.masks_dir,
+        association=args.association,
+        depth_rule=args.depth_rule,
+        mask_conf_quantile=args.mask_conf_quantile,
+        min_points=args.min_points,
     )
     build_scene_sheet(
         scene,
@@ -786,6 +881,8 @@ def main(argv=None):
         args.max_frame_points,
         frame_columns=not args.no_frames,
         cameras=not args.no_cameras,
+        depth_rule=args.depth_rule,
+        mask_conf_quantile=args.mask_conf_quantile,
     )
 
 

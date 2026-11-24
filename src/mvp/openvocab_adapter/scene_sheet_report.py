@@ -12,7 +12,8 @@ For each VSI-Bench question about the scene, in the order of the scene's questio
 The sheet comes from one of two sources, each with its default settings:
 
   pipeline (default)  question_scene_sheet.create_scene_sheet(scene, question): SAM 3, then tracking on the saved VGGT
-                      outputs, 16 uniformly sampled frames of the 128 (meta.json's uniform16, the VLM's frames), size
+                      outputs, all 128 frames (--frames subset:uniform16: the VLM's 16), tracking by 3D overlap and
+                      the mask-relative depth rule (--association centroid --depth-rule global: the original ones), size
                       columns, one 0/1 column per frame, cameras.csv. Needs what
                       question_scene_sheet.py needs: the OpenVocab-4D environment, a GPU, and the scene's dense depth
                       (or --patch-depth-fallback, which approximates it from the exported patch points, with a
@@ -64,7 +65,10 @@ CAMERA_COLUMNS = ["frame", "image", "x", "y", "z", "qw", "qx", "qy", "qz", "forw
 
 # create_scene_sheet's options that question_scene_sheet.prepare_scene takes too
 PREPARE_OPTIONS = {"frames", "dense_dir", "syntactic", "reid", "conf_percentile", "min_points", "backend", "min_score",
-                   "checkpoint", "overlays", "patch_depth_fallback"}
+                   "checkpoint", "overlays", "patch_depth_fallback", "association", "depth_rule", "mask_conf_quantile",
+                   "overlap_options"}
+# the pipeline options main() passes on only when they are given, so that their defaults stay create_scene_sheet's
+PIPELINE_CHOICES = ("frames", "association", "depth_rule")
 
 
 def read_jsonl(path):
@@ -310,8 +314,13 @@ def main(argv=None):
                    help="pipeline: if the dense depth is not found, approximate it from the exported patch points "
                         "(coarser, with a warning) instead of failing every question")
     p.add_argument("--work-dir", help="where geometry, masks, tracks and sheets are kept (default: "
-                                      "tasks/openvocab_adapter/out/<dataset>__<scene>/subset-uniform16, or "
+                                      "tasks/openvocab_adapter/out/<dataset>__<scene>/<frames>, e.g. all, or "
                                       ".../gold)")
+    p.add_argument("--frames", help="pipeline: question_scene_sheet.py's --frames (default: its default, all)")
+    p.add_argument("--association", choices=["overlap", "centroid"],
+                   help="pipeline: question_scene_sheet.py's --association (default: its default, overlap)")
+    p.add_argument("--depth-rule", choices=["mask", "global"],
+                   help="pipeline: question_scene_sheet.py's --depth-rule (default: its default, mask)")
     p.add_argument("--gold-dir", help="gold: folder with VSI-Bench's metadata (default: as scene_sheet_creator.py)")
     p.add_argument("--prompts", help='a .jsonl of {"id", "prompts", "prompt_mode"}: use these prompts instead of '
                                      "extracting them (then spaCy is not needed)")
@@ -319,7 +328,8 @@ def main(argv=None):
     missing = [m for m in ("spacy", "nltk", "en_core_web_md") if importlib.util.find_spec(m) is None]
     if missing and not args.prompts:  # fail here, not once per question
         p.error(f"the prompt extractor needs {', '.join(missing)} in this Python; see prompt_object_extractor.py")
-    options = ({"dense_dir": args.dense_dir, "patch_depth_fallback": args.patch_depth_fallback}
+    options = ({"dense_dir": args.dense_dir, "patch_depth_fallback": args.patch_depth_fallback,
+                **{k: getattr(args, k) for k in PIPELINE_CHOICES if getattr(args, k) is not None}}
                if args.source == "pipeline" else {})
     try:
         results = report(args.scene, args.source, args.data_root, args.questions, args.work_dir, args.gold_dir,

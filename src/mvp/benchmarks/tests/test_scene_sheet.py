@@ -16,6 +16,7 @@ import math
 import os
 import random
 import re
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -555,6 +556,8 @@ class Synthetic(unittest.TestCase):
             options = (q, source, fmt, cameras, time_unit, reasoning, visibility, step_order, object_directions)
             contradictory = (cameras and source != "pipeline") or source is not None and (
                 fmt is None or (source != "pipeline" and fmt == ss.NARRATIVE) or (fmt == ss.NARRATIVE and cameras))
+            # nearby needs a sheet made on more frames than the VLM's 16; the synthetic sheets are 16-frame ones
+            contradictory = contradictory or (visibility == "nearby" and source == "pipeline")
             if contradictory:
                 with self.assertRaises(ValueError, msg=options):
                     ss.build_sheet_prompt(q, source, fmt, self.root, self.vggt, cameras=cameras,
@@ -579,13 +582,175 @@ class Synthetic(unittest.TestCase):
                                  and (fmt == ss.NARRATIVE or (cameras and fmt == "text")), options)
                 self.assertEqual("Camera sheet" in scene, cameras and fmt != "text", options)  # the camera tables
                 self.assertEqual("Camera path" in scene, cameras and fmt == "text", options)  # the compass text
-                self.assertEqual(ss.BRIDGED_NOTE in scene, source == "pipeline" and visibility == "bridged", options)
+                self.assertEqual(ss.BRIDGED_NOTE in scene, source == "pipeline" and visibility in ("bridged", "auto"),
+                                 options)  # auto is bridged on a 16-frame sheet
+                self.assertNotIn(ss.NEARBY_NOTE, scene, options)
                 self.assertNotIn("first_seen", scene, options)
                 self.assertNotIn("num_frames", scene, options)
                 self.assertNotIn("behind you", scene, options)
                 narrative = source == "pipeline" and fmt == ss.NARRATIVE  # frame 5 turns without moving
                 self.assertEqual("Don't move and turn" in scene, narrative and step_order == "move-turn", options)
                 self.assertEqual("without moving" in scene, narrative and step_order == "turn-move", options)
+
+
+def dense_flags(*seen):
+    """num_frames and the 128 frame flags of a dense sheet's row (frames of the 128)."""
+    return [len(seen)] + [int(t in seen) for t in range(ss.N_CANDIDATES)]
+
+
+def vlm(*frames):
+    """The frames of the 128 that are the VLM's frames with these positions (0 to 15)."""
+    return [ss.VLM_FRAMES[j] for j in frames]
+
+
+class Dense(unittest.TestCase):
+    """Sheets made on all 128 VGGT frames (a dense sheet): their frames mapped onto the VLM's 16 when the prompt is
+    written. The fixture is Synthetic's scene as a dense sheet: the same objects, seen in the same VLM frames (and only
+    there, so every rule gives the 16-frame sheet's frames), and 128 cameras whose 16 VLM rows are Synthetic's."""
+
+    def setUp(self):
+        Synthetic.setUp(self)  # the 16-frame fixture in self.root, to compare with
+        self.legacy = self.root
+        root = Path(self.tmp.name) / "dense"
+        pipe = root / "s__1" / "all"
+        shutil.copytree(self.legacy / "s__1" / "gold", root / "s__1" / "gold")
+        rows = {
+            "chair+door": [
+                [0, "door", 2, "1.0004", "-0.0004", "2", "0.3", "1.9", "0.1", "0.057"] + dense_flags(*vlm(3, 4)),
+                [1, "chair", 1, "-0.5", "0.25", "1e-05", "0.4", "0.9", "0.45", "0.162"] + dense_flags(*vlm(1)),
+                [2, "door", 1, "-1.2364", "0.1", "0.5", "0.31", "2.0", "0.12", "0.0744"] + dense_flags(*vlm(1, 2, 5)),
+                [3, "coffee table", 1, "0", "0", "0", "1", "1", "1", "1"] + dense_flags(*vlm(1)),
+            ],
+            "room": [],
+        }
+        for folder, folder_rows in rows.items():
+            sheet = pipe / "sheets" / folder
+            sheet.mkdir(parents=True)
+            (sheet / "question.json").write_text(json.dumps({"scene": "s/1"}))
+            with open(sheet / "objects.csv", "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["object_id", "concept", "track_id", "x", "y", "z", "size_x", "size_y", "size_z", "size",
+                            "num_frames"] + [f"frame_{t:03d}" for t in range(ss.N_CANDIDATES)])
+                w.writerows(folder_rows)
+            with open(sheet / "cameras.csv", "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["frame", "image", "x", "y", "z", "qw", "qx", "qy", "qz", "forward_x", "forward_y",
+                            "forward_z"])
+                for t in range(ss.N_CANDIDATES):  # between the VLM's frames, a camera far off and turned
+                    view = TRAJECTORY[ss.VLM_FRAMES.index(t)] if t in ss.VLM_FRAMES else ((5, -2, t), 3 * t)
+                    w.writerow(camera_row(t, *view))
+        # the VLM frames' video frames are the 16-frame fixture's, so the timestamps are the same; the others between
+        source = np.interp(range(ss.N_CANDIDATES), ss.VLM_FRAMES, [30 * j for j in range(ss.N_FRAMES)])
+        (pipe / "scene").mkdir()
+        (pipe / "scene" / "adapter_report.json").write_text(json.dumps({
+            "selected_frames": list(range(ss.N_CANDIDATES)), "source_video_frames": [int(v) for v in source]}))
+        with open(self.legacy / "index.csv", newline="") as f:
+            index = list(csv.reader(f))
+        with open(root / "index.csv", "w", newline="") as f:
+            csv.writer(f).writerows([[c.replace("subset-uniform16", "all") for c in r] for r in index])
+        self.root = root
+        self.frames = ss.SheetFrames(range(ss.N_CANDIDATES), [int(v) for v in source])
+
+    def add_lamp(self, *seen):
+        with open(self.root / "s__1" / "all" / "sheets" / "chair+door" / "objects.csv", "a", newline="") as f:
+            csv.writer(f).writerow([4, "lamp", 1, "0", "0", "1", "0.2", "0.5", "0.2", "0.02"] + dense_flags(*seen))
+
+    def lamp(self, **options):
+        objects = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt, **options)
+        return next(o for o in objects if o["id"] == "lamp_1")["visible"]
+
+    def test_the_vlm_frames(self):
+        self.assertEqual(ss.VLM_FRAMES, (0, 8, 16, 25, 33, 42, 50, 59, 67, 76, 84, 93, 101, 110, 118, 127))
+        from mvp.reconstruction.sa_sampling import uniform_subset
+        self.assertEqual(list(ss.VLM_FRAMES), list(uniform_subset(ss.N_CANDIDATES, ss.N_FRAMES)))  # the eval's
+        self.assertEqual((self.frames.vlm, self.frames.dense), (ss.VLM_FRAMES, True))
+        legacy = ss.folder_frames(self.legacy / "s__1" / "subset-uniform16" / "sheets" / "room")
+        self.assertEqual((legacy.vlm, legacy.dense), (tuple(range(16)), False))
+        self.assertEqual(self.frames.vlm_video_frames, legacy.vlm_video_frames)
+        with self.assertRaises(ValueError):  # a sheet without the VLM's frames can't be mapped onto them
+            ss.SheetFrames(range(0, 128, 2), range(64))
+
+    def test_nearby_rule(self):
+        def seen(*frames, visibility="nearby"):
+            return ss.vlm_frames_seen(list(frames), self.frames, visibility)
+        self.assertEqual(seen(8), {1})  # seen in the frame itself
+        self.assertEqual(seen(6, 7, 9, 10), {1})  # two of the four before and two of the four after
+        self.assertEqual(seen(4, 5, 11, 12), {1})  # anywhere in the four
+        self.assertEqual(seen(7, 9, 10, 16), {2})  # one before is not enough (frame 16 counts on its own)
+        self.assertEqual(seen(1, 2), {0})  # frame 0 has nothing before it: only after counts
+        self.assertEqual(seen(125, 126), {15})  # and frame 127 nothing after it
+        self.assertEqual(seen(*range(0, 128)), set(range(16)))
+        # seen only between two VLM frames: the nearest of them for each sighting (the earlier when as near)
+        self.assertEqual(seen(11, 12, 13), {1, 2})
+        self.assertEqual(seen(12), {1})
+        # exact and bridged on a dense sheet: the VLM frames themselves, bridged across one missed VLM frame
+        self.assertEqual(seen(6, 7, 9, 10, visibility="exact"), {1})  # no VLM frame: the nearest
+        self.assertEqual(seen(8, 25, visibility="exact"), {1, 3})
+        self.assertEqual(seen(8, 25, visibility="bridged"), {1, 2, 3})
+        self.assertEqual(seen(8, 25, visibility="auto"), {1, 3})  # nearby
+        self.assertEqual((ss.resolve_visibility("auto", True), ss.resolve_visibility("auto", False)),
+                         ("nearby", "bridged"))
+        with self.assertRaises(ValueError):
+            ss.resolve_visibility("nearby", False)
+        with self.assertRaises(ValueError):
+            ss.bridged_note("auto")
+
+    def test_visible_ranges(self):
+        self.add_lamp(6, 7, 9, 10, 23, 24, 26, 27, 59)  # around VLM frames 1 and 3, and at 7
+        self.assertEqual(self.lamp(time_unit="frames"), "[2, 2], [4, 4], [8, 8]")
+        self.assertEqual(self.lamp(time_unit="frames", visibility="exact"), "[8, 8]")
+        self.assertEqual(self.lamp(), "[0.5, 0.5], [2.5, 2.5], [6.5, 6.5]")  # the 16-frame sheet's labels
+
+    def test_an_object_seen_only_between_vlm_frames_is_kept(self):
+        self.add_lamp(11, 12, 13)
+        self.assertEqual(self.lamp(time_unit="frames"), "[2, 3]")
+        self.assertEqual(self.lamp(), "[0.5, 2.5]")
+        narrative = ss.render_sheet(1, "pipeline", ss.NARRATIVE, self.root, vggt_root=self.vggt, time_unit="frames")
+        self.assertIn("you see lamp_1", narrative.splitlines()[2])
+
+    def test_exact_renders_as_the_16_frame_sheet(self):
+        """With the same objects seen in the same VLM frames, a dense sheet reads exactly as the 16-frame one: objects,
+        cameras (only their 16 rows count, not the others between), the camera text and the narrative; and so does
+        auto (nearby here), but for its own sentence about visibility."""
+        for visibility in ("exact", "bridged"):
+            for time_unit in ss.TIME_UNITS:
+                for fmt in ss.SHEET_FORMATS:
+                    for cameras in ((False, True) if fmt != ss.NARRATIVE else (False,)):
+                        a, b = (ss.render_scene(1, "pipeline", fmt, cameras, root, self.vggt, time_unit, visibility)
+                                for root in (self.root, self.legacy))
+                        self.assertEqual(a, b, (visibility, time_unit, fmt, cameras))
+        for fmt in ss.SHEET_FORMATS:
+            dense = ss.render_scene(1, "pipeline", fmt, False, self.root, self.vggt)
+            self.assertIn(ss.NEARBY_NOTE, dense)
+            self.assertNotIn(ss.BRIDGED_NOTE, dense)
+            legacy = ss.render_scene(1, "pipeline", fmt, False, self.legacy, self.vggt, visibility="exact")
+            note = ss.preamble("pipeline", visibility="nearby") if fmt != ss.NARRATIVE else ss.narrative_preamble(
+                visibility="nearby")
+            plain = ss.preamble("pipeline", visibility="exact") if fmt != ss.NARRATIVE else ss.narrative_preamble(
+                visibility="exact")
+            self.assertEqual(dense, legacy.replace(plain, note, 1), fmt)
+        self.assertEqual(ss.frame_timestamps(self.root / "s__1" / "all" / "scene", "s/1", self.vggt),
+                         ss.frame_timestamps(self.legacy / "s__1" / "subset-uniform16" / "scene", "s/1", self.vggt))
+        self.assertEqual(ss.build_sheet_prompt(1, "pipeline", "csv", self.root, self.vggt, visibility="exact"),
+                         ss.build_sheet_prompt(1, "pipeline", "csv", self.legacy, self.vggt, visibility="exact"))
+        self.assertEqual(len(ss.load_cameras(1, self.root, self.vggt)), 16)
+
+    def test_round_trip(self):
+        self.add_lamp(6, 7, 9, 10)
+        for visibility in ("auto", "exact", "bridged"):
+            objects = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt, visibility=visibility)
+            for fmt in ss.FORMATS:
+                rendered = ss.render_sheet(1, "pipeline", fmt, self.root, vggt_root=self.vggt, visibility=visibility)
+                self.assertEqual(parse(rendered, "pipeline", fmt, visibility=ss.resolve_visibility(visibility, True)),
+                                 objects, (fmt, visibility))
+
+    def test_the_eval_checks_the_video_frames(self):
+        from types import SimpleNamespace
+        from mvp.eval import vsibench as eval_vsibench
+        args = SimpleNamespace(sheets_root=str(self.root))
+        eval_vsibench.check_sheet_frames([{"id": 1}, {"id": 2}], [30 * j for j in range(16)], args)
+        with self.assertRaises(SystemExit):
+            eval_vsibench.check_sheet_frames([{"id": 1}], [30 * j + 1 for j in range(16)], args)
 
 
 class MetricScale(unittest.TestCase):

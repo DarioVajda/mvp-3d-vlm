@@ -13,9 +13,13 @@ the scene sheet of the objects the question names:
                 take in some background, so use it where the dense depth cannot be had.
   3. SAM 3      sam3_infer.py segments each prompt in every selected frame.
   4. tracking   OpenVocab-4D's track stage (milestone4_video.py) links the masks into objects, using the saved VGGT
-                cameras and depth. It keeps an object seen in enough of the selected frames, a minimum that scales
-                linearly with their number: 1 of 16, 4 of 128. Its fuse stage is not run: the scene sheet only
-                needs the tracks.
+                cameras and depth. By default (--association overlap) a detection continues the track whose 3D
+                points it overlaps; --association centroid is the original rule (3D centres within 5% of the first
+                frame's diagonal). A mask's depth counts by --depth-rule: mask (default), its pixels with confidence
+                at least the lower of the sequence's --conf-percentile and the mask's own median; global, the
+                original rule (the sequence's percentile only). It keeps an object seen in enough of the selected
+                frames, a minimum that scales linearly with their number: 1 of 16, 4 of 128. Its fuse stage is not
+                run: the scene sheet only needs the tracks.
   5. sheet      scene_sheet_creator.py writes objects.csv and cameras.csv (their columns are described there).
 
 On stdout it prints exactly two lines, the path of objects.csv and then of cameras.csv. Every log goes to stderr.
@@ -24,12 +28,14 @@ From Python, create_scene_sheet(scene, question) returns the same two paths.
   python src/mvp/openvocab_adapter/question_scene_sheet.py scannet/scene0025_01 \
       "Measuring from the closest point of each object, which of these objects (table, chair) is the closest to the fan?"
 
-By default it uses 16 of the 128 VGGT frames, uniformly sampled (meta.json's uniform16 subset, np.linspace(0, 127, 16)):
-the frames the VLM sees with --sampling uniform128, so the sheet and the VLM see the same frames. --frames all uses
-all 128.
+By default it uses all 128 VGGT frames (--frames all): neighbouring frames overlap, so tracking can follow an object,
+and objects seen only briefly are found. The VLM sees 16 of them (--sampling uniform128); the sheet's 128 frame columns
+are mapped onto those 16 when the prompt is written (mvp.benchmarks.scene_sheet, visibility "nearby").
+--frames subset:uniform16 uses only the VLM's 16 frames, as every sheet before 2026-11-24 did, and
+--association centroid --depth-rule global the original tracking with them.
 
-Work is kept and reused, in tasks/openvocab_adapter/out/<dataset>__<scene>/<frames>/ (<frames> is "subset-uniform16" by
-default):
+Work is kept and reused, in tasks/openvocab_adapter/out/<dataset>__<scene>/<frames>/ (<frames> is "all" by default,
+"subset-uniform16" for the 16 frames):
 
   scene/              the converted geometry (frames/, cameras.npz, depth.npz) and tracks/<prompt>.npz
   masks/<prompts>/    the SAM 3 masks of the prompts that were segmented together
@@ -37,7 +43,8 @@ default):
 
 A later question about the same scene runs SAM 3 and tracking only for prompts that have no tracks yet (tracks are
 independent between prompts), so a question that names known objects only rebuilds the sheet. Tracks made with other
-settings (re-identification, SAM 3 backend or thresholds) are made again. --fresh starts the scene over.
+settings (re-identification, SAM 3 backend or thresholds, association, depth rule) are made again. --fresh starts the
+scene over.
 
 Needs the OpenVocab-4D environment (hpc/setup_env.sh) with a GPU: SAM 3, and DINOv2 for re-identification unless
 --no-reid is given.
@@ -60,10 +67,18 @@ import scene_sheet_creator as sheet  # noqa: E402
 SAM3_INFER = common.HERE / "sam3_infer.py"
 DENSE_FILES = ("depth.npy", "depth_conf.npy")
 MAX_FOLDER_NAME = 80
-# The VLM's 16 frames: meta.json's uniform16, np.linspace(0, 127, 16, dtype=int) of the 128 VGGT frames
-DEFAULT_FRAMES = "subset:uniform16"
+# All 128 VGGT frames. The VLM's 16 (meta.json's uniform16, np.linspace(0, 127, 16, dtype=int)) are
+# "subset:uniform16", the default before 2026-11-24.
+DEFAULT_FRAMES = "all"
 # milestone 4 keeps a track seen in at least this many frames: linear in the frame count (min_track_frames there)
 MIN_TRACK_FRAMES_RULE = "linear: 1 at 16 frames, 4 at 128, at least 1"
+# Tracking (milestone4_video.py's options). The defaults are the fixes of 2026-11-24; ORIGINAL is milestone 4's own
+# behaviour, which every sheet made before used. OVERLAP_OPTIONS are --association overlap's settings: provisional
+# values, to be tuned on the dev scenes.
+DEFAULT_ASSOCIATION, DEFAULT_DEPTH_RULE = "overlap", "mask"
+ORIGINAL = {"association": "centroid", "depth_rule": "global"}
+OVERLAP_OPTIONS = {"voxel_frac": 0.065, "overlap_min": 0.10, "reid_radius_depth": 0.5, "merge_overlap": 0.2,
+                   "duplicate_overlap": 0.6}
 
 
 def log(message):
@@ -223,22 +238,54 @@ def ensure_tracks(scene_out, masks_root, prompts, settings, checkpoint=None, ove
             settings_file(scene_out, prompt).unlink(missing_ok=True)
         sheet.run_pipeline(frames_dir, scene_out, group, "track", 1, no_reid=not settings["reid"],
                            masks_dir=masks_dir, conf_percentile=settings["conf_percentile"],
-                           min_points=settings["min_points"], stdout=log_stream())
+                           min_points=settings["min_points"], stdout=log_stream(), **tracker_options(settings))
         for prompt in group:
             settings_file(scene_out, prompt).write_text(json.dumps(
                 {"prompt": prompt, "masks": masks_dir.name, "settings": settings}, indent=1))
 
 
-def track_settings(reid, backend, min_score, conf_percentile, min_points):
-    """The settings a prompt's masks and tracks are kept under; tracks made under other settings are made again."""
+def track_settings(reid, backend, min_score, conf_percentile, min_points=None, association=DEFAULT_ASSOCIATION,
+                   depth_rule=DEFAULT_DEPTH_RULE, mask_conf_quantile=sheet.MASK_CONF_QUANTILE, overlap_options=None):
+    """The settings a prompt's masks and tracks are kept under; tracks made under other settings are made again.
+
+    min_points None is the depth rule's default (scene_sheet_creator.MIN_POINTS). With the original tracking
+    (ORIGINAL) the settings are exactly those every earlier sheet recorded, so their tracks are reused; otherwise they
+    also name the association, the depth rule and their options (overlap_options: OVERLAP_OPTIONS by default)."""
+    if association not in ("overlap", "centroid"):
+        raise ValueError(f"association must be overlap or centroid, not {association!r}")
     # min_track_frames names milestone 4's rule, so that tracks made under its old fixed 3 are made again
-    return {"reid": bool(reid), "backend": backend, "min_score": min_score, "conf_percentile": conf_percentile,
-            "min_points": min_points, "min_track_frames": MIN_TRACK_FRAMES_RULE}
+    settings = {"reid": bool(reid), "backend": backend, "min_score": min_score, "conf_percentile": conf_percentile,
+                "min_points": sheet.min_points_for(depth_rule, min_points), "min_track_frames": MIN_TRACK_FRAMES_RULE}
+    if {"association": association, "depth_rule": depth_rule} == ORIGINAL:
+        return settings
+    settings.update(association=association, depth_rule=depth_rule)
+    if depth_rule == "mask":
+        settings["mask_conf_quantile"] = float(mask_conf_quantile)
+    if association == "overlap":
+        settings.update({**OVERLAP_OPTIONS, **(overlap_options or {})})
+    return settings
+
+
+def tracker_options(settings):
+    """run_pipeline's keyword arguments for the tracking settings beyond the original ones (none for ORIGINAL, so
+    milestone 4 runs exactly as before)."""
+    options = {"association": settings.get("association"), "depth_rule": settings.get("depth_rule"),
+               "mask_conf_quantile": settings.get("mask_conf_quantile")}
+    extra = {k: settings[k] for k in OVERLAP_OPTIONS if k in settings}
+    return {**options, "tracker_options": extra or None}
+
+
+def sheet_depth_options(settings):
+    """build_scene_sheet's depth rule for these tracking settings: the original rule when they name none."""
+    rule = settings.get("depth_rule", "global")
+    return {"depth_rule": rule, "mask_conf_quantile": settings.get("mask_conf_quantile", sheet.MASK_CONF_QUANTILE)}
 
 
 def prepare_scene(scene, questions, frames=DEFAULT_FRAMES, dense_dir=None, data_root=None, work_dir=None,
-                  syntactic=False, reid=True, conf_percentile=55.0, min_points=300, backend="transformers",
-                  min_score=0.5, checkpoint=None, overlays=False, patch_depth_fallback=False):
+                  syntactic=False, reid=True, conf_percentile=55.0, min_points=None, backend="transformers",
+                  min_score=0.5, checkpoint=None, overlays=False, patch_depth_fallback=False,
+                  association=DEFAULT_ASSOCIATION, depth_rule=DEFAULT_DEPTH_RULE,
+                  mask_conf_quantile=sheet.MASK_CONF_QUANTILE, overlap_options=None):
     """Segment and track the prompts of several questions about one scene together. Returns the prompts.
 
     Without it, create_scene_sheet starts SAM 3 and the track stage (each in its own process, with its models loaded
@@ -259,22 +306,26 @@ def prepare_scene(scene, questions, frames=DEFAULT_FRAMES, dense_dir=None, data_
                 prompts += [p for p in extract_prompts(question, syntactic)[0] if p not in prompts]
         log(f"{scene}: {len(questions)} questions name {len(prompts)} prompts {prompts}")
         ensure_geometry(scene, data_root, spec, label, dense_dir, work / "scene", patch_depth_fallback)
-        settings = track_settings(reid, backend, min_score, conf_percentile, min_points)
+        settings = track_settings(reid, backend, min_score, conf_percentile, min_points, association, depth_rule,
+                                  mask_conf_quantile, overlap_options)
         ensure_tracks(work / "scene", work / "masks", prompts, settings, checkpoint, overlays)
     return prompts
 
 
 def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, data_root=None, out_dir=None, work_dir=None,
                        syntactic=False, reid=True, include_size=True, relative_positions=False, size_trim=0.02,
-                       conf_percentile=55.0, min_points=300, backend="transformers", min_score=0.5, checkpoint=None,
-                       overlays=False, fresh=False, patch_depth_fallback=False):
+                       conf_percentile=55.0, min_points=None, backend="transformers", min_score=0.5, checkpoint=None,
+                       overlays=False, fresh=False, patch_depth_fallback=False, association=DEFAULT_ASSOCIATION,
+                       depth_rule=DEFAULT_DEPTH_RULE, mask_conf_quantile=sheet.MASK_CONF_QUANTILE,
+                       overlap_options=None):
     """Write the scene sheet for a question about a saved VGGT scene. Returns (objects.csv, cameras.csv) paths.
 
     scene       "<dataset>/<scene>", or only the scene's name
     question    the question, as one string; it does not have to be one of the scene's questions.jsonl
-    frames      a preset of common.PRESETS or a spec of common.select_frames; the default is the 16 uniformly sampled
-                frames the VLM sees, "all" is the 128 frames VGGT saw.
+    frames      a preset of common.PRESETS or a spec of common.select_frames; the default, "all", is the 128 frames
+                VGGT saw, "subset:uniform16" the 16 the VLM sees.
                 frame_<t> in the sheet counts the selected frames, cameras.csv names each one's image
+    association, depth_rule, mask_conf_quantile, overlap_options, min_points: the tracking (track_settings)
     dense_dir   folder with depth.npy and depth_conf.npy (default: $DENSE_ROOT or data/vggt, then /<dataset>/<scene>)
     patch_depth_fallback  without dense depth, approximate it from the patch points (with a warning) instead of
                 stopping
@@ -302,12 +353,14 @@ def create_scene_sheet(scene, question, frames=DEFAULT_FRAMES, dense_dir=None, d
             shutil.rmtree(scene_out, ignore_errors=True)
             shutil.rmtree(masks_root, ignore_errors=True)
         depth_source = ensure_geometry(scene, data_root, spec, label, dense_dir, scene_out, patch_depth_fallback)
-        settings = track_settings(reid, backend, min_score, conf_percentile, min_points)
+        settings = track_settings(reid, backend, min_score, conf_percentile, min_points, association, depth_rule,
+                                  mask_conf_quantile, overlap_options)
         ensure_tracks(scene_out, masks_root, prompts, settings, checkpoint, overlays)
 
         out = Path(out_dir).resolve() if out_dir else work / "sheets" / folder_name(prompts)
         objects_csv, cameras_csv = sheet.build_scene_sheet(
-            scene_out, prompts, relative_positions, include_size, out, conf_percentile, min_points, size_trim)
+            scene_out, prompts, relative_positions, include_size, out, conf_percentile, settings["min_points"],
+            size_trim, **sheet_depth_options(settings))
         (out / "question.json").write_text(json.dumps({
             "scene": scene, "question": question, "prompts": prompts, "prompt_mode": mode, "frames": spec,
             "tracking": settings, "size": include_size, "relative_positions": relative_positions,
@@ -324,8 +377,8 @@ def parse_args(argv):
     p.add_argument("question", help="the question, as one string")
     p.add_argument("--frames", default=DEFAULT_FRAMES,
                    help=f"frames to use: a preset ({', '.join(sorted(common.PRESETS))}) or all | uniform:K | subset:NAME | "
-                        f"window:START:COUNT[:STRIDE] | list:a,b (default: {DEFAULT_FRAMES}, 16 uniformly sampled "
-                        "frames of the 128, the VLM's)")
+                        f"window:START:COUNT[:STRIDE] | list:a,b (default: {DEFAULT_FRAMES}, the 128 VGGT frames; "
+                        "subset:uniform16 is the VLM's 16)")
     p.add_argument("--dense-dir", help="folder with the scene's depth.npy and depth_conf.npy "
                                        "(default: $DENSE_ROOT or data/vggt, then /<dataset>/<scene>)")
     p.add_argument("--patch-depth-fallback", action="store_true",
@@ -347,9 +400,22 @@ def parse_args(argv):
     p.add_argument("--size-trim", type=float, default=0.02,
                    help="percent of points ignored at each end of every axis when measuring size")
     p.add_argument("--conf-percentile", type=float, default=55.0,
-                   help="depth-confidence percentile below which pixels are ignored, in tracking and in the sheet")
-    p.add_argument("--min-points", type=int, default=300,
-                   help="confident pixels an object needs to count as seen in a frame, in tracking and in the sheet")
+                   help="the sequence's depth-confidence percentile a pixel needs (--depth-rule global), or the most "
+                        "it needs (mask), in tracking and in the sheet")
+    p.add_argument("--min-points", type=int, default=None,
+                   help="pixels of usable depth an object needs to count as seen in a frame, in tracking and in the "
+                        f"sheet (default: the depth rule's, {sheet.MIN_POINTS})")
+    p.add_argument("--depth-rule", choices=sheet.DEPTH_RULES, default=DEFAULT_DEPTH_RULE,
+                   help="which pixels of a mask have usable depth: mask (default), confidence at least the lower of "
+                        "--conf-percentile and the mask's own --mask-conf-quantile; global, the original rule")
+    p.add_argument("--mask-conf-quantile", type=float, default=sheet.MASK_CONF_QUANTILE,
+                   help="--depth-rule mask: percentile of the mask's own confidence its pixels need")
+    p.add_argument("--association", choices=["overlap", "centroid"], default=DEFAULT_ASSOCIATION,
+                   help="how detections join tracks (milestone4_video.py): overlap (default), by their 3D points; "
+                        "centroid, the original rule")
+    for name, value in OVERLAP_OPTIONS.items():
+        p.add_argument(f"--{name.replace('_', '-')}", type=float, default=value,
+                       help=f"--association overlap: milestone4_video.py's --{name.replace('_', '-')} (default {value})")
     p.add_argument("--backend", choices=["transformers", "sam3"], default="transformers",
                    help="how SAM 3 is run, see sam3_infer.py (transformers: the cached snapshot; sam3: Meta's package)")
     p.add_argument("--checkpoint", help="--backend sam3 only: a local sam3.pt")
@@ -367,7 +433,9 @@ def main(argv=None):
         include_size=not args.no_size, relative_positions=args.relative_positions, size_trim=args.size_trim,
         conf_percentile=args.conf_percentile, min_points=args.min_points, backend=args.backend,
         min_score=args.min_score, checkpoint=args.checkpoint, overlays=args.overlays, fresh=args.fresh,
-        patch_depth_fallback=args.patch_depth_fallback)
+        patch_depth_fallback=args.patch_depth_fallback, association=args.association, depth_rule=args.depth_rule,
+        mask_conf_quantile=args.mask_conf_quantile,
+        overlap_options={name: getattr(args, name) for name in OVERLAP_OPTIONS})
     print(objects_csv)
     print(cameras_csv)
     return 0

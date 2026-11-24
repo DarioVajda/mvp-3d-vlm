@@ -3,15 +3,19 @@
 hpc/run_sheets.sh makes the sheets with SAM 3 and tracking (GPU). Its output keeps, per scene, everything the sheet
 itself is computed from except the depth:
 
-  <dataset>__<scene>/subset-uniform16/scene/   cameras.npz, adapter_report.json, tracks/<prompt>.npz
-  <dataset>__<scene>/subset-uniform16/sheets/<prompts>/question.json   the prompts and settings of each sheet
-  <dataset>__<scene>/gold/sheets/<prompts>/question.json               the prompts of each gold sheet
+  <dataset>__<scene>/<frames>/scene/   cameras.npz, adapter_report.json, tracks/<prompt>.npz
+  <dataset>__<scene>/<frames>/sheets/<prompts>/question.json   the prompts and settings of each sheet
+  <dataset>__<scene>/gold/sheets/<prompts>/question.json       the prompts of each gold sheet
+
+<frames> names the frames the pipeline ran on: subset-uniform16 (the VLM's 16, every run before 2026-11-24) or all (the
+128). Every such folder of a scene, one with scene/adapter_report.json, is rebuilt, or only --label's.
 
 This script writes every sheet again with the current scene_sheet_creator.py, so a change to how sheets are computed
 or written (sizes, columns) reaches all of them in minutes on a CPU:
 
-  pipeline  scene_sheet_creator.build_scene_sheet on the saved tracks, with the settings in each question.json. The
-            zip leaves out scene/depth.npz (the shared VGGT depth, cut to the 16 frames), so it is made again first
+  pipeline  scene_sheet_creator.build_scene_sheet on the saved tracks, with the settings in each question.json (a
+            question.json that names no depth rule was made with the original one, "global"). The
+            zip leaves out scene/depth.npz (the shared VGGT depth, cut to the selected frames), so it is made again first
             from data/vggt/<dataset>/<scene>/depth.npy and depth_conf.npy, cut to adapter_report.json's
             selected_frames, exactly as adapt_vggt.py writes it. Checked: the dense depth's frame_indices.npy equals
             the report's source_video_frames, and every track has the depth's shape.
@@ -33,6 +37,7 @@ The steps' logs go to stderr, one summary line per scene and the totals to stdou
 """
 import argparse
 import contextlib
+import inspect
 import json
 import os
 import sys
@@ -48,8 +53,28 @@ import scene_sheet_creator as sheet  # noqa: E402
 import scene_sheet_report as checks  # noqa: E402
 
 DEFAULT_ROOT = common.REPO / "data" / "scene_sheets_75"
-PIPELINE_LABEL = "subset-uniform16"
+PIPELINE_LABEL = "subset-uniform16"  # the frames folder of every sheet run before 2026-11-24 (see pipeline_labels)
 DENSE_FILES = ("depth.npy", "depth_conf.npy")
+
+
+def pipeline_labels(scene_dir, label=None):
+    """The scene folder's pipeline frames folders (subset-uniform16, all, ...): those with scene/adapter_report.json,
+    or only label's."""
+    scene_dir = Path(scene_dir)
+    found = sorted(d.name for d in scene_dir.iterdir()
+                   if d.is_dir() and d.name != "gold" and (d / "scene" / "adapter_report.json").is_file())
+    return [x for x in found if x == label] if label else found
+
+
+def depth_options(tracking):
+    """build_scene_sheet's depth rule for a question.json's tracking settings, or None when that
+    scene_sheet_creator.py can't make it. Settings that name no rule were made with the original one ("global"). A
+    scene_sheet_creator.py from before the rule existed (as experiments/2026-11-18-scene-sheet-formats/pipeline_v3.py
+    runs it) gets no option: it only has the original rule."""
+    rule = tracking.get("depth_rule", "global")
+    if "depth_rule" in inspect.signature(sheet.build_scene_sheet).parameters:
+        return {"depth_rule": rule, "mask_conf_quantile": tracking.get("mask_conf_quantile", 50.0)}
+    return {} if rule == "global" else None
 
 
 def log(message):
@@ -119,12 +144,15 @@ def build_pipeline_sheet(out, scene_out):
     untracked = [p for p in prompts if not sheet.track_file(scene_out, p).is_file()]
     if untracked:
         return [f"not rebuilt: no saved tracks for {untracked} (needs SAM 3)"], {}
+    options = depth_options(tracking)
+    if options is None:
+        return [f"not rebuilt: its depth rule {tracking['depth_rule']!r} is not in this scene_sheet_creator.py"], {}
     try:
         with contextlib.redirect_stdout(sys.stderr):
             objects_csv, cameras_csv = sheet.build_scene_sheet(
                 scene_out, prompts, record.get("relative_positions", False), record.get("size", True), out,
                 tracking.get("conf_percentile", 55.0), tracking.get("min_points", 300),
-                record.get("size_trim", 0.02))
+                record.get("size_trim", 0.02), **options)
         if record.get("relative_positions"):  # the report's checks are for the 0/1 frame columns
             return [], {}
         return checks.check_pipeline_sheet(objects_csv, cameras_csv, prompts)
@@ -147,19 +175,21 @@ def build_gold_sheet(out, scene, info, gold_dir=None):
         return [f"not rebuilt: {type(error).__name__}: {error}"], {}
 
 
-def rebuild_pipeline(scene_dir, dense_root):
-    """Rebuild every pipeline sheet of one scene folder. Returns (results, scene)."""
-    work = scene_dir / PIPELINE_LABEL
-    scene_out = work / "scene"
-    folders = sheet_folders(work)
-    if not folders:
-        return [], None
-    scene, shape = ensure_depth(scene_out, dense_root)
-    check_tracks(scene_out, shape)
-    results = []
-    for out in folders:
-        problems, counts = build_pipeline_sheet(out, scene_out)
-        results.append({"sheet": str(out.relative_to(scene_dir.parent)), "problems": problems, "counts": counts})
+def rebuild_pipeline(scene_dir, dense_root, label=None):
+    """Rebuild every pipeline sheet of one scene folder, in each of its frames folders (pipeline_labels). Returns
+    (results, scene)."""
+    results, scene = [], None
+    for name in pipeline_labels(scene_dir, label):
+        work = scene_dir / name
+        scene_out = work / "scene"
+        folders = sheet_folders(work)
+        if not folders:
+            continue
+        scene, shape = ensure_depth(scene_out, dense_root)
+        check_tracks(scene_out, shape)
+        for out in folders:
+            problems, counts = build_pipeline_sheet(out, scene_out)
+            results.append({"sheet": str(out.relative_to(scene_dir.parent)), "problems": problems, "counts": counts})
     return results, scene
 
 
@@ -178,7 +208,7 @@ def rebuild_gold(scene_dir, scene, gold_dir):
     return results
 
 
-def rebuild_scene(scene_dir, source, dense_root, gold_dir, drop_depth):
+def rebuild_scene(scene_dir, source, dense_root, gold_dir, drop_depth, label=None):
     """Rebuild one scene's sheets. Returns {"scene", "pipeline", "gold", "error", "seconds"}."""
     start = time.time()
     scene_dir = Path(scene_dir)
@@ -186,9 +216,10 @@ def rebuild_scene(scene_dir, source, dense_root, gold_dir, drop_depth):
     scene = None
     try:
         if source in ("pipeline", "both"):
-            summary["pipeline"], scene = rebuild_pipeline(scene_dir, dense_root)
+            summary["pipeline"], scene = rebuild_pipeline(scene_dir, dense_root, label)
             if drop_depth:
-                (scene_dir / PIPELINE_LABEL / "scene" / "depth.npz").unlink(missing_ok=True)
+                for name in pipeline_labels(scene_dir, label):
+                    (scene_dir / name / "scene" / "depth.npz").unlink(missing_ok=True)
         if source in ("gold", "both"):
             summary["gold"] = rebuild_gold(scene_dir, scene, gold_dir)
     except Exception as error:  # noqa: BLE001 - reported per scene; the other scenes go on
@@ -225,10 +256,13 @@ def main(argv=None):
                    help="scenes rebuilt at a time (default: half the CPUs, at most 8)")
     p.add_argument("--drop-depth", action="store_true",
                    help="delete each scene's depth.npz once its sheets are rebuilt (it is made again next time)")
+    p.add_argument("--label", help="only this frames folder of each scene, e.g. subset-uniform16 or all (default: every "
+                                   "one it has)")
     args = p.parse_args(argv)
 
     root = Path(args.root)
-    scene_dirs = sorted(d for d in root.iterdir() if d.is_dir() and ((d / PIPELINE_LABEL).is_dir() or (d / "gold").is_dir()))
+    scene_dirs = sorted(d for d in root.iterdir()
+                        if d.is_dir() and (pipeline_labels(d, args.label) or (d / "gold").is_dir()))
     if args.scenes:
         unknown = set(args.scenes) - {d.name for d in scene_dirs}
         if unknown:
@@ -241,7 +275,7 @@ def main(argv=None):
 
     start = time.time()
     summaries = []
-    jobs = (args.source, args.dense_root, args.gold_dir, args.drop_depth)
+    jobs = (args.source, args.dense_root, args.gold_dir, args.drop_depth, args.label)
     if args.workers == 1:
         for d in scene_dirs:
             summaries.append(rebuild_scene(d, *jobs))

@@ -568,3 +568,14 @@ and the dev200 notebooks.
   (`analyses/`). Three pre-registered tests were run, and none confirmed its hypothesis (`pipeline_tests.md`). The
   analysis scripts read the predictions from `results/` instead of the folders they were first run from, and
   `explore200_v3.ipynb` is the version that ran, not a later local edit of it.
+- 2026-11-24: `pipeline_scorecard.py` changes, so that it can compare sheets made on all 128 frames (the pipeline's
+  new default, `tasks/2026-11-24-dense-tracking.md`) with 16-frame ones:
+  - "rows seen in only one frame" now counts the VLM's 16 frames as the prompt counts them (`mvp.benchmarks.scene_sheet`,
+    visibility `auto`), and on 16-frame sheets every number is unchanged (checked against the script at `87f3685` on
+    the 50 dev scenes)
+  - new measures: rows per unique object, and the share of unique objects with two or more rows
+  - new option `--scale oracle`: the priors scale's calibration was fitted on fragmented 16-frame rows, so it does not
+    hold for whole-object rows
+
+  Nothing registered here changes. `milestone4_video.py` keeps the original tracking as its default, and
+  `rerun_detection.patch_tracker` still applies to it (`tests/test_openvocab_adapter.py`).

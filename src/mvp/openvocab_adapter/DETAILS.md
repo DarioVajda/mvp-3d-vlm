@@ -318,22 +318,43 @@ The question is one string and doesn't have to be one of the scene's `questions.
 | Prompts | `prompt_object_extractor.py` picks the SAM 3 prompts: the physical things the question names. If it finds none, its syntactic mode is tried instead (every noun phrase). If that finds none either, `objects.csv` has only its header row, and `cameras.csv` is written as usual |
 | Geometry | `adapt_vggt.py` validates the saved cameras and dense depth and writes them in OpenVocab-4D's format. The dense depth is read from `data/vggt/<dataset>/<scene>/` (or `--dense-dir`, or `$DENSE_ROOT`). Without it the script stops, unless `--patch-depth-fallback` is given (see below) |
 | SAM 3 | `sam3_infer.py` segments every prompt in every selected frame |
-| Tracking | OpenVocab-4D's track stage links the masks into objects, with DINOv2 re-identification. The fuse stage is not run, because the scene sheet only needs the tracks |
+| Tracking | OpenVocab-4D's track stage links the masks into objects: a detection continues the track whose 3D points it overlaps (`--association overlap`), or a farther one it looks like (DINOv2 re-identification). The fuse stage is not run, because the scene sheet only needs the tracks |
 | Sheet | `scene_sheet_creator.py` writes the two CSVs, with the size columns and one 0/1 column per frame |
 
-**Defaults that differ from the comparison:** 16 frames uniformly sampled from the 128 (`subset:uniform16` of
-`meta.json`, the frames the VLM sees with `--sampling uniform128`; the comparison uses 64), and re-identification on
-(the comparison ran with `--no-reid`). So a sheet from this script is not expected to equal the comparison's sheet for
-the same scene. `--frames half --no-reid` gives the comparison's settings, and `--frames all` uses all 128 frames.
+**Defaults (since 2026-11-24).**
+
+- **All 128 frames** (`--frames all`). Neighbouring frames overlap, so tracking can follow an object across the video,
+  and objects seen only briefly are found. The VLM still sees 16 of them (`--sampling uniform128`). The sheet keeps
+  all 128 frame columns; `mvp.benchmarks.scene_sheet` maps them onto the VLM's 16 when it writes the prompt (visibility
+  `nearby`: seen in the frame, or in at least 2 of the 4 frames just before it and 2 of the 4 just after).
+- **Tracking by 3D overlap** (`--association overlap`). A detection continues the track whose points it overlaps: at
+  least `--overlap-min` of its voxels (side `--voxel-frac` of the scene's median depth, about 10 cm) lie next to the
+  track's. Otherwise it may be re-identified, by appearance, within `--reid-radius-depth` scene units of the track's
+  points. After the pass, tracks of one object are joined: `--merge-overlap` for tracks seen together in at most 2
+  frames, `--duplicate-overlap` for two masks of one object.
+- **The mask-relative depth rule** (`--depth-rule mask`). A pixel counts if its depth confidence is at least the lower
+  of the sequence's `--conf-percentile` (55) and the mask's own median. A detection needs `--min-points` such pixels,
+  50 by default. The original rule (`global`, 300 pixels) dropped 38% of SAM 3's detections of named objects:
+  screens, windows, mirrors, ceiling lights and thin objects have low confidence over most of their mask.
+
+The original pipeline, which made every sheet before 2026-11-24 (`docs/scene_sheets_75.md`), is
+`--frames subset:uniform16 --association centroid --depth-rule global`. Its tracks are identical to the code's before
+the options existed. `milestone4_video.py` itself still defaults to the original rules, because the frozen runs of
+`experiments/2026-11-18-scene-sheet-formats/` call it without these options. The overlap settings are provisional,
+to be tuned on the dev scenes.
+
+**Compared with the comparison:** that one uses 64 frames (`--frames half`) and `--no-reid`. So a sheet from this
+script is not expected to equal the comparison's sheet for the same scene.
 
 The track stage drops tracks seen in too few frames, with a minimum that scales linearly with the number of frames:
 1 of 16, 2 of 64, 4 of 128 (`min_track_frames` in `milestone4_video.py`, which records the value it used in
-`tracks/summary.json`; `--min-track-frames N` there fixes it). With the default 16 frames nothing is dropped for being
-short, so an object only briefly in view still gets a row, and so can a one-frame false detection or a fragment of an
-object that tracking failed to link. Tracks made before this rule are made again from the saved masks.
+`tracks/summary.json`; `--min-track-frames N` there fixes it). With 16 frames nothing is dropped for being short, so an
+object only briefly in view still gets a row, and so can a one-frame false detection or a fragment of an object that
+tracking failed to link. With the default 128, a track needs 4 frames. Tracks made before this rule are made again from
+the saved masks.
 
-**What is kept and reused.** Everything goes to `tasks/openvocab_adapter/out/<dataset>__<scene>/subset-uniform16/`
-(`subset-uniform16` is the frame selection):
+**What is kept and reused.** Everything goes to `tasks/openvocab_adapter/out/<dataset>__<scene>/all/` (`all` is the
+frame selection; `subset-uniform16` for the 16 frames):
 
 ```
 scene/              the converted geometry (frames/, cameras.npz, depth.npz) and tracks/<prompt>.npz
@@ -344,15 +365,20 @@ sheets/<prompts>/   objects.csv, cameras.csv and question.json (the question, it
 Tracks are independent between prompts. A later question about the same scene therefore runs SAM 3 and tracking only
 for prompts that have no tracks yet, and a question that names only known objects just rebuilds the sheet. Two
 questions that name the same objects, in the same order, share one sheet folder. Tracks made with other settings
-(re-identification, SAM 3 backend, thresholds) are made again from the saved masks. `--fresh` discards the scene's
-geometry, masks and tracks first. With `--frames all`, the work goes to `out/<dataset>__<scene>/all/`, which `RUNS=all`
-of the comparison deletes too, since it uses the same folder.
+(re-identification, SAM 3 backend, thresholds, association, depth rule) are made again from the saved masks. With the
+original settings, the settings recorded are exactly those of the sheets before 2026-11-24, so their saved tracks are
+reused. `--fresh` discards the scene's geometry, masks and tracks first. `RUNS=all` of the comparison deletes
+`out/<dataset>__<scene>/all/` too, since it uses the same folder.
 
 Options (`--help` lists all of them):
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--frames` | `subset:uniform16` | 16 uniformly sampled frames of the 128, the VLM's. A preset (`half`, `eval32`, `smoke5`, `all`) or a selection such as `uniform:32`. `frame_<t>` in the sheet counts the selected frames, and `cameras.csv` names each one's image |
+| `--frames` | `all` | The 128 VGGT frames; `subset:uniform16` is the VLM's 16. A preset (`half`, `eval32`, `smoke5`, `all`) or a selection such as `uniform:32`. `frame_<t>` in the sheet counts the selected frames, and `cameras.csv` names each one's image |
+| `--association` | `overlap` | How detections join tracks: by their 3D points, or `centroid`, the original rule (3D centres within 5% of the first frame's diagonal) |
+| `--depth-rule` | `mask` | Which pixels have usable depth: `mask` (the lower of the sequence's `--conf-percentile` and the mask's own `--mask-conf-quantile`), or `global`, the original rule |
+| `--min-points` | 50 (`mask`), 300 (`global`) | Pixels of usable depth a detection needs to count in a frame |
+| `--voxel-frac`, `--overlap-min`, `--reid-radius-depth`, `--merge-overlap`, `--duplicate-overlap` | 0.065, 0.10, 0.5, 0.2, 0.6 | `--association overlap`'s settings, passed to `milestone4_video.py` (provisional) |
 | `--dense-dir` | `data/vggt/<dataset>/<scene>` | The folder with `depth.npy` and `depth_conf.npy` |
 | `--patch-depth-fallback` | off | Without the dense depth, approximate it from the export's patch points instead of stopping (also in `scene_sheet_report.py`) |
 | `--out-dir` | `<work>/sheets/<prompts>` | Where the two CSVs go |
