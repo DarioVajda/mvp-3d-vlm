@@ -454,6 +454,33 @@ every run: the 2,048-token limit changed nothing here.
     use coordinates even when they are right.
   - If a format is needed now, use csv: it is the shortest and among the best with both kinds of sheet.
 
+## Running the pipeline (pipeline_v3 to pipeline_v4)
+
+The follow-up tests of the pipeline sheet are written up in `pipeline_tests.md`. In short, none of them improved on
+video only, and the sheet made distance answers significantly worse. The steps below make pipeline_v4's sheets for a
+new set of scenes and test them, as was done for batch2_A (`prereg_batch2_A.md`, "How batch2_A's sheets are made").
+Nothing under `data/` is in git: each step says what it reads and writes. "Local" means a CPU with numpy only; model
+work (SAM 3, the tracker, Qwen) runs on Colab or the cluster.
+
+| # | Where | Step | Reads | Writes |
+|---|---|---|---|---|
+| 1 | local | `batch_inputs.py geometry --export <vggt zip> --depth <depth zip> --scenes <scene list> --dense-root data/vggt --out <inputs>` | a VGGT export and its dense-depth add-on (`vggt_vsibench_batch2.zip`, `depth_vsibench_batch2.zip`) | `data/vggt/<dataset>/<scene>/depth.npy`, `depth_conf.npy`, `frame_indices.npy`; `<inputs>/<dataset>__<scene>/subset-uniform16/scene/` (adapted cameras, frames, depth) and `questions.jsonl`; zipped as `rerun_inputs_<set>_geometry.zip` |
+| 2 | Colab CPU | `batch2_A_inputs.ipynb` (`batch_inputs.py questions`: the SAM 3 prompts, which need spaCy) | the code zip (`mvp-3d-vlm-rerun-batch2.zip`) and step 1's zip | `rerun_inputs_<set>.zip` |
+| 3 | Colab GPU | `rerun_detection_batch2_A.ipynb` (`rerun_detection.py` with `track_many.py`: SAM 3 at `3c879f3` and the tracker, settings `rerun_detection.RUNS["pipeline_v3"]`) | the code zip and step 2's zip | `runs/pipeline_v3/` on Drive, one `DONE.json` per finished scene (it resumes after a disconnect); unzip to `data/rerun/pipeline_v3_<set>` |
+| 4 | local | `pipeline_v3.py --run data/rerun/pipeline_v3_<set> --out data/rerun_sheets/pipeline_v3_<set> --scenes <scene list>` (settings `rerun_detection.FROZEN`) | step 3's tracks, `data/vggt`, VSI-Bench's gold metadata (downloaded if missing); without `--code` it builds the `src/` tree of the sizing commit `50fe543` itself | the sheets, and `<out>_unmerged` |
+| 5 | local | `dedup_sheets.py --sheets data/rerun_sheets/pipeline_v3_<set> --runs data/rerun/pipeline_v3_<set> --out data/rerun_sheets/pipeline_v3_dedup2_<set>` | step 4's sheets, step 3's track scores | the deduplicated sheets |
+| 6 | local | `trimmed_sheets.py --run data/rerun/pipeline_v3_<set> --unmerged data/rerun_sheets/pipeline_v3_<set>_unmerged --scenes <scene list> --code <src tree at 50fe543> --out data/rerun_sheets/pipeline_v3_trim10_<set>` | steps 3 and 4, `data/vggt` | the same rows with 10th–90th percentile boxes |
+| 7 | local | `relations_v4.py --sheets data/rerun_sheets/pipeline_v3_dedup2_<set> --trimmed data/rerun_sheets/pipeline_v3_trim10_<set> --runs data/rerun/pipeline_v3_<set> --scenes <scene list> --out data/rerun_sheets/pipeline_v4_<set>` | steps 3, 5 and 6, `data/vggt` | pipeline_v4's sheets in metres, `relations_v4.json`, `scales_v4.json`; zipped as `scene_sheets_pipeline_v4_<set>.zip` |
+| 8 | Colab GPU | `final_test2.ipynb` (A_video and pipeline_v4; it checks its inputs' hashes before running) | `mvp-3d-vlm.zip` (`git archive b381205`), the question ids, `explore_sheets.py`, `src/mvp/benchmarks/scene_scale.py`, step 7's zip; VSI-Bench's videos from Hugging Face | `ssf_final2_results/` (predictions, summaries, `preregistered_test.csv`) |
+| 9 | local | `analyses/analyse_final2.py <results> <this folder> data/rerun_sheets/pipeline_v4_<set>` | step 8's results, step 7's sheets | the registered results recomputed, and the exploratory analyses |
+
+Run every local step from the repository root with `PYTHONPATH=src`. The notebooks are written for batch2_A; for
+another set, change the scene list, the ids file and the zip names in their first code cell. They also pin the
+registered hashes, so a changed input stops them on purpose. `batch2_B_scenes.txt` is reserved for replicating
+pipeline_v4 unchanged (`prereg_batch2_A.md`, "Replication and pooling"). The earlier sheets (pipeline_v3,
+pipeline_v3_dedup, pipeline_v3_dedup_relations) are steps 3–5 alone, used with `confirm_v3.ipynb`, `final_test.ipynb`
+and the dev200 notebooks.
+
 ## Log
 
 <!-- Dated changes to the plan, reruns and bugs found, each with its reason. -->
@@ -534,3 +561,10 @@ every run: the 2,048-token limit changed nothing here.
   applied at render time; tables only). Its calibration constant (0.8417) and fallback (2.293 m per unit) are fitted
   on the 24 reliable scenes outside `explore200_ids.txt`'s scenes (`metric_scale.py --fit`), and an object-size
   question leaves its own class out of the scale, so its answer does not come from the prior.
+- 2026-11-24: the pipeline work after the format experiment is now in the repository: the code that makes
+  pipeline_v3 and pipeline_v4 (byte for byte as `prereg_full_method.md` and `prereg_batch2_A.md` pin it), the
+  notebooks as they ran, the pre-registration of the relative-direction test (`prereg_v3_relative_direction.md`,
+  written before its run and not committed until now), each run's predictions (`results/`) and the analyses
+  (`analyses/`). Three pre-registered tests were run, and none confirmed its hypothesis (`pipeline_tests.md`). The
+  analysis scripts read the predictions from `results/` instead of the folders they were first run from, and
+  `explore200_v3.ipynb` is the version that ran, not a later local edit of it.
