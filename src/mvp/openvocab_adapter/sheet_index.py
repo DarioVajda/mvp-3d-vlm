@@ -9,6 +9,11 @@ the pipeline sheet, and in the gold sheet, with the true answer. The gold sheets
 checks the comparison itself. Standard library only, so it runs anywhere:
 
   python src/mvp/openvocab_adapter/sheet_index.py --data-root <the exported scenes>
+  python src/mvp/openvocab_adapter/sheet_index.py --gold-only --questions data/raw/VSI-Bench/test.jsonl --out <root>
+
+--gold-only indexes gold reports alone (<dataset>__<scene>_gold.txt), for scenes with no pipeline sheets and no export:
+the questions come from --questions (VSI-Bench's format), the prompts from the gold report, and the pipeline columns
+are empty (pipeline_sheet "", pipeline_ok False). Every question of a reported scene gets a row.
 """
 import argparse
 import csv
@@ -39,33 +44,53 @@ def count(sheet, concept):
         return sum(row["concept"] == concept for row in csv.DictReader(f))
 
 
-def main():
+def scene_questions(questions_jsonl):
+    """{"<dataset>__<scene>": {question id (str): question}} from a .jsonl in VSI-Bench's format."""
+    by_scene = defaultdict(dict)
+    with open(questions_jsonl) as f:
+        for q in map(json.loads, f):
+            by_scene[f"{q['dataset']}__{q['scene_name']}"][str(q["id"])] = q
+    return by_scene
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--data-root", required=True, help="the exported scenes (scenes/<dataset>/<scene>/questions.jsonl)")
+    ap.add_argument("--data-root", help="the exported scenes (scenes/<dataset>/<scene>/questions.jsonl)")
     ap.add_argument("--out", default=str(OUT), help="the sheets' root, with reports/ in it")
-    args = ap.parse_args()
-    out, data_root = Path(args.out).resolve(), Path(args.data_root)
+    ap.add_argument("--gold-only", action="store_true", help="index the gold reports alone (see above)")
+    ap.add_argument("--questions", help="--gold-only: the questions, a .jsonl in VSI-Bench's format")
+    args = ap.parse_args(argv)
+    if args.gold_only != bool(args.questions) or args.gold_only == bool(args.data_root):
+        ap.error("give --data-root, or --gold-only with --questions")
+    out = Path(args.out).resolve()
+    first = "gold" if args.gold_only else "pipeline"
+    by_scene = scene_questions(args.questions) if args.gold_only else None
 
     index, counting = [], defaultdict(list)
-    for report in sorted((out / "reports").glob("*_pipeline.txt")):
-        name = report.name[:-len("_pipeline.txt")]
+    for report in sorted((out / "reports").glob(f"*_{first}.txt")):
+        name = report.name[:-len(f"_{first}.txt")]
         dataset, scene = name.split("__", 1)
-        with open(data_root / "scenes" / dataset / scene / "questions.jsonl") as f:
-            questions = {str(q["id"]): q for q in map(json.loads, f)}
-        reports = {s: read_report(out / "reports" / f"{name}_{s}.txt") for s in SOURCES}
+        if args.gold_only:
+            questions = by_scene[name]
+            assert questions, f"{name}: no questions in {args.questions}"
+        else:
+            with open(Path(args.data_root) / "scenes" / dataset / scene / "questions.jsonl") as f:
+                questions = {str(q["id"]): q for q in map(json.loads, f)}
+        sources = ("gold",) if args.gold_only else SOURCES
+        reports = {s: read_report(out / "reports" / f"{name}_{s}.txt") if s in sources else {} for s in SOURCES}
         for qid, q in questions.items():
             row = {"id": qid, "scene": f"{dataset}/{scene}", "question_type": q["question_type"],
                    "question": q["question"], "options": " | ".join(q.get("options") or []),
-                   "ground_truth": q["ground_truth"], "prompts": reports["pipeline"].get(qid, ("",))[0]}
+                   "ground_truth": q["ground_truth"], "prompts": reports[first].get(qid, ("",))[0]}
             for s in SOURCES:
                 _, ok, sheet = reports[s].get(qid, ("", False, ""))
                 row[f"{s}_sheet"] = str(Path(sheet).resolve().relative_to(out)) if sheet else ""
                 row[f"{s}_ok"] = ok
             index.append(row)
             match = COUNT_QUESTION.match(q["question"])
-            if q["question_type"] == "object_counting" and match and row["pipeline_sheet"] and row["gold_sheet"]:
+            if q["question_type"] == "object_counting" and match and all(row[f"{s}_sheet"] for s in sources):
                 truth = int(float(q["ground_truth"]))
-                for s in SOURCES:
+                for s in sources:
                     counting[s].append((f"{dataset}/{scene}", match.group(1), truth,
                                         count(out / row[f"{s}_sheet"], match.group(1))))
 

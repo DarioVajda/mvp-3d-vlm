@@ -37,6 +37,7 @@ import question_scene_sheet  # noqa: E402
 import reconstruct_pipeline  # noqa: E402
 import scene_sheet_creator  # noqa: E402
 import scene_sheet_report  # noqa: E402
+import sheet_index  # noqa: E402
 
 sys.path.insert(0, str(common.TRACK_A))
 from saved_masks import SavedMasks  # noqa: E402
@@ -1449,6 +1450,53 @@ class SceneSheetReport(unittest.TestCase):
         self.assertEqual([r["id"] for r in results], [0, 2])
         results, _ = self.report(source="gold", limit=1)
         self.assertEqual([r["id"] for r in results], [0])
+
+    def test_a_prompts_file_replaces_the_extractor(self):
+        given = self.root / "prompts.jsonl"
+        given.write_text("".join(json.dumps({"id": i, "prompts": p, "prompt_mode": "given"}) + "\n"
+                                 for i, p in [(0, ["table"]), (2, ["chair", "lamp"])]))
+        with mock.patch.object(question_scene_sheet, "extract_prompts", side_effect=AssertionError("extracted")):
+            results, text = self.report(source="gold", prompts=scene_sheet_report.read_prompts(given))
+        self.assertEqual([r["prompts"] for r in results], [["table"], None, ["chair", "lamp"]])
+        self.assertEqual([r["ok"] for r in results], [True, False, True])
+        self.assertIn("prompts:  table  (given)", text)
+        self.assertIn("no prompts for question 1 in the prompts file", text)
+        self.assertEqual(results[2]["counts"], {"chair": 2, "lamp": 0})
+
+    def test_gold_only_index_from_gold_reports_and_a_questions_file(self):
+        out = self.root / "out"
+        (out / "reports").mkdir(parents=True)
+        questions = self.root / "test.jsonl"
+        extra = [{"id": 7, "dataset": "scannet", "scene_name": "s2", "question_type": "object_counting",
+                  "question": "How many chair(s) are in this room?", "ground_truth": "1"}]
+        self.write_questions(questions, "s1", extra)
+        rows = [json.loads(line) for line in questions.read_text().splitlines()]
+        for row in rows:
+            row.setdefault("ground_truth", "2")
+        questions.write_text("".join(json.dumps(r) + "\n" for r in rows))
+        prompts = {"0": (["chair", "table"], "full"), "1": (["coat rack"], "full"), "2": (["lamp", "chair"], "full"),
+                   "7": (["chair"], "full")}
+        for scene in ("s1", "s2"):
+            with open(out / "reports" / f"scannet__{scene}_gold.txt", "w") as f, \
+                    contextlib.redirect_stderr(io.StringIO()):
+                scene_sheet_report.report(scene, source="gold", questions=questions, work_dir=out / f"scannet__{scene}" / "gold",
+                                          gold_dir=self.gold, out=f, prompts=prompts)
+        with contextlib.redirect_stdout(io.StringIO()) as printed:
+            sheet_index.main(["--gold-only", "--questions", str(questions), "--out", str(out)])
+        index = read_csv(out / "index.csv")
+        self.assertEqual([(r["id"], r["scene"]) for r in index],
+                         [("0", "scannet/s1"), ("1", "scannet/s1"), ("2", "scannet/s1"), ("7", "scannet/s2")])
+        self.assertEqual([r["prompts"] for r in index], ["chair, table", "coat rack", "lamp, chair", "chair"])
+        self.assertTrue(all(r["gold_ok"] == "True" and r["pipeline_ok"] == "False" and r["pipeline_sheet"] == ""
+                            for r in index))
+        self.assertEqual(index[0]["gold_sheet"], "scannet__s1/gold/sheets/chair+table")
+        self.assertTrue((out / index[3]["gold_sheet"] / "objects.csv").is_file())
+        self.assertIn("gold rows of the asked class vs the true count, 1 counting questions:\n  exact 1",
+                      printed.getvalue())
+        for bad in ([], ["--gold-only"], ["--questions", str(questions)],
+                    ["--gold-only", "--questions", str(questions), "--data-root", str(self.data)]):
+            with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+                sheet_index.main(bad + ["--out", str(out)])
 
     def test_gold_check_catches_a_wrong_sheet(self):
         info = scene_sheet_creator.load_gold_scene("scannet/s1", self.gold)[1]

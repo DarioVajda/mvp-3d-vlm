@@ -35,6 +35,10 @@ VSI-Bench's format (data/raw/VSI-Bench/test.jsonl, which is tried last for a gol
   slurm/submit.sh -J sheet_report -t 02:00:00 -- .venv-ov4d/bin/python src/mvp/openvocab_adapter/scene_sheet_report.py \
       scannet/scene0025_01
 
+--prompts takes each question's prompts from a .jsonl of {"id", "prompts", "prompt_mode"} (written where spaCy runs, e.g.
+by an earlier report or prompt_object_extractor.py) instead of extracting them, so that a gold report then needs numpy
+only; a question it does not list fails.
+
 The report goes to stdout; the steps' own logs go to stderr (add 2> log.txt to keep them apart). Work is kept and
 reused as in question_scene_sheet.py, so a second report of the same scene only rebuilds the sheets. Exit status 1 if
 any sheet failed.
@@ -204,9 +208,17 @@ def gold_sheet(scene, question, prompts, mode, work_dir=None, gold_dir=None, inf
     return problems, counts, [objects_csv, out / "sheet.json"]
 
 
+def read_prompts(path):
+    """{question id (str): (prompts, prompt mode)} from a --prompts .jsonl."""
+    with open(path) as f:
+        return {str(r["id"]): (r["prompts"], r["prompt_mode"]) for r in map(json.loads, f) if r}
+
+
 def report(scene, source="pipeline", data_root=None, questions=None, work_dir=None, gold_dir=None, types=None,
-           limit=None, out=None, **sheet_options):
+           limit=None, out=None, prompts=None, **sheet_options):
     """Print the report of a scene's questions to out (default stdout). Returns one result dict per question.
+
+    prompts: {question id (str): (prompts, prompt mode)} to use instead of extracting them (read_prompts).
 
     sheet_options go to question_scene_sheet.create_scene_sheet (pipeline only); the command line passes none but
     --dense-dir and --patch-depth-fallback, so that the sheets have the default settings.
@@ -242,14 +254,19 @@ def report(scene, source="pipeline", data_root=None, questions=None, work_dir=No
         print(f"  question: {question}", file=out, flush=True)
         result = {"id": row.get("id"), "question": question, "prompts": None, "problems": [], "files": []}
         try:
-            prompts, mode = question_scene_sheet.extract_prompts(question)
-            result.update(prompts=prompts, prompt_mode=mode)
-            print(f"  prompts:  {', '.join(prompts) if prompts else '(none)'}  ({mode})", file=out, flush=True)
+            if prompts is None:
+                names, mode = question_scene_sheet.extract_prompts(question)
+            elif str(row.get("id")) in prompts:
+                names, mode = prompts[str(row.get("id"))]
+            else:
+                raise ValueError(f"no prompts for question {row.get('id')} in the prompts file")
+            result.update(prompts=names, prompt_mode=mode)
+            print(f"  prompts:  {', '.join(names) if names else '(none)'}  ({mode})", file=out, flush=True)
             if source == "gold":
-                problems, counts, files = gold_sheet(scene, question, prompts, mode, work_dir, gold_dir, info)
+                problems, counts, files = gold_sheet(scene, question, names, mode, work_dir, gold_dir, info)
             else:
                 options = {"data_root": data_root, "work_dir": work_dir, **sheet_options}
-                problems, counts, files = pipeline_sheet(scene, question, prompts, **options)
+                problems, counts, files = pipeline_sheet(scene, question, names, **options)
             result.update(problems=problems, counts=counts, files=[str(f) for f in files])
         except SystemExit as error:  # the steps stop with sys.exit("[question] ...") and their reason
             result["problems"] = [f"not made: {error.code}"]
@@ -296,15 +313,18 @@ def main(argv=None):
                                       "tasks/openvocab_adapter/out/<dataset>__<scene>/subset-uniform16, or "
                                       ".../gold)")
     p.add_argument("--gold-dir", help="gold: folder with VSI-Bench's metadata (default: as scene_sheet_creator.py)")
+    p.add_argument("--prompts", help='a .jsonl of {"id", "prompts", "prompt_mode"}: use these prompts instead of '
+                                     "extracting them (then spaCy is not needed)")
     args = p.parse_args(argv)
     missing = [m for m in ("spacy", "nltk", "en_core_web_md") if importlib.util.find_spec(m) is None]
-    if missing:  # fail here, not once per question
+    if missing and not args.prompts:  # fail here, not once per question
         p.error(f"the prompt extractor needs {', '.join(missing)} in this Python; see prompt_object_extractor.py")
     options = ({"dense_dir": args.dense_dir, "patch_depth_fallback": args.patch_depth_fallback}
                if args.source == "pipeline" else {})
     try:
         results = report(args.scene, args.source, args.data_root, args.questions, args.work_dir, args.gold_dir,
-                         args.types, args.limit, **options)
+                         args.types, args.limit, prompts=read_prompts(args.prompts) if args.prompts else None,
+                         **options)
     except (ValueError, RuntimeError) as error:
         p.error(str(error))
     return 0 if all(r["ok"] for r in results) else 1
