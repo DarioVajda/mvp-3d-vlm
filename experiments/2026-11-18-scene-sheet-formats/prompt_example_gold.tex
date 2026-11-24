@@ -1,0 +1,39 @@
+% Needs \usepackage{listings,xcolor}. Written by make_prompt_figures.py from the eval's own rendering of VSI-Bench
+% question 3159; grey text marks what is not shown.
+\providecommand{\promptnote}[1]{{\color{gray}\itshape[#1]}}
+\lstdefinestyle{promptbox}{basicstyle=\ttfamily\scriptsize, frame=single, framesep=4pt, breaklines=true,
+  breakatwhitespace=false, columns=fullflexible, keepspaces=true, escapeinside={(*@}{@*)},
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space}}
+\begin{figure}[t]
+\begin{lstlisting}[style=promptbox]
+(*@\promptnote{16 video frames, 1.4\,s -- 42.8\,s}@*)
+These are frames of a video.
+Scene sheet. Positions x, y, z are object centres in metres, with the z axis pointing up. size_x, size_y and size_z are each object's extent along x, y and z, in metres.
+id,label,x,y,z,size_x,size_y,size_z
+chair_1,chair,-1.332,0.672,-0.091,0.572,0.537,0.568
+chair_2,chair,2.161,-1.560,-0.072,0.359,0.585,0.768
+(*@\promptnote{\ldots\ chair\_3 to chair\_18: 16 more chairs}@*)
+door_1,door,2.923,-0.311,0.039,0.282,0.716,1.476
+table_1,table,0.738,0.732,-0.021,1.290,3.107,0.089
+table_2,table,-1.568,1.210,-0.150,0.375,0.415,0.558
+trash_bin_1,trash bin,0.595,-1.719,-0.488,0.278,0.221,0.401
+window_1,window,-1.360,2.866,0.457,0.156,1.369,0.966
+window_2,window,2.618,-1.055,0.195,0.243,1.373,1.707
+Relations between the objects the question names, from the sheet above (distance between the closest points of their boxes, in metres):
+object_a,object_b,distance
+window_1,table_1,1.375
+window_1,table_2,0.764
+window_1,door_1,4.591
+(*@\promptnote{\ldots\ 118 more pairs}@*)
+Distance from each candidate to the nearest trash bin (closest points, metres): window 1.762; table 0.818; door 2.253; chair 0.214. Closest to the trash bin: chair.
+Measuring from the closest point of each object, which of these objects (window, table, door, chair) is the closest to the trash bin?
+Options:
+A. window
+B. table
+C. door
+D. chair
+Answer with the option's letter from the given choices directly.
+\end{lstlisting}
+\caption{The same question (3159) with the gold scene sheet and its relations (condition C): VSI-Bench's labelled objects instead of the pipeline's. \texttt{x, y, z} are box centres and \texttt{size\_x, size\_y, size\_z} box extents, in metres in the dataset's world frame (z up); gold sheets have no timestamps. The relation table gives the closest-point distance between every two objects of the named classes, and the relation line each candidate's distance to the nearest reference object. Grey text is not part of the prompt; left out: 16 of the 24 sheet rows, 118 of the 121 distance pairs.}
+\label{fig:prompt-gold}
+\end{figure}
