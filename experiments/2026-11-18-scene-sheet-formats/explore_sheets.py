@@ -21,7 +21,13 @@
 As the eval's entry point, `python explore_sheets.py <mvp.eval.vsibench arguments>` runs mvp.eval.vsibench with the
 pipeline preamble replaced by EXPLORE_PREAMBLE (if set) and, with EXPLORE_RELATIONS=1, the relations appended to every
 rendered sheet (EXPLORE_RELATIONS=closest: closest-point distances); EXPLORE_INTERVALS=1 writes pipeline sheets with
-visible intervals and EXPLORE_SHUFFLE=1 shuffles gold sheets' rows. Nothing else in the eval changes.
+visible intervals and EXPLORE_SHUFFLE=1 shuffles gold sheets' rows. pipeline_v3's fixes (fix_sheet):
+EXPLORE_UNDETECTED=1 adds a line naming the question's objects that have no row in the pipeline sheet, telling
+the model to use the video for them; EXPLORE_NO_SIZE=size_questions leaves the size columns out of an
+object-size question's pipeline sheet. EXPLORE_RELATIONS=v3 (pipeline_v3_dedup_relations, relation_text) appends,
+for relative-direction questions, the direction the sheet's rows imply and, for absolute and relative distance
+questions, the closest-point distances between the named objects. EXPLORE_RELATIONS=v4 (pipeline_v4) appends each
+question's relations from relations_v4.json in the sheets folder (relations_v4.py). Nothing else in the eval changes.
 
   PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/explore_sheets.py  # see sheet_quality.py --v2
 """
@@ -30,6 +36,7 @@ import itertools
 import json
 import os
 import random
+import re
 import shutil
 from pathlib import Path
 
@@ -449,12 +456,140 @@ def render_shuffled(question_id, root, vggt_root, seed=SHUFFLE_SEED):
     return ss.render_objects(objects, "gold", "csv")
 
 
+# ---- the sheet fixes of pipeline_v3: objects not detected, and no sizes for object-size questions ----
+
+UNDETECTED = ("Not detected: {}. The question names these objects but the scene sheet has no row for them; use the "
+              "video for them.")
+SIZE_COLUMNS = ("size_x", "size_y", "size_z", "size")
+
+
+def named_objects(question):
+    """The objects a question names: its prompts (from the question's text) without "room"; none for room size."""
+    if question["question_type"] == "room_size_estimation":
+        return []
+    return [p.strip() for p in question["prompts"].split(",") if p.strip() and p.strip() != "room"]
+
+
+def undetected(question_id, root):
+    """The UNDETECTED line for the question's named objects that have no row in its pipeline sheet, or ""."""
+    from mvp.benchmarks import scene_sheet as ss
+    question = ss.load_index(Path(root))[int(question_id)]
+    rows, _ = read_csv(Path(root) / question["pipeline_sheet"] / "objects.csv")
+    have = {r["concept"] for r in rows}
+    missing = [c for c in dict.fromkeys(named_objects(question)) if c not in have]
+    return UNDETECTED.format(", ".join(missing)) if missing else ""
+
+
+def without_sizes(text):
+    """A rendered csv sheet without its size columns and the preamble's sentence about them. A sheet with no rows
+    (scene_sheet writes a sentence instead of the table) loses the sentence only."""
+    head, sep, table = text.partition("\nid,")
+    head = re.sub(r"size_x, size_y and size_z are [^.]*\. ", "", head)
+    if not sep:
+        return head
+    lines = [r for r in ("id," + table).split("\n") if r]
+    keep = [i for i, c in enumerate(lines[0].split(",")) if c not in SIZE_COLUMNS]
+    return head + "\n" + "\n".join(",".join(r.split(",")[i] for i in keep) for r in lines)
+
+
+def fix_sheet(text, question_id, source, root, undetected_note=False, no_size=False):
+    """A rendered pipeline sheet with pipeline_v3's fixes: for an object-size question no sizes (no_size), and the
+    UNDETECTED line (undetected_note). Other sources are returned as they are."""
+    if source != "pipeline" or not (undetected_note or no_size):
+        return text
+    from mvp.benchmarks import scene_sheet as ss
+    question = ss.load_index(Path(root))[int(question_id)]
+    if no_size and question["question_type"] == "object_size_estimation":
+        text = without_sizes(text)
+    note = undetected(question_id, root) if undetected_note else ""
+    return text + ("\n" + note if note else "")
+
+
+# ---- pipeline_v3_dedup_relations: the relation mode "v3" ----
+
+DIRECTION_TYPES = {"object_rel_direction_easy", "object_rel_direction_medium", "object_rel_direction_hard"}
+DISTANCE_TYPES = {"object_abs_distance", "object_rel_distance"}
+
+
+def direction_word(question_type, by, facing, target):
+    """The direction a relative-direction question asks for, from three positions in a pipeline sheet's camera frame
+    (x right, y down, z forward), on the floor plane (x, z) seen from above: standing at `by` and facing `facing`,
+    where `target` is. Easy: left or right of `facing`; medium: left, right, or back (turning at least 135 degrees);
+    hard: front-left, front-right, back-left or back-right."""
+    flat = lambda v: np.array([v[0], v[2]])
+    right = lambda f: np.array([f[1], -f[0]])
+    f = flat(facing) - flat(by)
+    if question_type.endswith("easy"):
+        return "right" if (flat(target) - flat(facing)) @ right(f) > 0 else "left"
+    t = flat(target) - flat(by)
+    side = "right" if t @ right(f) > 0 else "left"
+    cos = float(t @ f / (np.linalg.norm(t) * np.linalg.norm(f) + 1e-12))
+    if question_type.endswith("medium"):
+        return "back" if np.degrees(np.arccos(np.clip(cos, -1, 1))) >= 135 else side
+    return ("front-" if t @ f > 0 else "back-") + side
+
+
+def direction_relation(question, root, source="pipeline"):
+    """For a relative-direction question whose sheet has each of its three objects exactly once: the direction those
+    rows imply, as a sentence; otherwise ""."""
+    m = re.search(r"standing by the (.+?) and facing the (.+?), is the (.+?) (?:to (?:my|the)|in)", question["question"])
+    if not m:
+        return ""
+    by, facing, target = m.groups()
+    folder = question["gold_sheet"] if source == "gold" else question["pipeline_sheet"]
+    rows = read_csv(Path(root) / folder / "objects.csv")[0]
+    pos = {}
+    for name in (by, facing, target):
+        mine = [r for r in rows if r["concept"] == name]
+        if len(mine) != 1:
+            return ""
+        pos[name] = np.array([float(mine[0][k]) for k in POS])
+    word = direction_word(question["question_type"], pos[by], pos[facing], pos[target])
+    where = f"to the {word} of the {facing}" if question["question_type"].endswith("easy") else f"to your {word}"
+    return (f"Direction from the sheet's positions (the floor seen from above): standing by the {by} and facing the "
+            f"{facing}, the {target} is {where}.")
+
+
+V4_RELATIONS = "relations_v4.json"
+_v4_cache = {}
+
+
+def v4_relations(root):
+    """{question id: relations} that relations_v4.py wrote in the sheets folder."""
+    path = Path(root) / V4_RELATIONS
+    if path not in _v4_cache:
+        _v4_cache[path] = {int(q): text for q, text in json.loads(path.read_text()).items()}
+    return _v4_cache[path]
+
+
+def relation_text(question, root, source, mode):
+    """The relations appended to a sheet: relations() for "centre" and "closest"; for "v3", the direction for
+    relative-direction questions (direction_relation) and the closest-point distances for absolute and relative
+    distance questions (relations, "closest"), only when the sheet has a row for every object the question names;
+    nothing for other questions. For "v4", the question's relations in relations_v4.json (relations_v4.py), or
+    nothing."""
+    if mode == "v4":
+        return v4_relations(root).get(int(question["id"]), "") if source == "pipeline" else ""
+    if mode != "v3":
+        return relations(question, root, source, mode)
+    if question["question_type"] in DIRECTION_TYPES:
+        return direction_relation(question, root, source)
+    if question["question_type"] in DISTANCE_TYPES:
+        folder = question["gold_sheet"] if source == "gold" else question["pipeline_sheet"]
+        have = {r["concept"] for r in read_csv(Path(root) / folder / "objects.csv")[0]}
+        if not set(named_objects(question)) <= have:
+            return ""
+        return relations(question, root, source, "closest")
+    return ""
+
+
 def render(question_id, source, fmt, root, vggt_root, preamble=None, relations_mode=None, intervals=False,
-           shuffle=False):
+           shuffle=False, undetected_note=False, no_size=False):
     """The sheet as the eval will render it for an explore condition: scene_sheet.render_sheet, with the pipeline
     preamble replaced by `preamble`; with intervals, the pipeline sheet with visible intervals (render_intervals, csv,
-    `preamble` as given); with shuffle, the gold sheet's rows shuffled (render_shuffled, csv); and with relations_mode
-    ("centre" or "closest"), the relations appended."""
+    `preamble` as given); with shuffle, the gold sheet's rows shuffled (render_shuffled, csv); with undetected_note and
+    no_size, pipeline_v3's fixes (fix_sheet); and with relations_mode ("centre", "closest" or "v3", relation_text),
+    the relations appended."""
     from mvp.benchmarks import scene_sheet as ss
     saved = ss.PREAMBLES["pipeline"]
     if preamble:
@@ -468,22 +603,26 @@ def render(question_id, source, fmt, root, vggt_root, preamble=None, relations_m
             text = ss.render_sheet(question_id, source, fmt, Path(root), vggt_root=Path(vggt_root))
     finally:
         ss.PREAMBLES["pipeline"] = saved
+    text = fix_sheet(text, question_id, source, root, undetected_note, no_size)
     if relations_mode:
-        rel = relations(ss.load_index(Path(root))[int(question_id)], root, source, relations_mode)
+        rel = relation_text(ss.load_index(Path(root))[int(question_id)], root, source, relations_mode)
         text += "\n" + rel if rel else ""
     return text
 
 
 def main():
     """mvp.eval.vsibench with EXPLORE_PREAMBLE as the pipeline preamble and, with EXPLORE_RELATIONS ("centre", or "1"
-    as gold_relations ran it, or "closest"), the relations appended to every sheet."""
+    as gold_relations ran it, or "closest", or "v3", or "v4": relation_text), the relations appended to every sheet; EXPLORE_UNDETECTED=1 and
+    EXPLORE_NO_SIZE=size_questions add pipeline_v3's fixes (fix_sheet)."""
     from mvp.benchmarks import scene_sheet as ss
     if os.environ.get("EXPLORE_PREAMBLE"):
         ss.PREAMBLES["pipeline"] = os.environ["EXPLORE_PREAMBLE"]
     from mvp.eval import vsibench
-    mode = {"1": "centre", "centre": "centre", "closest": "closest"}.get(os.environ.get("EXPLORE_RELATIONS", ""))
+    mode = {"1": "centre", "centre": "centre", "closest": "closest", "v3": "v3", "v4": "v4"}.get(os.environ.get("EXPLORE_RELATIONS", ""))
     intervals, shuffle = os.environ.get("EXPLORE_INTERVALS") == "1", os.environ.get("EXPLORE_SHUFFLE") == "1"
-    if mode or intervals or shuffle:
+    undetected_note = os.environ.get("EXPLORE_UNDETECTED") == "1"
+    no_size = os.environ.get("EXPLORE_NO_SIZE") == "size_questions"
+    if mode or intervals or shuffle or undetected_note or no_size:
         plain = vsibench.render_sheet
 
         def explore_sheet(question_id, source, fmt, root, vggt_root=None, **kw):
@@ -493,7 +632,8 @@ def main():
                 text = render_shuffled(question_id, root, vggt_root)
             else:
                 text = plain(question_id, source, fmt, root, vggt_root=vggt_root, **kw)
-            rel = relations(ss.load_index(Path(root))[int(question_id)], root, source, mode) if mode else ""
+            text = fix_sheet(text, question_id, source, root, undetected_note, no_size)
+            rel = relation_text(ss.load_index(Path(root))[int(question_id)], root, source, mode) if mode else ""
             return text + ("\n" + rel if rel else "")
         vsibench.render_sheet = explore_sheet
     vsibench.main()

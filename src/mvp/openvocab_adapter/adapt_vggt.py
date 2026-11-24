@@ -83,8 +83,10 @@ def check_cameras(checks, cams, meta):
     det = np.abs(np.linalg.det(R) - 1).max()
     checks.add("cameras: rotations are orthonormal", ortho < 1e-3, f"max |RR^T-I| = {ortho:.2e}")
     checks.add("cameras: rotations have det +1", det < 1e-3, f"max |det-1| = {det:.2e}")
+    # VGGT predicts frame 0's pose too: in vggt_vsibench_batch2, arkitscenes/42897564's frame 0 is 1.0 degree from the
+    # identity (0.017); the others are within 2e-3
     origin = max(np.abs(R[0] - np.eye(3)).max(), np.abs(t[0]).max())
-    checks.add("cameras: world frame is frame 0's camera", origin < 1e-2, f"max deviation {origin:.2e}")
+    checks.add("cameras: world frame is frame 0's camera", origin < 2e-2, f"max deviation {origin:.2e}")
 
     center = -np.einsum("tji,tj->ti", R, t)
     if "camera_center" in cams:

@@ -632,6 +632,17 @@ class MetricScale(unittest.TestCase):
         only_door = self.k(3)  # no prior class left: the fallback
         self.assertEqual((only_door["k"], only_door["fallback"]), (self.sc.FALLBACK, True))
 
+    def test_scale_rows_of_unmerged_sheets(self):
+        """Merged sheets keep the unmerged rows' sizes in SCALE_ROWS, and the scale comes from those."""
+        (self.root / "s__1/subset-uniform16" / self.sc.SCALE_ROWS).write_text(
+            json.dumps({"longest": {"door": 1.0, "chair": 0.85}}))
+        self.clear()
+        self.assertEqual(self.sc.scene_longest(str(self.root), "s/1"), {"door": 1.0, "chair": 0.85})
+        self.assertAlmostEqual(self.k(1)["k"], self.sc.CALIBRATION * float(np.median([2.0 / 1.0, 0.85 / 0.85])))
+        (self.root / "s__1/subset-uniform16" / self.sc.SCALE_ROWS).unlink()
+        self.clear()
+        self.assertEqual(self.sc.scene_longest(str(self.root), "s/1")["door"], 2.0)  # the rows again
+
     def test_render(self):
         plain = ss.load_objects(1, "pipeline", self.root, vggt_root=self.vggt)
         text = ss.render_sheet(1, "pipeline", "csv", self.root, vggt_root=self.vggt, metric_scale="priors")

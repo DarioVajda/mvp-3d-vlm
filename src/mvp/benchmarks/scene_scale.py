@@ -14,6 +14,7 @@ true one in 82% of scenes (median error 16%).
   question_scale(question_id, root) -> {"k", "classes", "left_out", "fallback"}
 """
 import csv
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -31,13 +32,22 @@ PRIORS = {"door": 2.0, "bed": 2.0, "sofa": 2.0, "refrigerator": 1.75, "chair": 0
 CALIBRATION = 0.8417
 FALLBACK = 2.293
 SIZE_QUESTION = "object_size_estimation"
+SCALE_ROWS = "scale_rows.json"  # in a scene's pipeline folder (<dataset>__<scene>/subset-uniform16/), see scene_longest
 
 
 @lru_cache(maxsize=None)
 def scene_longest(root, scene):
-    """{class: longest side of its largest row} over every pipeline sheet of the scene in index.csv, sheet units."""
+    """{class: longest side of its largest row} over every pipeline sheet of the scene in index.csv, sheet units.
+
+    If the scene's pipeline folder has SCALE_ROWS, its "longest" is used instead: sheets whose rows were merged after
+    tracking keep the unmerged rows' sizes there, as the scale (and CALIBRATION) is defined on unmerged rows, and a
+    merged row, which spans several tracks, is larger than any of them."""
     with open(Path(root) / "index.csv", newline="") as f:
         folders = sorted({r["pipeline_sheet"] for r in csv.DictReader(f) if r["scene"] == scene})
+    if folders:
+        override = Path(root) / Path(folders[0]).parts[0] / Path(folders[0]).parts[1] / SCALE_ROWS
+        if override.is_file():
+            return {c: float(v) for c, v in json.loads(override.read_text())["longest"].items()}
     out = {}
     for folder in folders:
         with open(Path(root) / folder / "objects.csv", newline="") as f:
