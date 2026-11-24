@@ -127,7 +127,7 @@ paper backs as an assumption. -->
 | Format | csv | Among the best and the shortest in the format experiment; the pilot's format |
 | Relations | Closest-point distances (`--sheet-source gold_relations`, the same text as the pilot's `gold_relations_v2`) | VSI-Bench's distance questions measure between closest points (Background) |
 | Which questions get relations | As `gold_relations_v2`, unchanged: the table of distances between every two objects of different named classes for every question whose gold sheet has at least two of them (3,210 of 5,130; 1,992 of the 2,728); the closest-point answer line only for absolute- and relative-distance questions | The pilot's and structured-cot's condition; distance types and the other types with relations are reported apart (Metrics) |
-| Gold sheets | Built again for all 288 scenes with the current code (`build_gold_sheets.py`, into `tasks/openvocab_adapter/out_full`), the 75 scenes included; not the 75-scene sheets of `run_sheets.sh` | One build, from one commit, for every question keeps the full run and the fallback the same, whichever copy of the 75-scene sheets a machine has. Since `980cf00` a gold box is turned to fit its object; a local copy of the 75-scene sheets (`data/scene_sheets_75`) was built before it, with larger axis-aligned extents (2,643 of its 2,728 `objects.csv` differ in the sizes, none in the positions). structured-cot's sheets were not that copy: its answers follow the rebuilt sheets (Log, the explore200 preview) |
+| Gold sheets | Built again for all 288 scenes with the current code (`build_gold_sheets.py`, into `tasks/openvocab_adapter/out_full`), the 75 scenes included; not the 75-scene sheets of `run_sheets.sh` | One build, from one commit, for every question keeps the full run and the fallback the same, whichever copy of the 75-scene sheets a machine has. Since `980cf00` a gold box is turned to fit its object; `scene_sheets_75.zip` (Drive, 18 Nov, and its local copies) was built before it, with larger axis-aligned extents (2,643 of its 2,728 `objects.csv` differ in the sizes, none in the positions). Which sheets structured-cot read is not recorded; its answers fit the rebuilt sheets and not that zip (Log, the explore200 preview) |
 | Prompts | `prompts_full.jsonl`: each question's SAM 3 prompts, extracted once with spaCy 3.8 / `en_core_web_md` 3.8.0 (`extract_prompts.py`, on Colab, `prompts_full.ipynb`) | The gold sheets are then built with numpy only, the same on any machine; the prompts of the 2,728 questions are identical to the 75-scene sheets' |
 | Decoding | 2,048 new tokens, final answer scored (`--final-answer`) | The format experiment's and the pilot's settings: replies were bare answers, and the same rule scores every condition |
 | Runs | All three at one commit, none reused | The renderer has changed since the format experiment (`980cf00`, `080acf4`, `6642c48`) |
@@ -203,7 +203,7 @@ training: none
 | The relations state the answer to most distance questions | C near 100 on absolute and relative distance | C − B there measures copying a given number; read the other types with relations apart |
 | Closest-point distances treat each box as axis-aligned (its fitted sides matched to the world axes), so they can be off for objects at an angle | C's absolute-distance errors concentrated on large or diagonal objects | Stated; the pilot's 5 checks are the only evidence |
 | The relations lengthen the prompt (one line per pair of objects: up to 48k characters, 45 questions over 10k, all relative distance in ScanNet++ rooms with many chairs and ceiling lights) | Input tokens in C, and C − B lower where the relations are longest | Report tokens; break down by relation lines if needed |
-| The gold sheets differ from the ones the pilot used | — | structured-cot's sheets give the same answers as the rebuild on its 200 questions (Log); the 40-question pilot's sheets were not checked. Their numbers (67.3, 62.7) motivate the plan; they are not baselines for these runs |
+| The gold sheets differ from the ones the pilot used | — | A fresh run on the rebuilt sheets gives structured-cot's answers on its 200 questions (Log), though which sheets structured-cot read is not recorded; the 40-question pilot's sheets were not checked. Their numbers (67.3, 62.7) motivate the plan; they are not baselines for these runs |
 | The pilot's conditions are among these questions | — | 40 of 5,130 (of 2,728 in the fallback); the pilot motivates the plan, it is not a result here |
 | structured-cot ran the same conditions on 200 of these questions | — | 200 of 5,130 (4%; 7% of the fallback's 2,728); reported in Background, not reused, and every run here is new |
 | The model copies relations, so C on distance questions is set by the relations' accuracy | C near 100 on absolute and relative distance | Read C − B on the other types with relations apart; that is the comparison about using relations |
@@ -353,13 +353,22 @@ Not run yet.
   - Building the 75 scenes again and comparing with a local copy of their sheets (`data/scene_sheets_75`) showed
     that this copy predates `980cf00`, which fitted the gold boxes to their objects: the positions are the same, the
     extents differ in 2,643 of 2,728 sheets. The runs use the new build for every question, the fallback included.
-    (The next entry shows that structured-cot did not use this copy.)
+    (The next entry: structured-cot's answers do not fit this copy.)
 - 2026-11-24, a preview, not a result of this experiment: `preview_explore200.ipynb` (Colab, one L4) ran B and C on
   structured-cot's 200 explore200 questions with the gold sheets rebuilt at `87f3685` (the README's hashes), reusing
-  structured-cot's video-only run after checking that its frames and input lengths are this code's. Both runs equal
-  structured-cot's `gold_csv.jsonl` and `gold_relations.jsonl` byte for byte (every answer and input length; B 52.1,
-  C 62.7 overall). structured-cot's answers had already followed the rebuilt sheets: 25 of 25 absolute-distance
-  answers in C equal the rebuilt closest-point distance (1 of 25 the older copy's), and in the 19 size questions where
-  the two differ, 8 answers in B equal a rebuilt box size (0 the older copy's). So the earlier entry's statement that
-  structured-cot's numbers came from older sheets was wrong; the 40-question pilot's sheets were not checked. No
-  condition, setting or question changed.
+  structured-cot's video-only run after checking that its frames and input lengths are this code's.
+  - The runs started from empty files (the eval reported 0 of 200 done; `.started` markers with the commit and the
+    sheets' hash) and took 3.7 and 3.8 minutes. B scored 52.1 and C 62.7 overall.
+  - Both equal structured-cot's `gold_csv.jsonl` and `gold_relations.jsonl` byte for byte: all 200 answers, input
+    lengths and frames.
+  - Which sheets structured-cot read is not recorded (its notebook takes a sheets zip by name; `run_info.json` does not
+    list it). The zip of that name on Drive, `scene_sheets_75.zip` (18 Nov, 68.6 MB; compared through a download of the same
+    date and size), predates `980cf00`: for these
+    200 questions 28 of its gold `objects.csv` equal the rebuild and 172 differ in the sizes, and B's and C's prompts
+    rendered from it differ in the same 172. structured-cot's answers fit the rebuilt sheets, not that zip: 25 of 25
+    absolute-distance answers in C equal the rebuilt closest-point distance (1 of 25 the zip's; question 783: 1.174,
+    the zip's 0.888 m), and in the 19 size questions where the two differ, 8 answers in B equal a rebuilt box size
+    (0 the zip's). So structured-cot most likely read a later sheet set with fitted extents; its outputs equal a
+    run on the rebuild, but the file it read is not identified. The earlier entry's statement that structured-cot's numbers
+    came from older sheets is withdrawn. The 40-question pilot's sheets were not checked. No condition, setting or
+    question changed.
