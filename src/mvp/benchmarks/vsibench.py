@@ -53,14 +53,22 @@ def task_of(question_type):
     return "object_rel_direction" if question_type.startswith("object_rel_direction") else question_type
 
 
-def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None):
+def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None, video=True):
     """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question.
     reasoning: "direct" (lmms-eval's prompt: answer at once) or "cot" (reason step by step first, then end on
     "Answer: X", which score_final reads; cot_prompt). sheet_kind: where the sheet comes from, its source ('pipeline'
-    or 'gold'), for cot's instructions."""
-    pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
+    or 'gold'), for cot's instructions. video=False: no video goes with the prompt (the eval's --no-video), so the
+    video sentence is left out and the prompt starts with the sheet; direct reasoning only."""
     if reasoning not in REASONING:
         raise ValueError(f"reasoning must be one of {REASONING}, not {reasoning!r}")
+    if not video:
+        if reasoning != "direct":
+            raise ValueError("without the video: direct reasoning only (the CoT instructions refer to the video)")
+        head = [] if sheet is None else [sheet]
+        if doc["question_type"] in NA_QUESTION_TYPES:
+            return "\n".join(head + [doc["question"], NA_POST_PROMPT])
+        return "\n".join(head + [doc["question"], "Options:\n" + "\n".join(doc["options"]), MCA_POST_PROMPT])
+    pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
     if reasoning == "cot":
         return "\n".join([pre, question_block(doc), cot_prompt(doc, sheet is not None, sheet_kind)])
     if doc["question_type"] in NA_QUESTION_TYPES:
@@ -83,18 +91,21 @@ def question_block(doc):
     return doc["question"] + "\nOptions:\n" + "\n".join(doc["options"])
 
 
-def build_prompt_parts(doc, layout="sit", sheet=None, reasoning="direct", sheet_kind=None):
+def build_prompt_parts(doc, layout="sit", sheet=None, reasoning="direct", sheet_kind=None, video=True):
     """(text before the video, text after the video). The chat template joins parts with no separator, so text
     before the video ends in a newline to put the first frame timestamp on its own line.
       sit:  ("", baseline)                      question after the video (lmms-eval)
       sti:  (baseline + "\n", "")               the same text moved before the video
       stit: (question_block + "\n", baseline)   question echoed: before the video, and unchanged after it
-    A scene sheet goes between the video and the question, so only with sit. reasoning and sheet_kind: build_prompt's.
+    A scene sheet goes between the video and the question, so only with sit. reasoning, sheet_kind and video:
+    build_prompt's; without the video the whole prompt is the second part, and only sit applies.
     """
     if sheet is not None and layout != "sit":
         raise ValueError("a scene sheet goes between the video and the question: layout sit only")
+    if not video and layout != "sit":
+        raise ValueError("the layouts place the question around the video: without the video, sit only")
     if layout == "sit":
-        return "", build_prompt(doc, sheet, reasoning, sheet_kind)
+        return "", build_prompt(doc, sheet, reasoning, sheet_kind, video)
     if layout == "sti":
         return build_prompt(doc, reasoning=reasoning) + "\n", ""
     if layout == "stit":

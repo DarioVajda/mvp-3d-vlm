@@ -1018,11 +1018,14 @@ SYSTEM_PROMPT = "You are a helpful assistant."
 CHAT = ("<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{pre}<|vision_start|>{video}<|vision_end|>{post}"
         "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n")
 VIDEO_PAD = "<|video_pad|>"
+# The same without the video (the eval's --no-video, QwenVL.generate_text): the user turn is the text alone.
+TEXT_CHAT = ("<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{text}<|im_end|>\n<|im_start|>assistant\n"
+             "<think>\n\n</think>\n\n")
 
 
 def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VGGT_DIR, frame_tokens=None,
                        cameras=False, time_unit="seconds", reasoning="direct", visibility="auto",
-                       step_order="move-turn", object_directions="floor", metric_scale=None):
+                       step_order="move-turn", object_directions="floor", metric_scale=None, video=True):
     """The text input the eval (mvp.eval.vsibench, --sampling uniform128 --nframes 16, layout sit) sends for this
     question with this sheet: chat template, the 8 "<t seconds>" labels of the video's frame pairs, the scene
     information (render_scene: the objects, and with cameras the cameras in the same format) after "These are frames
@@ -1031,13 +1034,16 @@ def build_sheet_prompt(question_id, source, fmt, root=SCENE_SHEETS, vggt_root=VG
 
     Each frame pair's video tokens are written as one <|video_pad|>, or as "<|video_pad|> x frame_tokens", which is
     how QwenVL.render_prompt (--print-prompt) writes them, so the two can be compared. The question comes from
-    index.csv, which gives the same prompt as VSI-Bench's test.jsonl for all 2,728 questions (checked 2026-11-18)."""
+    index.csv, which gives the same prompt as VSI-Bench's test.jsonl for all 2,728 questions (checked 2026-11-18).
+    video=False: the prompt of --no-video, the scene information and the question with no video (TEXT_CHAT)."""
     row = load_index(root)[int(question_id)]
     doc = {"question_type": row["question_type"], "question": row["question"],
            "options": row["options"].split(" | ") if row["options"] else None}
     sheet = render_scene(question_id, source, fmt, cameras, root, vggt_root, time_unit, visibility, step_order,
                          object_directions, metric_scale)
-    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, sheet_kind(source, metric_scale))
+    pre, post = build_prompt_parts(doc, "sit", sheet, reasoning, sheet_kind(source, metric_scale), video)
+    if not video:
+        return TEXT_CHAT.format(system=SYSTEM_PROMPT, text=pre + post)
     # the video's labels are the pipeline frames' timestamps, whichever sheet goes in, and always in seconds
     times = frame_timestamps((Path(root) / row["pipeline_sheet"]).parents[1] / "scene", row["scene"], Path(vggt_root))
     pad = VIDEO_PAD if frame_tokens is None else f"{VIDEO_PAD} x {frame_tokens}"

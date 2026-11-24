@@ -1,0 +1,35 @@
+% Needs \usepackage{listings,xcolor}. Written by make_prompt_figures.py from the eval's own rendering of VSI-Bench
+% question 3159; grey text marks what is not shown.
+\providecommand{\promptnote}[1]{{\color{gray}\itshape[#1]}}
+\lstdefinestyle{promptbox}{basicstyle=\ttfamily\scriptsize, frame=single, framesep=4pt, breaklines=true,
+  breakatwhitespace=false, columns=fullflexible, keepspaces=true, escapeinside={(*@}{@*)},
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space}}
+\begin{figure}[t]
+\begin{lstlisting}[style=promptbox]
+(*@\promptnote{16 video frames, 1.4 s -- 42.8 s}@*)
+These are frames of a video.
+Scene sheet. Positions x, y, z are object centres, approximately in metres, estimated from typical object sizes. The origin is the camera of the first video frame: x points right, y down and z forward as seen from that camera. size_x, size_y and size_z are each object's extent along x, y and z, approximately in metres. first_seen is the video timestamp, in seconds, at which the object first appears, as the video's timestamps show it, and num_frames is how many of the 16 video frames it appears in.
+id,label,x,y,z,size_x,size_y,size_z,first_seen,num_frames
+chair_3,chair,0.530,-0.060,1.053,0.608,0.753,0.649,1.4,8
+table_1,table,1.325,-0.074,0.962,1.040,0.865,1.555,7.1,12
+window_1,window,3.521,-0.340,0.774,0.297,0.930,1.387,13.1,4
+door_1,door,-0.387,0.306,0.198,0.189,1.305,1.692,30.9,5
+trash_bin_1,trash bin,0.459,-0.233,1.832,0.297,0.116,0.152,30.9,2
+Relations between the objects the question names, from the sheet above (distance between the closest points of their boxes, in metres):
+object_a,object_b,distance
+window_1,table_1,1.745
+window_1,door_1,3.795
+window_1,chair_3,2.787
+(*@\promptnote{\ldots\ 7 more pairs}@*)
+Distance from each candidate to the nearest trash bin (closest points, metres): window 2.984; table 0.702; door 1.411; chair 0.588. Closest to the trash bin: chair.
+Measuring from the closest point of each object, which of these objects (window, table, door, chair) is the closest to the trash bin?
+Options:
+A. window
+B. table
+C. door
+D. chair
+Answer with the option's letter from the given choices directly.
+\end{lstlisting}
+\caption{The text Qwen3.5-2B receives after the video for one VSI-Bench question (3159, relative distance) with the pipeline\_v4 scene sheet. Each sheet row is one tracked object: \texttt{id} and \texttt{label}; \texttt{x, y, z}, its centre, and \texttt{size\_x, size\_y, size\_z}, its extent, in the coordinates of the first frame's camera (x right, y down, z forward), scaled to approximately metres from typical object sizes; \texttt{first\_seen}, the video timestamp at which it first appears; \texttt{num\_frames}, in how many of the 16 frames it is seen. For distance questions the sheet keeps one row per object the question names, then lists the closest-point distances between their boxes, and a relation line states each candidate's distance to the reference object and which is closest. Grey text is not part of the prompt; left out: 7 of the 10 distance pairs.}
+\label{fig:prompt-pipeline-v4}
+\end{figure}
