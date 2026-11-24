@@ -22,9 +22,10 @@ Do correct scene sheets, and precomputed relations, help Qwen3.5-2B on VSI-Bench
 - **Expected result:**
   - The gold sheet helps over video only (B − A > 0), almost all of it on counting, as in the format experiment; without
     counting it adds little.
-  - The relations help well beyond the gold sheet (C − B > 0), on absolute distance, relative distance, relative
-    direction, appearance order and route planning, the question types that get relations. The model uses the
-    distances it is given but does not compute them from coordinates (pilot).
+  - The relations raise the overall well beyond the gold sheet (C − B > 0), almost all of it on absolute and relative
+    distance, where they state the answer and the model copies it (pilot, structured-cot's 200 questions, the
+    pipeline tests). On relative direction, appearance order and route planning, which also get relations, C − B is
+    near 0 or negative: the model uses distances it is given but does not compute anything else from them.
 - **Results that would prove it wrong:**
   - C − B ≤ 0, or within the smallest difference that matters: the pilot's gain from the relations was noise.
   - C − B positive only on absolute and relative distance: the model copies the answer lines (the relations state the
@@ -72,6 +73,26 @@ paper backs as an assumption. -->
   question, 424 of the 428 absolute-distance questions and 28 of the 58 route-planning ones. The others name fewer
   than two classes that are in the gold sheet: counting, object size and room size, and the rest of absolute distance
   and route planning.
+- **The same three conditions on 200 questions** (`2026-11-19-structured-cot`, its direct conditions A, C and E, on
+  `explore200_ids.txt`; Colab L4, code at `7d39234`; `results/zeroshot/vsibench/structured_cot/explore200/`): video
+  only 48.6, gold sheet 52.1, gold sheet + relations 62.7. Most of the gain is on the types where the relations state
+  the answer:
+
+  | Task | Video only | Gold csv | Gold + relations |
+  |---|---:|---:|---:|
+  | Counting | 49.6 | 100.0 | 100.0 |
+  | Absolute distance | 39.6 | 26.4 | 94.8 |
+  | Relative distance | 76.0 | 64.0 | 96.0 |
+  | Relative direction | 47.2 | 56.0 | 47.7 |
+  | Appearance order | 44.0 | 36.0 | 32.0 |
+  | Route planning | 24.0 | 32.0 | 28.0 |
+
+  With 25 questions per task this is descriptive only, and these 200 questions are among the 2,728.
+- **The model copies given relations** (`experiments/2026-11-18-scene-sheet-formats/pipeline_tests.md`): with the
+  pipeline's relations it repeated the given distance in 80 of 80 absolute-distance questions and the given closest
+  object in 25 of 25 relative-distance ones, even when they were wrong. So C on the distance questions measures how
+  good the given numbers are, not whether the model reasons with them. The other types with relations (direction,
+  appearance order, route planning) are where C − B says whether relations help beyond stating the answer.
 - **Assumption:** that the gold sheet's axis-aligned boxes are close enough to the objects' shapes for closest-point
   distances; the pilot's 5 distance questions are the only check.
 
@@ -102,9 +123,12 @@ paper backs as an assumption. -->
 
 | Decision | Choice | Why |
 |---|---|---|
-| Questions | All 2,728 of the 75 exported scenes (`question_ids.txt`) | The scenes with sheets; the pilot's 40 are among them, which a sign test on 2,728 questions barely feels (1.5%) |
+| Questions | All 5,130 of VSI-Bench (288 scenes); fallback: the 2,728 of the 75 exported scenes (`question_ids.txt`) | The whole benchmark, for the report; gold sheets need only the labels, so every scene has them. The pilot's 40 and structured-cot's 200 are among them (under 5%) |
 | Format | csv | Among the best and the shortest in the format experiment; the pilot's format |
-| Relations | Closest-point distances (`gold_relations`) | VSI-Bench's distance questions measure between closest points (Background) |
+| Relations | Closest-point distances (`--sheet-source gold_relations`, the same text as the pilot's `gold_relations_v2`) | VSI-Bench's distance questions measure between closest points (Background) |
+| Which questions get relations | As `gold_relations_v2`, unchanged: the table of distances between every two objects of different named classes for every question whose gold sheet has at least two of them (3,210 of 5,130; 1,992 of the 2,728); the closest-point answer line only for absolute- and relative-distance questions | The pilot's and structured-cot's condition; distance types and the other types with relations are reported apart (Metrics) |
+| Gold sheets | Built again for all 288 scenes with the current code (`build_gold_sheets.py`, into `tasks/openvocab_adapter/out_full`), the 75 scenes included; not the 75-scene sheets of `run_sheets.sh` | Since `980cf00` a gold box is turned to fit its object; the 75-scene sheets were built before it, with axis-aligned extents, which are larger (2,643 of their 2,728 `objects.csv` differ in the sizes, none in the positions) and so give shorter closest-point distances. One build for every question keeps the full run and the fallback the same |
+| Prompts | `prompts_full.jsonl`: each question's SAM 3 prompts, extracted once with spaCy 3.8 / `en_core_web_md` 3.8.0 (`extract_prompts.py`, on Colab, `prompts_full.ipynb`) | The gold sheets are then built with numpy only, the same on any machine; the prompts of the 2,728 questions are identical to the 75-scene sheets' |
 | Decoding | 2,048 new tokens, final answer scored (`--final-answer`) | The format experiment's and the pilot's settings: replies were bare answers, and the same rule scores every condition |
 | Runs | All three at one commit, none reused | The renderer has changed since the format experiment (`980cf00`, `080acf4`, `6642c48`) |
 
@@ -117,10 +141,10 @@ Conditions table. -->
 data:
   benchmark: vsibench          # vsibench | mmsibench
   split: full                  # full (5,130 questions) | debiased (2,362) | pruned (2,768)
-  subset: experiments/2026-11-19-gold-sheet-relations/question_ids.txt  # the 2,728 questions of the 75 exported scenes
-  scenes: tasks/vggt_data/scenes.csv (75 exported, 2,728 questions)
+  subset: none                 # all 5,130 questions (fallback: question_ids.txt, the 2,728 of the 75 exported scenes)
+  scenes: all 288 (gold sheets: tasks/openvocab_adapter/out_full, from build_gold_sheets.py)
   question_types: all          # all 10
-  n_questions: 2728
+  n_questions: 5130            # fallback: 2728
 
 visual:                        # what the VLM sees of the video
   video: true
@@ -158,7 +182,7 @@ training: none
 
 ## Metrics and analysis
 
-- **Primary metric:** VSI-Bench overall (8 tasks) on the 2,728 questions, for C − B.
+- **Primary metric:** VSI-Bench overall (8 tasks) on the 5,130 questions (fallback: the 2,728), for C − B.
 - **Secondary metrics:** overall without counting; score per task and question type; parse rate
   (`compare_runs.parse_rate`, the final-answer rule); input tokens; the share of questions that get relations.
 - **Pipeline metrics:** n/a (gold sheets only).
@@ -177,9 +201,12 @@ training: none
 |---|---|---|
 | The gold sheet contains the counting answer | Counting near 98% in B and C | Read B − A and C − A without counting too |
 | The relations state the answer to most distance questions | C near 100 on absolute and relative distance | C − B there measures copying a given number; read the other types with relations apart |
-| Gold boxes are axis-aligned, so closest-point distances can be off for rotated objects | C's absolute-distance errors concentrated on large or diagonal objects | Stated; the pilot's 5 checks are the only evidence |
-| The relations lengthen the prompt (up to dozens of lines for a class with many instances) | Input tokens in C, and C − B lower where the relations are longest | Report tokens; break down by relation lines if needed |
-| The pilot's conditions are among these questions | — | 40 of 2,728; the pilot motivates the plan, it is not a result here |
+| Closest-point distances treat each box as axis-aligned (its fitted sides matched to the world axes), so they can be off for objects at an angle | C's absolute-distance errors concentrated on large or diagonal objects | Stated; the pilot's 5 checks are the only evidence |
+| The relations lengthen the prompt (one line per pair of objects: up to 48k characters, 45 questions over 10k, all relative distance in ScanNet++ rooms with many chairs and ceiling lights) | Input tokens in C, and C − B lower where the relations are longest | Report tokens; break down by relation lines if needed |
+| The gold sheets differ from the ones the pilot and structured-cot used (fitted extents, Decisions) | — | Their numbers (67.3, 62.7) motivate the plan; they are not baselines for these runs |
+| The pilot's conditions are among these questions | — | 40 of 5,130 (of 2,728 in the fallback); the pilot motivates the plan, it is not a result here |
+| structured-cot ran the same conditions on 200 of these questions | — | 200 of 5,130 (4%; 7% of the fallback's 2,728); reported in Background, not reused, and every run here is new |
+| The model copies relations, so C on distance questions is set by the relations' accuracy | C near 100 on absolute and relative distance | Read C − B on the other types with relations apart; that is the comparison about using relations |
 | The model's revision or the sheets differ from the pilot's | The smoke test's revision; the prompt check | Stated in the Log |
 
 ## Runs and cost
@@ -188,56 +215,91 @@ training: none
 environment.txt. -->
 
 All commands run from the repository root on the cluster, on `scene_sheet_formats` at a commit with this folder, in
-the project's environment. The sheets of `run_sheets.sh` are in `tasks/openvocab_adapter/out/`.
+the project's environment, with `PYTHONPATH=src` where shown. Nothing here needs spaCy or a GPU except the eval.
 
-**Checklist, before the runs:**
-
-1. **The prompts.** The full prompts of `prompt_check_ids.txt` for C, without loading the weights, checked against
-   `build_sheet_prompt` (the video's labels, the sheet and the relations, the whole prompt) with the broad-exploration
-   folder's `cluster_checks.check_prompts`:
-
-   ```bash
-   python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source gold_relations \
-       --sheet-format csv --sheets-root tasks/openvocab_adapter/out \
-       --ids experiments/2026-11-19-gold-sheet-relations/prompt_check_ids.txt --print-prompt 4 > prompts_C.txt
-   PYTHONPATH=src python -c "import sys; from pathlib import Path; sys.path.insert(0, 'experiments/2026-11-19-broad-exploration-of-approaches'); import cluster_checks as c; p = c.check_prompts(Path('prompts_C.txt').read_text(), Path('tasks/openvocab_adapter/out'), Path('data/vggt'), source='gold_relations'); print(*p, sep='\n') if p else print('OK'); sys.exit(bool(p))"
-   ```
-
-2. **20-question smoke test** of A and C, then the model revision:
-
-   ```bash
-   SMOKE="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer --ids experiments/2026-11-19-gold-sheet-relations/smoke_ids.txt"
-   python -m mvp.eval.vsibench $SMOKE --out results/_scratch/gsr_smoke/A.jsonl
-   python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv \
-       --sheets-root tasks/openvocab_adapter/out --out results/_scratch/gsr_smoke/C.jsonl
-   python experiments/2026-11-19-broad-exploration-of-approaches/cluster_checks.py smoke \
-       results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
-   python experiments/2026-11-19-broad-exploration-of-approaches/cluster_checks.py revision Qwen/Qwen3.5-2B \
-       results/zeroshot/vsibench/gold_sheet_relations/model_revision.txt
-   ```
-
-**The 3 runs**, one command per condition. They are independent and each resumes from its `--out` file if stopped:
+**1. Inputs (CPU, about a minute).** VSI-Bench's questions must be the version the prompts were taken from, and every
+scene needs VGGT's frame indices (`--sampling uniform128`):
 
 ```bash
-COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer --ids experiments/2026-11-19-gold-sheet-relations/question_ids.txt"
-OUT=results/zeroshot/vsibench/gold_sheet_relations
-SHEETS=tasks/openvocab_adapter/out
+shasum -a 256 data/raw/VSI-Bench/test.jsonl   # aa3ff8cc2010e555f4f865ff96483812ec0b275005b68562f53bb114ad4db9db
+ls data/vggt/*/*/frame_indices.npy | wc -l     # 288
+G=experiments/2026-11-19-gold-sheet-relations
+PYTHONPATH=src python $G/build_gold_sheets.py --questions data/raw/VSI-Bench/test.jsonl \
+    --prompts $G/prompts_full.jsonl --out tasks/openvocab_adapter/out_full
+PYTHONPATH=src python $G/check_sheets.py --sheets-root tasks/openvocab_adapter/out_full --questions data/raw/VSI-Bench/test.jsonl
+```
+
+`build_gold_sheets.py` must end with `sheets failed: 0` and these two SHA-256, which a local build gave (twice, the same):
+
+```
+index.csv sha256 22e0ee1ed3400a5ca59bc49c3791f433265115b4301c183b9772e4e014f5573c
+objects.csv sha256 bc0214c926be913606031474df123b2d6ee749fba39f799d56f4e8b1b21f41a5
+```
+
+`check_sheets.py` renders B and C for all 5,130 questions as the eval does and must end with `OK` (3,210 with
+relations). Locally: 288 scenes, 5,130 sheets, none failed; counting rows equal the true count in 553 of 565
+counting questions (the others are where VSI-Bench's labels and its answer disagree).
+
+**2. Checks before the runs.**
+
+- **The prompts.** The full prompts of `prompt_check_ids.txt` for C, without loading the weights, checked against
+  `build_sheet_prompt` with the format experiment's `cluster_checks.check_prompts`. It reads the video's timestamps
+  from the question's pipeline sheet folder, which only the 75-scene sheets have, so it runs on those: it checks how
+  the eval assembles the prompt, which is the same for both roots.
+
+  ```bash
+  python -m mvp.eval.vsibench --model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --sheet-source gold_relations \
+      --sheet-format csv --sheets-root tasks/openvocab_adapter/out \
+      --ids experiments/2026-11-19-gold-sheet-relations/prompt_check_ids.txt --print-prompt 4 > prompts_C.txt
+  PYTHONPATH=src python -c "import sys; from pathlib import Path; sys.path.insert(0, 'experiments/2026-11-18-scene-sheet-formats'); import cluster_checks as c; p = c.check_prompts(Path('prompts_C.txt').read_text(), Path('tasks/openvocab_adapter/out'), Path('data/vggt'), source='gold_relations'); print(*p, sep='\n') if p else print('OK'); sys.exit(bool(p))"
+  ```
+
+- **20-question smoke test** of A and C, then the model revision:
+
+  ```bash
+  SMOKE="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer --ids experiments/2026-11-19-gold-sheet-relations/smoke_ids.txt"
+  python -m mvp.eval.vsibench $SMOKE --out results/_scratch/gsr_smoke/A.jsonl
+  python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv \
+      --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/C.jsonl
+  python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py smoke \
+      results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
+  python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
+      results/zeroshot/vsibench/gold_sheet_relations_full/model_revision.txt
+  ```
+
+**3. The 3 runs on the full benchmark**, one command per condition, no `--ids`. They are independent and each resumes
+from its `--out` file if stopped:
+
+```bash
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+OUT=results/zeroshot/vsibench/gold_sheet_relations_full
+SHEETS=tasks/openvocab_adapter/out_full
 python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_A_video.jsonl
 python -m mvp.eval.vsibench $COMMON --sheet-source gold           --sheet-format csv --sheets-root $SHEETS --out $OUT/qwen3_5_2B_B_gold_csv.jsonl
 python -m mvp.eval.vsibench $COMMON --sheet-source gold_relations --sheet-format csv --sheets-root $SHEETS --out $OUT/qwen3_5_2B_C_gold_relations_csv.jsonl
 ```
 
-Record the commit each run was made at (`git rev-parse HEAD`) in the Log.
+Each must report 5,130 questions (the eval prints how many have a sheet; all do). Record the commit each run was
+made at (`git rev-parse HEAD`) in the Log.
 
 | Run | Conditions | Task or command | Output | Commit |
 |---|---|---|---|---|
-| A | A | the first command above | `results/zeroshot/vsibench/gold_sheet_relations/qwen3_5_2B_A_video.jsonl` | |
+| A | A | the first command above | `results/zeroshot/vsibench/gold_sheet_relations_full/qwen3_5_2B_A_video.jsonl` | |
 | B | B | the second | `.../qwen3_5_2B_B_gold_csv.jsonl` | |
 | C | C | the third | `.../qwen3_5_2B_C_gold_relations_csv.jsonl` | |
 
-**Cost:** about 10–15 GPU minutes in all, estimated from the format experiment, whose checks and eleven runs of the
-same model, frames and questions took 31 minutes on one B200; C's prompts are longer than B's where there are many
-objects.
+**Cost:** about 20–30 GPU minutes on one B200 for the three runs (15,390 answers) and the checks, estimated from the
+format experiment, whose checks and eleven runs of the same model and frames (30,008 answers) took 31 minutes there.
+C's longest prompts (Threats) make a few of its batches slower. Building and checking the gold sheets took under two
+minutes on a laptop CPU.
+
+### Fallback: the 75 exported scenes (2,728 questions)
+
+If the full runs are too much, the same steps with `--ids experiments/2026-11-19-gold-sheet-relations/question_ids.txt`
+added to `COMMON` and `OUT=results/zeroshot/vsibench/gold_sheet_relations`. Keep `SHEETS=tasks/openvocab_adapter/out_full`
+(step 1 still runs): its sheets of these scenes are the current code's, unlike `tasks/openvocab_adapter/out`'s
+(Decisions). About 15–20 GPU minutes with the checks (8,184 answers). These questions are a subset of the full run,
+so the fallback is not a replication of it.
 
 ## Results
 
@@ -270,3 +332,25 @@ Not run yet.
   experiment's. The prompt and smoke checks use the broad-exploration folder's `cluster_checks.py`, which checks the
   sheets' current `visible` field; the format experiment's copy still checks `first_seen`, which the sheets no longer
   have.
+- 2026-11-24, before any run of this experiment: the plan is updated with what is now known. structured-cot ran the
+  same three conditions on 200 of these questions (Background), and the pipeline tests showed that the model copies
+  given relations. So the hypothesis now expects C − B to come from the distance questions, and the threats cover
+  both. Which questions get relations is stated as `gold_relations_v2` does it, unchanged (every question with two
+  named classes in the sheet, not only distance questions), so that the results compare with the pilot's and
+  structured-cot's. An optional run on the full VSI-Bench is described, with what it needs (gold sheets for 213 more
+  scenes and a gold-only index) and its cost. The checks now use the format experiment's `cluster_checks.py`, into
+  which the broad-exploration copy was merged (`6011ba7`); it checks the sheets' `visible` field. No condition,
+  setting or question of the 75-scene plan changed.
+- 2026-11-24, before any run: the plan moves to the full VSI-Bench (5,130 questions, 288 scenes), with the 75 scenes
+  kept as a fallback. Gold sheets need only VSI-Bench's labels, so every scene can have them:
+  - `scene_sheet_report.py --prompts` takes the prompts from a file, and `sheet_index.py --gold-only` indexes gold
+    reports without pipeline sheets or an export (both tested in `test_openvocab_adapter.py`).
+  - `prompts_full.jsonl` holds every question's prompts, extracted once on Colab with spaCy 3.8 /
+    `en_core_web_md` 3.8.0 (`extract_prompts.py`, `prompts_full.ipynb`). For the 2,728 questions of the 75 scenes
+    they equal the prompts of the 75-scene sheets.
+  - `build_gold_sheets.py` builds all 288 scenes' gold sheets and the index with numpy only. It ran locally twice with
+    the same hashes (Runs), with no failed sheet, and `check_sheets.py` rendered B and C for all 5,130 questions.
+  - Building the 75 scenes again showed that their existing sheets predate `980cf00`, which fitted the gold boxes to
+    their objects: the positions are the same, the extents differ in 2,643 of 2,728 sheets. The runs use the new
+    build for every question, the fallback included; the pilot's and structured-cot's numbers came from the old
+    sheets.
