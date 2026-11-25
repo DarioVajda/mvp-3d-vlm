@@ -245,10 +245,12 @@ class ModelSize(unittest.TestCase):
                                  [source, "--sheet-format", "csv"])
             else:
                 self.assertFalse({"--sheet-source", "--sheet-format", "--sheets-root"} & set(cmd))
-        # the 9B's F1 differs from the 2B's only in the model and the device map
-        f1 = followup.run_config("cot_f1", self.tmp_path, large, self.q, device_map="auto")
+        # the 9B's F1 differs from the 2B's only in the model, the device map and the batch size (one question)
+        f1 = followup.run_config("cot_f1", self.tmp_path, large, self.q, device_map="auto", batch_size=1)
         f1_2b = followup.run_config("cot_f1", self.tmp_path, questions_path=self.q)
-        self.assertEqual({k for k in f1 if f1.get(k) != f1_2b.get(k)}, {"model", "device_map"})
+        self.assertEqual({k for k in f1 if f1.get(k) != f1_2b.get(k)}, {"model", "device_map", "batch_size"})
+        cmd = followup.eval_command(f1, "ids.txt", "p.jsonl", "sheets")
+        self.assertEqual((cmd[cmd.index("--batch-size") + 1], f1_2b["batch_size"]), ("1", 8))
 
     def test_run_writes_to_the_models_folder(self):
         qs = synthetic_questions()

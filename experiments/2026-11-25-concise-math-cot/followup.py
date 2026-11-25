@@ -12,7 +12,8 @@ tasks with the gold sheet, through the eval (python -m mvp.eval.vsibench), resum
              (DIRECT: A_video, gold_csv, gold_relations), for running them with another model
   models     --model other than MODEL (Qwen3.5-2B) writes to <out>/<model's name, lower case>/ (model_dir), so another
              model's answers never land in the 2B's folders; --device-map auto (not the default) for a model loaded
-             across the GPU by accelerate, which stops if any weight would be offloaded to the CPU
+             across the GPU by accelerate, which stops if any weight would be offloaded to the CPU; --batch-size 1 for
+             a model run one question at a time (the default, SETTINGS' 8, is the pilot's)
   layout     <out>/<variant>/config.json, predictions.jsonl (+ the eval's _summary.json), prompts.jsonl (the exact
              text after the video, question by question), timing.jsonl (one line per call: questions before and after,
              seconds, GPU), ids_k<k>.txt (the questions of each call)
@@ -20,7 +21,7 @@ tasks with the gold sheet, through the eval (python -m mvp.eval.vsibench), resum
   PYTHONPATH=src python experiments/2026-11-25-concise-math-cot/followup.py --variants cot_f1 cot_f2 cot_f3 --k 1 \
       --sheets-root tasks/openvocab_adapter/out_full --out results/zeroshot/vsibench/concise_math_cot/dev
   PYTHONPATH=src python experiments/2026-11-25-concise-math-cot/followup.py --model Qwen/Qwen3.5-9B --device-map auto \
-      --variants gold_csv cot_f1 gold_relations A_video --k 10 --sheets-root ... --out ...   # -> <out>/qwen3.5-9b/
+      --batch-size 1 --variants gold_csv cot_f1 gold_relations A_video --k 10 --sheets-root ... --out ...  # -> <out>/qwen3.5-9b/
 """
 import argparse
 import hashlib
@@ -96,10 +97,13 @@ def model_dir(out_root, model=MODEL):
     return Path(out_root) if model == MODEL else Path(out_root) / model.split("/")[-1].lower()
 
 
-def run_config(variant, sheets_root, model=MODEL, questions_path=QUESTIONS, prompt_version=None, device_map=DEVICE_MAP):
+def run_config(variant, sheets_root, model=MODEL, questions_path=QUESTIONS, prompt_version=None, device_map=DEVICE_MAP,
+               batch_size=None):
     """Everything that decides an answer other than the question itself. A direct condition's prompts are the eval's
     (unchanged since the pilot); write_prompts stops if a logged prompt changes."""
     extra = {} if device_map == DEVICE_MAP else {"device_map": device_map}
+    if batch_size is not None:
+        extra["batch_size"] = batch_size  # replaces SETTINGS' value
     if variant in DIRECT:
         source = DIRECT[variant]
         return {"variant": variant, "model": model, **SETTINGS, "reasoning": "direct", "sheet_source": source,
@@ -179,13 +183,13 @@ def write_prompts(run_dir, ids, variant, sheets_root, questions):
 
 
 def run(variant, k, sheets_root, out_root, pool=None, seed=SEED, questions_path=QUESTIONS, model=MODEL,
-        vggt_root=None, prompt_version=None, dry_run=False, env=None, device_map=DEVICE_MAP):
+        vggt_root=None, prompt_version=None, dry_run=False, env=None, device_map=DEVICE_MAP, batch_size=None):
     """One condition on k questions per task: checks the folder's config, logs the prompts, runs the eval on the
     questions not answered yet, and times the call (the model's loading included). Returns the run folder."""
     questions = load_questions(questions_path)
     pool = dev_pool(questions) if pool is None else pool
     ids = nested_subset(pool, questions, k, seed)
-    config = run_config(variant, sheets_root, model, questions_path, prompt_version, device_map)
+    config = run_config(variant, sheets_root, model, questions_path, prompt_version, device_map, batch_size)
     run_dir = model_dir(out_root, model) / variant
     guard(run_dir, {**config, "seed": seed, "pool_sha256": hashlib.sha256(json.dumps(sorted(pool)).encode()).hexdigest()})
     ids_file = run_dir / f"ids_k{k}.txt"
@@ -222,13 +226,15 @@ def main():
     ap.add_argument("--pool", help="a file of question ids to draw from (default: explore200's computing questions)")
     ap.add_argument("--model", default=MODEL, help="another model's answers go to <out>/<its name, lower case>/")
     ap.add_argument("--device-map", default=DEVICE_MAP, choices=[DEVICE_MAP, "auto"])
+    ap.add_argument("--batch-size", type=int, help=f"questions of a video per batch (default {SETTINGS['batch_size']})")
     ap.add_argument("--vggt-root")
     ap.add_argument("--dry-run", action="store_true", help="check the configs, log the prompts, print the commands")
     args = ap.parse_args()
     pool = [int(x) for x in Path(args.pool).read_text().split()] if args.pool else None
     for variant in args.variants:
         run_dir, cmd, todo = run(variant, args.k, args.sheets_root, args.out, pool, args.seed, args.questions,
-                                 args.model, args.vggt_root, dry_run=args.dry_run, device_map=args.device_map)
+                                 args.model, args.vggt_root, dry_run=args.dry_run, device_map=args.device_map,
+                                 batch_size=args.batch_size)
         print(f"{variant}: {len(todo)} questions to answer in {run_dir}" + (f"\n  {' '.join(cmd)}" if args.dry_run else ""))
 
 
