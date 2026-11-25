@@ -230,8 +230,9 @@ training: none
 <!-- One row per run. Output: the folder with the predictions (.jsonl), the summaries and the run's freeze.txt or
 environment.txt. -->
 
-All commands run from the repository root on the cluster, on `scene_sheet_formats` at a commit with this folder, in
-the project's environment, with `PYTHONPATH=src` where shown. Nothing here needs spaCy or a GPU except the eval.
+All commands run from the repository root on the cluster, on `scene_sheet_formats` at `1abeca4` or later (D and E need
+its `--no-video` fix), in the project's environment, with `PYTHONPATH=src` where shown. Nothing here needs spaCy or a
+GPU except the eval.
 
 **1. Inputs (CPU, about a minute).** VSI-Bench's questions must be the version the prompts were taken from, and every
 scene needs VGGT's frame indices (`--sampling uniform128`):
@@ -270,7 +271,7 @@ counting questions (the others are where VSI-Bench's labels and its answer disag
   PYTHONPATH=src python -c "import sys; from pathlib import Path; sys.path.insert(0, 'experiments/2026-11-18-scene-sheet-formats'); import cluster_checks as c; p = c.check_prompts(Path('prompts_C.txt').read_text(), Path('tasks/openvocab_adapter/out'), Path('data/vggt'), source='gold_relations'); print(*p, sep='\n') if p else print('OK'); sys.exit(bool(p))"
   ```
 
-- **20-question smoke test** of A and C, then the model revision:
+- **20-question smoke test** of A, C and E, then the model revision:
 
   ```bash
   SMOKE="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer --ids experiments/2026-11-19-gold-sheet-relations/smoke_ids.txt"
@@ -281,7 +282,7 @@ counting questions (the others are where VSI-Bench's labels and its answer disag
       results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
   python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv --no-video \
       --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/E.jsonl
-  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 4 tests, none skipped here
+  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 5 tests, none skipped here
   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
       results/zeroshot/vsibench/gold_sheet_relations_full/model_revision.txt
   ```
@@ -409,3 +410,8 @@ Not run yet.
 - 2026-11-24, before any run: each prediction now also records `n_prompt_tokens`, the question's own input length
   (`n_input_tokens` is the padded length of its batch of up to 8 questions, so it overstates short prompts). Nothing
   sent to the model changes; it is for the token cost of A–E.
+- 2026-11-25, before any run: `--no-video` stopped with a TypeError after its first video's questions (the progress
+  line read the frame size, which a run without the video doesn't have); found by an exploratory sheet-only run of
+  pipeline_v4 (`experiments/2026-11-18-scene-sheet-formats/v4_sheet_only.md`), and fixed in `1abeca4` with an
+  end-to-end test (`test_scene_sheet.NoVideo.test_run_without_video`). D and E, and E's smoke test, need that commit or
+  later. Nothing sent to the model changes.
