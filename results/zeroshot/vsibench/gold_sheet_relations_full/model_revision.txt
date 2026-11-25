@@ -1,0 +1,5 @@
+model: Qwen/Qwen3.5-2B
+revision: 15852e8c16360a2fea060d615a32b45270f8a8fc
+snapshot: /shared/workspace/povejmo/huggingface_cache/hub/models--Qwen--Qwen3.5-2B/snapshots/15852e8c16360a2fea060d615a32b45270f8a8fc
+code commit: 0f7c5f2e7fc178db847813e25c41e7118ec6322e
+recorded: 2026-11-25T22:26:49
