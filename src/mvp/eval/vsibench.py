@@ -31,6 +31,7 @@ from pathlib import Path
 from mvp.benchmarks.scene_sheet import (OBJECT_DIRECTIONS, SHEET_FORMATS, SHEET_SOURCES, STEP_ORDERS, TIME_UNITS,
                                         VISIBILITY, camera_folder, check_options, folder_frames, load_index,
                                         render_scene, sheet_kind)
+from mvp.benchmarks import cot_variants
 from mvp.benchmarks.vsibench import (ECHO_SYSTEM_PROMPT, LAYOUTS, REASONING, build_prompt_parts, load_vsibench, score,
                                      score_final, summarize, task_of)
 from mvp.paths import SCENE_SHEETS, VGGT_DIR
@@ -158,9 +159,11 @@ def main():
                     help="how the narrative says where an object is: along the floor from where the camera faces, plus "
                          "above/below (as the moves are measured), or in the camera's own tilted axes")
     ap.add_argument("--sheets-root", default=str(SCENE_SHEETS), help="the scene sheets folder, with index.csv")
-    ap.add_argument("--reasoning", default="direct", choices=REASONING,
+    ap.add_argument("--reasoning", default="direct", choices=REASONING + list(cot_variants.VARIANTS),
                     help="direct: lmms-eval's 'answer directly'; cot: reason step by step, then end on 'Answer: X' "
-                         "(implies --final-answer; --max-new-tokens defaults to %d)" % COT_MAX_NEW_TOKENS)
+                         "(implies --final-answer; --max-new-tokens defaults to %d); cot_f1, cot_f2, cot_f3: the "
+                         "follow-up variants, computing tasks with the gold sheet only (mvp.benchmarks.cot_variants)"
+                         % COT_MAX_NEW_TOKENS)
     ap.add_argument("--split", default="full", choices=["full", "debiased", "pruned"])
     ap.add_argument("--per-type", type=int, default=None, help="sample this many questions per question type")
     ap.add_argument("--ids", default=None, help="file with one question id per line: evaluate only these")
@@ -193,12 +196,12 @@ def main():
     except ValueError as e:
         ap.error(str(e))
     args.sheets = bool(args.sheet_source)
-    if args.reasoning == "cot":
+    if args.reasoning.startswith("cot"):  # cot and its follow-up variants (cot_variants)
         args.final_answer = True
         if args.max_new_tokens is None:
             args.max_new_tokens = COT_MAX_NEW_TOKENS
         elif args.max_new_tokens < MIN_COT_TOKENS:
-            ap.error(f"--reasoning cot needs room to reason: --max-new-tokens of at least {MIN_COT_TOKENS}")
+            ap.error(f"--reasoning {args.reasoning} needs room to reason: --max-new-tokens of at least {MIN_COT_TOKENS}")
     elif args.max_new_tokens is None:
         args.max_new_tokens = 16
     if args.no_video:

@@ -12,6 +12,7 @@ import re
 import numpy as np
 import pandas as pd
 
+from mvp.benchmarks import cot_variants  # the follow-up CoT variants (cot_f1, cot_f2, cot_f3)
 from mvp.paths import VSI_DIR
 
 MCA_QUESTION_TYPES = [
@@ -55,12 +56,13 @@ def task_of(question_type):
 
 def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None, video=True):
     """sheet: a rendered scene sheet (mvp.benchmarks.scene_sheet), put between the video sentence and the question.
-    reasoning: "direct" (lmms-eval's prompt: answer at once) or "cot" (reason step by step first, then end on
-    "Answer: X", which score_final reads; cot_prompt). sheet_kind: where the sheet comes from, its source ('pipeline'
+    reasoning: "direct" (lmms-eval's prompt: answer at once), "cot" (reason step by step first, then end on
+    "Answer: X", which score_final reads; cot_prompt), or one of cot_variants.VARIANTS (the computing tasks with the
+    gold sheet only). sheet_kind: where the sheet comes from, its source ('pipeline'
     or 'gold'), for cot's instructions. video=False: no video goes with the prompt (the eval's --no-video), so the
     video sentence is left out and the prompt starts with the sheet; direct reasoning only."""
-    if reasoning not in REASONING:
-        raise ValueError(f"reasoning must be one of {REASONING}, not {reasoning!r}")
+    if reasoning not in REASONING and reasoning not in cot_variants.VARIANTS:
+        raise ValueError(f"reasoning must be one of {REASONING + list(cot_variants.VARIANTS)}, not {reasoning!r}")
     if not video:
         if reasoning != "direct":
             raise ValueError("without the video: direct reasoning only (the CoT instructions refer to the video)")
@@ -71,6 +73,11 @@ def build_prompt(doc, sheet=None, reasoning="direct", sheet_kind=None, video=Tru
     pre = PRE_PROMPT if sheet is None else PRE_PROMPT + "\n" + sheet
     if reasoning == "cot":
         return "\n".join([pre, question_block(doc), cot_prompt(doc, sheet is not None, sheet_kind)])
+    if reasoning in cot_variants.VARIANTS:
+        task = task_of(doc["question_type"])
+        answer = COT_ANSWER["na" if doc["question_type"] in NA_QUESTION_TYPES else "mca"]
+        return "\n".join([pre, question_block(doc), cot_variants.instructions(
+            doc["question_type"], reasoning, COT_HINTS.get(task, ""), answer, sheet is not None, sheet_kind)])
     if doc["question_type"] in NA_QUESTION_TYPES:
         return pre + "\n" + doc["question"] + "\n" + NA_POST_PROMPT
     options = "Options:\n" + "\n".join(doc["options"])
@@ -117,7 +124,7 @@ def build_prompt_parts(doc, layout="sit", sheet=None, reasoning="direct", sheet_
 # They take the place of the "answer directly" line, so nothing in the prompt asks for a bare answer. The procedure is
 # the same for every question; each question type adds one hint on how to get its quantity, and the scene
 # information's origin adds what to watch for in it. The answer line is the one score_final reads.
-REASONING = ["direct", "cot"]
+REASONING = ["direct", "cot"]  # for every question; cot_variants.VARIANTS are for some questions only
 COT_STEPS = (
     "Think it through step by step before you answer. First, say which objects or places the question is about and "
     "find them in the video{where}. Then write down the facts you need, such as positions, distances, sizes, counts or "
