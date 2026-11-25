@@ -308,7 +308,8 @@ def main():
                 n += len(batch)
             if vi % 20 == 0:
                 print(f"[{vi + 1} videos, {n} qs, {time.time() - t0:.0f}s] {path.split('/')[-1]} "
-                      f"frames={n_frames}x{tuple(frame_hw)} tokens={n_tok}", flush=True)
+                      + (f"frames={n_frames}x{tuple(frame_hw)}" if frame_hw else "no video") + f" tokens={n_tok}",
+                      flush=True)
 
     res = pd.read_json(args.out, lines=True)
     res = res[res["id"].isin(df["id"])]

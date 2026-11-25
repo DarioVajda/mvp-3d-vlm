@@ -1,0 +1,10 @@
+,A_video,pipeline_v4,pipeline_v4_no_video
+object_counting,30.0,30.2,27.6
+object_abs_distance,31.8,25.7,23.5
+object_size_estimation,55.5,31.3,29.5
+room_size_estimation,43.2,34.7,24.5
+object_rel_distance,45.3,44.0,37.1
+object_rel_direction,47.5,53.5,44.4
+route_planning,32.1,35.7,21.4
+obj_appearance_order,44.1,38.2,41.2
+overall,41.2,36.7,31.2

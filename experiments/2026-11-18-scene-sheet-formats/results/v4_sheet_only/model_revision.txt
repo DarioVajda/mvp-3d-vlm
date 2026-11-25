@@ -1,0 +1,5 @@
+model: Qwen/Qwen3.5-2B
+revision: 15852e8c16360a2fea060d615a32b45270f8a8fc
+code commit: e60f46707603c2b492ade62bb9f2b15ced845513
+gpu: Tesla T4
+exploratory: not in prereg_batch2_A.md
