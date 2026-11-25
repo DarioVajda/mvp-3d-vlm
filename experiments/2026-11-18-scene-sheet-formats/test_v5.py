@@ -109,6 +109,118 @@ class DevRun(unittest.TestCase):
                          [list(names), 55.0, None, None, None, 0.02, "upright", False])
 
 
+class Stages(unittest.TestCase):
+    """The dev run in two stages (README, "v5 on the dev scenes"): stage 1 is the smoke scene and dev_scenes_15, stage 2
+    the same command on dev_scenes.txt, which must skip stage 1's finished scenes."""
+
+    def test_stage_lists(self):
+        stage1 = v5_dev.read_scenes(HERE / "dev_scenes_stage1.txt")
+        dev15, dev35 = (v5_dev.read_scenes(HERE / f) for f in ("dev_scenes_15.txt", "dev_scenes_35.txt"))
+        dev50 = v5_dev.read_scenes(HERE / "dev_scenes.txt")
+        self.assertEqual(stage1, ["scannet/scene0025_01"] + dev15)
+        self.assertEqual(sorted(dev15 + dev35), sorted(dev50))
+        self.assertEqual(len(set(dev50) - set(stage1)), 34)  # stage 2's new scenes
+
+    def test_unfinished_scenes(self):
+        with tempfile.TemporaryDirectory() as out:
+            for c in v5_dev.CONFIGS:  # a: finished everywhere; b: in one config only
+                v5_dev.done_path(out, c, "d/a").parent.mkdir(parents=True)
+                v5_dev.done_path(out, c, "d/a").write_text("{}")
+            v5_dev.done_path(out, "v5-his", "d/b").parent.mkdir(parents=True)
+            v5_dev.done_path(out, "v5-his", "d/b").write_text("{}")
+            self.assertEqual(v5_dev.unfinished_scenes(["d/a", "d/b", "d/c"], out), ["d/b", "d/c"])
+
+    def test_a_later_stage_skips_finished_scenes(self):
+        """main() with the GPU parts replaced: stage 1 runs its scenes, stage 2 (a longer list, the same --out) runs
+        only the new ones and loads no detector when nothing is left."""
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "code" / v5_dev.TRACKER).parent.mkdir(parents=True)
+            (tmp / "code" / v5_dev.TRACKER).write_text("tracker")
+            (tmp / "stage1.txt").write_text("d/a\nd/b\n")
+            (tmp / "stage2.txt").write_text("d/a\nd/b\nd/c\n")
+            ran, detectors = [], []
+
+            def fake_run(code, qss, sheet, upright, detector, rows, scene, work, out, *rest):
+                ran.append(scene)
+                for c in v5_dev.CONFIGS:
+                    v5_dev.done_path(out, c, scene).parent.mkdir(parents=True, exist_ok=True)
+                    v5_dev.done_path(out, c, scene).write_text("{}")
+
+            def main(scenes):
+                argv = ["v5_dev.py", "--code", str(tmp / "code"), "--scenes", str(scenes), "--work", str(tmp / "work"),
+                        "--out", str(tmp / "out")]
+                fakes = {m: mock.MagicMock() for m in ("question_scene_sheet", "scene_sheet_creator", "upright")}
+                with mock.patch.object(sys, "argv", argv), mock.patch.dict(sys.modules, fakes), \
+                        mock.patch.object(v5_dev, "check_code"), mock.patch.object(v5_dev, "patch_tracker", lambda s: s), \
+                        mock.patch.object(v5_dev, "question_rows", lambda scenes: [{"scene": s} for s in scenes]), \
+                        mock.patch.object(v5_dev.rd, "load_detector", lambda code: detectors.append(1) or "det"), \
+                        mock.patch.object(v5_dev, "run_scene", fake_run), mock.patch("builtins.print"), \
+                        self.assertRaises(SystemExit) as e:
+                    v5_dev.main()
+                return e.exception.code
+
+            self.assertEqual(main(tmp / "stage1.txt"), 0)
+            self.assertEqual(ran, ["d/a", "d/b"])
+            self.assertEqual(main(tmp / "stage2.txt"), 0)
+            self.assertEqual(ran, ["d/a", "d/b", "d/c"])  # stage 2 ran only the new scene
+            self.assertEqual(main(tmp / "stage2.txt"), 0)
+            self.assertEqual((ran, len(detectors)), (["d/a", "d/b", "d/c"], 2))  # nothing left: no detector loaded
+
+    def test_expected_counts(self):
+        """The counts the README and the agent prompt give for each stage."""
+        cache = Path.home() / ".cache/huggingface/hub/datasets--nyu-visionx--VSI-Bench/snapshots"
+        found = [v5_dev.QUESTIONS] if v5_dev.QUESTIONS.is_file() else sorted(cache.glob("*/test.jsonl"))
+        if not found:
+            self.skipTest("VSI-Bench's test.jsonl is not here")
+        stage1 = v5_dev.read_scenes(HERE / "dev_scenes_stage1.txt")
+        dev50 = v5_dev.read_scenes(HERE / "dev_scenes.txt")
+        self.assertEqual(len(v5_dev.question_rows(set(stage1), found[0])), 593)
+        self.assertEqual(len(v5_dev.question_rows({"scannet/scene0025_01"}, found[0])), 38)
+        self.assertEqual(len(v5_dev.question_rows(set(dev50), found[0])), 1813)
+
+
+class Stage1Analysis(unittest.TestCase):
+    """v5_stage1_analysis.py's reading of the relation texts and its stage-2 decision rule (README's criteria)."""
+
+    def test_relation_answers(self):
+        import v5_stage1_analysis as a
+        abs_q = {"question_type": "object_abs_distance", "ground_truth": "2.0"}
+        text = ("Relations between ...:\nobject_a,object_b,distance\ndoor_1,fan_1,0.526\n"
+                "Closest-point distance between the door and the fan: 0.526 m.")
+        self.assertEqual(a.relation_answer(abs_q, text), 0.526)
+        self.assertIsNone(a.relation_answer(abs_q, None))
+        rel_q = {"question_type": "object_rel_distance", "ground_truth": "D",
+                 "options": "A. chair | B. pillow | C. keyboard | D. door"}
+        text = ("...\nDistance from each candidate to the nearest fan (closest points, metres): chair 2.261; door 0.525. "
+                "Closest to the fan: door.")
+        self.assertEqual(a.relation_answer(rel_q, text), "D")
+        self.assertEqual(a.relation_score(rel_q, "D"), 1.0)
+        self.assertEqual(a.relation_score(abs_q, 2.0), 1.0)
+        self.assertEqual(a.relation_score(abs_q, 4.0), 0.0)  # twice the truth: no threshold met
+        self.assertAlmostEqual(a.mra(2.2, 2.0), 0.8)
+
+    def test_go_no_go(self):
+        import v5_stage1_analysis as a
+        def res(sim, inflated, ratio, found, abs_, rel):
+            return {"simulated distance score": sim, "boxes over 1.5x": inflated, "box side / gold, median": ratio,
+                    "named objects found": found, "_abs": abs_, "_rel": rel}
+        v4 = res(40, 5, 0.8, 78, {1: 0.5, 2: 0.2}, {3: 1.0})
+        good = res(50, 8, 1.05, 77, {1: 0.6, 2: 0.2, 9: 0.0}, {3: 1.0, 8: 0.0})  # 9, 8: v4 has no relation, not compared
+        results = {"v4": v4, "v5-his": res(45, 30, 1.3, 90, {1: 0.9}, {3: 1.0}), "v5-det": good,
+                   "v5-pts": res(30, 0, 1.0, 90, {1: 0.9}, {3: 1.0}), "v5-ours": res(10, 0, 1.0, 90, {}, {})}
+        best, checks, go = a.go_no_go(results)
+        self.assertEqual(best, "v5-det")  # the highest simulated score
+        self.assertTrue(go, checks)
+        results["v5-det"] = {**good, "named objects found": 75}  # loses more than 2 points of found objects
+        self.assertFalse(a.go_no_go(results)[2])
+        results["v5-det"] = {**good, "boxes over 1.5x": 10.5}  # more than 5 points over v4's inflated boxes
+        self.assertFalse(a.go_no_go(results)[2])
+        results["v5-det"] = {**good, "_rel": {8: 1.0}}  # no question in common with v4: the criterion fails
+        self.assertFalse(a.go_no_go(results)[2])
+
+
 class PostProcess(unittest.TestCase):
     def test_direction_on_the_upright_floor(self):
         """Upright axes: x right, y the way the first camera faces, z up. Standing at the chair (origin) facing the door

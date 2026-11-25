@@ -496,19 +496,27 @@ step is on the 50 dev scenes, to choose one of four tracking configurations; not
 | `v5-pts` | 0.55 | 300 |
 | `v5-ours` | 0.4 | 300 |
 
-**1. GPU (the cluster): `v5_dev.py`.** The revamped code is `119e603`'s, merged into this branch on 2026-11-25
-(`6ead380`); `v5_dev.py` checks its files' SHA-256 before anything runs. Per scene, once: the 128-frame geometry (the branch's
-`ensure_geometry`) and its upright frame, SAM 3 on every `fixed_v2` prompt and synonym of the scene's questions with
-each detection kept from 0.2, and the pooled masks. Then the four configurations' tracks on those masks, with a copy
-of the branch's tracker given `--det-score` and per-track scores (`v5_dev.patch_tracker`), and one sheet folder per
-question with its `question.json`. A finished (configuration, scene) has a `DONE.json` and is skipped when the command
-is run again.
+**1. GPU (the cluster): `v5_dev.py`, in two stages.** The revamped code is `119e603`'s, merged into this branch on
+2026-11-25 (`6ead380`); `v5_dev.py` checks its files' SHA-256 before anything runs. Per scene, once: the 128-frame
+geometry (the branch's `ensure_geometry`) and its upright frame, SAM 3 on every `fixed_v2` prompt and synonym of the
+scene's questions with each detection kept from 0.2, and the pooled masks. Then the four configurations' tracks on
+those masks, with a copy of the branch's tracker given `--det-score` and per-track scores (`v5_dev.patch_tracker`),
+and one sheet folder per question with its `question.json`. A finished (configuration, scene) has a `DONE.json`; a
+scene finished in all four is skipped entirely (no geometry, SAM 3 or pooling), so the same command continues after a
+stop, and stage 2, with the same `--work` and `--out`, runs only the scenes stage 1 has not.
+
+| Stage | Scenes (`--scenes`) | New scenes | `question.json` folders per configuration | SAM 3 prompts |
+|---|---|---:|---:|---:|
+| 1 (now) | `dev_scenes_stage1.txt`: the smoke scene + `dev_scenes_15.txt` | 16 | 593 | 214 |
+| 2 (only when asked) | `dev_scenes.txt`: the 50 dev scenes | 34 (16 skipped) | 1,813 in all | 465 |
+
+**Stage 1** (the smoke scene first, as a check; then the smoke scene and the 15 tuning scenes into `v5_dev`):
 
 ```bash
 git fetch origin && git checkout scene_sheet_formats && git pull
 E=experiments/2026-11-18-scene-sheet-formats
 
-# checks (CPU): 13 tests, 1 skipped (the smoke test needs the smoke run)
+# checks (CPU): 19 tests, 1 skipped (the smoke test needs the smoke run)
 PYTHONPATH=src .venv/bin/python -m unittest discover -s $E -p "test_v5.py"
 
 # smoke: one scene, all four configurations
@@ -516,52 +524,113 @@ echo scannet/scene0025_01 > /tmp/v5_smoke_scene.txt
 PYTHONPATH=src .venv-ov4d/bin/python $E/v5_dev.py --scenes /tmp/v5_smoke_scene.txt \
     --work tasks/openvocab_adapter/v5_work --out tasks/openvocab_adapter/v5_dev_smoke
 
-# the 50 dev scenes (the smoke scene's SAM 3 run is reused)
-PYTHONPATH=src .venv-ov4d/bin/python $E/v5_dev.py --scenes $E/dev_scenes.txt \
+# stage 1: 16 scenes (the smoke scene's SAM 3 run is reused from --work)
+PYTHONPATH=src .venv-ov4d/bin/python $E/v5_dev.py --scenes $E/dev_scenes_stage1.txt \
     --work tasks/openvocab_adapter/v5_work --out tasks/openvocab_adapter/v5_dev
-cd tasks/openvocab_adapter && zip -r v5_dev.zip v5_dev
+cd tasks/openvocab_adapter && zip -r v5_dev_stage1.zip v5_dev
 ```
 
 The smoke scene must end with `finished: {'v5-his': 1, 'v5-det': 1, 'v5-pts': 1, 'v5-ours': 1}` and, in each
 configuration's `scannet__scene0025_01/all/`: `DONE.json`; `scene/tracks/summary.json` with `"association": {"rule":
 "overlap", ...}`, `"min_track_frames": 4` and the configuration's `det_score`; a `tracks/<name>.scores.json` per
 tracked name; 38 folders `sheets/q<id>/` with a `question.json`. In `--work`, `masks/sam3_raw/manifest.json` lists 128
-frames and `"min_score": 0.2`. The dev run must end with 50 of 50 scenes per configuration and no failed scene.
-**Cost:** 685 SAM 3 prompts over the 50 scenes (6–27 per scene) on 128 frames each, an estimated 1.5–2.5 GPU hours on
-a B200/B300 (the smoke scene took 234 s for 8 prompts on an RTX 3070, and 270 s for 12 on Colab's L4), and under an hour for the four trackings.
-`v5_dev.zip` holds the tracks, cameras, adapter reports, upright frames and question records (no masks, frames or
-depth): a few hundred MB.
+frames and `"min_score": 0.2`. Stage 1 must end with `finished: {'v5-his': 16, 'v5-det': 16, 'v5-pts': 16,
+'v5-ours': 16} of 16 scenes per config; failed: none`, and each configuration's folder in `v5_dev` must hold 593
+`sheets/q<id>/question.json` (`find tasks/openvocab_adapter/v5_dev/v5-his -name question.json | wc -l`).
+`v5_dev_stage1.zip` holds the tracks, cameras, adapter reports, upright frames and question records of the 16 scenes
+(`--out` has no masks, frames or depth): about 70 MB (the smoke scene's four configurations are 4.3 MB).
 
-**2. Local (CPU): `v5_postprocess.py` and the scorecard.** For each configuration, with the dense depth in
-`data/vggt`, which every dev scene has (the run's `depth.npz` is made again from it):
+**Stage 1's cost on the cluster:** about 1–1.5 hours on one B200/B300, 2 at most. SAM 3: 214 prompts on 128 frames
+each, 30–50 minutes (8–13 s a prompt, the estimate the 50-scene plan used; Colab's L4 took 22.5 s a prompt on the
+smoke scene, 270 s for 12, which would make it 80 minutes); tracking: about 30 s per configuration and scene on the
+L4, 16 x 4 runs, about 30 minutes; the geometry conversion and pooling of 16 scenes, an estimated 10–20 minutes (not
+yet measured on the cluster). The smoke scene adds about 10 minutes.
+
+**Stage 2** (only when asked, after stage 1's go / no-go below): the same command on all 50 dev scenes, the same
+`--work` and `--out`; it prints `50 scenes in ...: 16 already finished in every config (skipped), 34 to run` and must
+end with `finished: {'v5-his': 50, ...} of 50 scenes per config; failed: none`, 1,813 `question.json` per
+configuration. About 2.5–3.5 hours on a B200/B300 (465 SAM 3 prompts, 34 x 4 trackings).
+
+```bash
+PYTHONPATH=src .venv-ov4d/bin/python $E/v5_dev.py --scenes $E/dev_scenes.txt \
+    --work tasks/openvocab_adapter/v5_work --out tasks/openvocab_adapter/v5_dev
+cd tasks/openvocab_adapter && zip -r v5_dev_stage2.zip v5_dev
+```
+
+**2. Local (CPU): `v5_postprocess.py` and the stage-1 analysis.** For each configuration, with the dense depth in
+`data/vggt`, which every dev scene has (the run's `depth.npz` is made again from it); `v5_dev_stage1.zip` unpacked
+into `data/rerun/`:
 
 ```bash
 for c in v5-his v5-det v5-pts v5-ours; do
   PYTHONPATH=src python $E/v5_postprocess.py --run data/rerun/v5_dev/$c --questions data/raw/VSI-Bench/test.jsonl \
-      --gold-root tasks/openvocab_adapter/out_full --dense-root data/vggt --out data/rerun_sheets/$c
-  PYTHONPATH=src python $E/pipeline_scorecard.py --old data/rerun_sheets/pipeline_v4_dev50 --new data/rerun_sheets/$c \
-      --scenes $E/dev_scenes_15.txt --out $E/pipeline_scorecard_$c.md
+      --gold-root tasks/openvocab_adapter/out_full --dense-root data/vggt --out data/rerun_sheets/v5_stage1/$c
 done
+PYTHONPATH=src python $E/v5_stage1_analysis.py --v4 data/rerun_sheets/pipeline_v4_dev50 \
+    --v5-root data/rerun_sheets/v5_stage1 --out $E/analyses/v5_stage1.md
 ```
 
-The scorecard's key measures are now the box sizes: inflated boxes shorten the closest-point distances the relations
-state (on the smoke scene a keyboard came out 2.35 m long). Choosing one configuration on `dev_scenes_15.txt`, checking
-it on `dev_scenes_35.txt`, and the dev200 VLM run follow `v5_dev_plan.md`.
+`v5_stage1_analysis.py` compares pipeline_v4's dev sheets (`pipeline_v4_dev50`, `index.csv` sha256 `a1ecafc0…`) and
+the four configurations on the 15 scenes of `dev_scenes_15.txt` (the smoke scene is left out: it shaped the
+configurations):
+
+- **sheet quality:** named objects found; rows per real object (pipeline rows of a named class with one gold object,
+  mean; 1 is right); count = gold; the box's longest side over gold's (median) and the share over 1.5x; the
+  closest-point gap error between such boxes; the position error after one similarity alignment per scene
+  (`explore_sheets.align`, median metres, and the scenes it fits);
+- **relations against VSI-Bench's answers** (the relation text the prompt states): absolute distance, MRA and the
+  median relation / truth; relative distance, the share whose stated closest object is the answer; each with the
+  share of questions that have a relation, and paired with pipeline_v4 on the questions both have a relation for;
+- **a simulated distance score against video only:** the relation's answer where there is one (the model copies
+  relations), video only's otherwise, on the distance questions with a video-only answer
+  (`results/dev200/A_video.jsonl`: 5 absolute and 10 relative-distance questions on these scenes). When the
+  gold-sheet run's video-only answers for all 5,130 questions are in, `--video <its A_video.jsonl>` covers all 150.
+
+**Exploratory.** These are tuning scenes: the configuration is chosen on them, and no difference here is a test.
+
+pipeline_v4 on the 15 scenes, for reference (computed 2026-11-25, before any v5 result): named objects found 77.6%,
+rows per real object 1.53, count = gold 49.6%, box side / gold 0.79 with 5.1% over 1.5x, gap error 0.60 m, aligned
+position error 0.38 m (10 of 15 scenes aligned); absolute distance: a relation for 46 of 85, MRA 30.0, relation /
+truth 1.03; relative distance: a relation for 24 of 65, closest right 70.8%; simulated distance score 39.3 against
+video only's 44.0 (15 questions).
+
+**Go / no-go for stage 2** (fixed 2026-11-25, before stage 1's results; `v5_stage1_analysis.go_no_go` applies it).
+The best v5 configuration is the one with the highest simulated distance score (ties: fewer boxes over 1.5x, then
+v5-his, v5-det, v5-pts, v5-ours). Stage 2 runs if it, against pipeline_v4 on the 15 scenes:
+
+1. has a simulated distance score at least pipeline_v4's;
+2. has an absolute-distance MRA and a relative-distance accuracy at least pipeline_v4's, each on the questions both
+   have a relation for (a criterion with no such question fails);
+3. has a median box side / gold at least as close to 1 as pipeline_v4's (in log ratio), with at most 5 points more
+   boxes over 1.5x;
+4. loses at most 2 points of named objects found.
+
+Otherwise no stage 2: the box sizes or scale are fixed on the 15 scenes first (`v5_dev_plan.md`, open decisions), and
+stage 1's analysis is run again. Stage 2 then checks the chosen configuration unchanged on the other 35 scenes.
+
+**Model runs on the 15 scenes only.** The scenes have 555 questions: object counting 46, absolute distance 85, object
+size 78, room size 15, relative distance 65, relative direction 137 (27 easy, 50 medium, 60 hard), route planning
+12, appearance order 117. Of dev200, 63 are on these scenes (`dev200_stage1_ids.txt`): counting 3, absolute
+distance 5, object size 10, room size 8, relative distance 10, relative direction 6 (1, 3, 2), route planning 11,
+appearance order 10. dev200's video-only answers cover those 63; any other of the 555 needs a video-only run too.
+Step C of `v5_dev_plan.md` (dev200 with the VLM) needs all 50 scenes.
 
 **Agent prompt** for whoever runs step 1:
 
-> Pull `scene_sheet_formats` to `d774333` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`, section
-> "v5 on the dev scenes", step 1, on one GPU. (1) Run `test_v5.py` (13 tests, 1 skipped; any failure stops);
-> `v5_dev.py` itself stops if the revamped code's files are not `119e603`'s. (2) Run the smoke
+> Pull `scene_sheet_formats` to the commit given with this prompt (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`,
+> section "v5 on the dev scenes", step 1, **stage 1 only**, on one GPU. (1) Run `test_v5.py` (19 tests, 1 skipped;
+> any failure stops); `v5_dev.py` itself stops if the revamped code's files are not `119e603`'s. (2) Run the smoke
 > scene and check what the README lists for it: 1 of 1 scenes for each of the four configurations, `DONE.json`,
 > `summary.json` with association overlap, `min_track_frames` 4 and the configuration's `det_score`, a `scores.json`
 > per tracked name, 38 `question.json` folders, and the SAM 3 manifest with 128 frames and `min_score` 0.2. (3) Run
-> the 50 dev scenes; if it stops, run the same command again (finished scenes are skipped). It must end with 50 of 50
-> scenes for every configuration and no failed scene. (4) Zip `tasks/openvocab_adapter/v5_dev` as the README shows
-> (no masks, frames or depth) and put `v5_dev.zip` on the shared Drive folder; report the zip's size, the SAM 3 and
-> tracking times from `DONE.json`, and the commit you ran at. Don't commit the outputs. Stop and report without
-> changing anything if the code check, a test or a smoke check fails, or any scene fails. Don't edit code or
-> settings.
+> stage 1 (`--scenes $E/dev_scenes_stage1.txt`, 16 scenes: the smoke scene and the 15 of `dev_scenes_15.txt`); if it
+> stops, run the same command again (finished scenes are skipped). It must end with 16 of 16 scenes for every
+> configuration and no failed scene, and each configuration's folder must hold 593 `question.json`. (4) Zip
+> `tasks/openvocab_adapter/v5_dev` as `v5_dev_stage1.zip`, as the README shows (no masks, frames or depth), and put it
+> on the shared Drive folder; report the zip's size, the SAM 3 and tracking times from `DONE.json`, and the commit you
+> ran at. Keep `tasks/openvocab_adapter/v5_work` and `v5_dev`: stage 2 reuses them. Do not run stage 2 until asked.
+> Don't commit the outputs. Stop and report without changing anything if the code check, a test or a smoke check
+> fails, or any scene fails. Don't edit code or settings.
 
 ## Log
 
@@ -679,3 +748,9 @@ it on `dev_scenes_35.txt`, and the dev200 VLM run follow `v5_dev_plan.md`.
   0.85, 0%, over 4 objects); the 300-point rule brings the keyboard to gold's 0.49 m (2.35 m in v5-his, 1.22 in
   v5-det); the telephone is 1.34 m against 0.27 in all four. The 0.4 detection score adds rows (122 and 120 against
   112) that gold does not have (18 and 16 unmatched against 9). On this scene `v5-pts` leads; the dev run decides.
+- 2026-11-25: the v5 dev run in two stages (section "v5 on the dev scenes"): stage 1 is the smoke scene and the 15
+  tuning scenes (`dev_scenes_stage1.txt`), stage 2 the other 34, only after stage 1's go / no-go, which was written
+  before any stage-1 result. `v5_dev.py` skips a scene finished in every configuration, so stage 2 reuses stage 1;
+  `v5_stage1_analysis.py` compares pipeline_v4 and the four configurations on the 15 scenes (sheet quality, relations
+  against the truth, a simulated distance score against video only) and applies the criteria; pipeline_v4's side is
+  in the section. `dev200_stage1_ids.txt`: dev200's 63 questions on the 15 scenes.

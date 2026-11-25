@@ -1,0 +1,16 @@
+scannet/scene0025_01
+arkitscenes/42446103
+arkitscenes/42446167
+arkitscenes/44358499
+arkitscenes/45662924
+arkitscenes/47331668
+scannet/scene0378_01
+scannet/scene0458_00
+scannet/scene0580_01
+scannet/scene0643_00
+scannet/scene0699_00
+scannetpp/0d2ee665be
+scannetpp/3e8bba0176
+scannetpp/3f15a9266d
+scannetpp/45b0dac5e3
+scannetpp/d755b3d9d8

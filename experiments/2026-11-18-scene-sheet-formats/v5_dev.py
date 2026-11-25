@@ -24,11 +24,15 @@ post-processing. Its code is CODE_COMMIT's, which this branch has had since the 
             <out>/<config>/<dataset>__<scene>/all/scene/{tracks/, cameras.npz, adapter_report.json, upright.json}
             and one sheet folder per question, sheets/q<id>/question.json (no objects.csv), then DONE.json
 
-Each (config, scene) with a DONE.json is skipped, so the run continues after a stop. Masks, frames and depth stay in
---work; --out holds only what the sheets are made from (with the dense depth of data/vggt, which every dev scene has).
+Each (config, scene) with a DONE.json is skipped, and a scene finished in every config is not touched at all (no
+geometry, SAM 3 or pooling; unfinished_scenes), so the run continues after a stop and a later stage with the same
+--out reuses an earlier stage's scenes. Masks, frames and depth stay in --work; --out holds only what the sheets are
+made from (with the dense depth of data/vggt, which every dev scene has). In stages (README, "v5 on the dev scenes"):
 
   PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/v5_dev.py \
-      --scenes experiments/2026-11-18-scene-sheet-formats/dev_scenes.txt --work <work> --out <out>
+      --scenes experiments/2026-11-18-scene-sheet-formats/dev_scenes_stage1.txt --work <work> --out <out>  # 16 scenes
+  PYTHONPATH=src python experiments/2026-11-18-scene-sheet-formats/v5_dev.py \
+      --scenes experiments/2026-11-18-scene-sheet-formats/dev_scenes.txt --work <work> --out <out>  # stage 2: the 34 others
 
 The patched tracker is written next to the branch's (PATCHED_TRACKER, ignored by git).
 """
@@ -151,6 +155,22 @@ def geometry_ready(scene_dir, scene):
             and report.get("depth_npz") == "written" and report.get("depth_source") == "dense" and len(frames) == 128)
 
 
+def done_path(out, config, scene):
+    return Path(out) / config / scene.replace("/", "__", 1) / LABEL / "DONE.json"
+
+
+def unfinished_scenes(scenes, out):
+    """The scenes of the list without a DONE.json in every config, in order."""
+    return [s for s in scenes if not all(done_path(out, c, s).is_file() for c in CONFIGS)]
+
+
+def read_scenes(path):
+    scenes = [s.strip() for s in Path(path).read_text().split() if s.strip()]
+    if len(set(scenes)) != len(scenes):
+        raise SystemExit(f"{path} lists a scene twice")
+    return scenes
+
+
 def run_scene(code, qss, sheet, upright, detector, rows, scene, work, out, data_root, dense_dir, log):
     """Geometry, SAM 3 and pooling once, then each config's tracks and sheet folders."""
     folder = scene.replace("/", "__", 1)
@@ -226,25 +246,27 @@ def main():
     import question_scene_sheet as qss
     import scene_sheet_creator as sheet
     import upright
-    scenes = [s.strip() for s in Path(args.scenes).read_text().split() if s.strip()]
-    rows = question_rows(set(scenes))
-    detector = rd.load_detector(code)
+    scenes = read_scenes(args.scenes)
+    todo = unfinished_scenes(scenes, args.out)
+    print(f"{len(scenes)} scenes in {args.scenes}: {len(scenes) - len(todo)} already finished in every config "
+          f"(skipped), {len(todo)} to run", flush=True)
+    rows = question_rows(set(todo))
+    detector = rd.load_detector(code) if todo else None
     Path(args.out).mkdir(parents=True, exist_ok=True)
     failed = []
     with open(Path(args.out) / "v5_dev.log", "a") as log:
-        for i, scene in enumerate(scenes, 1):
+        for i, scene in enumerate(todo, 1):
             mine = [r for r in rows if r["scene"] == scene]
             started = time.time()
             try:
                 run_scene(code, qss, sheet, upright, detector, mine, scene, args.work, args.out, args.data_root,
                           args.dense_dir, log)
-                print(f"[{i}/{len(scenes)}] {scene}: {len(mine)} questions, {time.time() - started:.0f} s", flush=True)
+                print(f"[{i}/{len(todo)}] {scene}: {len(mine)} questions, {time.time() - started:.0f} s", flush=True)
             except (Exception, SystemExit) as error:  # noqa: BLE001 - one scene's failure is reported, the rest run
                 failed.append(scene)
-                print(f"[{i}/{len(scenes)}] {scene}: FAILED: {error}", flush=True)
+                print(f"[{i}/{len(todo)}] {scene}: FAILED: {error}", flush=True)
                 log.write(f"FAILED {scene}: {error!r}\n")
-    done = {c: sum((Path(args.out) / c / s.replace("/", "__", 1) / LABEL / "DONE.json").is_file() for s in scenes)
-            for c in CONFIGS}
+    done = {c: sum(done_path(args.out, c, s).is_file() for s in scenes) for c in CONFIGS}
     print(f"finished: {done} of {len(scenes)} scenes per config; failed: {failed or 'none'}")
     sys.exit(1 if failed or min(done.values()) < len(scenes) else 0)
 
