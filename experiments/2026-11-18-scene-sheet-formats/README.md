@@ -508,7 +508,7 @@ is run again.
 git fetch origin && git checkout scene_sheet_formats && git pull
 E=experiments/2026-11-18-scene-sheet-formats
 
-# checks (CPU): 12 tests, 1 skipped (the smoke test needs the smoke run)
+# checks (CPU): 13 tests, 1 skipped (the smoke test needs the smoke run)
 PYTHONPATH=src .venv/bin/python -m unittest discover -s $E -p "test_v5.py"
 
 # smoke: one scene, all four configurations
@@ -528,7 +528,7 @@ configuration's `scannet__scene0025_01/all/`: `DONE.json`; `scene/tracks/summary
 tracked name; 38 folders `sheets/q<id>/` with a `question.json`. In `--work`, `masks/sam3_raw/manifest.json` lists 128
 frames and `"min_score": 0.2`. The dev run must end with 50 of 50 scenes per configuration and no failed scene.
 **Cost:** 685 SAM 3 prompts over the 50 scenes (6–27 per scene) on 128 frames each, an estimated 1.5–2.5 GPU hours on
-a B200/B300 (the smoke scene took 234 s for 8 prompts on an RTX 3070), and under an hour for the four trackings.
+a B200/B300 (the smoke scene took 234 s for 8 prompts on an RTX 3070, and 270 s for 12 on Colab's L4), and under an hour for the four trackings.
 `v5_dev.zip` holds the tracks, cameras, adapter reports, upright frames and question records (no masks, frames or
 depth): a few hundred MB.
 
@@ -550,8 +550,8 @@ it on `dev_scenes_35.txt`, and the dev200 VLM run follow `v5_dev_plan.md`.
 
 **Agent prompt** for whoever runs step 1:
 
-> Pull `scene_sheet_formats` to `d508cf7` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`, section
-> "v5 on the dev scenes", step 1, on one GPU. (1) Run `test_v5.py` (12 tests, 1 skipped; any failure stops);
+> Pull `scene_sheet_formats` to `cace408` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`, section
+> "v5 on the dev scenes", step 1, on one GPU. (1) Run `test_v5.py` (13 tests, 1 skipped; any failure stops);
 > `v5_dev.py` itself stops if the revamped code's files are not `119e603`'s. (2) Run the smoke
 > scene and check what the README lists for it: 1 of 1 scenes for each of the four configurations, `DONE.json`,
 > `summary.json` with association overlap, `min_track_frames` 4 and the configuration's `det_score`, a `scores.json`
