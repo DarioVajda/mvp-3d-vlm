@@ -669,3 +669,13 @@ it on `dev_scenes_35.txt`, and the dev200 VLM run follow `v5_dev_plan.md`.
   door), and the boxes are about twice gold's size error, so the scorecard now leads with box-size measures (pipeline_v4
   and v5's sheets, already in metres, used as they are under the priors scale). `v5_dev.py` runs SAM 3 once with the `fixed_v2` prompts on all 128 frames and the
   branch's tracker four ways (`--det-score` and per-track scores patched in); `test_v5.py` tests what needs no GPU.
+- 2026-11-25: v5's smoke scene on Colab (`v5_smoke.ipynb`, L4, code `f54ad23`; `v5_dev.py` uses a converted scene
+  folder as it is, `geometry_ready`). Every smoke check passes: 1 of 1 scenes per configuration, overlap association,
+  `min_track_frames` 4, each configuration's `det_score` and `min_points`, a `scores.json` per name, 38 question
+  folders, SAM 3 on 12 prompts x 128 frames from 0.2 (270 s). Scene scannet/scene0025_01 only, so exploratory. On
+  question 3139 all four have one row each of chair, pillow, keyboard, door and fan and their relation line names the
+  door (the ground truth, D), where pipeline_v4 has no fan. Box sizes against gold (longest side / gold, median, over
+  5 single-gold objects): v5-his and v5-det 1.03 with 40% over 1.5x, v5-pts and v5-ours 1.01 with 20% (pipeline_v4:
+  0.85, 0%, over 4 objects); the 300-point rule brings the keyboard to gold's 0.49 m (2.35 m in v5-his, 1.22 in
+  v5-det); the telephone is 1.34 m against 0.27 in all four. The 0.4 detection score adds rows (122 and 120 against
+  112) that gold does not have (18 and 16 unmatched against 9). On this scene `v5-pts` leads; the dev run decides.

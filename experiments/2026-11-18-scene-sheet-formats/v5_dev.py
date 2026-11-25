@@ -8,7 +8,9 @@ post-processing. Its code is CODE_COMMIT's, which this branch has had since the 
 --scenes:
 
   geometry  the branch's question_scene_sheet.ensure_geometry with --frames all: the 128 frames, cameras and dense
-            depth converted into <work>/<dataset>__<scene>/all/scene/, and its upright frame (upright.json)
+            depth converted into <work>/<dataset>__<scene>/all/scene/, and its upright frame (upright.json). A
+            folder there that already is that conversion (geometry_ready) is used as it is, so a scene's geometry
+            can also come from an earlier run of the branch (its out_smoke/<dataset>__<scene>/all/scene/)
   SAM 3     every SAM 3 prompt of the scene's questions under pipeline_v4's prompt set (rerun_detection, "fixed_v2":
             the questions' prompts with multi-word names kept together, plural names, and SYNONYMS_V2), on all 128
             frames, keeping each detection from rerun_detection.SAVE_MIN_SCORE (0.2) with its score: masks/sam3_raw/
@@ -135,13 +137,28 @@ def question_record(row, names, settings, scene_dir):
             "axes": "upright"}
 
 
+def geometry_ready(scene_dir, scene):
+    """Whether scene_dir holds the branch's finished conversion of the scene on all 128 frames with the dense depth:
+    adapter_report.json (written last) for this scene and frames, cameras.npz, depth.npz and the 128 frames."""
+    scene_dir = Path(scene_dir)
+    report_path = scene_dir / "adapter_report.json"
+    if not report_path.is_file() or not (scene_dir / "cameras.npz").is_file() or not (scene_dir / "depth.npz").is_file():
+        return False
+    report = json.loads(report_path.read_text())
+    frames = [p for p in (scene_dir / "frames").glob("*") if p.suffix.lower() in {".jpg", ".jpeg", ".png"}] \
+        if (scene_dir / "frames").is_dir() else []
+    return (report.get("scene") == scene and report.get("selected_frames") == list(range(128))
+            and report.get("depth_npz") == "written" and report.get("depth_source") == "dense" and len(frames) == 128)
+
+
 def run_scene(code, qss, sheet, upright, detector, rows, scene, work, out, data_root, dense_dir, log):
     """Geometry, SAM 3 and pooling once, then each config's tracks and sheet folders."""
     folder = scene.replace("/", "__", 1)
     base = Path(work) / folder / LABEL
     scene_dir = base / "scene"
-    spec, label = qss.frame_selection(LABEL)
-    qss.ensure_geometry(scene, data_root, spec, label, dense_dir, scene_dir)
+    if not geometry_ready(scene_dir, scene):
+        spec, label = qss.frame_selection(LABEL)
+        qss.ensure_geometry(scene, data_root, spec, label, dense_dir, scene_dir)
     upright.scene_upright(scene_dir, log=lambda text: log.write(text + "\n"))
     names = rd.scene_prompts(rows, PROMPT_SET)  # {name: SAM 3 prompts}
     sam = list(dict.fromkeys(p for v in names.values() for p in v))

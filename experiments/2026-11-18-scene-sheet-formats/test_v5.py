@@ -67,6 +67,25 @@ class DevRun(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, self.assertRaises(SystemExit):
             v5_dev.check_code(tmp)
 
+    def test_geometry_ready(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            self.assertFalse(v5_dev.geometry_ready(d, "scannet/s1"))
+            (d / "frames").mkdir()
+            for t in range(128):
+                (d / "frames" / f"{t:03d}.jpg").write_bytes(b"")
+            for f in ("cameras.npz", "depth.npz"):
+                (d / f).write_bytes(b"")
+            report = {"scene": "scannet/s1", "selected_frames": list(range(128)), "depth_npz": "written",
+                      "depth_source": "dense"}
+            (d / "adapter_report.json").write_text(json.dumps(report))
+            self.assertTrue(v5_dev.geometry_ready(d, "scannet/s1"))
+            self.assertFalse(v5_dev.geometry_ready(d, "scannet/s2"))  # another scene's
+            (d / "adapter_report.json").write_text(json.dumps({**report, "depth_source": "patch_points"}))
+            self.assertFalse(v5_dev.geometry_ready(d, "scannet/s1"))  # not the dense depth
+            (d / "adapter_report.json").write_text(json.dumps({**report, "selected_frames": list(range(16))}))
+            self.assertFalse(v5_dev.geometry_ready(d, "scannet/s1"))  # not the 128 frames
+
     def test_question_rows_and_prompts(self):
         with tempfile.TemporaryDirectory() as tmp:
             qs, ps = Path(tmp) / "test.jsonl", Path(tmp) / "prompts.jsonl"
