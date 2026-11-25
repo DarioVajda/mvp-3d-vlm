@@ -617,7 +617,7 @@ Step C of `v5_dev_plan.md` (dev200 with the VLM) needs all 50 scenes.
 
 **Agent prompt** for whoever runs step 1:
 
-> Pull `scene_sheet_formats` to the commit given with this prompt (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`,
+> Pull `scene_sheet_formats` to `86a54bd` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`,
 > section "v5 on the dev scenes", step 1, **stage 1 only**, on one GPU. (1) Run `test_v5.py` (19 tests, 1 skipped;
 > any failure stops); `v5_dev.py` itself stops if the revamped code's files are not `119e603`'s. (2) Run the smoke
 > scene and check what the README lists for it: 1 of 1 scenes for each of the four configurations, `DONE.json`,
