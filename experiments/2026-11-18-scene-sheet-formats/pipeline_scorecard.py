@@ -20,12 +20,19 @@ gold sheets. Measures, overall and by dataset:
   - unmatched rows: in each sheet folder, a class's rows beyond the count in the matching gold sheet, plus every row of
     a class that gold sheet does not have; a count-based stand-in, since positions can only be matched to gold with an
     alignment
+  - box size (key measures: inflated boxes shorten the closest-point distances the relations state), for classes with
+    one gold object, from the row seen in the most frames (the one the question-conditioned dedup keeps): its longest
+    side over the gold object's (median), the share of such boxes more than BOX_INFLATED times gold's longest side,
+    its volume over gold's (median), and the closest-point gap between two such classes' boxes against gold's (median
+    absolute error in metres); in metres as the size errors below
   - size and distance errors with the priors scale (mvp.benchmarks.scene_scale, no gold), or with --scale oracle each
     scene's scale fitted to its gold sheet (explore_sheets.oracle_scales; scenes without one are left out of these
     measures): the longest side of a class's largest row against the gold object's, and the distance between class
     centres against gold's, for classes with one gold object; median absolute error in metres and median relative
     error. The priors scale's calibration was fitted on 16-frame sheets, whose objects are split into small rows, so
-    sheets whose rows are whole objects (128 frames, overlap tracking) need --scale oracle, or the calibration refitted
+    sheets whose rows are whole objects (128 frames, overlap tracking) need --scale oracle, or the calibration refitted.
+    Sheets already in metres (a folder with scales_v4.json or scales_v5.json: pipeline_v4, v5) are used as they are
+    under the priors scale, which on their rows would rescale them a second time
   - fixed rules reading only the sheet, scaled the same way: counting (rows of the class), object size (largest row's
     longest side), absolute distance (smallest gap between the two classes' boxes), relative distance (the candidate
     whose boxes come closest to the target's); scored like VSI-Bench (MRA, exact match)
@@ -49,6 +56,20 @@ CONTEXT = {"object_counting", "room_size_estimation"}
 MRA_THRESHOLDS = np.arange(0.5, 1.0, 0.05)
 RULE_TYPES = {"object_counting": "counting", "object_size_estimation": "object size",
               "object_abs_distance": "absolute distance", "object_rel_distance": "relative distance"}
+
+
+METRIC_FILES = ("scales_v4.json", "scales_v5.json")  # a sheets folder already in metres (relations_v4.py, v5_postprocess.py)
+BOX_INFLATED = 1.5  # a box this many times gold's longest side counts as inflated
+
+
+def metric(root):
+    """Whether a sheets folder is already in metres."""
+    return any((Path(root) / f).is_file() for f in METRIC_FILES)
+
+
+def most_seen(rows):
+    """The row seen in the most frames (the first of those tied)."""
+    return max(rows, key=lambda r: int(r["num_frames"]) if r.get("num_frames") else 0)
 
 
 def read(path):
@@ -154,6 +175,8 @@ def score_root(root, scenes, scale="priors"):
             rec["empty_where_gold"].append(not prows and bool(grows))
             if q["question_type"] in RULE_TYPES:
                 k = scene_scale.question_scale(int(q["id"]), str(root))["k"] if oracle is None else oracle.get(scene)
+                if oracle is None and metric(root):
+                    k = 1.0
                 if k is not None:
                     rec[f"rule:{q['question_type']}"].append(rule_score(q, prows, k))
         rec["rows"] = rec["one_frame"] = rec["unmatched"] = 0
@@ -174,7 +197,21 @@ def score_root(root, scenes, scale="priors"):
         k = scene_scale.CALIBRATION * ratio if classes else scene_scale.FALLBACK
         if oracle is not None:
             k = oracle.get(scene)
+        elif metric(root):
+            k = 1.0
         single = [c for c, v in gold.items() if len(v) == 1 and objects.get(c)] if k is not None else []
+        shown = {c: most_seen(objects[c]) for c in single}
+        for c in single:
+            g = gold[c][0]
+            side = k * longest(shown[c]) / longest(g)
+            rec["box_ratio"].append(side)
+            rec["box_inflated"].append(side > BOX_INFLATED)
+            gv = float(np.prod(box(g)[1]))
+            if gv > 0:
+                rec["box_volume_ratio"].append(k ** 3 * float(np.prod(box(shown[c])[1])) / gv)
+        for a, b in itertools.combinations(single, 2):
+            pb = [(box(shown[c])[0] * k, box(shown[c])[1] * k) for c in (a, b)]
+            rec["gap_abs"].append(abs(gap(*pb) - gap(box(gold[a][0]), box(gold[b][0]))))
         for c in single:
             p, g = k * max(longest(r) for r in objects[c]), longest(gold[c][0])
             rec["size_abs"].append(abs(p - g))
@@ -191,6 +228,11 @@ def score_root(root, scenes, scale="priors"):
 
 
 MEASURES = [  # (name, how to compute over a group's records, format, better when higher)
+    ("**box longest side / gold, median**", lambda R: np.median([x for r in R for x in r["box_ratio"]]), "x", None),
+    (f"**boxes over {BOX_INFLATED}x gold's longest side**",
+     lambda R: np.mean([x for r in R for x in r["box_inflated"]]), "pct", False),
+    ("box volume / gold, median", lambda R: np.median([x for r in R for x in r["box_volume_ratio"]]), "x", None),
+    ("**closest-point gap error, median (m)**", lambda R: np.median([x for r in R for x in r["gap_abs"]]), "m", False),
     ("named objects found", lambda R: np.mean([x for r in R for x in r["found"]]), "pct", True),
     ("questions with every named object", lambda R: np.mean([x for r in R for x in r["all_found"]]), "pct", True),
     ("empty sheets where gold has objects", lambda R: int(sum(sum(r["empty_where_gold"]) for r in R)), "int", False),
@@ -215,7 +257,8 @@ MEASURES = [  # (name, how to compute over a group's records, format, better whe
 def fmt(v, kind):
     if v is None or (isinstance(v, float) and np.isnan(v)):
         return "–"
-    return {"pct": f"{100 * v:.1f}%", "int": f"{v:,}", "m": f"{v:.2f}", "score": f"{v:.1f}", "float": f"{v:.2f}"}[kind]
+    return {"pct": f"{100 * v:.1f}%", "int": f"{v:,}", "m": f"{v:.2f}", "score": f"{v:.1f}", "float": f"{v:.2f}",
+            "x": f"{v:.2f}x"}[kind]
 
 
 def diff(a, b, kind, higher):
@@ -223,7 +266,7 @@ def diff(a, b, kind, higher):
         return "–"
     d = b - a
     text = {"pct": f"{100 * d:+.1f} pts", "int": f"{d:+,}", "m": f"{d:+.2f}", "score": f"{d:+.1f}",
-            "float": f"{d:+.2f}"}[kind]
+            "float": f"{d:+.2f}", "x": f"{d:+.2f}x"}[kind]
     if d == 0 or higher is None:
         return text
     return text + (" ✓" if (d > 0) == higher else " ✗")
@@ -251,7 +294,10 @@ def report(old_root, new_root, scenes_file, scale="priors"):
               "optimistic." if scale == "priors" else
               "The size and distance errors and the fixed rules use each scene's oracle scale, fitted to its gold "
               "sheet (`explore_sheets.oracle_scales`, `--scale oracle`); scenes without one are left out of them, "
-              "and each folder's scenes are fitted on its own rows."), ""]
+              "and each folder's scenes are fitted on its own rows."),
+             "Bold: the key box-size measures (boxes larger than the objects shorten the closest-point distances the "
+             "relations state), from each class's most-seen row. A folder already in metres (pipeline_v4, v5: "
+             "`scales_v4.json`, `scales_v5.json`) is used as it is under the priors scale.", ""]
     lines += table(old, new, f"All {len(scenes)} scenes")
     for ds, name in DATASETS.items():
         o, n = [r for r in old if r["dataset"] == ds], [r for r in new if r["dataset"] == ds]
