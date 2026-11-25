@@ -111,3 +111,5 @@ results/*_undecayed_trunk/
 
 # Scene sheet-related ignores
 tasks/vggt_data/scenes
+# v5_dev.py: the revamped tracker with --det-score and per-track scores, made at run time
+openvocab-4D-main/trackA/milestone4_video_v5.py
