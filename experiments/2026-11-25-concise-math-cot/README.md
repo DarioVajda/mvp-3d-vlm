@@ -283,6 +283,81 @@ cell); A, C, D and E are read from `results/zeroshot/vsibench/structured_cot/exp
 5. Then the pipeline's sheets: the variants are defined for the gold sheet only (`cot_variants.check`); the pipeline's
    sheet (pipeline_v4, metres by an estimated scale) needs its own wording of the units, a decision for then.
 
+## Model size: Qwen3.5-9B (exploratory)
+
+Added 2026-11-25, before any 9B answer existed. **Exploratory:** 30 development questions (explore200, on which the
+prompts were designed), one run per condition; it can show a large difference, not establish a small one.
+
+### Question
+
+Does CoT over the gold scene sheet fail because the 2B model is too small? The same questions and prompts with
+Qwen/Qwen3.5-9B: does concise CoT (F1) beat direct answering with the sheet (C) for the 9B, and is its gain over the
+2B's gain larger? Ji et al. (2507.13362, Table III) found a structured CoT helped 7B and larger models and barely a 3B.
+
+### What would answer it
+
+- **Size is a reason:** 9B F1 − 9B C > 0 and (9B F1 − 9B C) − (2B F1 − 2B C) > 0, with the replies showing the 9B
+  applying a procedure the 2B does not (from the replies and `errors.csv`, not from the scores alone).
+- **Size is not the reason, at this scale:** 9B F1 − 9B C ≤ 0 as well. Then the next suspects are the prompt and the
+  sheet's form, not the model's size.
+- **Read alongside:** 9B C − 2B C (does the 9B read the sheet better when answering directly?) and 9B E − 2B E (with the
+  distances given; E is near its ceiling for the 2B, 82.0 on the pilot's 75 computing questions).
+- With 10 questions per task, only differences of about 15 points or more can clear the intervals. A result here
+  decides whether a larger 9B run (25 per task, then held-out questions) is worth it, not the answer.
+
+### Design
+
+| Model | Conditions run | From the pilot |
+|---|---|---|
+| Qwen3.5-9B | C, F1, E, A; F2 last and only if time allows | — |
+| Qwen3.5-2B | F1 on the 30 (the smoke stage's 3 are reused) | A, C, D, E |
+
+- **Questions:** `model_size_ids.txt`, 30: the first 10 of each computing task in `followup.nested_subset`'s seed-0
+  order over explore200's computing questions (the `extended` stage), so they include the smoke stage's 3 and every
+  one has the pilot's A, C, D and E (`test_followup.ModelSize.test_question_ids`). 14 scenes, up to 4 questions per
+  scene.
+- **The same for both models:** thinking off, 16 frames `uniform128`, the gold sheet as csv, greedy decoding, 2,048 new
+  tokens, batches of up to 8 questions of a video, the final-answer rule, the prompts (A, C, E: the eval's direct
+  prompts, as the pilot; F1, F2: `cot_variants`, version 2026-11-25.1), parsing and scoring. The 9B's A, C and E use
+  the pilot's flags (`followup.DIRECT`); each folder's `config.json` differs from the 2B's only in the model and the
+  device map (`test_followup.ModelSize`).
+- **Loading:** bf16, `device_map="auto"` (`--device-map auto`), no quantization; `QwenVL` stops if accelerate would
+  put any weight on the CPU or disk. The 2B keeps `device_map="cuda"`; the default of every command is unchanged.
+- **Folders:** the 9B's runs in `<results>/qwen3.5-9b/<condition>/`; the 2B's in `<results>/<condition>/`, as before.
+- **Deviations, stated:** the pilot's 2B A, C, D and E ran in batches of its 200 questions, the 9B's in batches of
+  these 30 (fewer questions per video), and on another GPU; batching and the GPU can change greedy decoding in the
+  last digits. The 2B's F1 answers come from two sessions (the smoke stage's 3, the other 27 on the A100).
+
+### Comparisons (one Holm family)
+
+| Comparison | Question |
+|---|---|
+| 9B F1 − 9B C | does CoT help the 9B? |
+| 2B F1 − 2B C | does CoT help the 2B? |
+| (9B F1 − 9B C) − (2B F1 − 2B C) | does model size change the effect of CoT? |
+| 9B C − 2B C | the sheet, direct |
+| 9B E − 2B E | the sheet and relations, direct |
+
+Each is a per-question contrast of scores on the questions every condition of both models answered, on the computing
+score (the mean of the three tasks) and per task: better / worse / same, an exact sign test, Holm over the five, and a
+paired bootstrap 95% interval (10,000 resamples within question type, seed 0), as the rest of the analysis. Per model
+and condition: the scores, the parse rate, the share cut off at 2,048 tokens, the median and 90th-percentile reply
+length and seconds per question (`analysis.py --model-size`, `model_size.md`).
+
+### Runs and cost (Colab, A100)
+
+`cot_9b.ipynb`, with the code zip `mvp-3d-vlm-cot-9b.zip` (`git archive`; its comment is the commit) in `MyDrive/mvp/`,
+on an A100 runtime, `RUN_NAME = "dev_v1"` (the 2B smoke stage's folder):
+
+1. **`STAGE = "smoke"`:** one question per task, the four 9B conditions (12 replies), about 25–35 minutes: installing
+   5, the 9B's download (about 19 GB) 5, a load on its own 1–2, four runs each with a load. Before the runs it checks
+   the 2B's F3 smoke replies for copying from the worked example. It prints the peak GPU memory, seconds per question
+   per condition and an estimate for the main stage. The decision to go on is made there.
+2. **`STAGE = "main"`:** the 30 questions in the order 9B C, 9B F1, 9B E, 2B F1, 9B A (then 9B F2 with `RUN_F2 =
+   True`); resumable, answers written to Drive batch by batch. Rough estimate before measuring: 50–70 minutes, F2 about
+   15 more; a reply that runs to 2,048 tokens takes 1.5–2 minutes on the 9B.
+3. The notebook zips `dev_v1` (both models) to `MyDrive/mvp/cot_9b_results_<STAGE>.zip`.
+
 ## Results
 
 <!-- make_table:start -->
@@ -300,3 +375,7 @@ Not run yet.
 
 - 2026-11-25: plan, prompts (`PROMPT_VERSION` 2026-11-25.1), runs and analysis written; CPU tests pass; nothing run on a
   GPU yet. The conventions were checked against VSI-Bench's answers on the full benchmark (Design).
+- 2026-11-25: the model-size comparison planned (Model size): Qwen3.5-9B on 30 development questions
+  (`model_size_ids.txt`), the 2B's F1 on the same; `followup.py` runs the pilot's direct conditions and other models
+  (`--model`, `--device-map`), `analysis.py --model-size`, `cot_9b.ipynb`; F3 replies flagged when they take the worked
+  example's answer or numbers. Nothing run with the 9B yet.

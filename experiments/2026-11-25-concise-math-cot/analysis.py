@@ -15,17 +15,30 @@ errors.csv has one row per (condition, question) for the CoT conditions with wha
 off, no answer line, the number or letter read, whether it equals the centre-distance or closest-point rule computed
 from the gold sheet, a metres-for-centimetres slip, whether the gold sheet's own rule disagrees with the ground truth)
 and empty columns for what needs reading the reply (object identification, attribute extraction, operation, arithmetic,
-unit, notes). A reply that contains the sheet's numbers or ids is not counted as correct reasoning.
+unit, notes). A reply that contains the sheet's numbers or ids is not counted as correct reasoning. Two flags check
+whether a reply took F3's worked example for its own: its answer is the example's (1.059 m, 183 cm), or it quotes two or
+more of the example's numbers that the question's own sheet does not have; F1 and F2, which never see the example, are
+the control.
+
+--model-size (exploratory, README "Model size"): Qwen3.5-9B against Qwen3.5-2B on the same questions
+(model_size_ids.txt) and prompts: a table per model and condition, and one Holm family of contrasts (9B F1 - 9B C,
+2B F1 - 2B C, their difference, 9B C - 2B C, 9B E - 2B E), each a per-question contrast of scores with its sign test and
+paired bootstrap interval. Writes model_size.md into the results folder.
+
+  PYTHONPATH=src python experiments/2026-11-25-concise-math-cot/analysis.py --results <out> --sheets-root <out_full> \
+      --model-size
 """
 import argparse
 import csv
 import functools
 import json
+import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from mvp.benchmarks.cot_variants import EXAMPLES
 from mvp.benchmarks.vsibench import (MCA_QUESTION_TYPES, final_letter, final_number, parsed, score_final, summarize,
                                      task_of)
 from mvp.paths import ROOT
@@ -46,6 +59,19 @@ FAMILIES = {  # (condition, reference, question); Holm within each family
     "against video only (A)": [(f, "A", "") for f in ("F1", "F2", "F3")],
 }
 FULL = 25  # questions per task in explore200
+# the model-size comparison (README, "Model size"): the 9B's folder, its questions, the conditions per model
+LARGE, LARGE_DIR = "Qwen/Qwen3.5-9B", "qwen3.5-9b"  # followup.model_dir's name for it
+SIZE_IDS = Path(__file__).resolve().parent / "model_size_ids.txt"
+SIZE_CONDITIONS = {"2B": ("A", "C", "D", "E", "F1"), "9B": ("A", "C", "E", "F1", "F2")}
+OPTIONAL = {("9B", "F2")}  # run last if time allows; left out unless it answered every question the others did
+SIZE_CONTRASTS = [  # (comparison, question, {(model, condition): weight}); one Holm family
+    ("9B F1 - 9B C", "does CoT help the 9B?", {("9B", "F1"): 1, ("9B", "C"): -1}),
+    ("2B F1 - 2B C", "does CoT help the 2B?", {("2B", "F1"): 1, ("2B", "C"): -1}),
+    ("(9B F1 - 9B C) - (2B F1 - 2B C)", "does model size change the effect of CoT?",
+     {("9B", "F1"): 1, ("9B", "C"): -1, ("2B", "F1"): -1, ("2B", "C"): 1}),
+    ("9B C - 2B C", "the sheet, direct", {("9B", "C"): 1, ("2B", "C"): -1}),
+    ("9B E - 2B E", "the sheet and relations, direct", {("9B", "E"): 1, ("2B", "E"): -1}),
+]
 B, SEED = 10_000, 0
 CLOSE = 0.05  # a number within 5% of a rule's value counts as that rule's
 
@@ -180,6 +206,18 @@ def near(value, target):
     return value is not None and target is not None and abs(value - target) <= CLOSE * max(abs(target), 1e-9)
 
 
+def example_answer(task):
+    """The answer F3's worked example for this task ends on."""
+    return EXAMPLES[task].rsplit("Answer: ", 1)[1].strip()
+
+
+def example_numbers(task, rows):
+    """The numbers written with three decimals in F3's example for this task that the question's own sheet rows do
+    not have: a reply that quotes them took them from the example."""
+    own = {f"{float(r[k]):.3f}" for r in rows for k in ("x", "y", "z", "size_x", "size_y", "size_z")}
+    return set(re.findall(r"-?\d+\.\d{3}", EXAMPLES[task])) - own
+
+
 def error_rows(runs, sheets_root, conditions=("D", "F1", "F2", "F3")):
     out = []
     for c in conditions:
@@ -207,10 +245,15 @@ def error_rows(runs, sheets_root, conditions=("D", "F1", "F2", "F3")):
                 flags["metres_not_cm"] = near(read, r["longest_m"])
                 flags["another_side"] = any(near(read, s) for s in r["other_sides_cm"]) and not near(read, r["longest_cm"])
                 rule_score = score_final(doc, str(r["longest_cm"]))
+            quoted = sorted(n for n in example_numbers(doc["question_type"], rows) if n in text)
+            flags["copies_example_answer"] = (not mca and read is not None
+                                              and near(read, float(example_answer(doc["question_type"]))))
+            flags["quotes_example_numbers"] = len(quoted) >= 2
             flags["sheet_rule_disagrees_with_truth"] = rule_score is not None and rule_score < 0.5
             flags["named_objects_missing_from_sheet"] = not r
             out.append({"condition": c, "id": q, "question_type": doc["question_type"], "ground_truth": doc["ground_truth"],
-                        "read": read, "score": doc["score"], "reply_tokens": doc.get("n_new_tokens"), **flags,
+                        "read": read, "score": doc["score"], "reply_tokens": doc.get("n_new_tokens"),
+                        "example_numbers_quoted": " ".join(quoted), **flags,
                         # to be filled by reading the reply
                         "manual_objects": "", "manual_attributes": "", "manual_operation": "", "manual_arithmetic": "",
                         "manual_unit": "", "manual_notes": ""})
@@ -283,13 +326,107 @@ def report(results, sheets_root, baselines=BASELINES):
     return text, runs, comps, errors
 
 
+# ---- model size (exploratory) ----
+
+STEMS = {**{c: s for c, (s, _) in BASELINE_FILES.items()}, **{c: s for c, (s, _) in VARIANTS.items()}}
+
+
+def load_sizes(results, baselines=BASELINES, ids_file=SIZE_IDS):
+    """{(model, condition): run} on the questions of ids_file that every run answered, and those ids. The 2B's A, C,
+    D and E are the pilot's, its F1 is <results>/cot_f1; the 9B's are <results>/qwen3.5-9b/<stem>. A missing run
+    stops it, except an optional one, which is left out unless it answered all the others' questions."""
+    ids = [int(x) for x in Path(ids_file).read_text().split()]
+    runs = {}
+    for model, conditions in SIZE_CONDITIONS.items():
+        for c in conditions:
+            if model == "2B" and c in BASELINE_FILES:
+                path = Path(baselines) / f"{STEMS[c]}.jsonl"
+            else:
+                path = Path(results) / (LARGE_DIR if model == "9B" else "") / STEMS[c] / "predictions.jsonl"
+            if path.is_file():
+                runs[(model, c)] = load_run(path)
+            elif (model, c) not in OPTIONAL:
+                raise SystemExit(f"{model} {c}: no predictions at {path}")
+    common = set(ids)
+    for key, r in runs.items():
+        if key not in OPTIONAL:
+            common &= set(r.index)
+    common = sorted(common)
+    if not common:
+        raise SystemExit("no question answered by every condition of both models")
+    runs = {k: r.loc[common] for k, r in runs.items() if set(common) <= set(r.index)}
+    return runs, common
+
+
+def contrast(runs, weights, seed=SEED, n=B):
+    """A per-question contrast of scores, sum of weight x score: its computing-score value (the mean of the task
+    means), per task, better / worse / same (contrast > 0 / < 0 / = 0), the sign test and a paired bootstrap 95%
+    interval (questions resampled within question type)."""
+    first = runs[next(iter(weights))]
+    qtypes = first["question_type"].to_numpy()
+    v = sum(w * runs[k]["score"].to_numpy(float) for k, w in weights.items())
+    groups = {t: np.flatnonzero(qtypes == t) for t in sorted(set(qtypes))}
+    rng = np.random.default_rng(seed)
+    boot = np.array([np.mean([v[rng.choice(m, size=len(m))].mean() for m in groups.values()]) for _ in range(n)])
+    better, worse = int((v > 1e-12).sum()), int((v < -1e-12).sum())
+    return {"diff": 100 * float(np.mean([v[m].mean() for m in groups.values()])),
+            **{f"diff {t}": 100 * float(v[m].mean()) for t, m in groups.items()},
+            "better": better, "worse": worse, "same": len(v) - better - worse, "p": sign_test(better, worse),
+            "ci": (100 * float(np.percentile(boot, 2.5)), 100 * float(np.percentile(boot, 97.5)))}
+
+
+def size_report(results, baselines=BASELINES, ids_file=SIZE_IDS):
+    runs, ids = load_sizes(results, baselines, ids_file)
+    first = next(iter(runs.values()))
+    per_task = first["question_type"].value_counts()
+    names = {**{c: w for c, (_, w) in BASELINE_FILES.items()}, **{c: w for c, (_, w) in VARIANTS.items()}}
+    lines = ["# Model size: Qwen3.5-9B against Qwen3.5-2B", "", "<!-- Written by analysis.py --model-size. -->", "",
+             f"**Exploratory: {len(ids)} questions ({int(per_task.min())} per task), development questions "
+             "(explore200), on which the prompts were designed.** Nothing here is an established difference.", "",
+             f"Questions: {len(ids)} ({', '.join(f'{t} {n}' for t, n in per_task.items())}), the same for every row. "
+             "The same prompts, frames, decoding, token limit, batches and answer rule for both models; the 2B's A, "
+             "C, D and E are the structured-CoT pilot's predictions. Scores x100 (score_final).", "",
+             "| Model | Condition | What | Computing | Abs. dist. | Rel. dist. | Obj. size | Parsed | "
+             "Reply tokens, median / p90 | Cut off | s / question |", "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    for (model, c), run in runs.items():
+        folder = Path(results) / (LARGE_DIR if model == "9B" else "")
+        pilot = model == "2B" and c in BASELINE_FILES  # the pilot's runs have no timing.jsonl
+        m = measures(run, None if pilot else timing_per_question(folder, STEMS[c]))
+        tokens = f"{m['reply tokens median']:.0f} / {m['reply tokens p90']:.0f}" if "reply tokens median" in m else "-"
+        secs = f"{m['seconds per question']:.1f}" if m.get("seconds per question") else "-"
+        lines.append(f"| {model} | {c} | {names[c]} | {m['computing']:.1f} | {m['object_abs_distance']:.1f} | "
+                     f"{m['object_rel_distance']:.1f} | {m['object_size_estimation']:.1f} | {m['parse rate']:.1f}% | "
+                     f"{tokens} | {m.get('cut off', 0):.1f}% | {secs} |")
+    rows = [{"comparison": name, "what": what, **contrast(runs, w)} for name, what, w in SIZE_CONTRASTS
+            if all(k in runs for k in w)]
+    for r, h in zip(rows, holm([r["p"] for r in rows])):
+        r["holm p"] = h
+    lines += ["", "s / question includes loading the model once per call. Contrasts, question by question (better / "
+              "worse: questions where the contrast is above / below 0; exact two-sided sign test; Holm over the "
+              f"family; paired bootstrap 95% interval, {B:,} resamples within question types):", "",
+              "| Comparison | Question | Computing | 95% interval | Abs. dist. | Rel. dist. | Obj. size | "
+              "Better / worse / same | p | Holm p |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    for r in rows:
+        lines.append(f"| {r['comparison']} | {r['what']} | {r['diff']:+.1f} | [{r['ci'][0]:+.1f}, {r['ci'][1]:+.1f}] | "
+                     f"{r['diff object_abs_distance']:+.1f} | {r['diff object_rel_distance']:+.1f} | "
+                     f"{r['diff object_size_estimation']:+.1f} | {r['better']} / {r['worse']} / {r['same']} | "
+                     f"{r['p']:.3g} | {r['holm p']:.3g} |")
+    text = "\n".join(lines) + "\n"
+    (Path(results) / "model_size.md").write_text(text)
+    return text, runs, rows
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--results", required=True, help="followup.py's --out: <variant>/predictions.jsonl")
     ap.add_argument("--sheets-root", required=True, help="the gold sheets the runs used")
     ap.add_argument("--baselines", default=str(BASELINES))
+    ap.add_argument("--model-size", action="store_true", help="the 9B against the 2B (model_size.md)")
     args = ap.parse_args()
-    print(report(args.results, args.sheets_root, args.baselines)[0])
+    if args.model_size:
+        print(size_report(args.results, args.baselines)[0])
+    else:
+        print(report(args.results, args.sheets_root, args.baselines)[0])
 
 
 if __name__ == "__main__":

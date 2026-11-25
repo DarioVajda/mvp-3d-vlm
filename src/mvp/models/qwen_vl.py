@@ -18,10 +18,15 @@ SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 class QwenVL:
-    def __init__(self, model_id, min_pixels=256 * 32 * 32, max_pixels=2048 * 32 * 32, attn="sdpa", weights=True):
-        """weights=False loads only the processor: enough to build prompts (render_prompt), not to generate."""
+    def __init__(self, model_id, min_pixels=256 * 32 * 32, max_pixels=2048 * 32 * 32, attn="sdpa", weights=True,
+                 device_map="cuda"):
+        """weights=False loads only the processor: enough to build prompts (render_prompt), not to generate.
+        device_map="auto": accelerate places the weights; it stops if any would be offloaded to the CPU or disk."""
         self.model = AutoModelForImageTextToText.from_pretrained(
-            model_id, dtype=torch.bfloat16, attn_implementation=attn, device_map="cuda").eval() if weights else None
+            model_id, dtype=torch.bfloat16, attn_implementation=attn, device_map=device_map).eval() if weights else None
+        offloaded = sorted({str(d) for d in (getattr(self.model, "hf_device_map", None) or {}).values()} & {"cpu", "disk"})
+        if offloaded:
+            raise RuntimeError(f"{model_id} does not fit on the GPU in bf16: parts were placed on {offloaded}")
         self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=min_pixels, max_pixels=max_pixels)
         self.processor.tokenizer.padding_side = "left"
         self.min_pixels, self.max_pixels = min_pixels, max_pixels

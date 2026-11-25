@@ -112,6 +112,9 @@ def print_prompts(df, args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", help="required unless --fusion-ckpt is given")
+    ap.add_argument("--device-map", default="cuda", choices=["cuda", "auto"],
+                    help="the model's weights: all on the GPU (default), or placed by accelerate (stops if any would "
+                         "be offloaded to the CPU)")
     ap.add_argument("--images", action="store_true", help="frames as separate images through mvp.fusion (SpatialStack's "
                     "protocol: np.linspace frames, VGGT on the same frames), instead of a Qwen video")
     ap.add_argument("--fusion-ckpt", help="trained arm from mvp.train.run (implies --images)")
@@ -255,7 +258,8 @@ def main():
         model = (FusionVL.load(args.fusion_ckpt) if args.fusion_ckpt else FusionVL(args.model, "base")).cuda().eval()
         args.model = model.config["model_id"]
     else:
-        model = QwenVL(args.model)
+        # the default call as before; the device map only when another is asked for
+        model = QwenVL(args.model) if args.device_map == "cuda" else QwenVL(args.model, device_map=args.device_map)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     t0, n = time.time(), 0
     with open(args.out, "a") as fout:

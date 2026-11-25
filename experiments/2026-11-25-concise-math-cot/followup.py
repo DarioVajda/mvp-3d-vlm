@@ -8,12 +8,19 @@ tasks with the gold sheet, through the eval (python -m mvp.eval.vsibench), resum
   config     run_config: everything that decides an answer except the question (model, eval settings, the variant's
              prompt fingerprint and version, the gold sheets' index hash, test.jsonl's hash); its hash names nothing,
              it is checked: guard() stops a run whose folder holds answers made under another config
+  conditions the variants (cot_f1, cot_f2, cot_f3), and the pilot's direct conditions under the pilot's names
+             (DIRECT: A_video, gold_csv, gold_relations), for running them with another model
+  models     --model other than MODEL (Qwen3.5-2B) writes to <out>/<model's name, lower case>/ (model_dir), so another
+             model's answers never land in the 2B's folders; --device-map auto (not the default) for a model loaded
+             across the GPU by accelerate, which stops if any weight would be offloaded to the CPU
   layout     <out>/<variant>/config.json, predictions.jsonl (+ the eval's _summary.json), prompts.jsonl (the exact
              text after the video, question by question), timing.jsonl (one line per call: questions before and after,
              seconds, GPU), ids_k<k>.txt (the questions of each call)
 
   PYTHONPATH=src python experiments/2026-11-25-concise-math-cot/followup.py --variants cot_f1 cot_f2 cot_f3 --k 1 \
       --sheets-root tasks/openvocab_adapter/out_full --out results/zeroshot/vsibench/concise_math_cot/dev
+  PYTHONPATH=src python experiments/2026-11-25-concise-math-cot/followup.py --model Qwen/Qwen3.5-9B --device-map auto \
+      --variants gold_csv cot_f1 gold_relations A_video --k 10 --sheets-root ... --out ...   # -> <out>/qwen3.5-9b/
 """
 import argparse
 import hashlib
@@ -35,6 +42,10 @@ MODEL = "Qwen/Qwen3.5-2B"
 SETTINGS = {"nframes": 16, "sampling": "uniform128", "max_new_tokens": 2048, "final_answer": True, "batch_size": 8,
             "token_budget": 120000, "sheet_source": "gold", "sheet_format": "csv", "layout": "sit"}
 STAGES = {"smoke": 1, "small": 5, "extended": 10, "full": 25}  # questions per task; explore200 has 25 per task
+VARIANTS = ("cot_f1", "cot_f2", "cot_f3")
+# the pilot's direct conditions (explore_cot.ipynb's CONDITIONS), name -> sheet source: A, C and E
+DIRECT = {"A_video": None, "gold_csv": "gold", "gold_relations": "gold_relations"}
+DEVICE_MAP = "cuda"  # the eval's default (mvp.models.qwen_vl.QwenVL)
 
 
 class ConfigMismatch(RuntimeError):
@@ -80,8 +91,20 @@ def heldout_pool(questions, dev_ids, available=None):
                   and (available is None or q in available))
 
 
-def run_config(variant, sheets_root, model=MODEL, questions_path=QUESTIONS, prompt_version=None):
-    """Everything that decides an answer other than the question itself."""
+def model_dir(out_root, model=MODEL):
+    """The folder of a model's conditions: out_root for MODEL (as before), out_root/<model's name, lower case> otherwise."""
+    return Path(out_root) if model == MODEL else Path(out_root) / model.split("/")[-1].lower()
+
+
+def run_config(variant, sheets_root, model=MODEL, questions_path=QUESTIONS, prompt_version=None, device_map=DEVICE_MAP):
+    """Everything that decides an answer other than the question itself. A direct condition's prompts are the eval's
+    (unchanged since the pilot); write_prompts stops if a logged prompt changes."""
+    extra = {} if device_map == DEVICE_MAP else {"device_map": device_map}
+    if variant in DIRECT:
+        source = DIRECT[variant]
+        return {"variant": variant, "model": model, **SETTINGS, "reasoning": "direct", "sheet_source": source,
+                "sheet_format": "csv" if source else None, "sheets_index_sha256": sha256(Path(sheets_root) / "index.csv"),
+                "questions_sha256": sha256(questions_path), **extra}
     from mvp.benchmarks import cot_variants
     from mvp.benchmarks.vsibench import COT_ANSWER, COT_HINTS
     if prompt_version is not None and prompt_version != cot_variants.PROMPT_VERSION:
@@ -89,7 +112,7 @@ def run_config(variant, sheets_root, model=MODEL, questions_path=QUESTIONS, prom
     return {"variant": variant, "model": model, **SETTINGS, "prompt_version": cot_variants.PROMPT_VERSION,
             "prompt_fingerprint": cot_variants.fingerprint(variant, COT_HINTS, COT_ANSWER),
             "sheets_index_sha256": sha256(Path(sheets_root) / "index.csv"),
-            "questions_sha256": sha256(questions_path)}
+            "questions_sha256": sha256(questions_path), **extra}
 
 
 def guard(run_dir, config):
@@ -119,42 +142,51 @@ def answered(run_dir):
 def eval_command(config, ids_file, out, sheets_root, vggt_root=None):
     cmd = [sys.executable, "-m", "mvp.eval.vsibench", "--model", config["model"], "--nframes", str(config["nframes"]),
            "--sampling", config["sampling"], "--max-new-tokens", str(config["max_new_tokens"]), "--batch-size",
-           str(config["batch_size"]), "--token-budget", str(config["token_budget"]), "--reasoning", config["variant"],
-           "--sheet-source", config["sheet_source"], "--sheet-format", config["sheet_format"], "--sheets-root",
-           str(sheets_root), "--ids", str(ids_file), "--out", str(out)]
+           str(config["batch_size"]), "--token-budget", str(config["token_budget"]), "--reasoning",
+           config.get("reasoning", config["variant"])]
+    if config["sheet_source"]:
+        cmd += ["--sheet-source", config["sheet_source"], "--sheet-format", config["sheet_format"], "--sheets-root",
+                str(sheets_root)]
+    cmd += ["--ids", str(ids_file), "--out", str(out)]
     if config["final_answer"]:
         cmd.append("--final-answer")
     if vggt_root:
         cmd += ["--vggt-root", str(vggt_root)]
+    if config.get("device_map", DEVICE_MAP) != DEVICE_MAP:
+        cmd += ["--device-map", config["device_map"]]
     return cmd
 
 
 def write_prompts(run_dir, ids, variant, sheets_root, questions):
     """prompts.jsonl: the exact text the eval puts after the video for each question not logged yet (the eval's own
-    prompt_parts; the video's tokens and timestamps come before it and are the same in every condition)."""
+    prompt_parts; the video's tokens and timestamps come before it and are the same in every condition). A question
+    logged already must get the same text again, or the run stops: its answers were made with another prompt."""
     from mvp.eval import vsibench as ev
     path = Path(run_dir) / "prompts.jsonl"
-    have = {json.loads(l)["id"] for l in path.read_text().splitlines()} if path.is_file() else set()
-    args = argparse.Namespace(sheets=True, sheet_source="gold", sheet_format="csv", cameras=False,
-                              sheets_root=str(sheets_root), vggt_root="unused", time_unit="seconds", visibility="auto",
-                              step_order="move-turn", object_directions="floor", metric_scale=None, layout="sit",
-                              reasoning=variant, no_video=False)
+    have = {r["id"]: r for r in map(json.loads, path.read_text().splitlines())} if path.is_file() else {}
+    source = DIRECT.get(variant, "gold")
+    args = argparse.Namespace(sheets=source is not None, sheet_source=source, sheet_format="csv" if source else None,
+                              cameras=False, sheets_root=str(sheets_root), vggt_root="unused", time_unit="seconds",
+                              visibility="auto", step_order="move-turn", object_directions="floor", metric_scale=None,
+                              layout="sit", reasoning="direct" if variant in DIRECT else variant, no_video=False)
     with open(path, "a") as f:
         for q in ids:
+            pre, post = ev.prompt_parts(questions[q], args)
             if q not in have:
-                pre, post = ev.prompt_parts(questions[q], args)
                 f.write(json.dumps({"id": q, "before_video": pre, "after_video": post}) + "\n")
+            elif (have[q]["before_video"], have[q]["after_video"]) != (pre, post):
+                raise ConfigMismatch(f"{run_dir}: question {q}'s prompt is not the one its answer was made with")
 
 
 def run(variant, k, sheets_root, out_root, pool=None, seed=SEED, questions_path=QUESTIONS, model=MODEL,
-        vggt_root=None, prompt_version=None, dry_run=False, env=None):
-    """One variant on k questions per task: checks the folder's config, logs the prompts, runs the eval on the
-    questions not answered yet, and times the call. Returns the run folder."""
+        vggt_root=None, prompt_version=None, dry_run=False, env=None, device_map=DEVICE_MAP):
+    """One condition on k questions per task: checks the folder's config, logs the prompts, runs the eval on the
+    questions not answered yet, and times the call (the model's loading included). Returns the run folder."""
     questions = load_questions(questions_path)
     pool = dev_pool(questions) if pool is None else pool
     ids = nested_subset(pool, questions, k, seed)
-    config = run_config(variant, sheets_root, model, questions_path, prompt_version)
-    run_dir = Path(out_root) / variant
+    config = run_config(variant, sheets_root, model, questions_path, prompt_version, device_map)
+    run_dir = model_dir(out_root, model) / variant
     guard(run_dir, {**config, "seed": seed, "pool_sha256": hashlib.sha256(json.dumps(sorted(pool)).encode()).hexdigest()})
     ids_file = run_dir / f"ids_k{k}.txt"
     ids_file.write_text("\n".join(map(str, ids)) + "\n")
@@ -181,21 +213,22 @@ def run(variant, k, sheets_root, out_root, pool=None, seed=SEED, questions_path=
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--variants", nargs="+", default=["cot_f1", "cot_f2", "cot_f3"])
+    ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=[*VARIANTS, *DIRECT])
     ap.add_argument("--k", type=int, default=STAGES["smoke"], help="questions per computing task")
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--sheets-root", required=True, help="the gold sheets (build_gold_sheets.py's out_full)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--questions", default=str(QUESTIONS))
     ap.add_argument("--pool", help="a file of question ids to draw from (default: explore200's computing questions)")
-    ap.add_argument("--model", default=MODEL)
+    ap.add_argument("--model", default=MODEL, help="another model's answers go to <out>/<its name, lower case>/")
+    ap.add_argument("--device-map", default=DEVICE_MAP, choices=[DEVICE_MAP, "auto"])
     ap.add_argument("--vggt-root")
     ap.add_argument("--dry-run", action="store_true", help="check the configs, log the prompts, print the commands")
     args = ap.parse_args()
     pool = [int(x) for x in Path(args.pool).read_text().split()] if args.pool else None
     for variant in args.variants:
         run_dir, cmd, todo = run(variant, args.k, args.sheets_root, args.out, pool, args.seed, args.questions,
-                                 args.model, args.vggt_root, dry_run=args.dry_run)
+                                 args.model, args.vggt_root, dry_run=args.dry_run, device_map=args.device_map)
         print(f"{variant}: {len(todo)} questions to answer in {run_dir}" + (f"\n  {' '.join(cmd)}" if args.dry_run else ""))
 
 
