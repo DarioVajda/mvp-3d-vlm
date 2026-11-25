@@ -550,7 +550,7 @@ it on `dev_scenes_35.txt`, and the dev200 VLM run follow `v5_dev_plan.md`.
 
 **Agent prompt** for whoever runs step 1:
 
-> Pull `scene_sheet_formats` to `cace408` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`, section
+> Pull `scene_sheet_formats` to `d774333` (or later) and follow `experiments/2026-11-18-scene-sheet-formats/README.md`, section
 > "v5 on the dev scenes", step 1, on one GPU. (1) Run `test_v5.py` (13 tests, 1 skipped; any failure stops);
 > `v5_dev.py` itself stops if the revamped code's files are not `119e603`'s. (2) Run the smoke
 > scene and check what the README lists for it: 1 of 1 scenes for each of the four configurations, `DONE.json`,
