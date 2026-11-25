@@ -1245,6 +1245,59 @@ class NoVideo(unittest.TestCase):
         self.assertIn("[21 videos, 42 qs", printed.getvalue())
         self.assertIn("no video tokens=", printed.getvalue())
 
+    def test_gold_sheets_with_the_video_on_a_gold_only_index(self):
+        """B and C of the gold-sheet experiment: gold sheets with the video, from an index with no pipeline sheets
+        (build_gold_sheets.py's). The frame check is for sheets that refer to frames, so it is not run; the eval's
+        main() answers every question with the video (a stand-in model; no weights or videos are read)."""
+        import contextlib
+        import io
+        import json
+        import sys
+        import types
+        from unittest import mock
+        import numpy as np
+        import pandas as pd
+        from mvp.eval import vsibench as ev
+
+        class StandIn:
+            def __init__(self, model_id):
+                pass
+
+            def load_video_frames(self, path, indices):
+                return np.zeros((16, 3, 64, 64)), {"frames_indices": list(indices)}, {}
+
+            def generate_video(self, video, meta, vkw, prompts, pres=None, system=None, max_new_tokens=16):
+                self.last_new_tokens = [(1, False)] * len(prompts)
+                self.last_prompt_tokens = [10] * len(prompts)
+                return ["A"] * len(prompts), 10
+
+        docs = pd.DataFrame([{"id": i, "dataset": "scannet", "scene_name": f"s{i // 2}", "question_type": "object_rel_distance",
+                              "question": f"Which is closest? ({i})", "options": ["A. a", "B. b"], "ground_truth": "A",
+                              "video_path": f"/no/such/scannet/s{i // 2}.mp4"} for i in range(4)])
+        fake = types.ModuleType("mvp.models.qwen_vl")
+        fake.QwenVL, fake.SYSTEM_PROMPT = StandIn, "You are a helpful assistant."
+        for source in ("gold", "gold_relations"):
+            with tempfile.TemporaryDirectory() as tmp:
+                out = f"{tmp}/{source}.jsonl"
+                argv = ["vsibench", "--model", "m", "--nframes", "16", "--sampling", "uniform128", "--max-new-tokens",
+                        "16", "--final-answer", "--sheet-source", source, "--sheet-format", "csv", "--sheets-root", tmp,
+                        "--out", out]
+                with mock.patch.dict(sys.modules, {"mvp.models.qwen_vl": fake}), mock.patch.object(sys, "argv", argv), \
+                        mock.patch.object(ev, "load_vsibench", return_value=docs), \
+                        mock.patch.object(ev, "load_index", return_value=set(range(4))), \
+                        mock.patch.object(ev, "render_scene", return_value="SHEET"), \
+                        mock.patch.object(ev, "frame_indices", return_value=list(range(0, 128, 8))), \
+                        mock.patch.object(ev, "check_sheet_frames", side_effect=AssertionError("checked gold sheets")), \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    ev.main()
+                rows = [json.loads(line) for line in Path(out).read_text().splitlines()]
+            self.assertEqual(sorted(r["id"] for r in rows), [0, 1, 2, 3], source)
+            self.assertTrue(all(r["n_frames"] == 16 for r in rows), source)
+        args = mock.Mock(sheets=True, sheet_source="pipeline", cameras=False)
+        self.assertTrue(ev.frames_in_sheet(args))  # pipeline sheets are still checked
+        args.sheet_source, args.cameras = "gold", True
+        self.assertTrue(ev.frames_in_sheet(args))
+
     def test_each_prompts_own_length_is_recorded(self):
         try:
             import torch

@@ -49,6 +49,12 @@ def prompt_parts(d, args):
                               video=not args.no_video)
 
 
+def frames_in_sheet(args):
+    """Whether the scene information refers to video frames: pipeline sheets (their visibility and timestamps) and
+    cameras do; gold sheets have no frames, and a gold-only index has no pipeline sheet to read them from."""
+    return args.sheets and (args.sheet_source == "pipeline" or args.cameras)
+
+
 def check_sheet_frames(docs, indices, args):
     """Stop unless the video frames the model gets (indices) are the frames the questions' pipeline sheets map their
     objects and timestamps onto (scene_sheet.folder_frames: the VLM's 16 of the sheet's frames)."""
@@ -92,7 +98,7 @@ def print_prompts(df, args):
             video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
         else:
             indices = frame_indices(path, args.sampling, args.nframes, args.vggt_root)
-            if args.sheets:
+            if frames_in_sheet(args):
                 check_sheet_frames(group.to_dict("records"), indices, args)
             video, meta, vkw = model.load_video_frames(path, indices)
         for d in group.to_dict("records"):
@@ -263,7 +269,7 @@ def main():
                 video, meta, vkw = model.load_video(path, nframes=args.nframes, fps=args.fps)
             else:
                 indices = frame_indices(path, args.sampling, args.nframes, args.vggt_root)
-                if args.sheets:
+                if frames_in_sheet(args):
                     check_sheet_frames(group.to_dict("records"), indices, args)
                 video, meta, vkw = model.load_video_frames(path, indices)
             docs = group.to_dict("records")
