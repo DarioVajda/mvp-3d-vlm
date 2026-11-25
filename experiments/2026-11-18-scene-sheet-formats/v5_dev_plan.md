@@ -46,6 +46,24 @@ Run it as the README's section "v5 on the dev scenes" says (`v5_dev.py`, with it
   and configuration `all/scene/{tracks/, cameras.npz, adapter_report.json, upright.json}` and every sheet's
   `question.json`. A few hundred MB in all.
 
+### Step A as run (2026-11-25)
+
+- **All 50 dev scenes at once, before the split into stages:** `v5_dev.zip` (sha256 `2d019519…2296b6`), run at
+  `9c27ec3` with the tracking code at `119e603`; `4d7ed0a`, committed after, fixes how `v5_dev.py` passes the dense
+  depth (per scene). Each configuration has 50 scenes, 50 `DONE.json` and 1,813 `question.json`, 593 of them on the 16
+  scenes of `dev_scenes_stage1.txt` (counted from the zip's file names).
+- **The 34 stage-2 scenes were kept unopened:** only the 16 stage-1 scenes were extracted, post-processed
+  (`v5_postprocess.py --dense-root data/vggt`; each scene's depth is the dense depth of the frames its
+  `adapter_report.json` names, checked against `data/vggt`'s frame indices) and analysed. The other 34
+  (`dev_scenes.txt` minus `dev_scenes_stage1.txt`) stay in the zip, unread, held out for stage 2.
+- **Stage 1's analysis:** `analyses/v5_stage1.md` (`v5_stage1_analysis.py`, the 15 scenes of `dev_scenes_15.txt`;
+  exploratory). The go / no-go rule is the README's ("v5 on the dev scenes", fixed before these results; this plan
+  states none of its own): **no-go**. The best configuration by the simulated distance score, v5-pts (44.7 against
+  v4's 39.3), fails two of the six criteria: relative-distance accuracy on the questions both have a relation for
+  (54.2 against 70.8, 24 questions) and boxes over 1.5x (12.3% against v4's 5.1% + 5 points). v5-his, v5-det and
+  v5-ours fail the same two. Per the README: no stage 2 until the box sizes or scale are changed on the 15 scenes and
+  stage 1's analysis is run again.
+
 ## Step B: sheets and scorecard (CPU, local)
 
 1. `v5_postprocess.py` per configuration (minutes), with `--dense-root data/vggt`: the run comes back without depth.
