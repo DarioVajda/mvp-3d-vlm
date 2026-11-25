@@ -178,7 +178,7 @@ def run_scene(code, qss, sheet, upright, detector, rows, scene, work, out, data_
     scene_dir = base / "scene"
     if not geometry_ready(scene_dir, scene):
         spec, label = qss.frame_selection(LABEL)
-        qss.ensure_geometry(scene, data_root, spec, label, dense_dir, scene_dir)
+        qss.ensure_geometry(scene, data_root, spec, label, Path(dense_dir) / scene, scene_dir)
     upright.scene_upright(scene_dir, log=lambda text: log.write(text + "\n"))
     names = rd.scene_prompts(rows, PROMPT_SET)  # {name: SAM 3 prompts}
     sam = list(dict.fromkeys(p for v in names.values() for p in v))
@@ -237,7 +237,7 @@ def main():
     ap.add_argument("--work", required=True, help="geometry, frames and masks (kept for later runs)")
     ap.add_argument("--out", required=True, help="the four configs' tracks and question records")
     ap.add_argument("--data-root", default=str(REPO / "tasks/vggt_data/out"), help="the exported VGGT scenes")
-    ap.add_argument("--dense-dir", default=str(REPO / "data/vggt"), help="the dense VGGT depth")
+    ap.add_argument("--dense-dir", default=str(REPO / "data/vggt"), help="the dense VGGT depth: <dataset>/<scene>/")
     args = ap.parse_args()
     code = Path(args.code).resolve()
     check_code(code)
