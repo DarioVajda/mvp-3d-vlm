@@ -931,6 +931,69 @@ class NoVideo(unittest.TestCase):
         self.assertNotIn("videos", call.kwargs)
         self.assertNotIn("images", call.kwargs)
 
+    def test_run_without_video(self):
+        """The eval's main() end to end with --no-video, a stand-in model and 25 videos' questions (so the progress
+        line prints at videos 1 and 21): every question answered with no frames, the summary written, and a second
+        run resumes without asking again. No weights, video or sheet files are read."""
+        import contextlib
+        import io
+        import json
+        import sys
+        import types
+        from unittest import mock
+        import pandas as pd
+        from mvp.eval import vsibench as ev
+
+        class StandIn:  # the part of QwenVL the eval uses without the video
+            calls = []
+
+            def __init__(self, model_id):
+                pass
+
+            def generate_text(self, prompts, max_new_tokens=16, pres=None, system=None):
+                StandIn.calls.append(prompts)
+                self.last_new_tokens = [(1, False)] * len(prompts)
+                self.last_prompt_tokens = [len(p.split()) for p in prompts]
+                return ["A"] * len(prompts), max(self.last_prompt_tokens)
+
+            def generate_video(self, *args, **kwargs):
+                raise AssertionError("--no-video asked for the video")
+
+            def load_video_frames(self, *args, **kwargs):
+                raise AssertionError("--no-video loaded a video")
+
+            load_video = load_video_frames
+
+        docs = pd.DataFrame([{"id": i, "dataset": "scannet", "scene_name": f"s{i // 2}", "question_type": "object_rel_distance",
+                              "question": f"Which is closest? ({i})", "options": ["A. a", "B. b"], "ground_truth": "A",
+                              "video_path": f"/no/such/scannet/s{i // 2}.mp4"} for i in range(50)])
+        fake = types.ModuleType("mvp.models.qwen_vl")
+        fake.QwenVL, fake.SYSTEM_PROMPT = StandIn, "You are a helpful assistant."
+        with tempfile.TemporaryDirectory() as tmp:
+            out = f"{tmp}/E.jsonl"
+            argv = ["vsibench", "--model", "m", "--nframes", "16", "--sampling", "uniform128", "--max-new-tokens", "16",
+                    "--final-answer", "--sheet-source", "gold_relations", "--sheet-format", "csv", "--no-video",
+                    "--sheets-root", tmp, "--out", out]
+            with mock.patch.dict(sys.modules, {"mvp.models.qwen_vl": fake}), mock.patch.object(sys, "argv", argv), \
+                    mock.patch.object(ev, "load_vsibench", return_value=docs), \
+                    mock.patch.object(ev, "load_index", return_value=set(range(50))), \
+                    mock.patch.object(ev, "render_scene", return_value="SHEET"), \
+                    contextlib.redirect_stdout(io.StringIO()) as printed:
+                ev.main()
+                first = len(StandIn.calls)
+                ev.main()  # resumes: nothing left to ask
+            rows = [json.loads(line) for line in Path(out).read_text().splitlines()]
+            summary = json.loads(Path(out.replace(".jsonl", "_summary.json")).read_text())
+        self.assertEqual(sorted(r["id"] for r in rows), list(range(50)))
+        self.assertTrue(all(r["n_frames"] == 0 and r["frame_hw"] is None and r["frame_indices"] == [] for r in rows))
+        self.assertTrue(all(r["n_prompt_tokens"] > 0 and r["score"] == 1.0 for r in rows))
+        self.assertEqual((summary["protocol"], summary["n"]), ("text", 50))
+        self.assertEqual(len(StandIn.calls), first)
+        self.assertTrue(all(p.startswith("SHEET\nWhich is closest?") for call in StandIn.calls for p in call))
+        self.assertIn("[1 videos, 2 qs", printed.getvalue())
+        self.assertIn("[21 videos, 42 qs", printed.getvalue())
+        self.assertIn("no video tokens=", printed.getvalue())
+
     def test_each_prompts_own_length_is_recorded(self):
         try:
             import torch
