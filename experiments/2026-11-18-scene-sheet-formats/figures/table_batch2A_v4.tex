@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Condition & Overall & \shortstack[r]{Obj.\\Count} & \shortstack[r]{Abs.\\Dist.} & \shortstack[r]{Obj.\\Size} & \shortstack[r]{Room\\Size} & \shortstack[r]{Rel.\\Dist.} & \shortstack[r]{Rel.\\Dir.} & \shortstack[r]{Route\\Plan} & \shortstack[r]{Appr.\\Order} \\
+\midrule
+Video only & 41.2 & 30.0 & \textbf{31.8} & \textbf{55.5} & \textbf{43.2} & \textbf{45.3} & 47.5 & 32.1 & \textbf{44.1} \\
+Video + v4 sheet & 36.7 & \textbf{30.2} & 25.7 & 31.3 & 34.7 & 44.0 & \textbf{53.5} & \textbf{35.7} & 38.2 \\
+v4 full method & \textbf{41.5} & 30.0 & 25.7$^\dagger$ & \textbf{55.5} & \textbf{43.2} & 44.0$^\dagger$ & \textbf{53.5}$^\dagger$ & \textbf{35.7}$^\dagger$ & \textbf{44.1} \\
+v4 sheet only (no video) & 31.2 & 27.6 & 23.5 & 29.5 & 24.5 & 37.1 & 44.4 & 21.4 & 41.2 \\
+\bottomrule
+\end{tabular}
+\caption{The pipeline's scene sheet (pipeline\_v4) on 798 VSI-Bench questions no earlier experiment used (batch2\_A: every question of 38 scenes). Qwen3.5-2B zero-shot, thinking off, 16 video frames (uniform among VGGT's 128), greedy decoding, the final answer scored; VSI-Bench scores $\times 100$, relative direction as the mean of its easy, medium and hard types. Best per column in bold. These scores are not comparable with the trained models' table, which uses other frames and other questions. The full method answers the tasks marked $^\dagger$ (absolute and relative distance, relative direction, route planning) with video + v4 sheet and the others with video only, as pre-registered. The sheet-only row was run afterwards and is exploratory.}
+\label{tab:pipeline-v4-batch2A}
+\end{table}

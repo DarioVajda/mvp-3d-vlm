@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Condition & Overall & \shortstack[r]{Obj.\\Count} & \shortstack[r]{Abs.\\Dist.} & \shortstack[r]{Obj.\\Size} & \shortstack[r]{Room\\Size} & \shortstack[r]{Rel.\\Dist.} & \shortstack[r]{Rel.\\Dir.} & \shortstack[r]{Route\\Plan} & \shortstack[r]{Appr.\\Order} \\
+\midrule
+Video only & 48.6 & 49.6 & 39.6 & \textbf{68.8} & 39.2 & 76.0 & 47.2 & 24.0 & \textbf{44.0} \\
+Video + gold sheet & 52.1 & \textbf{100.0} & 26.4 & 55.2 & 47.2 & 64.0 & \textbf{56.0} & \textbf{32.0} & 36.0 \\
+Video + gold sheet + relations & \textbf{62.7} & \textbf{100.0} & \textbf{94.8} & 55.2 & \textbf{48.0} & \textbf{96.0} & 47.7 & 28.0 & 32.0 \\
+\bottomrule
+\end{tabular}
+\caption{Preliminary: the gold (VSI-Bench-labelled) scene sheet on 200 VSI-Bench questions (explore200: 25 per task from 25 scenes). Qwen3.5-2B zero-shot, thinking off, 16 video frames (uniform among VGGT's 128), greedy decoding, the final answer scored; VSI-Bench scores $\times 100$, relative direction as the mean of its easy, medium and hard types. Best per column in bold. These scores are not comparable with the trained models' table, which uses other frames and other questions. Relations: closest-point distances in metres between the named objects' boxes, which state the answer to most distance questions. These results will be replaced by the run on the full benchmark (5,130 questions).}
+\label{tab:gold-sheet-explore200}
+\end{table}
