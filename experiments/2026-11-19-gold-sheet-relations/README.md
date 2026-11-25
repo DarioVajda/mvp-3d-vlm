@@ -230,8 +230,8 @@ training: none
 <!-- One row per run. Output: the folder with the predictions (.jsonl), the summaries and the run's freeze.txt or
 environment.txt. -->
 
-All commands run from the repository root on the cluster, on `scene_sheet_formats` at `1abeca4` or later (D and E need
-its `--no-video` fix), in the project's environment, with `PYTHONPATH=src` where shown. Nothing here needs spaCy or a
+All commands run from the repository root on the cluster, on `scene_sheet_formats` at `b0ed3c1` or later (D and E need
+`1abeca4`'s `--no-video` fix, and B and C `b0ed3c1`'s frame check; the commits in between stop B and C), in the project's environment, with `PYTHONPATH=src` where shown. Nothing here needs spaCy or a
 GPU except the eval.
 
 **1. Inputs (CPU, about a minute).** VSI-Bench's questions must be the version the prompts were taken from, and every
@@ -282,7 +282,7 @@ counting questions (the others are where VSI-Bench's labels and its answer disag
       results/_scratch/gsr_smoke/A.jsonl results/_scratch/gsr_smoke/C.jsonl --n 20
   python -m mvp.eval.vsibench $SMOKE --sheet-source gold_relations --sheet-format csv --no-video \
       --sheets-root tasks/openvocab_adapter/out_full --out results/_scratch/gsr_smoke/E.jsonl
-  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 5 tests, none skipped here
+  PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet.NoVideo   # 6 tests, none skipped here
   python experiments/2026-11-18-scene-sheet-formats/cluster_checks.py revision Qwen/Qwen3.5-2B \
       results/zeroshot/vsibench/gold_sheet_relations_full/model_revision.txt
   ```
@@ -415,3 +415,9 @@ Not run yet.
   pipeline_v4 (`experiments/2026-11-18-scene-sheet-formats/v4_sheet_only.md`), and fixed in `1abeca4` with an
   end-to-end test (`test_scene_sheet.NoVideo.test_run_without_video`). D and E, and E's smoke test, need that commit or
   later. Nothing sent to the model changes.
+- 2026-11-25, before any run: the revamped pipeline was merged into this branch (`6ead380`). Its eval checks each
+  video's frames against the question's pipeline sheet, which an index of gold sheets only (`build_gold_sheets.py`'s)
+  does not have, so B and C stopped on their first video; `b0ed3c1` runs that check only for sheets that refer to
+  frames (pipeline sheets, cameras), with a test of B and C's setting. Rechecked at `b0ed3c1`: the gold build gives the
+  hashes above, and the prompts of A–E for all 5,130 questions are those at `0f7c5f2`. The runs need `b0ed3c1` or
+  later.
