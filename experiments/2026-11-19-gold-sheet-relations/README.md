@@ -421,3 +421,7 @@ Not run yet.
   frames (pipeline sheets, cameras), with a test of B and C's setting. Rechecked at `b0ed3c1`: the gold build gives the
   hashes above, and the prompts of A–E for all 5,130 questions are those at `0f7c5f2`. The runs need `b0ed3c1` or
   later.
+- 2026-11-25: the five full-benchmark runs (A–E, 5,130 questions each) were made at `0f7c5f2`, which has
+  `1abeca4`'s `--no-video` fix and predates the merge (`6ead380`) whose frame check `b0ed3c1` fixes, so B and C ran
+  without it. Qwen/Qwen3.5-2B at revision `15852e8c16360a2fea060d615a32b45270f8a8fc` (`model_revision.txt`). The
+  predictions and summaries are in `results/zeroshot/vsibench/gold_sheet_relations_full/` (`c4d74df`).
