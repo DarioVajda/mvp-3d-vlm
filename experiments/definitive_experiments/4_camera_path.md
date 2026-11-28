@@ -1,12 +1,12 @@
 ---
 id: definitive-4-camera-path
-title: Does the camera's path, as a table, as text or in one narrative, add to pipeline_v4.1's objects for Qwen3.5-4B on VSI-Bench
+title: Does the camera's path, as a table, as text or in one narrative, add to pipeline_v4's objects for Qwen3.5-2B on VSI-Bench
 owner: Nicolás Ramos Fernandez
 created: 2026-11-27
 status: planned              # draft | planned | running | analysing | done | abandoned
 tags: [scene-sheet, cameras, narrative, pipeline, definitive]
 varies: [scene_sheet.cameras, scene_sheet.format]
-depends_on: [README.md section 5, items 1–6 (including cameras in metres on the sheet's scale)]
+depends_on: [README.md section 5, items 1–5 (including cameras in metres on the sheet's scale)]
 ---
 
 # Camera path
@@ -18,7 +18,7 @@ code of `README.md` section 5 exists.
 
 ## Question
 
-Does the camera's path add to pipeline_v4.1's objects for Qwen3.5-4B? Each form is tested against the objects alone
+Does the camera's path add to pipeline_v4's objects for Qwen3.5-2B? Each form is tested against the objects alone
 in the same format: a camera table, a compass path in text, and one narrative of the walk that merges the objects
 with the path.
 
@@ -51,11 +51,11 @@ with the path.
 | ID | Condition | Objects | `scene_sheet.cameras` | `scene_sheet.format` | Role | Run |
 |---|---|---|---|---|---|---|
 | A | Video only | none | none | none | baseline | R1 |
-| B | `obj_csv` | csv | none | csv | control for C | R8 |
-| C | `cam_csv` | csv | csv table | csv | treatment | R15 |
-| D | `obj_text` | sentences | none | text | control for E and F | R11 |
-| E | `cam_text` | sentences | compass path, a separate block | text | treatment | R16 |
-| F | `narrative` | in the walk | in the walk | narrative | treatment | R17 |
+| B | `obj_csv` | csv | none | csv | control for C | R9 |
+| C | `cam_csv` | csv | csv table | csv | treatment | R14 |
+| D | `obj_text` | sentences | none | text | control for E and F | R10 |
+| E | `cam_text` | sentences | compass path, a separate block | text | treatment | R15 |
+| F | `narrative` | in the walk | in the walk | narrative | treatment | R16 |
 
 ### Comparisons
 
@@ -72,7 +72,7 @@ planning), with Holm within each family and score.
 | Table format | csv | the csv rule (`README.md` 2.6). The 2026-11-25 redesign had chosen the markdown table (pilot: 44.6 against 38.4 with cameras) |
 | Camera format | the objects' format | the code's rule since `080acf4`; one control per format |
 | Text options | the defaults: timestamps in seconds, bridged visibility, move-then-turn steps, object directions along the floor | the pilot's variants of them stayed within a few points |
-| Relations | none | pipeline_v4.1's direction relation would state the answer the cameras could help with |
+| Relations | none | pipeline_v4's direction relation would state the answer the cameras could help with |
 | Reasoning | direct only | the pilot's CoT lowered every camera form; CoT is experiments 5–7 |
 | `room` rows, the narrative's camera distances | kept | part of what the pipeline writes; the metric tasks are read apart |
 
@@ -81,7 +81,7 @@ planning), with Holm within each family and score.
 ```yaml
 # README.md section 2, except:
 scene_sheet:
-  source: pipeline             # pipeline_v4.1 (A: none)
+  source: pipeline             # pipeline_v4 (A: none)
   cameras: varies              # none (B, D) | in the objects' format (C, E) | in the walk (F); metres on the sheet's scale, upright axes
   format: varies               # csv (B, C) | text (D, E) | narrative (F)
 ```
@@ -110,8 +110,8 @@ As `README.md` 2.7. In addition:
 C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
 OUT=results/zeroshot/vsibench/definitive
 S=results/_scratch/definitive_smoke
-ROOT=tasks/openvocab_adapter/out_v4_1         # the pipeline_v4.1 build (README.md section 5, item 3)
-COMMON="--model Qwen/Qwen3.5-4B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+ROOT=tasks/openvocab_adapter/out_v4         # the pipeline_v4 build (README.md section 5, item 2)
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
 PIPE="--sheet-source pipeline --sheets-root $ROOT --metric-scale <SHEET_SCALE>"
 ```
 
@@ -119,7 +119,7 @@ PIPE="--sheet-source pipeline --sheets-root $ROOT --metric-scale <SHEET_SCALE>"
 
 1. **Inputs.** `test.jsonl`'s SHA-256 (`README.md` 2.3); 288 `data/vggt/*/*/frame_indices.npy`; `$ROOT/index.csv` with
    SHA-256 `<from the build>`.
-2. **Tests and render check.** `<README.md section 5, items 4–5>`. They must show camera positions and move lengths in
+2. **Tests and render check.** `<README.md section 5, items 3–4>`. They must show camera positions and move lengths in
    metres on the sheet's scale. All must pass, with none skipped.
 3. **Prompt check** for C, E and F:
 
@@ -136,24 +136,24 @@ PIPE="--sheet-source pipeline --sheets-root $ROOT --metric-scale <SHEET_SCALE>"
 4. **Smoke test** of A and C, then the model revision:
 
    ```bash
-   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R1.jsonl
-   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv --cameras --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R15.jsonl
-   python $C/cluster_checks.py smoke $S/qwen3_5_4B_R1.jsonl $S/qwen3_5_4B_R15.jsonl --n 20
-   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
+   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R1.jsonl
+   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv --cameras --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R14.jsonl
+   python $C/cluster_checks.py smoke $S/qwen3_5_2B_R1.jsonl $S/qwen3_5_2B_R14.jsonl --n 20
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
    ```
 
 **Runs**, each reporting 5,130 questions:
 
 ```bash
-python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_4B_R1.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv                --out $OUT/qwen3_5_4B_R8.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv --cameras      --out $OUT/qwen3_5_4B_R15.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format text               --out $OUT/qwen3_5_4B_R11.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format text --cameras     --out $OUT/qwen3_5_4B_R16.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format narrative          --out $OUT/qwen3_5_4B_R17.jsonl
+python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_R1.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv                --out $OUT/qwen3_5_2B_R9.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv --cameras      --out $OUT/qwen3_5_2B_R14.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format text               --out $OUT/qwen3_5_2B_R10.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format text --cameras     --out $OUT/qwen3_5_2B_R15.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format narrative          --out $OUT/qwen3_5_2B_R16.jsonl
 ```
 
-**Analysis:** `<make_table_4.py>` (`README.md` section 5, item 6) writes the Results table and the letter table.
+**Analysis:** `<make_table_4.py>` (`README.md` section 5, item 5) writes the Results table and the letter table.
 
 ## Results
 

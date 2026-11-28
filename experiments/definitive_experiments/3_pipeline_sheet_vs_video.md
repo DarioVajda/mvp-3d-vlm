@@ -1,12 +1,12 @@
 ---
 id: definitive-3-pipeline-sheet-vs-video
-title: Does pipeline_v4.1's scene sheet, and its relations, help Qwen3.5-4B on VSI-Bench, with and without the video
+title: Does pipeline_v4's scene sheet, and its relations, help Qwen3.5-2B on VSI-Bench, with and without the video
 owner: Nicolás Ramos Fernandez
 created: 2026-11-27
 status: planned              # draft | planned | running | analysing | done | abandoned
 tags: [scene-sheet, pipeline, relations, definitive]
 varies: [scene_sheet.source, visual.video]
-depends_on: [README.md section 5, items 1–6, definitive-2-gold-sheet-relations (the gold twins)]
+depends_on: [README.md section 5, items 1–5, definitive-2-gold-sheet-relations (the gold twins)]
 ---
 
 # Pipeline sheet vs video
@@ -18,7 +18,7 @@ code of `README.md` section 5 exists.
 
 ## Question
 
-Does pipeline_v4.1's sheet, and its relations, help Qwen3.5-4B over the video alone? How much is left without the
+Does pipeline_v4's sheet, and its relations, help Qwen3.5-2B over the video alone? How much is left without the
 video, and how far is each condition from its gold twin in experiment 2?
 
 ## Hypothesis and what would change our mind
@@ -40,14 +40,14 @@ video, and how far is each condition from its gold twin in experiment 2?
 
 - **No version of the pipeline sheet has beaten video only on held-out questions**
   (`experiments/2026-11-18-scene-sheet-formats/pipeline_tests.md`). The registered pipeline_v4 on batch2_A
-  (Qwen3.5-2B, frozen tracker, first-camera axes):
+  (Qwen3.5-2B, the same pipeline in first-camera axes):
   - distance questions: 53 helped, 89 hurt (p = 0.0032);
   - relative direction: 20 helped, 14 hurt (p = 0.39);
   - the full method's overall: +0.28 [−2.42, +2.97].
 - **The model copies the relations it is given,** even wrong ones (same file). So C on the distance questions mostly
   measures how accurate the relations are.
-- **The gold twins with Qwen3.5-2B,** all 5,130 questions: A 43.3, B 48.9, C 61.3, D 39.9, E 55.0
-  (`results/zeroshot/vsibench/gold_sheet_relations_full/`). Background only.
+- **The gold twins** (experiment 2, `2_gold_sheet_relations.md`), all 5,130 questions: A 43.3, B 48.9, C 61.3,
+  D 39.9, E 55.0 (`results/zeroshot/vsibench/gold_sheet_relations_full/`, at `0f7c5f2`).
 
 ## Design
 
@@ -56,16 +56,16 @@ video, and how far is each condition from its gold twin in experiment 2?
 | ID | Condition | `scene_sheet.source` | `visual.video` | Role | Run | Gold twin |
 |---|---|---|---|---|---|---|
 | A | Video only | none | true | baseline | R1 | 2A |
-| B | Video + pipeline sheet | pipeline | true | treatment | R8 | 2B |
-| C | Video + pipeline sheet + relations | pipeline_relations | true | treatment | R12 | 2C |
-| D | Pipeline sheet only | pipeline | false | sheet only | R13 | 2D |
-| E | Pipeline sheet + relations only | pipeline_relations | false | sheet only | R14 | 2E |
+| B | Video + pipeline sheet | pipeline | true | treatment | R9 | 2B |
+| C | Video + pipeline sheet + relations | pipeline_relations | true | treatment | R11 | 2C |
+| D | Pipeline sheet only | pipeline | false | sheet only | R12 | 2D |
+| E | Pipeline sheet + relations only | pipeline_relations | false | sheet only | R13 | 2E |
 
 ### Comparisons
 
 - **First family (Holm):** B − A and C − B. Also C − A on the distance questions (H1) and on relative direction (H2).
 - **Second family (Holm):** B − D, E − C and D − A.
-- **Third family (Holm):** pipeline − gold for each of B, C, D and E, against experiment 2's runs, per question type.
+- **Third family (Holm):** pipeline − gold for each of B, C, D and E, against experiment 2's runs (`results/zeroshot/vsibench/gold_sheet_relations_full/`), per question type.
 - **The full method (H3):** C's answer for absolute distance, relative distance, relative direction and route planning,
   A's for the rest. Compared with A, with its interval. It needs no extra run.
 
@@ -74,7 +74,8 @@ video, and how far is each condition from its gold twin in experiment 2?
 | Decision | Choice | Why |
 |---|---|---|
 | Format | csv | so that every condition pairs with its gold twin |
-| Relations | pipeline_v4.1's (`README.md` 2.5): only distance and relative direction, only when every named object has a row | pipeline_v4's design; pipeline − gold on C and E therefore mixes content with coverage |
+| Relations | pipeline_v4's (`README.md` 2.5): only distance and relative direction, only when every named object has a row | pipeline_v4's design; pipeline − gold on C and E therefore mixes content with coverage |
+| Gold twins | experiment 2's runs, not rerun | they are the same conditions with the gold sheet, on the same questions, with the same model and settings |
 
 ## Configuration
 
@@ -83,12 +84,12 @@ video, and how far is each condition from its gold twin in experiment 2?
 visual:
   video: varies                # true (A, B, C) | false (D, E: --no-video)
 scene_sheet:
-  source: varies               # none (A) | pipeline (B, D) | pipeline_relations (C, E): pipeline_v4.1
+  source: varies               # none (A) | pipeline (B, D) | pipeline_relations (C, E): pipeline_v4
 ```
 
 ## Metrics and analysis
 
-As `README.md` 2.7. In addition, per question type, the share of questions with relations in pipeline_v4.1 and in
+As `README.md` 2.7. In addition, per question type, the share of questions with relations in pipeline_v4 and in
 gold. For distance questions with a relation, its error against VSI-Bench's answer.
 
 ## Threats to validity and checks
@@ -97,6 +98,7 @@ gold. For distance questions with a relation, its error against VSI-Bench's answ
 |---|---|---|
 | The relations cover fewer questions than gold's | pipeline − gold largest where gold has relations and the pipeline none | break pipeline − gold down by whether each has a relation |
 | Without the video, appearance order and route planning have little to go on | D and E near chance there | expected; read B − D per task |
+| The gold twins ran at another commit (`0f7c5f2`), possibly in another environment | — | stated; their prompts are the same as at later commits (experiment 2) |
 
 ## Runs and cost
 
@@ -104,8 +106,8 @@ gold. For distance questions with a relation, its error against VSI-Bench's answ
 C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
 OUT=results/zeroshot/vsibench/definitive
 S=results/_scratch/definitive_smoke
-ROOT=tasks/openvocab_adapter/out_v4_1         # the pipeline_v4.1 build (README.md section 5, item 3)
-COMMON="--model Qwen/Qwen3.5-4B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+ROOT=tasks/openvocab_adapter/out_v4         # the pipeline_v4 build (README.md section 5, item 2)
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
 PIPE="--sheets-root $ROOT --sheet-format csv --metric-scale <SHEET_SCALE>"
 ```
 
@@ -113,7 +115,7 @@ PIPE="--sheets-root $ROOT --sheet-format csv --metric-scale <SHEET_SCALE>"
 
 1. **Inputs.** `test.jsonl`'s SHA-256 (`README.md` 2.3); 288 `data/vggt/*/*/frame_indices.npy`; `$ROOT/index.csv` and
    the relations file with SHA-256 `<from the build>`.
-2. **Tests and render check.** `<README.md section 5, items 4–5>`, including a `--no-video` test of
+2. **Tests and render check.** `<README.md section 5, items 3–4>`, including a `--no-video` test of
    `pipeline_relations`: all must pass, with none skipped.
 3. **Prompt check** for C:
 
@@ -125,24 +127,24 @@ PIPE="--sheets-root $ROOT --sheet-format csv --metric-scale <SHEET_SCALE>"
 4. **Smoke test** of A, C and E, then the model revision. E's 20 lines must each have `"n_frames": 0`.
 
    ```bash
-   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R1.jsonl
-   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R12.jsonl
-   python $C/cluster_checks.py smoke $S/qwen3_5_4B_R1.jsonl $S/qwen3_5_4B_R12.jsonl --n 20
-   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --no-video --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R14.jsonl
-   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
+   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R1.jsonl
+   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R11.jsonl
+   python $C/cluster_checks.py smoke $S/qwen3_5_2B_R1.jsonl $S/qwen3_5_2B_R11.jsonl --n 20
+   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --no-video --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R13.jsonl
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
    ```
 
 **Runs**, each reporting 5,130 questions:
 
 ```bash
-python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_4B_R1.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline                      --out $OUT/qwen3_5_4B_R8.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations            --out $OUT/qwen3_5_4B_R12.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline           --no-video --out $OUT/qwen3_5_4B_R13.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --no-video --out $OUT/qwen3_5_4B_R14.jsonl
+python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_R1.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline                      --out $OUT/qwen3_5_2B_R9.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations            --out $OUT/qwen3_5_2B_R11.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline           --no-video --out $OUT/qwen3_5_2B_R12.jsonl
+python -m mvp.eval.vsibench $COMMON $PIPE --sheet-source pipeline_relations --no-video --out $OUT/qwen3_5_2B_R13.jsonl
 ```
 
-**Analysis:** `<make_table_3.py>` (`README.md` section 5, item 6) writes the Results table, with pipeline − gold
+**Analysis:** `<make_table_3.py>` (`README.md` section 5, item 5) writes the Results table, with pipeline − gold
 against experiment 2's runs.
 
 ## Results

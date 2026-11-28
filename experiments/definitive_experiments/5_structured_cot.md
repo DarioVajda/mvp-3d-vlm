@@ -1,6 +1,6 @@
 ---
 id: definitive-5-structured-cot
-title: Does structured chain-of-thought help Qwen3.5-4B use a gold scene sheet on VSI-Bench, and does it recover what precomputed relations give
+title: Does structured chain-of-thought help Qwen3.5-2B use a gold scene sheet on VSI-Bench, and does it recover what precomputed relations give
 owner: Tamara Grujičić
 created: 2026-11-27
 status: draft                # draft | planned | running | analysing | done | abandoned
@@ -18,7 +18,7 @@ TODO C1 is settled.
 
 ## Question
 
-Does step-by-step reasoning help Qwen3.5-4B use a correct scene sheet, and does it recover what precomputed relations
+Does step-by-step reasoning help Qwen3.5-2B use a correct scene sheet, and does it recover what precomputed relations
 give it?
 
 ## Hypothesis and what would change our mind
@@ -104,7 +104,7 @@ As `README.md` 2.7, with its CoT measures. In addition, 20 wrong D answers from 
 | CoT replies loop until the limit and lose for that alone | the share cut off and looping, per condition | report the score with cut-off replies counted wrong too |
 | The gold sheet contains the counting answer, and its largest side is the object-size answer | counting and object size near 100 in C–E | read every comparison without counting; read object size apart |
 | The relations state the answer to most distance questions | E near its ceiling there | E is an upper reference for using given relations, not a test of reasoning |
-| A 4B model may still be too small to gain from CoT | D − C and B − A both near 0 | read as a result about this size; experiment 7 varies it |
+| A 2B model may be too small to gain from CoT (Wei et al. 2022) | D − C and B − A both near 0 | read as a result about this size; experiment 7 varies it |
 
 ## Runs and cost
 
@@ -112,7 +112,7 @@ As `README.md` 2.7, with its CoT measures. In addition, 20 wrong D answers from 
 C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
 OUT=results/zeroshot/vsibench/definitive
 S=results/_scratch/definitive_smoke
-COMMON="--model Qwen/Qwen3.5-4B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
 GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv"
 COT="--reasoning <TODO C1>"                    # cot as the code stands
 ```
@@ -122,30 +122,30 @@ COT="--reasoning <TODO C1>"                    # cot as the code stands
 1. **Inputs and gold sheets.** As experiment 2, check 1.
 2. **Tests.** `PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet` must pass.
 3. **Prompt check** for D, as `experiments/2026-11-19-gold-sheet-relations/README.md`'s Runs step 2, with
-   `--sheet-source gold $COT --model Qwen/Qwen3.5-4B`. Compare the CoT text with `cot_prompt.md` (or its replacement,
+   `--sheet-source gold $COT --model Qwen/Qwen3.5-2B`. Compare the CoT text with `cot_prompt.md` (or its replacement,
    TODO C1).
 4. **Smoke test** of A and D, then B, then the model revision. For B and D, also report reply length, the share cut off
    and the parse rate.
 
    ```bash
-   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R1.jsonl
-   python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R4.jsonl
-   python $C/cluster_checks.py smoke $S/qwen3_5_4B_R1.jsonl $S/qwen3_5_4B_R4.jsonl --n 20
-   python -m mvp.eval.vsibench $COMMON $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R2.jsonl
-   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
+   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R1.jsonl
+   python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R4.jsonl
+   python $C/cluster_checks.py smoke $S/qwen3_5_2B_R1.jsonl $S/qwen3_5_2B_R4.jsonl --n 20
+   python -m mvp.eval.vsibench $COMMON $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R2.jsonl
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
    ```
 
 **Runs**, each reporting 5,130 questions:
 
 ```bash
-python -m mvp.eval.vsibench $COMMON                                   --out $OUT/qwen3_5_4B_R1.jsonl
-python -m mvp.eval.vsibench $COMMON $COT                              --out $OUT/qwen3_5_4B_R2.jsonl
-python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold         --out $OUT/qwen3_5_4B_R3.jsonl
-python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT    --out $OUT/qwen3_5_4B_R4.jsonl
-python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold_relations --out $OUT/qwen3_5_4B_R5.jsonl
+python -m mvp.eval.vsibench $COMMON                                   --out $OUT/qwen3_5_2B_R1.jsonl
+python -m mvp.eval.vsibench $COMMON $COT                              --out $OUT/qwen3_5_2B_R2.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold         --out $OUT/qwen3_5_2B_R3.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT    --out $OUT/qwen3_5_2B_R4.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold_relations --out $OUT/qwen3_5_2B_R5.jsonl
 ```
 
-**Analysis:** `<make_table_5.py>` (`README.md` section 5, item 6) writes the Results table and the CoT measures.
+**Analysis:** `<make_table_5.py>` (`README.md` section 5, item 5) writes the Results table and the CoT measures.
 
 ## TODO
 

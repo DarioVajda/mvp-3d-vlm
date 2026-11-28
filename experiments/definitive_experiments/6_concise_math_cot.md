@@ -1,6 +1,6 @@
 ---
 id: definitive-6-concise-math-cot
-title: Concise, mathematical and few-shot structured CoT for Qwen3.5-4B on the computing tasks with the gold sheet
+title: Concise, mathematical and few-shot structured CoT for Qwen3.5-2B on the computing tasks with the gold sheet
 owner: Tamara Grujičić
 created: 2026-11-27
 status: draft                # draft | planned | running | analysing | done | abandoned
@@ -17,7 +17,7 @@ Everything not stated here is `README.md` section 2 (this folder).
 
 ## Question
 
-Can a more constrained, mathematically explicit CoT, with or without one worked example per task, make Qwen3.5-4B
+Can a more constrained, mathematically explicit CoT, with or without one worked example per task, make Qwen3.5-2B
 answer the computing tasks better from the gold sheet than structured CoT (D), than direct answering (C) and than the
 video alone (A)? How far does it stay from the given relations (E)?
 
@@ -64,9 +64,9 @@ video alone (A)? How far does it stay from the given relations (E)?
 | C | Video + gold sheet, direct | direct | baseline | R3, computing questions |
 | D | Video + gold sheet, structured CoT | CoT (TODO C1) | baseline | R4, computing questions |
 | E | Video + gold sheet + relations, direct | direct | upper reference | R5, computing questions |
-| F1 | Video + gold sheet, concise CoT | `cot_f1` | treatment | R18 |
-| F2 | F1 + geometric formulas | `cot_f2` | treatment | R19 |
-| F3 | F2 + one worked example | `cot_f3` | treatment | R20 |
+| F1 | Video + gold sheet, concise CoT | `cot_f1` | treatment | R17 |
+| F2 | F1 + geometric formulas | `cot_f2` | treatment | R18 |
+| F3 | F2 + one worked example | `cot_f3` | treatment | R19 |
 
 ### Comparisons
 
@@ -122,7 +122,7 @@ As `README.md` 2.7, with its CoT measures, and `errors.csv` as
 D=experiments/definitive_experiments
 OUT=results/zeroshot/vsibench/definitive
 S=results/_scratch/definitive_smoke
-COMMON="--model Qwen/Qwen3.5-4B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
 GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-source gold"
 ```
 
@@ -144,7 +144,7 @@ GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-
    ```bash
    for v in 1 2 3; do
      python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f$v --ids $D/computing_smoke_ids.txt \
-         --out $S/qwen3_5_4B_R$((17 + v)).jsonl
+         --out $S/qwen3_5_2B_R$((16 + v)).jsonl
    done
    ```
 
@@ -152,12 +152,12 @@ GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-
 F1–F3 each report 2,497 questions:
 
 ```bash
-python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f1 --ids $D/computing_ids.txt --out $OUT/qwen3_5_4B_R18.jsonl
-python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f2 --ids $D/computing_ids.txt --out $OUT/qwen3_5_4B_R19.jsonl
-python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f3 --ids $D/computing_ids.txt --out $OUT/qwen3_5_4B_R20.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f1 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R17.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f2 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R18.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f3 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R19.jsonl
 ```
 
-**Analysis:** `<make_table_6.py>` (`README.md` section 5, item 6), built on
+**Analysis:** `<make_table_6.py>` (`README.md` section 5, item 5), built on
 `experiments/2026-11-25-concise-math-cot/analysis.py`, writes the Results table and `errors.csv`.
 
 ## TODO

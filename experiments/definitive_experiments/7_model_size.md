@@ -49,12 +49,12 @@ All six have the video and the gold sheet (csv).
 
 | ID | `visual.model` | `prompt.reasoning` | Run |
 |---|---|---|---|
-| S2D | Qwen/Qwen3.5-2B | direct | R21 |
-| S2C | Qwen/Qwen3.5-2B | CoT | R22 |
-| S4D | Qwen/Qwen3.5-4B | direct | R3 |
-| S4C | Qwen/Qwen3.5-4B | CoT | R4 |
-| S9D | Qwen/Qwen3.5-9B | direct | R23 |
-| S9C | Qwen/Qwen3.5-9B | CoT | R24 |
+| S2D | Qwen/Qwen3.5-2B | direct | R3 |
+| S2C | Qwen/Qwen3.5-2B | CoT | R4 |
+| S4D | Qwen/Qwen3.5-4B | direct | R20 |
+| S4C | Qwen/Qwen3.5-4B | CoT | R21 |
+| S9D | Qwen/Qwen3.5-9B | direct | R22 |
+| S9C | Qwen/Qwen3.5-9B | CoT | R23 |
 
 ### Comparisons
 
@@ -108,7 +108,7 @@ S=results/_scratch/definitive_smoke
 BASE="--nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
 GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-source gold"
 COT="--reasoning <TODO C4>"
-M2="--model Qwen/Qwen3.5-2B"
+M4="--model Qwen/Qwen3.5-4B"
 M9="--model Qwen/Qwen3.5-9B --device-map auto <TODO C5: --batch-size>"
 ```
 
@@ -119,25 +119,25 @@ M9="--model Qwen/Qwen3.5-9B --device-map auto <TODO C5: --batch-size>"
    seconds per question.
 
    ```bash
-   for m in 2 9; do
+   for m in 4 9; do
      M=M$m
      python -m mvp.eval.vsibench ${!M} $BASE $GOLD      --ids $C/smoke_ids.txt --out $S/qwen3_5_${m}B_direct.jsonl
      python -m mvp.eval.vsibench ${!M} $BASE $GOLD $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_${m}B_cot.jsonl
    done
-   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
    python $C/cluster_checks.py revision Qwen/Qwen3.5-9B $OUT/model_revision_qwen3_5_9B.txt
    ```
 
 **Runs:** R3 and R4 come from experiment 5. The other four each report 5,130 questions:
 
 ```bash
-python -m mvp.eval.vsibench $M2 $BASE $GOLD      --out $OUT/qwen3_5_2B_R21.jsonl
-python -m mvp.eval.vsibench $M2 $BASE $GOLD $COT --out $OUT/qwen3_5_2B_R22.jsonl
-python -m mvp.eval.vsibench $M9 $BASE $GOLD      --out $OUT/qwen3_5_9B_R23.jsonl
-python -m mvp.eval.vsibench $M9 $BASE $GOLD $COT --out $OUT/qwen3_5_9B_R24.jsonl
+python -m mvp.eval.vsibench $M4 $BASE $GOLD      --out $OUT/qwen3_5_4B_R20.jsonl
+python -m mvp.eval.vsibench $M4 $BASE $GOLD $COT --out $OUT/qwen3_5_4B_R21.jsonl
+python -m mvp.eval.vsibench $M9 $BASE $GOLD      --out $OUT/qwen3_5_9B_R22.jsonl
+python -m mvp.eval.vsibench $M9 $BASE $GOLD $COT --out $OUT/qwen3_5_9B_R23.jsonl
 ```
 
-**Analysis:** `<make_table_7.py>` (`README.md` section 5, item 6) writes the Results table.
+**Analysis:** `<make_table_7.py>` (`README.md` section 5, item 5) writes the Results table.
 
 ## TODO
 
