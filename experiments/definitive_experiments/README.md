@@ -508,14 +508,37 @@ Experiments 3 and 4 also wait on the pipeline_v4 build; experiments 1, 5, 6 and 
   - Option 2: a revised version for all question types, for example without that step, as F1 does.
   - Open since 2026-11-20 (`explore_cot.md`, Conclusion). If it changes, experiment 6's D changes with it, and F1 − D
     no longer measures F1's pieces against the pilot's prompt.
-- **C2, freezing F1–F3 (experiment 6):** `cot_variants.PROMPT_VERSION` `2026-11-25.1` has never run on a GPU, not even
-  its smoke stage. Should its development stages on explore200 run before the text is frozen, or should it be frozen
-  as it is?
+  - **Evidence so far** (exploratory, on explore200's development questions;
+    `experiments/2026-11-25-concise-math-cot/README.md`, Results): on the 30 computing questions of
+    `model_size_ids.txt` (2B), D scores 66.7 with 3.3% of replies cut off, and F1, which drops the check against the
+    video, 64.7 with none cut off and replies a quarter of D's length (F1 − D −2.0, interval −15.7 to +11.7). F1 is
+    defined only for the three computing tasks, so option 2 needs new text for the other types.
+- **C2, freezing F1–F3 (experiment 6):** should `cot_variants.PROMPT_VERSION` `2026-11-25.1` be frozen as it is, or
+  revised first on explore200?
+  - **Evidence so far** (exploratory, on explore200's development questions;
+    `experiments/2026-11-25-concise-math-cot/README.md`, Results): the 2B's smoke stage (3 questions, `64e566e`) and
+    F1 and F2 on the 30 questions (`e2cd67a`) ran; the predictions are in
+    `results/zeroshot/vsibench/concise_math_cot/dev_v1/`.
+    - F3 copied its worked example's numbers in 2 of 3 smoke replies (1.059 on question 838, 183 on question 2227)
+      and was not run further, which bears on freezing F3 as written.
+    - F2's formula raised absolute distance (2B 45.0 → 61.0, 9B 49.0 → 98.0) but lowered relative distance (2B
+      70.0 → 30.0, 9B 80.0 → 40.0); 2B F2 − F1 −7.7 on the computing score.
+    - No F beat the given relations: E 85.3 against at most 64.7 on the 2B, 98.7 against at most 79.3 on the 9B.
 - **C3, batches (experiment 6):** A, C, D and E come from the shared runs on all 5,130 questions, so their batches mix
   question types. F1–F3 run on the computing questions only. Greedy decoding in a batch can differ in the last digits.
   Accept this as a stated deviation, or rerun A, C, D and E on the computing questions alone?
+  - **So far:** the exploratory runs had the same deviation, stated there: the baselines in the pilot's batches of up
+    to 8 questions of a video, F1 and F2 in the subset's smaller batches.
 - **C4, the CoT prompt for model size (experiment 7):** C1's prompt for every question type, or a concise variant on
   the three computing tasks (the only ones `cot_variants` defines) with C1's prompt elsewhere?
+  - **Evidence so far** (exploratory, on explore200's development questions;
+    `experiments/2026-11-25-concise-math-cot/README.md`, Results): with F1 on the same 30 questions, CoT − direct
+    (F1 − C) is +12.7 for the 2B (interval −5.3 to +31.0) and −3.7 for the 9B (−17.0 to +9.0); the interaction is −16.3
+    (−35.0 to +1.3). The 9B's direct answers with the sheet are 28.0 points above the 2B's. With F2, 16.7% of the 9B's
+    replies reach 2,048 tokens.
 - **C5, the 9B's batch size (experiment 7):** the same batches as the 2B and 4B (8) if memory allows? Otherwise one
   smaller batch size for all three models, or for the 9B alone, as a stated deviation. The exploratory 9B plan answered
   one question at a time.
+  - **Measured so far** (exploratory; `7_model_size.md`, Runs and cost): at `--batch-size 1` and `--device-map auto`
+    on one L4 (23.7 GB), the 9B loaded entirely on the GPU (18.8 GB of weights) and peaked at 19.5 GB. 8 questions at
+    a time has not been tried.
