@@ -73,7 +73,7 @@ planning), with Holm within each family and score.
 | Camera format | the objects' format | the code's rule since `080acf4`; one control per format |
 | Text options | the defaults: timestamps in seconds, bridged visibility, move-then-turn steps, object directions along the floor | the pilot's variants of them stayed within a few points |
 | Relations | none | pipeline_v4's direction relation would state the answer the cameras could help with |
-| Reasoning | direct only | the pilot's CoT lowered every camera form; CoT is experiments 5–7 |
+| Reasoning | direct only | the pilot's CoT lowered every camera form; CoT is experiment 5 |
 | `room` rows, the narrative's camera distances | kept | part of what the pipeline writes; the metric tasks are read apart |
 
 ## Configuration

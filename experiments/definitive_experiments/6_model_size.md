@@ -1,12 +1,12 @@
 ---
-id: definitive-7-model-size
+id: definitive-6-model-size
 title: Does Qwen3.5-9B use the gold scene sheet better than the 2B on the computing tasks, answering directly and with concise CoT
 owner: Tamara Grujičić
 created: 2026-11-25
 status: done                 # draft | planned | running | analysing | done | abandoned
 tags: [gold-sheet, chain-of-thought, model-size, definitive, exploratory]
 varies: [visual.model, prompt.reasoning]
-depends_on: [definitive-5-structured-cot (the 2B's A, C, D, E), definitive-6-concise-math-cot (the prompts, the 2B's F1 and F2)]
+depends_on: [definitive-5-structured-cot (the 2B's A, C, D, E; the follow-up's prompts and the 2B's F1 and F2)]
 ---
 
 # Model size
@@ -19,8 +19,8 @@ p 0.096).
 This file describes the model-size check as it was run (`experiments/2026-11-25-concise-math-cot/README.md`, "Model
 size", and `model_size.md` from `analysis.py --model-size`). **Exploratory, not pre-registered:** the 30 questions
 (`model_size_ids.txt`) are explore200's, where the prompts were developed; the plan was written on 2026-11-25 before
-any 9B answer existed. The prompts and the 2B's F1 and F2 are experiment 6's; the 2B's A, C, D and E are experiment
-5's predictions.
+any 9B answer existed. The prompts and the 2B's F1 and F2 are experiment 5's follow-up's; the 2B's A, C, D and E are
+experiment 5's pilot predictions.
 
 ## Question
 
@@ -43,7 +43,7 @@ As planned before the 9B runs (concise-math-cot README):
 ## Background
 
 - **Prior work:** `experiments/2026-11-25-concise-math-cot/README.md`, Background.
-- **The 2B on these questions:** experiment 6's Results (A 57.0, C 52.0, D 66.7, E 85.3, F1 64.7, F2 57.0).
+- **The 2B on these questions:** experiment 5's follow-up, Results (A 57.0, C 52.0, D 66.7, E 85.3, F1 64.7, F2 57.0).
 
 ## Design
 
@@ -52,12 +52,12 @@ As planned before the 9B runs (concise-math-cot README):
 | Model | Condition | `prompt.reasoning` | Run |
 |---|---|---|---|
 | 2B | A, C, D, E | direct; cot (D) | experiment 5's predictions |
-| 2B | F1, F2 | `cot_f1`, `cot_f2` | experiment 6's `dev_v1/cot_f1`, `dev_v1/cot_f2` |
+| 2B | F1, F2 | `cot_f1`, `cot_f2` | experiment 5's follow-up, `dev_v1/cot_f1`, `dev_v1/cot_f2` |
 | 9B | A, C, E | direct | `dev_v1/qwen3.5-9b/A_video`, `gold_csv`, `gold_relations` |
 | 9B | F1 | `cot_f1` | `dev_v1/qwen3.5-9b/cot_f1` |
 | 9B | F2 | `cot_f2` | `dev_v1/qwen3.5-9b/cot_f2` (run last) |
 
-A: video only; C: video + gold sheet; E: video + gold sheet + relations; F1, F2: experiment 6's prompts with the gold
+A: video only; C: video + gold sheet; E: video + gold sheet + relations; F1, F2: experiment 5's follow-up prompts with the gold
 sheet. The 9B's A, C and E use the pilot's direct flags (`followup.DIRECT`).
 
 ### Comparisons
@@ -123,7 +123,7 @@ training: none
 `analysis.py --model-size` (`model_size.md`): per model and condition the scores, parse rate, the share cut off at
 2,048 tokens, reply length and seconds per question; each contrast's difference, better / worse / same, an exact sign
 test, Holm over the five, and a paired bootstrap 95% interval (10,000 resamples within question type, seed 0). The
-error flags are experiment 6's (`errors.csv`).
+error flags are experiment 5's follow-up's (`errors.csv`).
 
 ## Threats to validity and checks
 
@@ -150,7 +150,7 @@ The predictions are in `results/zeroshot/vsibench/concise_math_cot/dev_v1/` (the
 
 ## Results
 
-From `model_size.md` (30 questions, 10 per task; written before the 2B's F2 ran, which is experiment 6's 57.0):
+From `model_size.md` (30 questions, 10 per task; written before the 2B's F2 ran, which is 57.0 in experiment 5's follow-up):
 
 | Model | Condition | Computing | Abs. dist. | Rel. dist. | Obj. size | Parsed | Reply tokens, median / p90 | Cut off | s / question |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
