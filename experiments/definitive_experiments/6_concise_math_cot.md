@@ -246,6 +246,75 @@ F3 − F2 has only the smoke stage's 3 questions (−33.3; 0 better, 1 worse).
 - **Next** (the README's branch for "none improves on D and C"): precomputed relations (E) remain the way to give the
   model distances. The 9B check of the same prompts is experiment 7.
 
+## Planned: full-benchmark rerun (not run)
+
+The rerun planned in this folder's `README.md` (sections 3 and 4: its hypotheses, comparisons and shared runs),
+as written there on 2026-11-28. Nothing in this section has been run; the results above are the exploratory runs'.
+
+### Conditions
+
+| ID | Condition | `prompt.reasoning` | Role | Run |
+|---|---|---|---|---|
+| A | Video only, direct | direct | baseline | R1, computing questions |
+| C | Video + gold sheet, direct | direct | baseline | R3, computing questions |
+| D | Video + gold sheet, structured CoT | CoT (TODO C1) | baseline | R4, computing questions |
+| E | Video + gold sheet + relations, direct | direct | upper reference | R5, computing questions |
+| F1 | Video + gold sheet, concise CoT | `cot_f1` | treatment | R17 |
+| F2 | F1 + geometric formulas | `cot_f2` | treatment | R18 |
+| F3 | F2 + one worked example | `cot_f3` | treatment | R19 |
+
+### Runs
+
+```bash
+D=experiments/definitive_experiments
+OUT=results/zeroshot/vsibench/definitive
+S=results/_scratch/definitive_smoke
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-source gold"
+```
+
+**Checks** (`README.md` 2.8):
+
+1. **Inputs and gold sheets.** As experiment 2, check 1. `computing_ids.txt` must have SHA-256
+   `ed4b146f98e064965e2783fedcae120637e96c4bfc1afbfa2503d0e6050a0a5c`.
+2. **Tests.** Both must pass:
+
+   ```bash
+   PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_cot_variants
+   PYTHONPATH=src python -m unittest discover -s experiments/2026-11-25-concise-math-cot -p "test_*.py"
+   ```
+
+3. **Smoke test** of F1–F3 on the 6 computing questions of the smoke set (`computing_smoke_ids.txt`, SHA-256
+   `7f0e27eb891134bba048a7255fe01487ae21ee2482390626c223aa727da98e49`). Print every prompt and reply. Each run must
+   answer all 6, every reply must have an "Answer:" line, and no F3 answer may be the example's (1.059, 183).
+
+   ```bash
+   for v in 1 2 3; do
+     python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f$v --ids $D/computing_smoke_ids.txt \
+         --out $S/qwen3_5_2B_R$((16 + v)).jsonl
+   done
+   ```
+
+**Runs:** R1, R3, R4 and R5 come from experiment 5. They are on all 5,130 questions and are read here on the 2,497.
+F1–F3 each report 2,497 questions:
+
+```bash
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f1 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R17.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f2 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R18.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --reasoning cot_f3 --ids $D/computing_ids.txt --out $OUT/qwen3_5_2B_R19.jsonl
+```
+
+**Analysis:** `<make_table_6.py>` (`README.md` section 5, item 5), built on
+`experiments/2026-11-25-concise-math-cot/analysis.py`, writes the Results table and `errors.csv`.
+
+### Open questions
+
+- **C1:** the structured-CoT prompt, D's (experiment 5). If it changes, F1 − D no longer compares F1's pieces with the
+  pilot's prompt.
+- **C2:** freeze `PROMPT_VERSION` `2026-11-25.1` as it is, or run its development stages on explore200 first.
+- **C3:** A, C, D and E run in batches that mix question types, and F1–F3 on the computing questions alone. Accept it
+  as a stated deviation, or rerun A, C, D and E on `computing_ids.txt`?
+
 ## Log
 
 - 2026-11-25: plan, prompts (`PROMPT_VERSION` 2026-11-25.1), runs and analysis written (concise-math-cot README).

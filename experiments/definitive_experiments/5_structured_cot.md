@@ -204,6 +204,68 @@ right chair rows, then "verifying with the video" in invented mm:ss frames until
 - **Next:** the failure analysis (wrong distance, loops) led to the concise and mathematical variants (experiment 6)
   and the model-size check (experiment 7).
 
+## Planned: full-benchmark rerun (not run)
+
+The rerun planned in this folder's `README.md` (sections 3 and 4: its hypotheses, comparisons and shared runs),
+as written there on 2026-11-28. Nothing in this section has been run; the results above are the exploratory runs'.
+
+### Conditions
+
+| ID | Condition | `prompt.reasoning` | `scene_sheet.source` | Role | Run |
+|---|---|---|---|---|---|
+| A | Video only, direct | direct | none | baseline | R1 |
+| B | Video only, CoT | CoT | none | treatment | R2 |
+| C | Video + gold sheet, direct | direct | gold | control | R3 |
+| D | Video + gold sheet, CoT | CoT | gold | treatment | R4 |
+| E | Video + gold sheet + relations, direct | direct | gold_relations | upper reference | R5 |
+
+### Runs
+
+```bash
+C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
+OUT=results/zeroshot/vsibench/definitive
+S=results/_scratch/definitive_smoke
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv"
+COT="--reasoning <TODO C1>"                    # cot as the code stands
+```
+
+**Checks** (`README.md` 2.8):
+
+1. **Inputs and gold sheets.** As experiment 2, check 1.
+2. **Tests.** `PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet` must pass.
+3. **Prompt check** for D, as `experiments/2026-11-19-gold-sheet-relations/README.md`'s Runs step 2, with
+   `--sheet-source gold $COT --model Qwen/Qwen3.5-2B`. Compare the CoT text with `cot_prompt.md` (or its replacement,
+   TODO C1).
+4. **Smoke test** of A and D, then B, then the model revision. For B and D, also report reply length, the share cut off
+   and the parse rate.
+
+   ```bash
+   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R1.jsonl
+   python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R4.jsonl
+   python $C/cluster_checks.py smoke $S/qwen3_5_2B_R1.jsonl $S/qwen3_5_2B_R4.jsonl --n 20
+   python -m mvp.eval.vsibench $COMMON $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R2.jsonl
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
+   ```
+
+**Runs**, each reporting 5,130 questions:
+
+```bash
+python -m mvp.eval.vsibench $COMMON                                   --out $OUT/qwen3_5_2B_R1.jsonl
+python -m mvp.eval.vsibench $COMMON $COT                              --out $OUT/qwen3_5_2B_R2.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold         --out $OUT/qwen3_5_2B_R3.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold $COT    --out $OUT/qwen3_5_2B_R4.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-source gold_relations --out $OUT/qwen3_5_2B_R5.jsonl
+```
+
+**Analysis:** `<make_table_5.py>` (`README.md` section 5, item 5) writes the Results table and the CoT measures.
+
+### Open questions
+
+- **C1** (`README.md` section 5): the CoT prompt. Either `--reasoning cot` as it stands, whose check against the video
+  made 12% (gold) and 28% (no sheet) of the pilot's replies loop, or a revised version for all question types, such as
+  one without that step.
+
 ## Log
 
 - 2026-11-19: plan, hypothesis and comparisons written (structured-cot README), for a run on 2,728 questions.

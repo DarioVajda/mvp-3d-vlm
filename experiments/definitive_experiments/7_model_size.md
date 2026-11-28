@@ -200,6 +200,72 @@ From `model_size.md` (30 questions, 10 per task; written before the 2B's F2 ran,
 - **Next** (the plan's branch for "size is not the reason"): the prompt and the sheet's form are the next suspects;
   the 9B's direct answers with the sheet (C) are the stronger baseline.
 
+## Planned: full-benchmark rerun (not run)
+
+The rerun planned in this folder's `README.md` (sections 3 and 4: its hypotheses, comparisons and shared runs),
+as written there on 2026-11-28. Nothing in this section has been run; the results above are the exploratory runs'.
+
+### Conditions
+
+All six have the video and the gold sheet (csv).
+
+| ID | `visual.model` | `prompt.reasoning` | Run |
+|---|---|---|---|
+| S2D | Qwen/Qwen3.5-2B | direct | R3 |
+| S2C | Qwen/Qwen3.5-2B | CoT | R4 |
+| S4D | Qwen/Qwen3.5-4B | direct | R20 |
+| S4C | Qwen/Qwen3.5-4B | CoT | R21 |
+| S9D | Qwen/Qwen3.5-9B | direct | R22 |
+| S9C | Qwen/Qwen3.5-9B | CoT | R23 |
+
+### Runs
+
+```bash
+C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
+OUT=results/zeroshot/vsibench/definitive
+S=results/_scratch/definitive_smoke
+BASE="--nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+GOLD="--sheets-root tasks/openvocab_adapter/out_full --sheet-format csv --sheet-source gold"
+COT="--reasoning <TODO C4>"
+M4="--model Qwen/Qwen3.5-4B"
+M9="--model Qwen/Qwen3.5-9B --device-map auto <TODO C5: --batch-size>"
+```
+
+**Checks** (`README.md` 2.8):
+
+1. **Inputs and gold sheets.** As experiment 2, check 1.
+2. **Smoke test** per model, direct and CoT, then each model's revision. Report each model's peak GPU memory and
+   seconds per question.
+
+   ```bash
+   for m in 4 9; do
+     M=M$m
+     python -m mvp.eval.vsibench ${!M} $BASE $GOLD      --ids $C/smoke_ids.txt --out $S/qwen3_5_${m}B_direct.jsonl
+     python -m mvp.eval.vsibench ${!M} $BASE $GOLD $COT --ids $C/smoke_ids.txt --out $S/qwen3_5_${m}B_cot.jsonl
+   done
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-9B $OUT/model_revision_qwen3_5_9B.txt
+   ```
+
+**Runs:** R3 and R4 come from experiment 5. The other four each report 5,130 questions:
+
+```bash
+python -m mvp.eval.vsibench $M4 $BASE $GOLD      --out $OUT/qwen3_5_4B_R20.jsonl
+python -m mvp.eval.vsibench $M4 $BASE $GOLD $COT --out $OUT/qwen3_5_4B_R21.jsonl
+python -m mvp.eval.vsibench $M9 $BASE $GOLD      --out $OUT/qwen3_5_9B_R22.jsonl
+python -m mvp.eval.vsibench $M9 $BASE $GOLD $COT --out $OUT/qwen3_5_9B_R23.jsonl
+```
+
+**Analysis:** `<make_table_7.py>` (`README.md` section 5, item 5) writes the Results table.
+
+### Open questions
+
+- **C1:** the structured-CoT prompt (experiment 5).
+- **C4:** the CoT prompt here. Either C1's prompt for every question type, or a concise variant (experiment 6) on the
+  three computing tasks with C1's prompt elsewhere.
+- **C5:** the 9B's batch size. Either the 2B's and 4B's 8, if memory allows, or one smaller size, for the 9B alone or
+  for all three models, stated as a deviation.
+
 ## Log
 
 - 2026-11-25: the model-size check planned (concise-math-cot README, "Model size") before any 9B answer existed.

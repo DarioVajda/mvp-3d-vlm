@@ -1,12 +1,12 @@
 ---
 id: definitive-1-scene-sheet-formats
-title: Which format of pipeline_v4.1's scene sheet helps Qwen3.5-4B most on VSI-Bench, against video alone
+title: Which format of the gold scene sheet helps Qwen3.5-2B most on VSI-Bench, against video alone
 owner: Tamara Grujičić, Nicolás Ramos Fernandez
 created: 2026-11-27
 status: planned              # draft | planned | running | analysing | done | abandoned
-tags: [scene-sheet, format, pipeline, definitive]
+tags: [scene-sheet, format, gold-sheet, definitive]
 varies: [scene_sheet.source, scene_sheet.format]
-depends_on: [README.md section 5, items 1–6 (pipeline_v4.1's sheets and the eval's support for them)]
+depends_on: [gold sheets in tasks/openvocab_adapter/out_full (README.md 2.4)]
 ---
 
 # Scene-sheet formats
@@ -18,36 +18,36 @@ code of `README.md` section 5 exists.
 
 ## Question
 
-Which way of writing pipeline_v4.1's sheet (csv, markdown table, json or text) helps Qwen3.5-4B most over the video
-alone? The sheet's content is the same in every format.
+Which way of writing the gold sheet (csv, markdown table, json or text) helps Qwen3.5-2B most over the video alone?
+The sheet's content is the same in every format.
 
 ## Hypothesis and what would change our mind
 
-- **Expected:** the sheet adds little over A, or nothing. The differences between formats are smaller than the
-  difference between having the sheet and not. The tables (csv, markdown table) are at least as good as json and text.
+- **Expected:** every format beats A overall, almost all of it on counting, where the gold sheet holds the answer. The
+  differences between formats are smaller than the gain from adding the sheet.
 - **Would prove it wrong:** the spread between the best and the worst format is at least the best format's gain over
   A, so the format matters as much as the sheet itself.
 - **Next:**
   - formats equal within the smallest difference that matters: keep csv, the shortest, in every later sheet;
-  - one format clearly best: use it in later pipeline experiments, and repeat the best and the worst on a second model
-    first.
+  - one format clearly best: use it in later experiments, and repeat the best and the worst on a second model first.
 
 ## Background
 
-- `experiments/2026-11-18-scene-sheet-formats/README.md`, Results. That run used Qwen3.5-2B on 2,728 questions, with
-  sheets in relative units and first-camera axes. Overall scores:
+- **The 2026-11-19 gold runs** (`experiments/2026-11-18-scene-sheet-formats/README.md`, Results, G–K): Qwen3.5-2B on
+  2,728 questions, with gold sheets built before `980cf00` (boxes not yet fitted to their objects). Video only scored
+  43.2.
 
-  | Condition | Overall |
-  |---|---:|
-  | Video only | 43.2 |
-  | csv | 34.9 |
-  | markdown table | 35.1 |
-  | json | 31.3 |
-  | markdown key-value | 25.5 |
-  | text | 29.0 |
+  | Format | Overall | Mean sheet tokens |
+  |---|---:|---:|
+  | csv | 49.4 | 215 |
+  | markdown table | 49.4 | 269 |
+  | json | 49.4 | 341 |
+  | markdown key-value | 48.4 | 305 |
+  | text | 48.7 | 281 |
 
-- The model read the relative units as metres, so the metric tasks fell 26–31 points in every format.
-- The five gold formats were within 1 point of each other.
+- In every format, counting rose from 39.6 to about 98, and without counting each format was below video only.
+- **Experiment 2** (`2_gold_sheet_relations.md`): the gold sheet in csv on all 5,130 questions, 48.9 against video
+  only's 43.3, all of it from counting.
 
 ## Design
 
@@ -56,22 +56,23 @@ alone? The sheet's content is the same in every format.
 | ID | Condition | `scene_sheet.source` | `scene_sheet.format` | Role | Run |
 |---|---|---|---|---|---|
 | A | Video only | none | none | baseline | R1 |
-| B | Video + pipeline sheet | pipeline | csv | treatment | R8 |
-| C | Video + pipeline sheet | pipeline | markdown_table | treatment | R9 |
-| D | Video + pipeline sheet | pipeline | json | treatment | R10 |
-| E | Video + pipeline sheet | pipeline | text | treatment | R11 |
+| B | Video + gold sheet | gold | csv | treatment | R3 |
+| C | Video + gold sheet | gold | markdown_table | treatment | R6 |
+| D | Video + gold sheet | gold | json | treatment | R7 |
+| E | Video + gold sheet | gold | text | treatment | R8 |
 
 ### Comparisons
 
 - **Primary**, one Holm family: B − A, C − A, D − A and E − A.
 - **Secondary**, one Holm family: the six pairs of formats.
+- All also without counting.
 
 ### Decisions
 
 | Decision | Choice | Why |
 |---|---|---|
-| Formats | csv, markdown_table, json, text | markdown_kv was the worst in the 2026-11-19 run (25.5, against 34.9–35.1 for the tables) |
-| Gold arms | none | the gold formats were within 1 point of each other; experiment 2 has gold csv |
+| Sheet | gold only | correct content, so that the pipeline's errors don't hide a format effect |
+| Formats | csv, markdown_table, json, text | markdown_kv was the worst in the 2026-11-19 runs (gold 48.4, pipeline 25.5) |
 | Relations, cameras | none | so that the format is the only difference |
 
 ## Configuration
@@ -79,21 +80,20 @@ alone? The sheet's content is the same in every format.
 ```yaml
 # README.md section 2, except:
 scene_sheet:
-  source: varies               # none (A) | pipeline: pipeline_v4.1 (B–E)
+  source: varies               # none (A) | gold (B–E)
   format: varies               # csv | markdown_table | json | text
 ```
 
 ## Metrics and analysis
 
-As `README.md` 2.7. In addition, sheet tokens per format (mean, median, max) with the Qwen3.5-4B tokenizer, and the
-scores on empty and non-empty sheets.
+As `README.md` 2.7. In addition, sheet tokens per format (mean, median, max) with the Qwen3.5-2B tokenizer.
 
 ## Threats to validity and checks
 
 | Risk | How we'd notice | What to do |
 |---|---|---|
-| The formats differ in length (json and text are about 1.5× csv) | gains that track token counts | report tokens next to every score |
-| Empty sheets dilute the format effect | the same scores in B–E on them | report empty and non-empty sheets apart |
+| The gold sheet contains the counting answer, so every format gains there alike | counting near 100 in B–E | read every comparison without counting too |
+| The formats differ in length (json about 1.6× csv) | gains that track token counts | report tokens next to every score |
 
 ## Runs and cost
 
@@ -101,45 +101,38 @@ scores on empty and non-empty sheets.
 C=experiments/2026-11-18-scene-sheet-formats   # cluster_checks.py and the check ids
 OUT=results/zeroshot/vsibench/definitive
 S=results/_scratch/definitive_smoke
-ROOT=tasks/openvocab_adapter/out_v4_1         # the pipeline_v4.1 build (README.md section 5, item 3)
-COMMON="--model Qwen/Qwen3.5-4B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
-PIPE="--sheet-source pipeline --sheets-root $ROOT --metric-scale <SHEET_SCALE>"
+COMMON="--model Qwen/Qwen3.5-2B --nframes 16 --sampling uniform128 --max-new-tokens 2048 --final-answer"
+GOLD="--sheet-source gold --sheets-root tasks/openvocab_adapter/out_full"
 ```
 
 **Checks** (`README.md` 2.8):
 
-1. **Inputs.** `test.jsonl`'s SHA-256 (`README.md` 2.3); 288 `data/vggt/*/*/frame_indices.npy`; `$ROOT/index.csv` with
-   SHA-256 `<from the build>`.
-2. **Tests and render check.** `<README.md section 5, items 4–5>`: all must pass, with none skipped.
-3. **Prompt check**, every format:
-
-   ```bash
-   for f in csv markdown_table json text; do
-     python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format $f --ids $C/prompt_check_ids.txt --print-prompt 4 > prompts_$f.txt
-     python $C/cluster_checks.py prompts prompts_$f.txt --sheets-root $ROOT --format $f
-   done
-   ```
-
+1. **Inputs and gold sheets.** Build and check as `experiments/2026-11-19-gold-sheet-relations/README.md`, Runs step
+   1. The build must end with `sheets failed: 0` and its two SHA-256, and `check_sheets.py` with `OK`.
+2. **Tests and render check.** `PYTHONPATH=src python -m unittest mvp.benchmarks.tests.test_scene_sheet` and
+   `<README.md section 5, item 4>`: all must pass, with none skipped.
+3. **Prompt check**, every format: as that README's Runs step 2, with `--model Qwen/Qwen3.5-2B --sheet-source gold`
+   and each `--sheet-format`.
 4. **Smoke test** of A and B, then the model revision:
 
    ```bash
-   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R1.jsonl
-   python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv --ids $C/smoke_ids.txt --out $S/qwen3_5_4B_R8.jsonl
-   python $C/cluster_checks.py smoke $S/qwen3_5_4B_R1.jsonl $S/qwen3_5_4B_R8.jsonl --n 20
-   python $C/cluster_checks.py revision Qwen/Qwen3.5-4B $OUT/model_revision_qwen3_5_4B.txt
+   python -m mvp.eval.vsibench $COMMON --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R1.jsonl
+   python -m mvp.eval.vsibench $COMMON $GOLD --sheet-format csv --ids $C/smoke_ids.txt --out $S/qwen3_5_2B_R3.jsonl
+   python $C/cluster_checks.py smoke $S/qwen3_5_2B_R1.jsonl $S/qwen3_5_2B_R3.jsonl --n 20
+   python $C/cluster_checks.py revision Qwen/Qwen3.5-2B $OUT/model_revision_qwen3_5_2B.txt
    ```
 
 **Runs**, each reporting 5,130 questions:
 
 ```bash
-python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_4B_R1.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format csv            --out $OUT/qwen3_5_4B_R8.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format markdown_table --out $OUT/qwen3_5_4B_R9.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format json           --out $OUT/qwen3_5_4B_R10.jsonl
-python -m mvp.eval.vsibench $COMMON $PIPE --sheet-format text           --out $OUT/qwen3_5_4B_R11.jsonl
+python -m mvp.eval.vsibench $COMMON --out $OUT/qwen3_5_2B_R1.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-format csv            --out $OUT/qwen3_5_2B_R3.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-format markdown_table --out $OUT/qwen3_5_2B_R6.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-format json           --out $OUT/qwen3_5_2B_R7.jsonl
+python -m mvp.eval.vsibench $COMMON $GOLD --sheet-format text           --out $OUT/qwen3_5_2B_R8.jsonl
 ```
 
-**Analysis:** `<make_table_1.py>` (`README.md` section 5, item 6) writes the Results table.
+**Analysis:** `<make_table_1.py>` (`README.md` section 5, item 5) writes the Results table.
 
 ## Results
 
