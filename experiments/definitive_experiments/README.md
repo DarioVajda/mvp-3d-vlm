@@ -23,7 +23,7 @@ describes it as registered and run.
 | 4 | Camera path | `2026-11-20-camera`, as redesigned on 2026-11-25 | cameras, format | whether the camera's path adds anything to the pipeline's objects, and in which form |
 | 5 | Structured CoT | `2026-11-19-structured-cot` | reasoning, sheet source | whether step-by-step reasoning lets the model use a correct sheet, and whether it recovers what the relations give |
 | 6 | Concise, mathematical CoT | `2026-11-25-concise-math-cot` | reasoning | whether a shorter CoT with explicit formulas, then with a worked example, does better on the computing tasks |
-| 7 | Model size (new) | none | model, reasoning | whether a larger model uses the gold sheet better, answering directly and with CoT |
+| 7 | Model size (new) | none | model | whether a larger model uses the gold sheet better, answering directly |
 
 The 2026-11-25 redesigns are in the Claude Doc "Scene-sheet final experiments: cluster run prompts" (prompts 2–4). The
 `varies` keys are TEMPLATE.md's, as follows:
@@ -63,7 +63,7 @@ How each one works:
 
    They run on the three computing tasks (absolute distance, relative distance, object size) and are compared with
    experiment 5's conditions on the same questions.
-7. **Model size.** Qwen3.5-2B, 4B and 9B, each with the video and the gold sheet, answering directly and with CoT.
+7. **Model size.** Qwen3.5-2B, 4B and 9B, each with the video and the gold sheet, answering directly.
 
 ## 2. Common methodology
 
@@ -237,8 +237,8 @@ own detection, tracking and post-processing, at 16 frames. Only how its sheet is
 
 ## 3. What each experiment modifies
 
-Each subsection lists the conditions (with their runs from section 4), the comparisons and their Holm families, the
-hypothesis, and what departs from the source README beyond section 2.
+Each subsection lists the conditions (with their runs from section 4), the comparisons and their Holm families, and the
+hypothesis.
 
 ### 3.1 Scene-sheet formats
 
@@ -257,12 +257,6 @@ hypothesis, and what departs from the source README beyond section 2.
   sheet.
 - **Would prove it wrong:** the spread between the best and the worst format is at least the best format's gain over
   A. That would mean the format matters as much as the sheet itself.
-- **Departures from the README:**
-  - four formats, with markdown_kv dropped: it was the worst in the 2026-11-19 run (pipeline 25.5 against 34.9 and
-    35.1 for the tables; gold 48.4, the lowest of the five);
-  - gold sheets only, with no pipeline arms (B–F of the README): correct content keeps the pipeline's errors from
-    hiding a format effect;
-  - no relations and no cameras, so the format is the only difference.
 
 ### 3.2 Gold sheet and relations (done)
 
@@ -296,12 +290,6 @@ without the video) are the gold twins of experiment 3.
   - the full method raises the overall (H3).
 - **Would prove it wrong:** C − A ≤ 0 on the distance questions. That is what registered pipeline_v4 gave on batch2_A,
   with first-camera axes: 53 questions helped against 89 hurt, p = 0.0032.
-- **Departures from `scene_sheet_vs_video.md`** (a 2026-11-17 draft): almost everything, as redesigned on 2026-11-25.
-  It used Qwen3-VL-4B, 16 new tokens and the first-word answer, sheets in relative units, no relations and no
-  statistics. Two points to state in the experiment file:
-  - csv, so that every condition pairs with its gold twin;
-  - pipeline relations cover fewer questions than gold's: only distance and relative direction, and only when every
-    named object has a row. So pipeline − gold on C and E mixes content with coverage.
 - **The gold twins' runs** come from another commit and environment (`0f7c5f2`); their prompts are the same as at later
   commits (experiment 2's Conclusion). Stated as a caveat on pipeline − gold.
 
@@ -331,14 +319,6 @@ without the video) are the gold twins of experiment 3.
 - **Would prove it wrong:** a camera form beats its control on direction and route (relative direction and route
   planning together) by at least 5 points, with Holm p < 0.05. The gain must hold on the questions whose answer is not
   B.
-- **Departures from the README and the 2026-11-25 redesign:**
-  - The camera table is in csv. The 2026-11-25 redesign chose the markdown table from the pilot (44.6 against 38.4 with
-    cameras), but the csv rule (2.6) takes precedence.
-  - 6 direct conditions, with no CoT and no variants. The pilot had 15 direct conditions, 3 CoT and 7 variants.
-  - 2,048 tokens. The pilot used 256 for direct answers.
-  - Sign tests with Holm. The pilot used bootstrap intervals only.
-  - The `room` rows and the narrative's distances from the camera are kept. The pilot found the model copying them on
-    room size and absolute distance, so the metric tasks are read separately.
 
 ### 3.5 Structured CoT
 
@@ -369,12 +349,6 @@ without the video) are the gold twins of experiment 3.
   - D − C ≤ 0, overall and on the computing tasks;
   - D ≥ E;
   - B − A clearly positive.
-- **Departures from the README:**
-  - all 5,130 questions; the README planned 2,728, or 933 if the CoT runs were too long;
-  - 2,048 tokens with no rule to raise them. The pilot's cut-off replies were loops, which a higher limit would not end
-    (Log, 2026-11-20);
-  - no thinking-mode condition (dropped on 2026-11-20);
-  - the CoT prompt is TODO C1.
 
 ### 3.6 Concise, mathematical CoT
 
@@ -406,41 +380,26 @@ without the video) are the gold twins of experiment 3.
   questions the centre and closest-point rules never disagree, but on the full benchmark they score 83.7 against
   98.3.
 - **Would prove it wrong:** F2 ≤ F1 on absolute distance, F1 below D, or more answers that can't be read.
-- **Departures from the README:**
-  - all 2,497 computing questions in one run. The README planned nested subsets of explore200's computing questions,
-    then a held-out pool.
-  - the baselines are rerun (shared runs), where the README reused the pilot's predictions;
-  - the README's exploratory 9B section is replaced by experiment 7.
-  - TODOs C1–C3.
 
 ### 3.7 Model size (new)
 
 | ID | Model | Reasoning | Run |
 |---|---|---|---|
 | S2D | Qwen3.5-2B | direct | R3 |
-| S2C | Qwen3.5-2B | CoT | R4 |
 | S4D | Qwen3.5-4B | direct | R20 |
-| S4C | Qwen3.5-4B | CoT | R21 |
 | S9D | Qwen3.5-9B | direct | R22 |
-| S9C | Qwen3.5-9B | CoT | R23 |
 
-All six have the video and the gold sheet (csv), on all 5,130 questions.
+All three have the video and the gold sheet (csv), answered directly, on all 5,130 questions.
 
-- **Question:** does a larger Qwen3.5 use the gold sheet better, answering directly and with CoT? Does the effect of
-  CoT grow with model size?
+- **Question:** does a larger Qwen3.5 use the gold sheet better, answering directly?
 - **Comparisons:**
-  - Primary family: CoT − direct for each model (S2C − S2D, S4C − S4D, S9C − S9D).
-  - Secondary family, between sizes: S4D − S2D, S9D − S4D, S4C − S2C and S9C − S4C.
-  - Third family, the interaction as a per-question contrast: (S9C − S9D) − (S2C − S2D), and (S4C − S4D) − (S2C −
-    S2D).
+  - One family, between sizes: S4D − S2D, S9D − S4D and S9D − S2D.
   - Everything also without counting and on the computing tasks.
-- **Expected:** CoT's gain grows with size: it is positive for the 9B, and larger for the 9B than for the 2B. Direct
-  answering with the sheet also improves with size. The basis is Ji et al. (arXiv 2507.13362, Table III): structured
-  CoT helped 7B and larger models and barely a 3B. Also concise-math-cot's model-size section.
-- **Would prove it wrong:** S9C − S9D ≤ 0, so model size is not the reason CoT fails, at least at this scale. Or the
-  interaction ≤ 0.
+- **Expected:** direct answering with the sheet improves with size. The basis is concise-math-cot's model-size section.
+- **Would prove it wrong:** S9D − S2D ≤ 0, so a larger model does not use the gold sheet better, at least at this
+  scale.
 - **Loading the 9B:** `--device-map auto`. `QwenVL` stops if any weight would go to the CPU or disk.
-- TODOs C1, C4 and C5.
+- TODO C5.
 
 ## 4. Shared runs
 
@@ -453,7 +412,7 @@ Qwen3.5-2B unless the row says otherwise. Every row also has the common flags: `
 | R1 | none | yes | direct | 1A, 3A, 4A, 5A, 6A |
 | R2 | none | yes | CoT | 5B |
 | R3 | gold, csv | yes | direct | 1B, 5C, 6C, S2D |
-| R4 | gold, csv | yes | CoT | 5D, 6D, S2C (TODO C1, C4) |
+| R4 | gold, csv | yes | CoT | 5D, 6D (TODO C1) |
 | R5 | gold_relations, csv | yes | direct | 5E, 6E |
 | R6 | gold, markdown_table | yes | direct | 1C |
 | R7 | gold, json | yes | direct | 1D |
@@ -467,12 +426,12 @@ Qwen3.5-2B unless the row says otherwise. Every row also has the common flags: `
 | R15 | pipeline, text, `--cameras` | yes | direct | 4E |
 | R16 | pipeline, narrative | yes | direct | 4F |
 | R17–R19 | gold, csv; the 2,497 computing questions | yes | `cot_f1`, `cot_f2`, `cot_f3` | 6F1–F3 |
-| R20, R21 | gold, csv; Qwen3.5-4B | yes | direct, CoT | S4D, S4C |
-| R22, R23 | gold, csv; Qwen3.5-9B | yes | direct, CoT | S9D, S9C |
+| R20 | gold, csv; Qwen3.5-4B | yes | direct | S4D |
+| R22 | gold, csv; Qwen3.5-9B | yes | direct | S9D |
 
-That is 23 runs. Each writes `results/zeroshot/vsibench/definitive/<model>_<run>.jsonl`: `qwen3_5_2B_R1.jsonl` to
-`qwen3_5_2B_R19.jsonl`, then `qwen3_5_4B_R20.jsonl`, `qwen3_5_4B_R21.jsonl`, `qwen3_5_9B_R22.jsonl` and
-`qwen3_5_9B_R23.jsonl`. A run another experiment has already made resumes from its file and answers nothing new.
+That is 21 runs. Each writes `results/zeroshot/vsibench/definitive/<model>_<run>.jsonl`: `qwen3_5_2B_R1.jsonl` to
+`qwen3_5_2B_R19.jsonl`, then `qwen3_5_4B_R20.jsonl` and `qwen3_5_9B_R22.jsonl`. A run another experiment has already
+made resumes from its file and answers nothing new.
 Experiments 3 and 4 also wait on the pipeline_v4 build; experiments 1, 5, 6 and 7 do not.
 
 ## 5. Needed before the runs, and open questions
@@ -499,9 +458,9 @@ Experiments 3 and 4 also wait on the pipeline_v4 build; experiments 1, 5, 6 and 
    gold, so that a rendering failure shows before any GPU time is spent.
 5. **Analysis scripts** for each experiment that read the shared runs and write its Results table.
 
-### TODO (CoT experiments only)
+### TODO (experiments 5–7 only)
 
-- **C1, the CoT prompt (experiments 5, 6's D and 7):**
+- **C1, the CoT prompt (experiments 5 and 6's D):**
   - Option 1: `--reasoning cot` as it stands (`experiments/2026-11-19-structured-cot/cot_prompt.md`, `6642c48`). Its
     step "check that the result agrees with what the video shows" made 12% of the pilot's replies with the gold sheet
     loop to the token limit, and 28% of those without a sheet.
@@ -529,13 +488,6 @@ Experiments 3 and 4 also wait on the pipeline_v4 build; experiments 1, 5, 6 and 
   Accept this as a stated deviation, or rerun A, C, D and E on the computing questions alone?
   - **So far:** the exploratory runs had the same deviation, stated there: the baselines in the pilot's batches of up
     to 8 questions of a video, F1 and F2 in the subset's smaller batches.
-- **C4, the CoT prompt for model size (experiment 7):** C1's prompt for every question type, or a concise variant on
-  the three computing tasks (the only ones `cot_variants` defines) with C1's prompt elsewhere?
-  - **Evidence so far** (exploratory, on explore200's development questions;
-    `experiments/2026-11-25-concise-math-cot/README.md`, Results): with F1 on the same 30 questions, CoT − direct
-    (F1 − C) is +12.7 for the 2B (interval −5.3 to +31.0) and −3.7 for the 9B (−17.0 to +9.0); the interaction is −16.3
-    (−35.0 to +1.3). The 9B's direct answers with the sheet are 28.0 points above the 2B's. With F2, 16.7% of the 9B's
-    replies reach 2,048 tokens.
 - **C5, the 9B's batch size (experiment 7):** the same batches as the 2B and 4B (8) if memory allows? Otherwise one
   smaller batch size for all three models, or for the 9B alone, as a stated deviation. The exploratory 9B plan answered
   one question at a time.
