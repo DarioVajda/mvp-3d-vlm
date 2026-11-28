@@ -3,7 +3,7 @@ id: 2026-11-19-gold-sheet-relations    # also the folder name: experiments/<id>/
 title: Do correct scene sheets, and precomputed relations, help Qwen3.5-2B on VSI-Bench
 owner: Tamara Grujičić
 created: 2026-11-19
-status: planned              # draft | planned | running | analysing | done | abandoned
+status: done                 # draft | planned | running | analysing | done | abandoned
 tags: [scene-sheet, gold-sheet, relations]
 varies: [scene_sheet.source, visual.video]  # keys that differ between conditions
 depends_on: [2026-11-18-scene-sheet-formats (gold sheets, the 40-question pilot)]
@@ -11,7 +11,10 @@ depends_on: [2026-11-18-scene-sheet-formats (gold sheets, the 40-question pilot)
 
 # Gold sheets and precomputed relations
 
-**Outcome:** <!-- one line once the experiment is done: the answer and its headline number -->
+**Outcome:** on all 5,130 questions, the relations raise the overall from 48.9 (gold sheet) to 61.3 (C − B +12.4,
+Holm p < 1e-150), but only where they state the answer (absolute and relative distance, +55.9, which the model copies);
+on the other types with relations they cost 4.2 points. The gold sheet alone adds +5.6 over video only (43.3), all of
+it from counting.
 
 ## Question
 
@@ -309,11 +312,11 @@ made at (`git rev-parse HEAD`) in the Log.
 
 | Run | Conditions | Task or command | Output | Commit |
 |---|---|---|---|---|
-| A | A | the first command above | `results/zeroshot/vsibench/gold_sheet_relations_full/qwen3_5_2B_A_video.jsonl` | |
-| B | B | the second | `.../qwen3_5_2B_B_gold_csv.jsonl` | |
-| C | C | the third | `.../qwen3_5_2B_C_gold_relations_csv.jsonl` | |
-| D | D | the fourth | `.../qwen3_5_2B_D_gold_csv_no_video.jsonl` | |
-| E | E | the fifth | `.../qwen3_5_2B_E_gold_relations_csv_no_video.jsonl` | |
+| A | A | the first command above | `results/zeroshot/vsibench/gold_sheet_relations_full/qwen3_5_2B_A_video.jsonl` | `0f7c5f2` |
+| B | B | the second | `.../qwen3_5_2B_B_gold_csv.jsonl` | `0f7c5f2` |
+| C | C | the third | `.../qwen3_5_2B_C_gold_relations_csv.jsonl` | `0f7c5f2` |
+| D | D | the fourth | `.../qwen3_5_2B_D_gold_csv_no_video.jsonl` | `0f7c5f2` |
+| E | E | the fifth | `.../qwen3_5_2B_E_gold_relations_csv_no_video.jsonl` | `0f7c5f2` |
 
 **Cost:** about 20–30 GPU minutes on one B200 for A–C (15,390 answers) and the checks, estimated from the format
 experiment, whose checks and eleven runs of the same model and frames (30,008 answers) took 31 minutes there. D and E
@@ -333,23 +336,126 @@ so the fallback is not a replication of it. D and E take the same `--ids` (about
 ## Results
 
 <!-- make_table:start -->
-Not run yet.
+Written by `make_table.py` (5,130 questions per condition; scores ×100; overall: the mean over the 8 tasks present).
+
+| ID | Condition | Overall | Without counting | Count | Abs. dist. | Obj. size | Room size | Rel. dist. | Rel. dir. | Route | Order | Parsed | Input tokens (mean / median) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | video only | 43.3 | 43.7 | 40.1 | 34.6 | 59.6 | 40.7 | 46.3 | 46.5 | 33.5 | 45.0 | 100.0% | 2562 / 2546 |
+| B | + gold sheet | 48.9 | 41.8 | 98.7 | 31.4 | 55.4 | 45.1 | 45.2 | 47.7 | 33.5 | 34.1 | 100.0% | 2800 / 2738 |
+| C | + gold sheet + relations | 61.3 | 55.9 | 98.7 | 91.2 | 55.0 | 44.6 | 96.3 | 46.1 | 33.0 | 25.2 | 100.0% | 3048 / 2762 |
+| D | gold sheet only | 39.9 | 31.5 | 98.5 | 22.4 | 78.0 | 0.6 | 37.3 | 37.0 | 28.4 | 16.8 | 100.0% | 318 / 257 |
+| E | gold sheet + relations only | 55.0 | 48.8 | 98.5 | 91.0 | 77.6 | 0.6 | 93.4 | 37.1 | 26.8 | 15.4 | 100.0% | 566 / 279 |
+
+Comparisons, question by question (better / worse: questions where the second condition scores higher / lower; exact two-sided sign test; Holm over B − A and C − B, and with D and E over B − D, E − C and D − A):
+
+| Comparison | Overall | Without counting | Better / worse / same | p | Holm p |
+|---|---:|---:|---:|---:|---:|
+| B − A | +5.6 | -2.0 | 1464 / 1211 / 2455 | 1.08e-06 | 1.08e-06 |
+| C − B | +12.4 | +14.2 | 1265 / 263 / 3602 | 4.05e-157 | 8.1e-157 |
+| C − A | +18.0 | +12.2 | 2253 / 928 / 1949 | 1.4e-125 | – |
+| B − A, counting left out | -2.0 | -2.0 | 1064 / 1207 / 2294 | 0.00288 | – |
+| B − D | +9.0 | +10.3 | 1286 / 919 / 2925 | 5.63e-15 | 1.69e-14 |
+| E − C | -6.2 | -7.1 | 602 / 728 / 3800 | 0.000604 | 0.00121 |
+| D − A | -3.4 | -12.2 | 1591 / 1548 / 1991 | 0.453 | 0.453 |
+
+C − B by group (3210 of 5130 questions get relations; scores: the mean over the group's questions, not over tasks):
+
+| Questions that | n | A | B | C | C − B | Better / worse / same | p |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| get relations | 3210 | 42.4 | 39.7 | 64.4 | +24.7 | 1232 / 224 / 1754 | 1.06e-168 |
+| get no relations | 1920 | 49.6 | 65.4 | 65.1 | -0.3 | 33 / 39 / 1848 | 0.556 |
+| get relations: abs. and rel. distance | 1540 | 40.0 | 37.8 | 93.7 | +55.9 | 1119 / 41 / 380 | 8.51e-274 |
+| get relations: the other types | 1670 | 44.6 | 41.6 | 37.4 | -4.2 | 113 / 183 / 1374 | 5.63e-05 |
+
+Per question type:
+
+| Question type | n | With relations | A | B | C | C − B |
+|---|---:|---:|---:|---:|---:|---:|
+| obj_appearance_order | 618 | 618 | 45.0 | 34.1 | 25.2 | -8.9 |
+| object_abs_distance | 834 | 830 | 34.6 | 31.4 | 91.2 | +59.8 |
+| object_counting | 565 | 0 | 40.1 | 98.7 | 98.7 | +0.0 |
+| object_rel_direction_easy | 217 | 217 | 53.0 | 51.2 | 48.8 | -2.3 |
+| object_rel_direction_hard | 373 | 373 | 39.9 | 42.1 | 43.2 | +1.1 |
+| object_rel_direction_medium | 378 | 378 | 46.6 | 49.7 | 46.3 | -3.4 |
+| object_rel_distance | 710 | 710 | 46.3 | 45.2 | 96.3 | +51.1 |
+| object_size_estimation | 953 | 0 | 59.6 | 55.4 | 55.0 | -0.4 |
+| room_size_estimation | 288 | 0 | 40.7 | 45.1 | 44.6 | -0.5 |
+| route_planning | 194 | 84 | 33.5 | 33.5 | 33.0 | -0.5 |
+
+Per dataset (mean over questions):
+
+| Dataset | n | A | B | C |
+|---|---:|---:|---:|---:|
+| arkitscenes | 1601 | 49.1 | 52.6 | 68.1 |
+| scannet | 2071 | 44.3 | 47.7 | 61.9 |
+| scannetpp | 1458 | 41.7 | 48.0 | 64.8 |
 <!-- make_table:end -->
+
+All five runs answered the same 5,130 questions, every reply parsed, none reached the token limit (at most 11 new
+tokens), and every D and E prediction has `"n_frames": 0`.
 
 ### Examples
 
--
+- **Absolute distance, copied** (question 680: "the distance between the sofa and the stove", truth 2.9 m): A answers
+  2.4, B 3.376 (from the sheet's coordinates), C and E 3.154, the relation's closest-point distance word for word.
+- **Appearance order, made worse** (question 2725: chair, toilet, blanket, basket; truth B): A and B answer B, C answers
+  A (the order the question lists them) and E answers D. A is right and C wrong on 157 of the 618 order questions, the
+  reverse on 35.
+- **Room size without the video:** D and E answer 120 to all 288 room-size questions: the gold sheet has no room
+  dimensions, so there is nothing to read.
 
 ### What the results show
 
--
+- **The gold sheet (B − A, +5.6, Holm p 1.1e-6) helps through counting only.** Counting goes from 40.1 to 98.7; without
+  counting B is 2.0 points below video only (1,064 better, 1,207 worse, p 0.003, descriptive), with the largest loss on
+  appearance order (45.0 → 34.1). This replicates the format experiment on the 2,728 questions.
+- **The relations (C − B, +12.4, Holm p 8e-157) help where they state the answer, and nowhere else.**
+  - On absolute and relative distance, C − B is +55.9 (1,119 better, 41 worse). C's answer is the stated distance in 830
+    of 830 absolute-distance questions, and the stated closest object in 694 of 710 relative-distance ones. The stated
+    values are good: 798 of 830 distances are within 25% of the truth (median error 0.07 m), and 684 of 710 closest
+    objects are right.
+  - On the other types that get relations (appearance order, relative direction, route planning), C − B is −4.2 (113
+    better, 183 worse, p 5.6e-5), mostly appearance order (−8.9: C answers B for 53% of order questions, whose truths
+    are spread evenly). Relative direction moves by −3.4 to +1.1 per difficulty, route planning by −0.5.
+  - The questions without relations (counting, sizes, the rest) are unchanged (−0.3; 33 better, 39 worse).
+- **Without the video**, the sheet keeps what it states and loses the rest. D scores 39.9 and E 55.0. Counting stays at
+  98.5, and E keeps absolute and relative distance (91.0, 93.4). Appearance order falls to 16.8 and 15.4, below the 25
+  of chance, and room size to 0.6 (Examples). Object size rises from 55.4 (B) to 78.0 (D): where B and D answer
+  differently (74% of size questions), D scores 74.4 and B 43.7, so with the video the model uses the sheet's sizes less.
+  - B − D +9.0 (Holm p 1.7e-14) and E − C −6.2 (Holm p 0.0012): the video adds to a correct sheet.
+  - D − A −3.4 (Holm p 0.45): a gold sheet alone and the video alone are not distinguishable overall, though they win on
+    different tasks (D − A −12.2 without counting).
+- **Token cost** (mean / median input tokens): video only 2,562 / 2,546; the sheet adds about 240 (B) and the relations
+  about 250 more (C, 3,048 / 2,762; C's long tail is the relation tables of rooms with many objects). Sheet only costs
+  318 / 257 (D) and 566 / 279 (E), 12% and 22% of video only's mean.
+- **Datasets:** C's gain over A is similar in ARKitScenes (+19.0), ScanNet (+17.6) and ScanNet++ (+23.1).
 
 ## Conclusion
 
-- **Answer to the question:**
-- **Hypothesis:** <!-- supported, rejected or inconclusive, and why -->
-- **Caveats:** <!-- what limits the conclusion: subset size, one seed, one model -->
-- **Next:** <!-- the decision this leads to, and follow-up experiments by id -->
+- **Answer to the question:** a correct scene sheet helps Qwen3.5-2B only on counting, where it holds the answer.
+  Precomputed relations raise the overall by 12.4 points, all of it on absolute and relative distance, where they state
+  the answer and the model copies it; on the other types they reach, the model gets nothing from them and does slightly
+  worse. Without the video the sheet keeps these gains and loses appearance order and room size, for about a tenth of
+  the input tokens.
+- **Hypothesis:** supported, including its expectation that C − B comes from the distance questions and is near zero or
+  negative elsewhere. That pattern is also the registered result "C − B positive only on absolute and relative
+  distance": the model copies the answer lines and gets nothing else from the relations. D ≥ B was not found
+  (B − D +9.0).
+- **Caveats:**
+  - One model (2B), one run with greedy decoding, direct answers.
+  - Gold sheets and relations are an upper bound: the 2B copies given distances whether right or wrong (pipeline
+    tests), so with a pipeline sheet the distance gain is only as good as the pipeline's distances.
+  - B − A without counting and C − A are descriptive, outside the two Holm families.
+  - The runs were made at `0f7c5f2`, before `b0ed3c1`; that commit changes only a frame check that gold sheets skip,
+    and the prompts of A–E for all 5,130 questions are the same at both (Log, 2026-11-25).
+- **Next:**
+  - Give the relations only to the questions whose answer they state (absolute and relative distance); on appearance
+    order they cost 8.9 points.
+  - The gain carries over to a usable system only if the pipeline's own distances are close to gold; v5 is not yet
+    there (`experiments/2026-11-18-scene-sheet-formats/analyses/v5_stage1.md`: no-go on relative distance and box
+    size).
+  - For the types the relations don't state (direction, order, route), the model must compute from the sheet:
+    2026-11-19-structured-cot, or a larger model (the 9B comparison).
 
 ## Log
 
@@ -425,3 +531,9 @@ Not run yet.
   `1abeca4`'s `--no-video` fix and predates the merge (`6ead380`) whose frame check `b0ed3c1` fixes, so B and C ran
   without it. Qwen/Qwen3.5-2B at revision `15852e8c16360a2fea060d615a32b45270f8a8fc` (`model_revision.txt`). The
   predictions and summaries are in `results/zeroshot/vsibench/gold_sheet_relations_full/` (`c4d74df`).
+- 2026-11-27: results written with `make_table.py --results results/zeroshot/vsibench/gold_sheet_relations_full
+  --sheets-root tasks/openvocab_adapter/out_full` and `--ids` all 5,130 question ids (the full run has no ids file;
+  the script checks that each of A–E answered exactly them), into Results and `results.csv`. The Holm families are the
+  registered ones, {B − A, C − B} and {B − D, E − C, D − A}; C − A and B − A without counting are descriptive. The
+  copying counts, the stated relations' accuracy and the examples (What the results show) were computed from the same
+  predictions and `scene_sheet.relations` on the same sheets. No condition, setting or question changed.
