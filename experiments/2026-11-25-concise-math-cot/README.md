@@ -3,7 +3,7 @@ id: 2026-11-25-concise-math-cot
 title: Concise, mathematical and few-shot structured CoT for Qwen3.5-2B on the computing tasks with the gold sheet
 owner: Tamara Grujičić
 created: 2026-11-25
-status: planned              # draft | planned | running | analysing | done | abandoned
+status: analysing            # draft | planned | running | analysing | done | abandoned
 tags: [prompting, chain-of-thought, gold-sheet]
 varies: [prompt.reasoning]
 depends_on: [2026-11-19-structured-cot (its conditions A, C, D, E and their predictions), 2026-11-19-gold-sheet-relations (the rebuilt gold sheets)]
@@ -11,7 +11,10 @@ depends_on: [2026-11-19-structured-cot (its conditions A, C, D, E and their pred
 
 # Concise, mathematical and few-shot structured CoT
 
-**Outcome:** <!-- once run: the answer and its headline number -->
+**Outcome:** exploratory, development questions only (the held-out evaluation was not run). On 30 questions with
+the 2B, F1 scores 64.7 and F2 57.0 on the computing tasks against D's 66.7 and E's 85.3; F3, run on the smoke stage's
+3 questions only, copied its worked example's numbers in 2 of 3 replies. Concise CoT does not help the 9B either (9B
+F1 − 9B C −3.7), whose direct answers with the sheet are 28.0 points above the 2B's.
 
 ## Question
 
@@ -36,6 +39,12 @@ given the precomputed relations (E)?
   a stated procedure, and precomputed relations (E) remain the way to give it distances.
 
 ## Background
+
+Prior work found that chain-of-thought does not improve, and often degrades, visual spatial reasoning from video (Yang
+et al. 2025, Thinking in Space, arXiv:2412.14171; Kancheti et al. 2026, Chain-of-Thought Degrades Visual Spatial
+Reasoning Capabilities of Multimodal LLMs, ACL 2026, https://aclanthology.org/2026.acl-short.71). Yang et al. also found that having the model generate a
+cognitive map improved distance questions. We ask instead whether reasoning helps once the correct geometry is given in
+a scene sheet.
 
 ### The pilot (`experiments/2026-11-19-structured-cot/explore_cot.md`, explore200, 200 questions)
 
@@ -365,15 +374,81 @@ on an A100 or L4 runtime, `RUN_NAME = "dev_v1"` (the 2B smoke stage's folder):
 ## Results
 
 <!-- make_table:start -->
-Not run yet.
+**Exploratory:** development questions from explore200, on which the prompts were designed; one run per condition.
+Tables from `analysis.py` (smoke stage, the 2B's 30) and `analysis.py --model-size` (`model_size.md`). A, C, D and E
+are the pilot's predictions. Scores ×100, computing = the mean of the three tasks. The predictions are in
+`results/zeroshot/vsibench/concise_math_cot/dev_v1/` (the run folder `dev_v1`, from the notebook's `cot_9b_results_main.zip`, SHA-256
+`5db6d4d61a28374f0729477fae705d53e6b7ffc95c96123fadaf52e774dfb4c3`; its top-level `analysis.md` and `errors.csv` are
+the smoke stage's).
+
+**Smoke stage, the 2B, 3 questions** (`cot_followup.ipynb`, code `64e566e`):
+
+| Condition | Computing | Abs. dist. | Rel. dist. | Obj. size | Parsed | Reply tokens, median / p90 | Cut off |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A | 76.7 | 100.0 | 100.0 | 30.0 | 100.0% | 3 / 3 | 0.0% |
+| C | 83.3 | 90.0 | 100.0 | 60.0 | 100.0% | 4 / 4 | 0.0% |
+| D | 6.7 | 20.0 | 0.0 | 0.0 | 100.0% | 1196 / 1878 | 33.3% |
+| E | 86.7 | 100.0 | 100.0 | 60.0 | 100.0% | 4 / 5 | 0.0% |
+| F1 | 26.7 | 20.0 | 0.0 | 60.0 | 100.0% | 183 / 825 | 0.0% |
+| F2 | 33.3 | 0.0 | 0.0 | 100.0 | 100.0% | 404 / 1719 | 33.3% |
+| F3 | 0.0 | 0.0 | 0.0 | 0.0 | 100.0% | 235 / 299 | 0.0% |
+
+**F3 copied its worked example's numbers in 2 of 3 replies:** on question 838 (absolute distance, truth 2.2 m) the
+reply is the absolute-distance example itself, with its `sofa_1` and `lamp_1` rows and its answer 1.059; on question
+2227 (object size, truth 73 cm) it lists the example's sides (0.452, 1.830, 0.600) and answers 183. F3 was not run
+beyond the smoke stage.
+
+**The 2B, 30 questions** (`model_size_ids.txt`; F1 and F2 in `cot_9b.ipynb`'s main stage, code `e2cd67a`, the smoke
+stage's 3 reused):
+
+| Condition | Computing | Abs. dist. | Rel. dist. | Obj. size | Parsed | Reply tokens, median / p90 | Cut off |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A | 57.0 | 43.0 | 70.0 | 58.0 | 100.0% | 3 / 3 | 0.0% |
+| C | 52.0 | 27.0 | 70.0 | 59.0 | 100.0% | 4 / 5 | 0.0% |
+| D | 66.7 | 40.0 | 80.0 | 80.0 | 100.0% | 536 / 1548 | 3.3% |
+| E | 85.3 | 97.0 | 100.0 | 59.0 | 100.0% | 4 / 5 | 0.0% |
+| F1 | 64.7 | 45.0 | 70.0 | 79.0 | 100.0% | 143 / 463 | 0.0% |
+| F2 | 57.0 | 61.0 | 30.0 | 80.0 | 96.7% | 358 / 1263 | 6.7% |
+
+| Comparison | Computing | 95% interval | Abs. dist. | Rel. dist. | Obj. size | Better / worse / same | Holm p |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| F1 − D | −2.0 | [−15.7, +11.7] | +5.0 | −10.0 | −1.0 | 5 / 6 / 19 | 1 |
+| F2 − F1 | −7.7 | [−27.7, +12.0] | +16.0 | −40.0 | +1.0 | 9 / 10 / 11 | 1 |
+| F1 − C | +12.7 | [−5.3, +31.0] | +18.0 | +0.0 | +20.0 | 10 / 6 / 14 | 0.85 |
+| F2 − C | +5.0 | [−18.0, +28.0] | +34.0 | −40.0 | +21.0 | 15 / 10 / 5 | 0.85 |
+| F1 − E | −20.7 | [−34.0, −7.7] | −52.0 | −30.0 | +20.0 | 3 / 12 / 15 | 0.035 |
+| F2 − E | −28.3 | [−44.3, −12.3] | −36.0 | −70.0 | +21.0 | 5 / 19 / 6 | 0.013 |
+| F1 − A | +7.7 | [−13.0, +28.3] | +2.0 | +0.0 | +21.0 | 14 / 7 / 9 | 0.38 |
+| F2 − A | +0.0 | [−21.0, +22.3] | +18.0 | −40.0 | +22.0 | 15 / 9 / 6 | 0.38 |
+
+**Model size, the 9B against the 2B, the same 30 questions** (`cot_9b.ipynb`, one L4, code `e2cd67a`; the 9B one
+question at a time):
+
+| Model | Condition | Computing | Abs. dist. | Rel. dist. | Obj. size | Parsed | Reply tokens, median / p90 | Cut off |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 9B | A | 53.3 | 54.0 | 60.0 | 46.0 | 100.0% | 2 / 3 | 0.0% |
+| 9B | C | 80.0 | 71.0 | 70.0 | 99.0 | 100.0% | 4 / 4 | 0.0% |
+| 9B | E | 98.7 | 97.0 | 100.0 | 99.0 | 100.0% | 4 / 5 | 0.0% |
+| 9B | F1 | 76.3 | 49.0 | 80.0 | 100.0 | 100.0% | 174 / 952 | 0.0% |
+| 9B | F2 | 79.3 | 98.0 | 40.0 | 100.0 | 83.3% | 406 / 2048 | 16.7% |
+
+| Comparison (one Holm family) | Computing | 95% interval | Abs. dist. | Rel. dist. | Obj. size | Better / worse / same | Holm p |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 9B F1 − 9B C | −3.7 | [−17.0, +9.0] | −22.0 | +10.0 | +1.0 | 4 / 9 / 17 | 0.534 |
+| 2B F1 − 2B C | +12.7 | [−5.3, +31.0] | +18.0 | +0.0 | +20.0 | 10 / 6 / 14 | 0.534 |
+| (9B F1 − 9B C) − (2B F1 − 2B C) | −16.3 | [−35.0, +1.3] | −40.0 | +10.0 | −19.0 | 6 / 13 / 11 | 0.501 |
+| 9B C − 2B C | +28.0 | [+13.0, +42.7] | +44.0 | +0.0 | +40.0 | 15 / 4 / 11 | 0.0961 |
+| 9B E − 2B E | +13.3 | [+5.7, +21.0] | +0.0 | +0.0 | +40.0 | 6 / 1 / 23 | 0.5 |
 <!-- make_table:end -->
 
 ## Conclusion
 
-- **Answer to the question:**
-- **Hypothesis:**
-- **Caveats:**
-- **Next:**
+Exploratory: 30 development questions from explore200 (F3: 3), one run per condition; nothing here is an
+established difference. Concise CoT (F1) scored above direct reading of the sheet (C) on the 2B (+12.7, interval
+−5.3 to +31.0) but not on the 9B (−3.7, interval −17.0 to +9.0). F2's formula raised absolute distance on both
+models (2B 45.0 → 61.0, 9B 49.0 → 98.0) but lowered relative distance on both (2B 70.0 → 30.0, 9B 80.0 → 40.0).
+F3 copied its worked example's numbers in 2 of 3 replies, and the precomputed relations (E) beat every CoT variant
+on both models (2B 85.3, 9B 98.7, against at most 66.7 and 79.3).
 
 ## Log
 
@@ -383,3 +458,12 @@ Not run yet.
   (`model_size_ids.txt`), the 2B's F1 on the same; `followup.py` runs the pilot's direct conditions and other models
   (`--model`, `--device-map`, `--batch-size`; the 9B one question at a time, on an A100 or L4), `analysis.py --model-size`, `cot_9b.ipynb`; F3 replies flagged when they take the worked
   example's answer or numbers. Nothing run with the 9B yet.
+- 2026-11-25, exploratory: the 2B's smoke stage (`cot_followup.ipynb`, code `64e566e`) ran F1–F3 on 3 questions. F3
+  copied its worked example's numbers in 2 of 3 replies (Results) and was not run further.
+- 2026-11-25, exploratory: the model-size runs (`cot_9b.ipynb`, one L4, code `e2cd67a`): the 9B's A, C, E, F1 and F2,
+  and the 2B's F1 and F2, on the 30 questions of `model_size_ids.txt`. The 2B's F2 ran after `model_size.md` was
+  written, so its table lacks it.
+- 2026-11-28: Results and Outcome written from those runs; Background gains the prior work on chain-of-thought and
+  visual spatial reasoning. The held-out evaluation has not been run.
+- 2026-11-28: the run folder `dev_v1` added to `results/zeroshot/vsibench/concise_math_cot/dev_v1/`, unchanged from
+  the notebook's zip; Conclusion written.

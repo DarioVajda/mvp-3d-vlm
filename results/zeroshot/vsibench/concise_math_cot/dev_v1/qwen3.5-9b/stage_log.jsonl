@@ -1,0 +1,17 @@
+{"stage": "smoke", "model": "Qwen/Qwen3.5-9B", "condition": "gold_csv", "new": 3, "seconds": 33.0, "peak_gpu_gb": 19.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "smoke", "model": "Qwen/Qwen3.5-9B", "condition": "cot_f1", "new": 3, "seconds": 58.9, "peak_gpu_gb": 19.2, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "smoke", "model": "Qwen/Qwen3.5-9B", "condition": "gold_relations", "new": 3, "seconds": 29.6, "peak_gpu_gb": 19.2, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "smoke", "model": "Qwen/Qwen3.5-9B", "condition": "A_video", "new": 3, "seconds": 28.7, "peak_gpu_gb": 18.8, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "gold_csv", "new": 27, "seconds": 92.5, "peak_gpu_gb": 19.4, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "cot_f1", "new": 27, "seconds": 773.4, "peak_gpu_gb": 19.5, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "gold_relations", "new": 27, "seconds": 97.5, "peak_gpu_gb": 19.2, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-2B", "condition": "cot_f1", "new": 27, "seconds": 246.5, "peak_gpu_gb": 6.8, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "A_video", "new": 27, "seconds": 89.9, "peak_gpu_gb": 18.8, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "cot_f2", "new": 30, "seconds": 1408.5, "peak_gpu_gb": 19.2, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "gold_csv", "new": 0, "seconds": 0.1, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "cot_f1", "new": 0, "seconds": 0.1, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "gold_relations", "new": 0, "seconds": 0.1, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-2B", "condition": "cot_f1", "new": 0, "seconds": 0.1, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "A_video", "new": 0, "seconds": 0.0, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-9B", "condition": "cot_f2", "new": 0, "seconds": 0.1, "peak_gpu_gb": 0.0, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}
+{"stage": "main", "model": "Qwen/Qwen3.5-2B", "condition": "cot_f2", "new": 27, "seconds": 532.6, "peak_gpu_gb": 7.1, "gpu": "NVIDIA L4", "code": "e2cd67abeea04ce85da336a416237908bf3db29f"}

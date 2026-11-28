@@ -1,0 +1,13 @@
+condition,id,question_type,ground_truth,read,score,reply_tokens,cut_off,no_answer_line,unread,equals_centre_rule,equals_closest_rule,sheet_rule_disagrees_with_truth,named_objects_missing_from_sheet,manual_objects,manual_attributes,manual_operation,manual_arithmetic,manual_unit,manual_notes,metres_not_cm,another_side,picks_centre_rule,picks_closest_rule
+D,838,object_abs_distance,2.2,3.15,0.2,526,False,False,False,True,False,False,False,,,,,,,,,,
+D,2227,object_size_estimation,73,11.0,0.0,2048,True,True,False,,,False,False,,,,,,,False,False,,
+D,2984,object_rel_distance,C,D,0.0,1196,False,False,False,,,False,False,,,,,,,,,False,False
+F1,838,object_abs_distance,2.2,3.15,0.2,183,False,False,False,True,False,False,False,,,,,,,,,,
+F1,2227,object_size_estimation,73,58.2,0.6000000000000001,96,False,False,False,,,False,False,,,,,,,False,False,,
+F1,2984,object_rel_distance,C,A,0.0,985,False,False,False,,,False,False,,,,,,,,,False,False
+F2,838,object_abs_distance,2.2,6970.01,0.0,2048,True,True,False,False,False,False,False,,,,,,,,,,
+F2,2227,object_size_estimation,73,73.4,1.0,79,False,False,False,,,False,False,,,,,,,False,False,,
+F2,2984,object_rel_distance,C,A,0.0,404,False,False,False,,,False,False,,,,,,,,,False,False
+F3,838,object_abs_distance,2.2,1.059,0.0,235,False,False,False,False,False,False,False,,,,,,,,,,
+F3,2227,object_size_estimation,73,183.0,0.0,89,False,False,False,,,False,False,,,,,,,False,False,,
+F3,2984,object_rel_distance,C,B,0.0,315,False,False,False,,,False,False,,,,,,,,,False,False

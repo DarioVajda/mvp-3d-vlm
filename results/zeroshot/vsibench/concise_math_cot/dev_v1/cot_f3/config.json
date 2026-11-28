@@ -1,0 +1,19 @@
+{
+ "batch_size": 8,
+ "final_answer": true,
+ "layout": "sit",
+ "max_new_tokens": 2048,
+ "model": "Qwen/Qwen3.5-2B",
+ "nframes": 16,
+ "pool_sha256": "ce96f1ec98dfaabcd934a0c3a191d3a63fb35dde6fee42feb5f191a1b2cf7f98",
+ "prompt_fingerprint": "31d4794a3412718bcd63a7ce8afe28bdbc36540b342cd6015009991b7f0747d6",
+ "prompt_version": "2026-11-25.1",
+ "questions_sha256": "aa3ff8cc2010e555f4f865ff96483812ec0b275005b68562f53bb114ad4db9db",
+ "sampling": "uniform128",
+ "seed": 0,
+ "sheet_format": "csv",
+ "sheet_source": "gold",
+ "sheets_index_sha256": "22e0ee1ed3400a5ca59bc49c3791f433265115b4301c183b9772e4e014f5573c",
+ "token_budget": 120000,
+ "variant": "cot_f3"
+}

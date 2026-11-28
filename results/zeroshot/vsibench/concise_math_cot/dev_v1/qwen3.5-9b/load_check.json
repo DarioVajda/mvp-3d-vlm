@@ -1,0 +1,10 @@
+{
+ "load_seconds": 14.6,
+ "weights_gb": 18.82,
+ "devices": [
+  "cuda:0"
+ ],
+ "dtype": "torch.bfloat16",
+ "gpu": "NVIDIA L4",
+ "gpu_gb": 23.7
+}

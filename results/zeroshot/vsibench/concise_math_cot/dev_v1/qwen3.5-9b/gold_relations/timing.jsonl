@@ -1,0 +1,2 @@
+{"k": 1, "questions": 3, "new": 3, "seconds": 29.5, "seconds_per_new_question": 9.8, "gpu": "NVIDIA L4"}
+{"k": 10, "questions": 30, "new": 27, "seconds": 97.5, "seconds_per_new_question": 3.6, "gpu": "NVIDIA L4"}
