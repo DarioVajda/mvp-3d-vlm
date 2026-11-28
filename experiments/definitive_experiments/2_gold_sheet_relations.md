@@ -361,13 +361,10 @@ Nothing in this section was registered before the runs; it is exploratory.
     157, the reverse on 35;
   - object size: D 78.0 against B 55.4; where B and D answer differently (74% of size questions), D scores 74.4 and B
     43.7.
-- **A replacement criterion written after the results** (this file's earlier draft, 2026-11-27, two days after the
-  results were pushed in `c4d74df`): it dropped the second registered disproof and put in its place "C − B helps (at
-  least 5 points, Holm p < 0.05) on a type with relations other than absolute and relative distance". It is not a
-  registered criterion of this experiment. Read post hoc on these results, no such type improves by 5 points (the
-  largest is relative direction hard, +1.1).
-- **A rerun with Qwen3.5-4B** (this folder's `README.md`, sections 2 and 3.2) would be a separate experiment on the
-  same design, with criteria to be registered before its runs.
+- An alternative criterion, proposed after the results were available: 'C − B helps (at least 5 points, Holm p < 0.05)
+  on a type with relations other than absolute and relative distance'. It is not a registered criterion of this
+  experiment. Read post hoc on these results, no such type improves by 5 points (the largest is relative direction
+  hard, +1.1).
 
 ## Log
 
